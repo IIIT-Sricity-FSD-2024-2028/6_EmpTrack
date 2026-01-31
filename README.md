@@ -32,9 +32,9 @@ The objective of this system is to:
 
 The system involves three primary actors:
 
-* **Employee** – Records attendance, applies for leave, and interacts with assigned tasks
-* **Team Lead** – Supervises team attendance, manages team leave, and allocates work
-* **HR** – Manages organizational policies, handles complaints, and generates reports
+* **Employee** – An Employee is an authorized individual employed by the organization who performs assigned duties and contributes to organizational objectives.
+* **Team Lead** – A Team Lead is a supervisory-level employee responsible for managing and coordinating the activities of a designated team.
+* **HR** – The Human Resources (HR) role represents authorized personnel responsible for workforce administration and policy enforcement.
 
 ---
 
