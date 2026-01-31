@@ -11,7 +11,7 @@ This document records the interaction with the domain expert for the **Attendanc
 * **Date of Interaction:** 31/01/2026
 * **Mode of Interaction:** Video Call (Google Meet)
 * **Duration (in minutes):** 30 minutes
-* **Publicly Accessible Video Link:** https://drive.google.com/file/d/17gjoyyrZsiF_7-AsUOMea2fgMos_nXc_/view?usp=sharing
+* **Publicly Accessible Video Link:** https://drive.google.com/file/d/11S8wPIu9DFUBC4YTEIXaPcdHb_7LiDEo/view?usp=sharing
 
 ---
 
