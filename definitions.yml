@@ -21,7 +21,7 @@ Name: Attendance Oversight
   -Presence Supervision
   
 Name: Task Allocation
-  definition:The process of assigning, distributing, and reallocating work tasks to employees based on availability, workload, and attendance status.
+   definition:The process of assigning, distributing, and reallocating work tasks to employees based on availability, workload, and attendance status.
   examples:
    -Assigning tasks to available employees at the start of the day.
    -Reallocating work when an employee goes on leave.
@@ -30,7 +30,7 @@ Name: Task Allocation
    -Task Distribution
   
   Name: Leave Regularization
-  definition:The process of converting an absence into approved leave based on organizational policies and managerial approval, or escalating the issue if leave was not applied.
+    definition:The process of converting an absence into approved leave based on organizational policies and managerial approval, or escalating the issue if leave was not applied.
  examples:
    -Team lead regularizes an absence due to an emergency situation.
    -Team lead raises a complaint to HR if an employee forgets to apply for leave.
@@ -39,7 +39,7 @@ aliases:
   -Leave Adjustment
 
 Name: Work Progress Update
-  definition:The process of updating the current status of a task or project in the system.
+   definition:The process of updating the current status of a task or project in the system.
  examples:
   -Employee marks a task as “In Progress” or “50% Completed.”
   -Team lead reviews updates to monitor task progress.
