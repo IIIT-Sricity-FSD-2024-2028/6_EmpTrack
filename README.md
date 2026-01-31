@@ -1,6 +1,6 @@
 # 6_EmpTrack
 FFSD Project – Attendance, Leave and Work Allocation Platform
-Problem Statement:Attendance,Leave and Work            Allocation Platform
+Problem Statement:Attendance,Leave and Work Allocation Platform
  In many organizations, attendance tracking, leave management, and work allocation are handled using disconnected tools or manual processes. This leads to:
 •	Inaccurate attendance records
 •	Delays in leave approvals
