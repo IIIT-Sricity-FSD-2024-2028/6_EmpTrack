@@ -83,7 +83,7 @@ The system involves three primary actors:
 * **Modify Task Assignments**: Reassign or update tasks
 * **Track Task Progress**: Monitor completion status
 
-#### Generate Reports
+#### Generate Team Reports
 
 * **Generate Team Attendance Reports**: Create periodic reports summarizing team attendance records
 * **Generate Leave Reports**: Produce reports on team leave usage and approval status
