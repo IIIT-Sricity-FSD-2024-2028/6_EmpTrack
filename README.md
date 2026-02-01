@@ -5,7 +5,7 @@
 **Attendance, Leave and Work Allocation Platform**
 
 In many organizations, attendance tracking, leave management, and work allocation are handled using disconnected tools or manual processes. This leads to:
-
+     
 * Inaccurate attendance records
 * Delays in leave approvals
 * Lack of transparency between employees, team leads, and HR
