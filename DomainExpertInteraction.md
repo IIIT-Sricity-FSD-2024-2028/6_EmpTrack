@@ -9,7 +9,7 @@ This document records the interaction with the domain expert for the **Attendanc
 * **Problem Statement:**
   Design and development of an integrated system to manage employee attendance, leave requests, work allocation, approvals, policy enforcement, and reporting for employees, team leads, and HR.
 * **Date of Interaction:** 31/01/2026
-* **Mode of Interaction:** Video Call (Google Meet)
+* **Mode of Interaction:** Video Call (Google)
 * **Duration (in minutes):** 30 minutes
 * **Publicly Accessible Video Link:** https://drive.google.com/file/d/11S8wPIu9DFUBC4YTEIXaPcdHb_7LiDEo/view?usp=sharing
 
