@@ -10,7 +10,7 @@ In many organizations, attendance tracking, leave management, and work allocatio
 * Delays in leave approvals
 * Lack of transparency between employees, team leads, and HR
 * Difficulty in tracking assigned work and team performance
-* Inefficient handling of complaints and policy enforcement
+* Inefficient handling of complaints and policy enforcement       
 
 To address these challenges, this project proposes a centralized web-based platform that integrates attendance, leave, and work allocation into a single system with role-based access.
 
