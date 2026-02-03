@@ -67,7 +67,7 @@ The purpose of this system is to ensure transparent tracking of employee attenda
 
 ### Workflow 1: Attendance Management
 
-* **Trigger / Start Condition:** Employee marks attendance or submits a regularization request
+* **Trigger :** Employee marks attendance or submits a regularization request
 
 **Steps Involved:**
 
@@ -77,13 +77,13 @@ The purpose of this system is to ensure transparent tracking of employee attenda
 4. Team Lead approves or rejects the request
 5. HR rules are applied if escalation is required
 
-* **Outcome / End Condition:** Attendance record updated and employee notified
+* **Outcome :** Attendance record updated and employee notified
 
 ---
 
 ### Workflow 2: Leave Management
 
-* **Trigger / Start Condition:** Employee applies for leave
+* **Trigger :** Employee applies for leave
 
 **Steps Involved:**
 
@@ -93,13 +93,13 @@ The purpose of this system is to ensure transparent tracking of employee attenda
 4. In emergency or conflict cases, request is escalated to HR
 5. HR reviews and takes final decision
 
-* **Outcome / End Condition:** Leave status updated and employee informed
+* **Outcome :** Leave status updated and employee informed
 
 ---
 
 ### Workflow 3: Work Allocation
 
-* **Trigger / Start Condition:** New project task or workload adjustment
+* **Trigger :** New project task or workload adjustment
 
 **Steps Involved:**
 
@@ -108,7 +108,7 @@ The purpose of this system is to ensure transparent tracking of employee attenda
 3. Employees update task progress
 4. Team Lead monitors completion status
 
-* **Outcome / End Condition:** Task completion and productivity tracking
+* **Outcome :** Task completion and productivity tracking
 
 ---
 
