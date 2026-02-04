@@ -46,5 +46,58 @@ Name: Work Progress Update
  aliases:
     -Task Status Update
     -Project Progress Tracking
+    - Name: Attendance Regularization
+  definition: The process of correcting incorrect, missing, or wrongly recorded attendance entries within the system.
+  examples:
+    - Employee submits a request to correct a missed punch-in or punch-out.
+    - HR approves and updates incorrect attendance records.
+  aliases:
+    - Attendance Correction
+    - Attendance Adjustment
+
+- Name: Leave Approval
+  definition: The authorization process carried out by a team lead or HR to approve or reject employee leave requests.
+  examples:
+    - Team lead approves an employee’s sick leave request.
+    - HR rejects a leave request due to insufficient leave balance.
+  aliases:
+    - Leave Authorization
+    - Leave Validation
+
+- Name: Escalation
+  definition: The process of forwarding unresolved issues or disputes to HR in cases of policy violations or exceptional circumstances.
+  examples:
+    - Team lead escalates a leave dispute to HR.
+    - Attendance conflict is forwarded to HR for review.
+  aliases:
+    - Issue Escalation
+    - Conflict Resolution
+
+- Name: Work Allocation
+  definition: The process of assigning and managing tasks for employees based on their roles, skills, and workload.
+  examples:
+    - Manager assigns tasks according to employee availability.
+    - Team lead redistributes work due to resource constraints.
+  aliases:
+    - Task Assignment
+    - Work Distribution
+
+- Name: Policy Enforcement
+  definition: The application of organizational rules related to attendance, leave, and working conditions within the system.
+  examples:
+    - System marks employees late based on company policy.
+    - Leave requests are restricted according to defined rules.
+  aliases:
+    - Rule Enforcement
+    - Compliance Management
+
+- Name: Policy Management
+  definition: The process of defining, updating, and enforcing organizational rules related to attendance, leave, working hours, and escalation procedures within the system.
+  examples:
+    - HR updates office working hours and late mark rules.
+    - System applies new leave policy to all employees automatically.
+  aliases:
+    - Rules Management
+    - Policy Control
 
 
