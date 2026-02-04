@@ -105,6 +105,7 @@ The system involves three primary actors:
 
 #### Generate Reports
 
-* **Create Attendance Reports**: Prepare summaries of employee attendance
-* **Create Leave Reports**: Prepare reports on leave usage and balances
-* **Create Work Reports**: Generate reports showing task progress and employee performance
+* **Create Attendance Reports**: Generate organization-wide employee attendance summaries.
+* **Create Leave Reports**: Produce reports on leave usage, balances, and policy compliance.
+* **Create Work Reports**: Analyze task progress and employee performance across the organization.
+
