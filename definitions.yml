@@ -46,7 +46,8 @@ Name: Work Progress Update
  aliases:
     -Task Status Update
     -Project Progress Tracking
-    - Name: Attendance Regularization
+    
+ - Name: Attendance Regularization
   definition: The process of correcting incorrect, missing, or wrongly recorded attendance entries within the system.
   examples:
     - Employee submits a request to correct a missed punch-in or punch-out.
