@@ -74,31 +74,9 @@ Name: Work Progress Update
     - Issue Escalation
     - Conflict Resolution
 
-- Name: Work Allocation
-  definition: The process of assigning and managing tasks for employees based on their roles, skills, and workload.
-  examples:
-    - Manager assigns tasks according to employee availability.
-    - Team lead redistributes work due to resource constraints.
-  aliases:
-    - Task Assignment
-    - Work Distribution
 
-- Name: Policy Enforcement
-  definition: The application of organizational rules related to attendance, leave, and working conditions within the system.
-  examples:
-    - System marks employees late based on company policy.
-    - Leave requests are restricted according to defined rules.
-  aliases:
-    - Rule Enforcement
-    - Compliance Management
 
-- Name: Policy Management
-  definition: The process of defining, updating, and enforcing organizational rules related to attendance, leave, working hours, and escalation procedures within the system.
-  examples:
-    - HR updates office working hours and late mark rules.
-    - System applies new leave policy to all employees automatically.
-  aliases:
-    - Rules Management
-    - Policy Control
+
+
 
 
