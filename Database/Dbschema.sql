@@ -1,3 +1,5 @@
+CREATE DATABASE EmpTrack;
+USE EmpTrack;
 CREATE TABLE Department (
     department_id INT PRIMARY KEY,
     dep_name VARCHAR(100)
@@ -129,4 +131,5 @@ CREATE TABLE Report (
     FOREIGN KEY (attendance_id) REFERENCES Attendance(attendance_id),
     FOREIGN KEY (task_id) REFERENCES Task(task_id)
 );
+
 
