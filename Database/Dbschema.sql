@@ -22,7 +22,7 @@ CREATE TABLE Employee (
     FOREIGN KEY (department_id) REFERENCES Department(department_id),
     FOREIGN KEY (team_id) REFERENCES Team(team_id)
 ); CREATE TABLE Attendance (
-    attendance_id INT PRIMARY KEY,
+    attendance_id VARCHAR PRIMARY KEY,
     emp_id INT,
     attendance_date DATE,
     attendance_mode VARCHAR(20),
@@ -101,7 +101,7 @@ CREATE TABLE Work_Log (
     FOREIGN KEY (escalated_to) REFERENCES Employee(emp_id)
 ); CREATE TABLE Attendance_Regularization (
     reg_id INT PRIMARY KEY,
-    attendance_id INT,
+    attendance_id VARCHAR,
     employee_id INT,
     reason TEXT,
     request_date DATE,
@@ -123,9 +123,10 @@ CREATE TABLE Report (
     status VARCHAR(20),
     FOREIGN KEY (generated_by) REFERENCES Employee(emp_id)
 ); CREATE TABLE Corrects (
-    attendance_id INT,
+    attendance_id VARCHAR,
     task_id INT,
     PRIMARY KEY (attendance_id, task_id),
     FOREIGN KEY (attendance_id) REFERENCES Attendance(attendance_id),
     FOREIGN KEY (task_id) REFERENCES Task(task_id)
 );
+
