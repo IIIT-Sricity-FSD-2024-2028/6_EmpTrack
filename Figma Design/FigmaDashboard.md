@@ -2,4 +2,4 @@ Link to Figma Dashboard :https://www.figma.com/design/KqTYWLHkyK1QGLHpq9tmu5/FFS
 
 
 
-Link to Figma Prototype:https://www.figma.com/proto/KqTYWLHkyK1QGLHpq9tmu5/FFSD?node-id=289-2208&t=Vne0xE93Xq5r3jgB-1
+Link to Figma Prototype:https://www.figma.com/proto/KqTYWLHkyK1QGLHpq9tmu5/FFSD?node-id=289-18640&t=Lv0P5XjIlCnEOS9Z-1
