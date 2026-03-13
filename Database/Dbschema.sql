@@ -28,7 +28,7 @@ CREATE TABLE Employee (
 
     FOREIGN KEY (department_id)
     REFERENCES Department(department_id)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE,
 
     FOREIGN KEY (team_id)
@@ -63,7 +63,7 @@ CREATE TABLE Leave_Details (
     status ENUM('PENDING','APPROVED','REJECTED','CANCELLED') NOT NULL,
     applied_date DATE NOT NULL,
     approved_date DATE,
-    approved_by INT,
+    approved_by VARCHAR(20),
 
     FOREIGN KEY (emp_id)
     REFERENCES Employee(emp_id)
@@ -77,7 +77,7 @@ CREATE TABLE Leave_Details (
 );
 CREATE TABLE Leave_Balance (
     balance_id VARCHAR(20) PRIMARY KEY,
-    emp_id INT NOT NULL UNIQUE,
+    emp_id VARCHAR(20) NOT NULL UNIQUE,
     total_leaves INT NOT NULL,
     used_leaves INT NOT NULL,
     remaining_leaves INT NOT NULL,
@@ -165,7 +165,7 @@ CREATE TABLE Work_Allocation (
     FOREIGN KEY (employee_id)
     REFERENCES Employee(emp_id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE
+    ON UPDATE CASCADE,
     
     FOREIGN KEY (approved_by)
     REFERENCES Employee(emp_id)
@@ -174,7 +174,7 @@ CREATE TABLE Work_Allocation (
 );CREATE TABLE Escalation (
     escalation_id VARCHAR(20) PRIMARY KEY,
     reference_type ENUM('TASK','LEAVE','ATTENDANCE') NOT NULL,
-    reference_id VARCAHR(20) NOT NULL,
+    reference_id VARCHAR(20) NOT NULL,
     escalated_from VARCHAR(20) NOT NULL,
     escalated_to VARCHAR(20) NOT NULL,
     escalation_reason TEXT NOT NULL,
@@ -219,4 +219,5 @@ CREATE TABLE Work_Allocation (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
+
 
