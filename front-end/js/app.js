@@ -25,6 +25,8 @@ import { renderTeamLeadAttendance } from './views/teamlead/attendance.js';
 import { renderTeamLeadLeave } from './views/teamlead/leave.js';
 import { renderTeamLeadTasks } from './views/teamlead/tasks.js';
 import { renderTeamLeadWorkMonitoring } from './views/teamlead/work-monitoring.js';
+import { renderTeamLeadIssues } from './views/teamlead/issue-management.js';
+import { renderAssignIssue } from './views/teamlead/assign-issue.js';
 // HR
 import { renderHRReports } from './views/hr/reports.js';
 import { renderHREscalations } from './views/hr/escalations.js';
@@ -127,6 +129,17 @@ function router() {
             break;
         case hash === '#assign-tasks':
             if (role === 'TEAMLEAD') renderTeamLeadTasks(mainContent);
+            break;
+        case hash === '#issue-management':
+            if (role === 'TEAMLEAD') renderTeamLeadIssues(mainContent);
+            break;
+        case hash.startsWith('#assign-issue/'):
+            if (role === 'TEAMLEAD') {
+                const parts = hash.split('/');
+                if(parts.length === 2 && parts[1]) {
+                    renderAssignIssue(mainContent, parts[1]);
+                }
+            }
             break;
 
         // HR Routes
