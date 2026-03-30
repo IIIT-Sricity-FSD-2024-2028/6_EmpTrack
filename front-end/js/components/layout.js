@@ -16,11 +16,14 @@ export function renderLayout(container) {
             <a href="#leave-request" class="nav-item"><i class="ph ph-calendar-x"></i> Leave Request</a>`;
     } else if (user.role === 'TEAMLEAD') {
         navItems = `
-            <a href="#dashboard" class="nav-item active"><i class="ph ph-squares-four"></i> Team Dashboard</a>
-            <a href="#team-attendance" class="nav-item"><i class="ph ph-users"></i> Team Attendance</a>
-            <a href="#assign-tasks" class="nav-item"><i class="ph ph-briefcase"></i> Work Allocation</a>
-            <a href="#leave-approvals" class="nav-item"><i class="ph ph-check-square"></i> Leave Approvals</a>
-            <a href="#reports" class="nav-item"><i class="ph ph-chart-bar"></i> Performance Reports</a>
+            <a href="#dashboard" class="nav-item active"><i class="ph ph-squares-four"></i> Dashboard</a>
+            <a href="#work-monitoring" class="nav-item"><i class="ph ph-users"></i> Work Monitoring</a>
+            <a href="#assign-tasks" class="nav-item"><i class="ph ph-briefcase"></i> Assign Tasks</a>
+            <a href="#issue-management" class="nav-item"><i class="ph ph-warning-circle"></i> Issue Management</a>
+            <a href="#escalations" class="nav-item"><i class="ph ph-siren"></i> Escalations</a>
+            <a href="#leave-management" class="nav-item"><i class="ph ph-check-square"></i> Leave Management</a>
+            <a href="#team-performance" class="nav-item"><i class="ph ph-chart-bar"></i> Team Performance</a>
+            <a href="#reports" class="nav-item"><i class="ph ph-file-text"></i> Reports</a>
         `;
     } else if (user.role === 'HR') {
         navItems = `
@@ -50,12 +53,12 @@ export function renderLayout(container) {
                 
                 <a href="#profile" style="text-decoration: none; display: block;">
                 <div class="user-profile" style="display:flex; align-items:center; gap:var(--spacing-md); padding: 0 var(--spacing-lg);">
-                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--primary-light); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                        ${user.emp_name.charAt(0)}
+                    <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255,255,255,0.2); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid rgba(255,255,255,0.3);">
+                        ${user.role === 'TEAMLEAD' ? 'RS' : user.emp_name.charAt(0)}
                     </div>
                     <div class="user-info" style="display:flex; flex-direction:column;">
-                        <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-main);">${user.emp_name}</span>
-                        <span class="user-role" style="font-size: var(--text-xs); color: var(--text-muted);">${user.role === 'HR' ? 'Super User' : user.role === 'TEAMLEAD' ? 'Admin' : 'Employee'}</span>
+                        <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: #FFFFFF;">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.emp_name}</span>
+                        <span class="user-role" style="font-size: var(--text-xs); color: rgba(255,255,255,0.7);">${user.role === 'HR' ? 'Super User' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
                     </div>
                 </div>
                 </a>
@@ -64,8 +67,9 @@ export function renderLayout(container) {
         
         <main class="main-wrapper">
             <header class="top-header">
-                <div class="header-left">
-                    <h2 class="header-title" id="page-title">Overview</h2>
+                <div class="header-left" style="display:flex; flex-direction:column; gap:0;">
+                    <h2 class="header-title" id="page-title" style="margin-bottom:0;">Dashboard</h2>
+                    ${user.role === 'TEAMLEAD' ? '<span style="font-size:var(--text-xs); color:var(--text-muted); font-weight:var(--font-medium);">Team Lead Portal</span>' : ''}
                 </div>
                 <div class="header-right" style="display:flex; gap:16px; align-items:center;">
                     <div class="theme-toggle" id="themeToggleBtn" style="font-size: var(--text-xl); color: var(--text-muted); cursor: pointer; transition: 0.2s;">

@@ -1,0 +1,210 @@
+// /js/views/teamlead/assign-issue.js
+import { auth } from '../../auth.js';
+import { db } from '../../store.js';
+
+export function renderAssignIssue(container, issueId) {
+    const user = auth.getCurrentUser();
+    
+    // Find absolute DB node mapping
+    const issueArray = db.data.issue || [];
+    const issueData = issueArray.find(i => i.issue_id === issueId);
+
+    if (!issueData) {
+        container.innerHTML = `
+            <div class="card" style="text-align:center; padding: 40px;">
+                <h2>Issue Not Found</h2>
+                <p style="color:var(--text-muted);">The requested issue ${issueId} could not be located in the database cache.</p>
+                <a href="#issue-management" class="btn btn-primary" style="margin-top:20px; text-decoration:none;">Return to Tracker</a>
+            </div>
+        `;
+        return;
+    }
+
+    // Header Back Row
+    document.getElementById('page-title').innerHTML = `
+        <div style="display:flex; align-items:center; gap: 12px; width:100%;">
+            <a href="#issue-management" style="color:var(--text-main); font-size:20px; display:flex; align-items:center; padding:4px; text-decoration:none;">
+                <i class="ph-bold ph-arrow-left"></i>
+            </a>
+            <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Assign Issue</span>
+        </div>
+    `;
+
+    // Map strict DB metadata dynamically
+    const empRef = db.getUserById(issueData.emp_id);
+    const empNameNode = empRef ? empRef.emp_name : "Unknown Employee";
+
+    // Priority badge lookup
+    let badgePri = 'badge-low';
+    if(issueData.priority === 'Medium') badgePri = 'badge-medium';
+    if(issueData.priority === 'High') badgePri = 'badge-high';
+
+    // Status badge lookup
+    let statBadge = 'badge-open';
+    if(issueData.status === 'In Progress') statBadge = 'badge-info';
+    if(issueData.status === 'Resolved') statBadge = 'badge-completed';
+
+    container.innerHTML = `
+        <div style="max-width: 1200px; margin: 0 auto; display:grid; grid-template-columns: 1fr 1fr; gap: 24px; padding-bottom: 40px;">
+            
+            <!-- LEFT PANEL: ISSUE DETAILS -->
+            <div style="display:flex; flex-direction:column; gap: 16px;">
+                
+                <!-- Main Info Card -->
+                <div class="card" style="padding: 24px; background-color: #FFFFFF;">
+                    <h3 style="margin:0 0 16px 0; color:var(--primary-color); font-size:var(--text-lg);">${issueData.issue_id}</h3>
+                    <h4 style="margin:0 0 8px 0; font-size: 20px; font-weight:var(--font-bold); color:#1E293B;">${issueData.title}</h4>
+                    <p style="color:#475569; font-size:14px; line-height:1.6; margin:0 0 24px 0; padding-bottom:16px; border-bottom:1px solid #E2E8F0;">
+                        ${issueData.description || 'No detailed description provided by the reporter.'}
+                    </p>
+                    
+                    <!-- Metadata Grid -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        
+                        <!-- Left Block -->
+                        <div style="display:flex; flex-direction:column; gap: 16px;">
+                            <div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Reported By</div>
+                                <div style="font-weight:var(--font-medium); font-size:14px; color:#334155;">${empNameNode}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Related Task</div>
+                                <div style="font-weight:var(--font-medium); font-size:14px; color:var(--primary-color);">${issueData.related_task || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Priority</div>
+                                <span class="badge ${badgePri}">${issueData.priority}</span>
+                            </div>
+                        </div>
+
+                        <!-- Right Block -->
+                        <div style="display:flex; flex-direction:column; gap: 16px;">
+                            <div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Employee ID</div>
+                                <div style="font-weight:var(--font-medium); font-size:14px; color:#334155;">${issueData.emp_id}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Created Date</div>
+                                <div style="font-weight:var(--font-medium); font-size:14px; color:#334155;">${issueData.raised_date || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Current Status</div>
+                                <span class="badge ${statBadge}">${issueData.status}</span>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <div style="margin-top:24px; padding-top:16px; border-top:1px solid #E2E8F0;">
+                        <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Current Assignment</div>
+                        <div style="font-weight:var(--font-medium); font-size:14px; color:#64748B; font-style:italic;">${issueData.assigned_to === 'Unassigned' ? 'Unassigned' : issueData.assigned_to}</div>
+                    </div>
+                </div>
+
+                <!-- Assignment Tips -->
+                <div class="card" style="padding: 20px; background-color: #F8FAFC; border:1px solid #E2E8F0;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 12px; color:#3B82F6;">
+                        <i class="ph-fill ph-lightbulb" style="font-size:20px;"></i>
+                        <h4 style="margin:0; font-size:14px; font-weight:var(--font-bold); color:#1E293B;">Assignment Tips</h4>
+                    </div>
+                    <ul style="margin:0; padding-left: 20px; color:#475569; font-size:13px; line-height:1.6;">
+                        <li>Choose appropriate team/individual</li>
+                        <li>Set realistic deadlines</li>
+                        <li>Add clear instructions</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- RIGHT PANEL: ASSIGNMENT FORM -->
+            <div class="card" style="padding: 0; overflow:hidden; display:flex; flex-direction:column;">
+                
+                <!-- Purple Header Area -->
+                <div style="background: linear-gradient(to right, var(--primary-color), #4F46E5); padding: 24px; color: white;">
+                    <h3 style="margin:0 0 4px 0; font-size: 20px; font-weight:var(--font-bold);">Assignment Form</h3>
+                    <div style="font-size: 13px; opacity: 0.9;">Fill in the details to assign this issue</div>
+                </div>
+
+                <div style="padding: 24px;">
+                    <form id="assign-issue-form">
+                        <div class="form-group">
+                            <label class="form-label">Assignment Type</label>
+                            <select id="assign_type" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                                <option value="" disabled selected>Select execution scope...</option>
+                                <option value="Individual">Individual Contributor</option>
+                                <option value="Team">Team / Squad Request</option>
+                                <option value="External">External Vendor</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Select Team / Assigned Node</label>
+                            <select id="assign_target" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                                <option value="" disabled selected>Route issue to...</option>
+                                <option value="Tech Support">Tech Support</option>
+                                <option value="DevOps Team">DevOps Team</option>
+                                <option value="HR001">Super Admin (HR001)</option>
+                                <option value="EM002">Jane Smith (EM002)</option>
+                            </select>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label">Priority Override</label>
+                                <select id="assign_prio" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                                    <option value="High" ${issueData.priority === 'High' ? 'selected' : ''}>High</option>
+                                    <option value="Medium" ${issueData.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                                    <option value="Low" ${issueData.priority === 'Low' ? 'selected' : ''}>Low</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin:0;">
+                                <label class="form-label">Resolution Deadline</label>
+                                <input type="date" id="assign_date" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 32px;">
+                            <label class="form-label">Assignment Notes</label>
+                            <textarea id="assign_notes" class="form-control" rows="4" placeholder="Inject explicit directives for the team..." required style="border-radius: var(--radius-md); padding: 16px; background-color:#F8FAFC; resize:vertical;"></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display:flex; gap: 16px; align-items:center;">
+                            <button type="submit" class="btn btn-purple" style="flex:2; padding: 14px; font-size:14px; justify-content:center; box-shadow: var(--shadow-sm);">
+                                Assign Issue
+                            </button>
+                            <a href="#issue-management" class="btn btn-outline" style="flex:1; padding: 14px; justify-content:center; text-decoration:none; border-radius: var(--radius-full); background-color:#F1F5F9; border:none; color:#475569;">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    // Intercept submit
+    document.getElementById('assign-issue-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        // Perform Database Mutation
+        issueData.assigned_to = document.getElementById('assign_target').value;
+        issueData.priority = document.getElementById('assign_prio').value;
+        issueData.status = 'In Progress'; // Officially moves from Open natively.
+        
+        // Append an update trace explicitly!
+        if (!issueData.updates) issueData.updates = [];
+        issueData.updates.push({
+            sender: user.emp_id,
+            time: new Date().toISOString().split('T')[0],
+            message: `Assigned to ${issueData.assigned_to}: ${document.getElementById('assign_notes').value}`
+        });
+
+        // Trigger permanent save
+        db.saveData();
+
+        // Redirect UI router securely natively
+        window.location.hash = '#issue-management';
+    });
+}
