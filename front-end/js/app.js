@@ -37,12 +37,17 @@ import { renderTeamLeadProfile } from './views/teamlead/profile.js';
 // HR
 import { renderHRReports } from './views/hr/reports.js';
 import { renderHREscalations } from './views/hr/escalations.js';
+import { renderHRAttendance } from './views/hr/attendance.js';
+import { renderHREmployeeManagement } from './views/hr/employee-management.js';
+import { renderHRSettings } from './views/hr/settings.js';
+import { renderHRProfile } from './views/hr/profile.js';
+import { renderHRNotifications } from './views/hr/notifications.js';
 
 const appContainer = document.getElementById('app');
 
 function router() {
     const hash = window.location.hash || '#';
-    
+
     const isAuthRoute = hash === '#login';
     if (!isAuthRoute && !auth.isAuthenticated()) {
         window.location.hash = '#login';
@@ -63,11 +68,11 @@ function router() {
     // All authenticated routes get wrapped in layout
     renderLayout(appContainer);
     const mainContent = document.getElementById('main-content');
-    
+
     // Highlight correct nav item manually
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     const activeNav = document.querySelector(`.nav-item[href="${hash}"]`);
-    if(activeNav) activeNav.classList.add('active');
+    if (activeNav) activeNav.classList.add('active');
 
     const role = auth.getRole();
 
@@ -82,7 +87,7 @@ function router() {
         case hash.startsWith('#update-task/'):
             if (role === 'EMPLOYEE') {
                 const parts = hash.split('/');
-                if(parts.length === 2 && parts[1]) {
+                if (parts.length === 2 && parts[1]) {
                     renderUpdateTaskProgress(mainContent, parts[1]);
                 }
             }
@@ -92,7 +97,7 @@ function router() {
         case hash.startsWith('#issue-details/'):
             if (role === 'EMPLOYEE') {
                 const parts = hash.split('/');
-                if(parts.length === 2 && parts[1]) {
+                if (parts.length === 2 && parts[1]) {
                     renderIssueDetails(mainContent, parts[1]);
                 }
             }
@@ -122,6 +127,7 @@ function router() {
             break;
         case hash === '#profile':
             if (role === 'EMPLOYEE') renderEmployeeProfile(mainContent);
+            else if (role === 'HR') renderHRProfile(mainContent);
             else if (role === 'TEAMLEAD') renderTeamLeadProfile(mainContent);
             break;
 
@@ -144,7 +150,7 @@ function router() {
         case hash.startsWith('#assign-issue/'):
             if (role === 'TEAMLEAD') {
                 const parts = hash.split('/');
-                if(parts.length === 2 && parts[1]) {
+                if (parts.length === 2 && parts[1]) {
                     renderAssignIssue(mainContent, parts[1]);
                 }
             }
@@ -152,7 +158,7 @@ function router() {
         case hash.startsWith('#resolve-issue/'):
             if (role === 'TEAMLEAD') {
                 const parts = hash.split('/');
-                if(parts.length === 2 && parts[1]) {
+                if (parts.length === 2 && parts[1]) {
                     renderResolveIssue(mainContent, parts[1]);
                 }
             }
@@ -174,10 +180,33 @@ function router() {
         case hash === '#org-reports':
             if (role === 'HR') renderHRReports(mainContent);
             break;
+        case hash === '#hr-attendance':
+            if (role === 'HR') renderHRAttendance(mainContent);
+            break;
         case hash === '#escalations':
             if (role === 'HR') renderHREscalations(mainContent);
             else if (role === 'TEAMLEAD') renderTeamLeadEscalations(mainContent);
             break;
+        case hash === '#employee-management':
+            if (role === 'HR') renderHREmployeeManagement(mainContent);
+            break;
+        case hash === '#policy-settings':
+            if (role === 'HR') renderHRSettings(mainContent);
+            break;
+        case hash === '#notifications':
+            if (role === 'HR') renderHRNotifications(mainContent);
+            break;
+        case hash === '#employee-management':
+            if (role === 'HR') renderHREmployeeManagement(mainContent);
+            break;
+        case hash === '#policy-settings':
+            if (role === 'HR') renderHRSettings(mainContent);
+            break;
+        case hash === '#notifications':
+            if (role === 'HR') renderHRNotifications(mainContent);
+            break;
+
+
 
         default:
             mainContent.innerHTML = `
