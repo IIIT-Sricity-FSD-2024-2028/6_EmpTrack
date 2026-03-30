@@ -1,65 +1,384 @@
 // /js/views/teamlead/leave.js
-import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
 export function renderTeamLeadLeave(container) {
-    document.getElementById('page-title').textContent = "Leave Approvals";
-    const user = auth.getCurrentUser();
-    
-    // Get all team members, then filter leaves
-    const teamIds = db.getUsersByManager(user.emp_id).map(m => m.emp_id);
-    const leaves = db.getAllLeaves().filter(l => teamIds.includes(l.emp_id)).sort((a,b) => new Date(b.applied_date) - new Date(a.applied_date));
-    
-    container.innerHTML = `
-        <div class="card">
-            <div class="card-header">
-                <h3>Pending & Resolved Requests</h3>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Dates</th>
-                            <th>Type</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${leaves.map(l => {
-                            const emp = db.getUserById(l.emp_id);
-                            return `
-                                <tr>
-                                    <td>${emp.emp_name} (${l.emp_id})</td>
-                                    <td>${l.start_date} to ${l.end_date}</td>
-                                    <td><span class="badge badge-info">${l.leave_type}</span></td>
-                                    <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${l.reason}">${l.reason}</td>
-                                    <td><span class="badge ${l.status === 'APPROVED' ? 'badge-success' : l.status === 'REJECTED' ? 'badge-danger' : 'badge-warning'}">${l.status}</span></td>
-                                    <td>
-                                        ${l.status === 'PENDING' ? `
-                                            <div style="display:flex; gap:5px;">
-                                                <button class="btn btn-primary leave-action" data-id="${l.leave_id}" data-action="APPROVED" style="padding:4px 8px; font-size:var(--text-xs);">Approve</button>
-                                                <button class="btn btn-danger leave-action" data-id="${l.leave_id}" data-action="REJECTED" style="padding:4px 8px; font-size:var(--text-xs);">Reject</button>
-                                            </div>
-                                        ` : `Handled on ${l.approved_date}`}
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    `;
+    // Update Page Title
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) {
+        titleEl.textContent = 'Leave Management';
+    }
 
-    container.querySelectorAll('.leave-action').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const leaveId = e.target.getAttribute('data-id');
-            const action = e.target.getAttribute('data-action');
-            db.updateLeaveStatus(leaveId, action, user.emp_id);
-            renderTeamLeadLeave(container); // Refresh UI natively
+    // State
+    let currentFilter = 'Pending'; // 'Pending' or 'Approved'
+
+    // Mock Data for UI
+    const summaryStats = {
+        pending: 3,
+        approved: 12,
+        unauthorized: 2,
+        availability: '85%'
+    };
+
+    const unauthorizedData = [
+        { id: 'UA-001', name: 'Mike Davis', days: 1, date: '2026-03-29', escalated: '2026-03-30', reason: 'No-Call No-Show' },
+        { id: 'UA-002', name: 'James Brown', days: 2, date: '2026-03-27 to 2026-03-28', escalated: '2026-03-29', reason: 'Unreachable during shift' }
+    ];
+
+    let leaveRequests = [
+        { id: 'LR-1045', emp: 'Sarah Johnson', type: 'Vacation', start: '2026-04-10', end: '2026-04-14', days: 4, reason: 'Family trip', balance: 12, status: 'Pending' },
+        { id: 'LR-1048', emp: 'Emma Wilson', type: 'Sick Leave', start: '2026-03-31', end: '2026-03-31', days: 1, reason: 'Doctor appointment', balance: 8, status: 'Pending' },
+        { id: 'LR-1050', emp: 'Lisa Anderson', type: 'Personal Leave', start: '2026-04-05', end: '2026-04-05', days: 1, reason: 'Attending wedding', balance: 5, status: 'Pending' },
+        { id: 'LR-1033', emp: 'John Smith', type: 'Emergency', start: '2026-03-25', end: '2026-03-26', days: 2, reason: 'Family emergency', balance: 6, status: 'Approved' },
+        { id: 'LR-1029', emp: 'Mike Davis', type: 'Vacation', start: '2026-03-15', end: '2026-03-18', days: 4, reason: 'Out of town', balance: 10, status: 'Approved' },
+    ];
+
+    // Helper functions for badges
+    const getLeaveTypeBadge = (type) => {
+        let bg, color;
+        switch (type) {
+            case 'Vacation': bg = 'rgba(107, 33, 168, 0.1)'; color = '#6B21A8'; break; // Purple
+            case 'Sick Leave': bg = 'rgba(124, 58, 237, 0.1)'; color = '#7C3AED'; break; // Light Purple
+            case 'Personal Leave': bg = 'rgba(167, 139, 250, 0.1)'; color = '#A78BFA'; break; // Lavender
+            case 'Emergency': bg = 'rgba(236, 72, 153, 0.1)'; color = '#EC4899'; break; // Pink
+            default: bg = 'var(--border-light)'; color = 'var(--text-main)';
+        }
+        return `<span style="padding: 4px 8px; border-radius: var(--radius-sm); font-size: 12px; font-weight: var(--font-bold); background-color: ${bg}; color: ${color};">${type}</span>`;
+    };
+
+    const getStatusBadge = (status) => {
+        let bg, color;
+        if (status === 'Pending') {
+            bg = 'rgba(245, 158, 11, 0.1)'; color = 'var(--warning-color)';
+        } else if (status === 'Approved') {
+            bg = 'rgba(16, 185, 129, 0.1)'; color = 'var(--secondary-color)';
+        } else {
+            bg = 'rgba(239, 68, 68, 0.1)'; color = 'var(--danger-color)';
+        }
+        return `<span style="padding: 4px 8px; border-radius: var(--radius-full); font-size: 12px; font-weight: var(--font-bold); background-color: ${bg}; color: ${color};">${status}</span>`;
+    };
+
+
+    const renderHTML = () => {
+        const filteredLeaves = leaveRequests.filter(lr => lr.status === currentFilter);
+
+        container.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:var(--spacing-xl); max-width: 1440px; margin: 0 auto; animation: fade-in 0.3s ease-out;">
+                
+                <!-- SECTION 1: Summary Cards -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-lg);">
+                    
+                    <div style="background-color: var(--bg-surface); border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease;" class="hover-card">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background-color: rgba(245,158,11,0.1); color: var(--warning-color); display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                            <i class="ph-fill ph-hourglass-high"></i>
+                        </div>
+                        <div>
+                            <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Pending Requests</p>
+                            <h3 style="margin:4px 0 0 0; font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-main);">${summaryStats.pending}</h3>
+                        </div>
+                    </div>
+
+                    <div style="background-color: var(--bg-surface); border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease;" class="hover-card">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background-color: rgba(16,185,129,0.1); color: var(--secondary-color); display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                            <i class="ph-fill ph-check-circle"></i>
+                        </div>
+                        <div>
+                            <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Approved This Month</p>
+                            <h3 style="margin:4px 0 0 0; font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-main);">${summaryStats.approved}</h3>
+                        </div>
+                    </div>
+
+                    <div style="background-color: var(--bg-surface); border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease;" class="hover-card">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background-color: rgba(239,68,68,0.1); color: var(--danger-color); display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                            <i class="ph-fill ph-warning-octagon"></i>
+                        </div>
+                        <div>
+                            <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Unauthorized Absences</p>
+                            <h3 style="margin:4px 0 0 0; font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-main);">${summaryStats.unauthorized}</h3>
+                        </div>
+                    </div>
+
+                    <div style="background-color: var(--bg-surface); border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease;" class="hover-card">
+                        <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, rgba(106, 17, 203, 0.1) 0%, rgba(255, 75, 145, 0.1) 100%); color: #6A11CB; display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                            <i class="ph-fill ph-users"></i>
+                        </div>
+                        <div>
+                            <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Team Availability</p>
+                            <h3 style="margin:4px 0 0 0; font-size: var(--text-3xl); font-weight: var(--font-bold); color: var(--text-main);">${summaryStats.availability}</h3>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- SECTION 2: Unauthorized Absences Alert -->
+                <div style="background-color: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-xl); padding: var(--spacing-xl); display:flex; flex-direction:column; gap: var(--spacing-lg); box-shadow: var(--shadow-sm);">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: var(--spacing-md);">
+                        <div style="display:flex; align-items:center; gap: var(--spacing-md);">
+                            <div style="background-color: var(--danger-color); color: white; width: 40px; height: 40px; border-radius: 50%; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);">
+                                <i class="ph-fill ph-warning" style="font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin:0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--danger-color);">Unauthorized Absences Detected – Escalated to HR</h3>
+                                <p style="margin: 4px 0 0 0; font-size: var(--text-sm); color: var(--text-main);">The following employees were absent without approved leave. These cases have been auto-escalated to HR for review.</p>
+                            </div>
+                        </div>
+                        <button id="alert-escalated-btn" style="background-color: var(--danger-color); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); display:flex; align-items:center; gap: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2); transition: all 0.2s ease;" class="hover-btn">
+                            <i class="ph ph-siren" style="font-size: 1.2rem;"></i> View Escalations Report
+                        </button>
+                    </div>
+
+                    <div style="background-color: white; border-radius: var(--radius-lg); overflow:hidden; border: 1px solid var(--border-color);">
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                                <thead style="background-color: rgba(239, 68, 68, 0.02);">
+                                    <tr>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-color);">Absence ID</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-color);">Employee Name</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-color);">Duration</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-color);">Absence Date</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-color);">Escalated Date</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-color);">Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${unauthorizedData.map(ua => `
+                                        <tr>
+                                            <td style="padding: var(--spacing-md); font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--text-main);">${ua.id}</td>
+                                            <td style="padding: var(--spacing-md); display:flex; align-items:center; gap:var(--spacing-sm);">
+                                                <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 12px;">
+                                                    ${ua.name.charAt(0)}
+                                                </div>
+                                                <span style="font-weight: var(--font-medium);">${ua.name}</span>
+                                            </td>
+                                            <td style="padding: var(--spacing-md);">
+                                                <span style="padding: 4px 8px; border-radius: var(--radius-sm); font-size: 11px; background-color: rgba(239, 68, 68, 0.1); color: var(--danger-color); font-weight: var(--font-bold);">${ua.days} day(s) absent</span>
+                                            </td>
+                                            <td style="padding: var(--spacing-md); color: var(--text-muted); font-size: var(--text-sm);">${ua.date}</td>
+                                            <td style="padding: var(--spacing-md); color: var(--text-muted); font-size: var(--text-sm);">${ua.escalated}</td>
+                                            <td style="padding: var(--spacing-md); color: var(--text-main); font-size: var(--text-sm);">${ua.reason}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Layout (Table + Sidebar Guidelines) -->
+                <div style="display:flex; flex-wrap:wrap; gap: var(--spacing-xl);">
+                    
+                    <!-- SECTION 3: Team Leave Requests Table -->
+                    <div style="flex: 1 1 65%; min-width: 300px; display:flex; flex-direction:column; gap: var(--spacing-lg);">
+                        <div style="background-color: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); overflow:hidden; border: 1px solid var(--border-color);">
+                            
+                            <div style="padding: var(--spacing-lg) var(--spacing-xl); border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--spacing-md);">
+                                <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main); margin:0;">Team Leave Requests</h3>
+                                
+                                <!-- Filters -->
+                                <div style="display:flex; background-color: var(--bg-main); border-radius: var(--radius-md); padding: 4px; border: 1px solid var(--border-color);">
+                                    <button class="filter-btn ${currentFilter === 'Pending' ? 'active-filter' : ''}" data-filter="Pending" style="padding: 6px 16px; border:none; border-radius: var(--radius-sm); font-family:var(--font-family); font-weight:var(--font-semibold); font-size:var(--text-sm); cursor:pointer; transition:all 0.2s ease;">Pending</button>
+                                    <button class="filter-btn ${currentFilter === 'Approved' ? 'active-filter' : ''}" data-filter="Approved" style="padding: 6px 16px; border:none; border-radius: var(--radius-sm); font-family:var(--font-family); font-weight:var(--font-semibold); font-size:var(--text-sm); cursor:pointer; transition:all 0.2s ease;">Approved</button>
+                                </div>
+                            </div>
+                            
+                            <div style="overflow-x:auto;">
+                                <table style="width:100%; border-collapse:collapse; text-align:left;">
+                                    <thead style="background-color: var(--bg-main);">
+                                        <tr>
+                                            <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Request ID</th>
+                                            <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Employee</th>
+                                            <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Leave Type</th>
+                                            <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Dates</th>
+                                            <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Days</th>
+                                            <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Reason / Balance</th>
+                                            <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Status</th>
+                                            ${currentFilter === 'Pending' ? `<th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-xs); text-transform:uppercase;">Action</th>` : ''}
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leave-table-body">
+                                        ${filteredLeaves.map(lr => `
+                                            <tr style="border-bottom: 1px solid var(--border-color); transition: background-color 0.2s ease;" class="table-row">
+                                                <td style="padding: var(--spacing-md); font-size: var(--text-sm); color: var(--text-muted);">${lr.id}</td>
+                                                <td style="padding: var(--spacing-md); display:flex; align-items:center; gap:var(--spacing-sm);">
+                                                    <span style="font-weight: var(--font-medium); color: var(--text-main);">${lr.emp}</span>
+                                                </td>
+                                                <td style="padding: var(--spacing-md);">${getLeaveTypeBadge(lr.type)}</td>
+                                                <td style="padding: var(--spacing-md); font-size: var(--text-sm); color: var(--text-main);">
+                                                    ${lr.start === lr.end ? lr.start : `${lr.start} to ${lr.end}`}
+                                                </td>
+                                                <td style="padding: var(--spacing-md); font-size: var(--text-sm); font-weight:var(--font-bold); color: var(--text-main);">${lr.days}</td>
+                                                <td style="padding: var(--spacing-md); padding-right: var(--spacing-xl);">
+                                                    <div style="font-size: var(--text-sm); color: var(--text-main); max-width: 150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${lr.reason}">${lr.reason}</div>
+                                                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Balance: <b style="color:var(--text-main);">${lr.balance} days</b></div>
+                                                </td>
+                                                <td style="padding: var(--spacing-md);">${getStatusBadge(lr.status)}</td>
+                                                ${currentFilter === 'Pending' ? `
+                                                    <td style="padding: var(--spacing-md);">
+                                                        <div style="display:flex; gap: 8px;">
+                                                            <button class="action-btn approve-btn hover-btn" data-id="${lr.id}" title="Approve" style="padding: 6px 12px; border: none; background-color: var(--secondary-color); color: white; border-radius: var(--radius-md); cursor: pointer; display:flex; align-items:center; gap: 4px; box-shadow: 0 2px 5px rgba(16,185,129,0.3); transition:all 0.2s ease;">
+                                                                <i class="ph ph-check-circle" style="font-size:1.1rem;"></i> Approve
+                                                            </button>
+                                                            <button class="action-btn reject-btn hover-btn" data-id="${lr.id}" title="Reject" style="padding: 6px 12px; border: none; background-color: var(--danger-color); color: white; border-radius: var(--radius-md); cursor: pointer; display:flex; align-items:center; gap: 4px; box-shadow: 0 2px 5px rgba(239,68,68,0.3); transition:all 0.2s ease;">
+                                                                <i class="ph ph-x-circle" style="font-size:1.1rem;"></i> Reject
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                ` : ''}
+                                            </tr>
+                                        `).join('')}
+                                        ${filteredLeaves.length === 0 ? `
+                                            <tr>
+                                                <td colspan="${currentFilter === 'Pending' ? 8 : 7}" style="padding: var(--spacing-xl); text-align:center; color: var(--text-muted);">
+                                                    No ${currentFilter.toLowerCase()} leave requests found.
+                                                </td>
+                                            </tr>
+                                        ` : ''}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4: Leave Guidelines Card -->
+                    <div style="flex: 1 1 30%; min-width: 280px; display:flex; flex-direction:column;">
+                        <div style="background-color: #E0F2FE; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); overflow:hidden; border: 1px solid #BAE6FD; position:relative;">
+                            
+                            <!-- Header Area with Icon -->
+                            <div style="padding: var(--spacing-lg) var(--spacing-lg) 0 var(--spacing-lg); display:flex; align-items:flex-start; gap: var(--spacing-md);">
+                                <div style="width: 48px; height: 48px; border-radius: 50%; background-color: #3B82F6; color: white; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);">
+                                    <i class="ph-fill ph-book-open"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin:0; font-size: var(--text-lg); font-weight: var(--font-bold); color: #0369A1;">Leave Approval Guidelines</h3>
+                                    <p style="margin: 4px 0 0 0; font-size: var(--text-xs); color: #0284C7; font-weight:var(--font-medium);">Key protocols for Team Leads</p>
+                                </div>
+                            </div>
+
+                            <!-- Bullet Points Content -->
+                            <div style="padding: var(--spacing-lg);">
+                                <ul style="margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap: var(--spacing-md);">
+                                    <li style="display:flex; align-items:flex-start; gap: 12px;">
+                                        <i class="ph-fill ph-check-circle" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                        <div>
+                                            <strong style="font-size:var(--text-sm); color:#0F172A;">Advance Notice</strong>
+                                            <p style="margin:0; font-size: 12px; color:#334155;">Minimum 3 days required for planned vacation leave.</p>
+                                        </div>
+                                    </li>
+                                    <li style="display:flex; align-items:flex-start; gap: 12px;">
+                                        <i class="ph-fill ph-users-three" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                        <div>
+                                            <strong style="font-size:var(--text-sm); color:#0F172A;">Team Coverage</strong>
+                                            <p style="margin:0; font-size: 12px; color:#334155;">Ensure adequate coverage before approving overlaps.</p>
+                                        </div>
+                                    </li>
+                                    <li style="display:flex; align-items:flex-start; gap: 12px;">
+                                        <i class="ph-fill ph-wallet" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                        <div>
+                                            <strong style="font-size:var(--text-sm); color:#0F172A;">Leave Balance</strong>
+                                            <p style="margin:0; font-size: 12px; color:#334155;">Verify balance > requested days strictly.</p>
+                                        </div>
+                                    </li>
+                                    <li style="display:flex; align-items:flex-start; gap: 12px;">
+                                        <i class="ph-fill ph-warning-circle" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                        <div>
+                                            <strong style="font-size:var(--text-sm); color:#0F172A;">Unauthorized Absence</strong>
+                                            <p style="margin:0; font-size: 12px; color:#334155;">No action required; auto-escalates to HR globally.</p>
+                                        </div>
+                                    </li>
+                                    <li style="display:flex; align-items:flex-start; gap: 12px;">
+                                        <i class="ph-fill ph-first-aid" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                        <div>
+                                            <strong style="font-size:var(--text-sm); color:#0F172A;">Emergency Leave</strong>
+                                            <p style="margin:0; font-size: 12px; color:#334155;">Can be processed retroactively after 48 hrs.</p>
+                                        </div>
+                                    </li>
+                                    <li style="display:flex; align-items:flex-start; gap: 12px;">
+                                        <i class="ph-fill ph-file-text" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                        <div>
+                                            <strong style="font-size:var(--text-sm); color:#0F172A;">Documentation</strong>
+                                            <p style="margin:0; font-size: 12px; color:#334155;">Required file upload for sick leave > 2 days.</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Subtle graphic overlay -->
+                            <div style="position:absolute; bottom:-30px; right:-30px; color:rgba(59,130,246,0.1); font-size: 15rem; pointer-events:none;">
+                                <i class="ph-fill ph-shield-check"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            
+            <style>
+                @keyframes fade-in {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .hover-card:hover { transform: translateY(-4px) !important; box-shadow: var(--shadow-md) !important; border-color: var(--border-color); }
+                .hover-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+                .table-row:hover { background-color: rgba(106, 17, 203, 0.02) !important; }
+                
+                .active-filter { background-color: var(--bg-surface) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #6A11CB !important; }
+                .filter-btn { background-color: transparent; color: var(--text-muted); }
+                .filter-btn:hover:not(.active-filter) { background-color: rgba(0,0,0,0.03); }
+            </style>
+        `;
+
+        // Attack Event Listeners
+        attachEventListeners();
+    };
+
+    const attachEventListeners = () => {
+        // Filter Buttons
+        const filterBtns = container.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                currentFilter = e.target.getAttribute('data-filter');
+                renderHTML(); // Re-render the UI with new state
+            });
         });
-    });
+
+        // Approve / Reject Actions
+        const approveBtns = container.querySelectorAll('.approve-btn');
+        const rejectBtns = container.querySelectorAll('.reject-btn');
+
+        approveBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                const req = leaveRequests.find(lr => lr.id === id);
+                if (req) {
+                    req.status = 'Approved';
+                    summaryStats.pending--;
+                    summaryStats.approved++;
+                    renderHTML();
+                }
+            });
+        });
+
+        rejectBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                const req = leaveRequests.find(lr => lr.id === id);
+                if (req) {
+                    req.status = 'Rejected';
+                    summaryStats.pending--;
+                    renderHTML();
+                }
+            });
+        });
+
+        // Escalated Route Integration
+        const alertBtn = document.getElementById('alert-escalated-btn');
+        if (alertBtn) {
+            alertBtn.addEventListener('click', () => {
+                window.location.hash = '#escalate-to-hr';
+            });
+        }
+    };
+
+    // Initial render
+    renderHTML();
 }

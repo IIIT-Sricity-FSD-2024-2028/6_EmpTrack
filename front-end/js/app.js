@@ -27,6 +27,13 @@ import { renderTeamLeadTasks } from './views/teamlead/tasks.js';
 import { renderTeamLeadWorkMonitoring } from './views/teamlead/work-monitoring.js';
 import { renderTeamLeadIssues } from './views/teamlead/issue-management.js';
 import { renderAssignIssue } from './views/teamlead/assign-issue.js';
+import { renderResolveIssue } from './views/teamlead/resolve-issue.js';
+import { renderTeamLeadEscalations } from './views/teamlead/escalations.js';
+import { renderEmployeeRaisedIssues } from './views/teamlead/employee-raised-issues.js';
+import { renderEscalateToHR } from './views/teamlead/escalate-to-hr.js';
+import { renderTeamPerformance } from './views/teamlead/team-performance.js';
+import { renderTeamLeadReports } from './views/teamlead/reports.js';
+import { renderTeamLeadProfile } from './views/teamlead/profile.js';
 // HR
 import { renderHRReports } from './views/hr/reports.js';
 import { renderHREscalations } from './views/hr/escalations.js';
@@ -115,6 +122,7 @@ function router() {
             break;
         case hash === '#profile':
             if (role === 'EMPLOYEE') renderEmployeeProfile(mainContent);
+            else if (role === 'TEAMLEAD') renderTeamLeadProfile(mainContent);
             break;
 
         // TeamLead Routes
@@ -124,7 +132,7 @@ function router() {
         case hash === '#team-attendance':
             if (role === 'TEAMLEAD') renderTeamLeadAttendance(mainContent);
             break;
-        case hash === '#leave-approvals':
+        case hash === '#leave-management':
             if (role === 'TEAMLEAD') renderTeamLeadLeave(mainContent);
             break;
         case hash === '#assign-tasks':
@@ -141,6 +149,26 @@ function router() {
                 }
             }
             break;
+        case hash.startsWith('#resolve-issue/'):
+            if (role === 'TEAMLEAD') {
+                const parts = hash.split('/');
+                if(parts.length === 2 && parts[1]) {
+                    renderResolveIssue(mainContent, parts[1]);
+                }
+            }
+            break;
+        case hash === '#employee-raised-issues':
+            if (role === 'TEAMLEAD') renderEmployeeRaisedIssues(mainContent);
+            break;
+        case hash === '#escalate-to-hr':
+            if (role === 'TEAMLEAD' || role === 'HR') renderEscalateToHR(mainContent);
+            break;
+        case hash === '#team-performance':
+            if (role === 'TEAMLEAD') renderTeamPerformance(mainContent);
+            break;
+        case hash === '#reports':
+            if (role === 'TEAMLEAD') renderTeamLeadReports(mainContent);
+            break;
 
         // HR Routes
         case hash === '#org-reports':
@@ -148,6 +176,7 @@ function router() {
             break;
         case hash === '#escalations':
             if (role === 'HR') renderHREscalations(mainContent);
+            else if (role === 'TEAMLEAD') renderTeamLeadEscalations(mainContent);
             break;
 
         default:

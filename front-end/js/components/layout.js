@@ -69,10 +69,15 @@ export function renderLayout(container) {
                     <h2 class="header-title" id="page-title" style="margin-bottom:0;">Dashboard</h2>
                     ${user.role === 'TEAMLEAD' ? '<span style="font-size:var(--text-xs); color:var(--text-muted); font-weight:var(--font-medium);">Team Lead Portal</span>' : ''}
                 </div>
-                <div class="header-right">
+                <div class="header-right" style="display:flex; align-items:center;">
                     <div class="notification-bell" style="font-size: var(--text-xl); color: var(--text-muted); cursor: pointer;">
                         <i class="ph ph-bell"></i>
                     </div>
+                    <a href="#profile" style="text-decoration: none;" title="My Profile">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px; margin-left: var(--spacing-lg); box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease; cursor: pointer;">
+                            ${user.role === 'TEAMLEAD' ? 'RS' : user.emp_name.charAt(0)}
+                        </div>
+                    </a>
                 </div>
             </header>
             
