@@ -1,8 +1,10 @@
 :root {
     /* Color Palette */
-    --primary-color: #5B2EFF; /* Requested Dark Purple */
-    --primary-hover: #4e26e0;
-    --primary-light: #EEF2FF;
+    --primary-color: #6B21A8; /* Deep Purple */
+    --primary-hover: #581C87;
+    --primary-dark: #4C1D95;
+    --primary-light: #F3E8FF;
+    --primary-gradient: linear-gradient(180deg, #2E1065 0%, #6B21A8 100%);
     
     --secondary-color: #10B981; /* Emerald 500 */
     --secondary-hover: #059669;
@@ -15,7 +17,7 @@
     
     --warning-color: #F59E0B; /* Amber 500 */
     
-    --bg-main: #F9FAFB;
+    --bg-main: #F3F4F6;
     --bg-surface: #FFFFFF;
     
     /* Text Colors */

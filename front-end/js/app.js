@@ -24,6 +24,7 @@ import { renderEmployeeProfile } from './views/employee/profile.js';
 import { renderTeamLeadAttendance } from './views/teamlead/attendance.js';
 import { renderTeamLeadLeave } from './views/teamlead/leave.js';
 import { renderTeamLeadTasks } from './views/teamlead/tasks.js';
+import { renderTeamLeadWorkMonitoring } from './views/teamlead/work-monitoring.js';
 // HR
 import { renderHRReports } from './views/hr/reports.js';
 import { renderHREscalations } from './views/hr/escalations.js';
@@ -115,6 +116,9 @@ function router() {
             break;
 
         // TeamLead Routes
+        case hash === '#work-monitoring':
+            if (role === 'TEAMLEAD') renderTeamLeadWorkMonitoring(mainContent);
+            break;
         case hash === '#team-attendance':
             if (role === 'TEAMLEAD') renderTeamLeadAttendance(mainContent);
             break;
