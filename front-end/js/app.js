@@ -27,6 +27,11 @@ import { renderTeamLeadTasks } from './views/teamlead/tasks.js';
 // HR
 import { renderHRReports } from './views/hr/reports.js';
 import { renderHREscalations } from './views/hr/escalations.js';
+import { renderHRAttendance } from './views/hr/attendance.js';
+import { renderHREmployeeManagement } from './views/hr/employee-management.js';
+import { renderHRSettings } from './views/hr/settings.js';
+import { renderHRProfile } from './views/hr/profile.js';
+import { renderHRNotifications } from './views/hr/notifications.js';
 
 const appContainer = document.getElementById('app');
 
@@ -112,6 +117,7 @@ function router() {
             break;
         case hash === '#profile':
             if (role === 'EMPLOYEE') renderEmployeeProfile(mainContent);
+            else if (role === 'HR') renderHRProfile(mainContent);
             break;
 
         // TeamLead Routes
@@ -129,9 +135,22 @@ function router() {
         case hash === '#org-reports':
             if (role === 'HR') renderHRReports(mainContent);
             break;
+        case hash === '#hr-attendance':
+            if (role === 'HR') renderHRAttendance(mainContent);
+            break;
         case hash === '#escalations':
             if (role === 'HR') renderHREscalations(mainContent);
             break;
+        case hash === '#employee-management':
+            if (role === 'HR') renderHREmployeeManagement(mainContent);
+            break;
+        case hash === '#policy-settings':
+            if (role === 'HR') renderHRSettings(mainContent);
+            break;
+        case hash === '#notifications':
+            if (role === 'HR') renderHRNotifications(mainContent);
+            break;
+
 
         default:
             mainContent.innerHTML = `
