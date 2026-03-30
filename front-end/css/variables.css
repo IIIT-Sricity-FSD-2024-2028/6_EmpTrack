@@ -1,0 +1,74 @@
+:root {
+    /* Color Palette */
+    --primary-color: #5B2EFF; /* Requested Dark Purple */
+    --primary-hover: #4e26e0;
+    --primary-light: #EEF2FF;
+    
+    --secondary-color: #10B981; /* Emerald 500 */
+    --secondary-hover: #059669;
+    
+    --accent-orange: #F97316; /* Requested Accent Orange */
+    --accent-orange-hover: #EA580C;
+    
+    --danger-color: #EF4444; /* Red 500 */
+    --danger-hover: #DC2626;
+    
+    --warning-color: #F59E0B; /* Amber 500 */
+    
+    --bg-main: #F9FAFB;
+    --bg-surface: #FFFFFF;
+    
+    /* Text Colors */
+    --text-main: #111827;
+    --text-muted: #6B7280;
+    --text-light: #9CA3AF;
+    --text-inverse: #FFFFFF;
+    
+    /* Border Colors */
+    --border-color: #E5E7EB;
+    --border-light: #F3F4F6;
+    
+    /* Typography */
+    --font-family: 'Inter', sans-serif;
+    --text-xs: 0.75rem;     /* 12px */
+    --text-sm: 0.875rem;    /* 14px */
+    --text-base: 1rem;      /* 16px */
+    --text-lg: 1.125rem;    /* 18px */
+    --text-xl: 1.25rem;     /* 20px */
+    --text-2xl: 1.5rem;     /* 24px */
+    --text-3xl: 1.875rem;   /* 30px */
+    
+    /* Font Weights */
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;   /* 4px */
+    --spacing-sm: 0.5rem;    /* 8px */
+    --spacing-md: 1rem;      /* 16px */
+    --spacing-lg: 1.5rem;    /* 24px */
+    --spacing-xl: 2rem;      /* 32px */
+    --spacing-2xl: 3rem;     /* 48px */
+    
+    /* Borders & Radius */
+    --radius-sm: 0.25rem;    /* 4px */
+    --radius-md: 0.375rem;   /* 6px */
+    --radius-lg: 0.5rem;     /* 8px */
+    --radius-xl: 0.75rem;    /* 12px */
+    --radius-full: 9999px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+    /* Layout Dimensions */
+    --sidebar-width: 260px;
+    --header-height: 70px;
+    
+    /* Transitions */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+}
