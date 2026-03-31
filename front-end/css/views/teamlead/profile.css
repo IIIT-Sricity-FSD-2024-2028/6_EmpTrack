@@ -1,0 +1,17 @@
+@keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .stat-bounce:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: rgba(106, 17, 203, 0.2); }
+        .info-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .hover-pill:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .hover-btn-white:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(255,255,255,0.3); }
+        
+        #update-pwd-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106, 17, 203, 0.3); filter: brightness(1.1); }
+        #update-pwd-btn:active { transform: scale(0.98); }
+
+        .custom-input:focus { border-color: #6A11CB !important; box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1) !important; }

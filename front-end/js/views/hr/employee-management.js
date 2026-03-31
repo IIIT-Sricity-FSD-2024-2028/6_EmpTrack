@@ -99,6 +99,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Add Employee Logic
+    const addEmpForm = document.getElementById('addEmpForm');
+    const addEmpSuccess = document.getElementById('addEmpSuccess');
+    if(addEmpForm) {
+        addEmpForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if(!addEmpForm.checkValidity()) {
+                addEmpForm.reportValidity();
+                return;
+            }
+
+            const name = document.getElementById('addEmpName').value.trim();
+            const email = document.getElementById('addEmpEmail').value.trim();
+            const dept = document.getElementById('addEmpDept').value;
+            const role = document.getElementById('addEmpRole').value;
+            
+            let displayRole = role === 'TL' ? 'Team Lead' : role === 'HR' ? 'HR Admin' : 'Employee';
+            if (dept === 'Engineering' && displayRole === 'Employee') displayRole = 'Developer';
+
+            const newId = 'EMP-' + String(employees.length + 1).padStart(3, '0');
+            const today = new Date().toISOString().split('T')[0];
+
+            employees.unshift({
+                id: newId,
+                name: name,
+                email: email,
+                dept: dept,
+                role: displayRole,
+                joinDate: today,
+                status: 'Active'
+            });
+
+            applyFilters();
+            
+            const totalVal = document.getElementById('total-val');
+            if(totalVal) {
+                totalVal.setAttribute('data-val', parseInt(totalVal.getAttribute('data-val')) + 1);
+                totalVal.innerText = totalVal.getAttribute('data-val');
+            }
+
+            const activeVal = document.getElementById('active-val');
+            if(activeVal) {
+                activeVal.setAttribute('data-val', parseInt(activeVal.getAttribute('data-val')) + 1);
+                activeVal.innerText = activeVal.getAttribute('data-val');
+            }
+
+            addEmpSuccess.style.display = 'block';
+            addEmpForm.reset();
+
+            setTimeout(() => {
+                addEmpSuccess.style.display = 'none';
+            }, 3000);
+        });
+    }
+
     // Animate summary stats
     const counters = document.querySelectorAll('.count-anim');
     counters.forEach(counter => {

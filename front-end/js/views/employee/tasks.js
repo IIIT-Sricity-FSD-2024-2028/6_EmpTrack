@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <a href="update-task.html?id=${t.task_id}" class="btn btn-orange" style="font-size: 11px; text-decoration: none; display:inline-block; text-align:center;">
                             Update
                         </a>
-                        <a href="update-task.html?id=${t.task_id}" class="btn btn-purple" style="font-size: 11px; text-decoration: none; display:inline-block; text-align:center; padding: 6px 16px;">
+                        <a href="work-logs.html?id=${t.task_id}" class="btn btn-purple" style="font-size: 11px; text-decoration: none; display:inline-block; text-align:center; padding: 6px 16px;">
                             Work on Task
                         </a>
                     </div>

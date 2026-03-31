@@ -83,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const filtered = employees.filter(emp => {
             const mSearch = emp.name.toLowerCase().includes(term) || emp.id.toLowerCase().includes(term);
-            const mDept = dept === 'all' || emp.dept === dept;
-            const mStatus = status === 'all' || emp.status === status;
+            const mDept = dept === 'all' || emp.dept.toLowerCase() === dept.toLowerCase();
+            const mStatus = status === 'all' || emp.status.toLowerCase() === status.toLowerCase();
             return mSearch && mDept && mStatus;
         });
 

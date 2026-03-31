@@ -1,0 +1,73 @@
+.hr-reports-root {
+            --rep-primary: #7C3AED;
+            --rep-blue: #3B82F6;
+            --rep-green: #22C55E;
+            --rep-orange: #F97316;
+            --rep-red: #EF4444;
+            animation: hrFadeIn 0.3s ease-out forwards;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        @keyframes hrFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hr-reports-root .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            padding: 24px;
+        }
+
+        .hr-reports-root .card:hover { box-shadow: var(--shadow-md); }
+
+        /* Tooltip */
+        .hr-reports-root .hr-tooltip { position: relative; cursor: help; }
+        .hr-reports-root .hr-tooltip::after {
+            content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+            background: #111827; color: white; padding: 4px 8px; font-size: 11px; border-radius: 4px;
+            white-space: nowrap; opacity: 0; pointer-events: none; transition: 0.2s; z-index: 10;
+        }
+        .hr-reports-root .hr-tooltip:hover::after { opacity: 1; }
+
+        /* Top KPI Cards */
+        .hr-reports-root .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .hr-reports-root .kpi-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 12px; flex-shrink:0;}
+        .hr-reports-root .kpi-label { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+        .hr-reports-root .kpi-val { font-size: 28px; font-weight: 700; color: var(--text-main); line-height: 1; margin-bottom: 8px; }
+        .hr-reports-root .kpi-trend { font-size: 11px; font-weight: 600; }
+
+        /* Chart Grid */
+        .hr-reports-root .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .hr-reports-root .chart-item { position: relative; min-height: 300px; }
+        .hr-reports-root .chart-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text-main); }
+        .hr-reports-root .chart-wrapper { position: relative; height: 250px; width: 100%; }
+
+        .hr-reports-root .skeleton {
+            background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-main) 50%, var(--border-color) 75%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 8px; position: absolute; inset: 0; z-index: 5;
+        }
+        @keyframes skeleton-loading { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+        /* Bottom Summary */
+        .hr-reports-root .bottom-summary { display: flex; gap: 24px; padding: 24px; }
+        .hr-reports-root .bs-item { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 0 16px; border-left: 3px solid transparent; }
+        .hr-reports-root .bs-item:first-child { border-left: none; padding-left: 0; }
+        .hr-reports-root .bs-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .hr-reports-root .bs-val { font-size: 24px; font-weight: 700; color: var(--text-main); }
+        .hr-reports-root .bs-trend { font-size: 12px; font-weight: 600; }
+
+        @media (max-width: 900px) {
+            .hr-reports-root .chart-grid { grid-template-columns: 1fr; }
+            .hr-reports-root .bottom-summary { flex-direction: column; }
+            .hr-reports-root .bs-item { border-left: none; border-bottom: 1px solid var(--border-color); padding: 16px 0; }
+            .hr-reports-root .bs-item:first-child { padding-top: 0; }
+            .hr-reports-root .bs-item:last-child { border-bottom: none; padding-bottom: 0; }
+        }
