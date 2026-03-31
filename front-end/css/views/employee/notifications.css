@@ -78,5 +78,5 @@
         .employee-notif-root .ni-action-btn.btn-done:hover { background: #dcfce7; color: #16a34a; border-color: #16a34a; }
         .employee-notif-root .ni-action-btn.btn-del:hover { background: #fee2e2; color: #ef4444; border-color: #ef4444; }
 
-        #prof-toast { position: fixed; bottom: 24px; right: 24px; background: var(--nt-primary); color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; transform: translateY(100px); opacity: 0; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); }
-        #prof-toast.show { transform: translateY(0); opacity: 1; }
+        #prof-toast { position: fixed; bottom: 24px; right: 24px; background: var(--nt-primary); color: rgb(127, 171, 25); padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; transform: translateY(100px); opacity: 0; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); }
+        #prof-toast.show { transform: translateY(0); opacity: 1.5; }
