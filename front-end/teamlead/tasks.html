@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Assign Tasks</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        .ts-assign-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            animation: fadeIn 0.4s ease-out forwards;
+            --tl-primary: #7C3AED;
+            --tl-success: #22C55E;
+            --tl-warning: #F97316;
+            --tl-danger: #EF4444;
+            --tl-info: #3B82F6;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ts-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .ts-card:hover { box-shadow: var(--shadow-md); }
+
+        .ts-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .ts-card h3 i {
+            color: var(--tl-primary);
+        }
+
+        /* Form Styling */
+        #assign-task-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            padding: 12px 16px;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s border-color ease, 0.2s box-shadow ease;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            border-color: var(--tl-primary);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+
+        .btn-submit {
+            background: var(--tl-primary);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            background: #6D28D9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Table Styling */
+        .table-overflow {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .ts-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            min-width: 800px;
+        }
+
+        .ts-table th {
+            background: var(--bg-main);
+            padding: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ts-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .ts-table tbody tr { transition: background 0.2s; }
+        .ts-table tbody tr:hover { background: var(--bg-main); }
+        .ts-table tbody tr:last-child td { border-bottom: none; }
+
+        /* Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--tl-info); }
+        .badge-orange { background: rgba(249, 115, 22, 0.15); color: var(--tl-warning); }
+        .badge-green { background: rgba(34, 197, 94, 0.15); color: var(--tl-success); }
+
+        /* Action Buttons */
+        .btn-action {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-edit { color: var(--tl-info); }
+        .btn-edit:hover { background: rgba(59, 130, 246, 0.1); }
+        
+        .btn-delete { color: var(--tl-danger); margin-left: 4px; }
+        .btn-delete:hover { background: rgba(239, 68, 68, 0.1); }
+
+        /* Stats Grid Bottom */
+        .ts-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .ts-stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ts-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            font-size: 28px;
+            opacity: 0.2;
+        }
+
+        .ts-stat-card h4 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ts-stat-card p {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        @media(max-width: 768px) {
+            #assign-task-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div id="page-title" style="display:none;">Assign Tasks</div>
+                
+                <div class="ts-assign-wrapper">
+                    
+                    <!-- ASSIGN TASK FORM -->
+                    <div class="ts-card">
+                        <h3><i class="ph-fill ph-plus-circle"></i> Create & Assign Task</h3>
+                        <form id="assign-task-form">
+                            <div class="form-group">
+                                <label>Assign To</label>
+                                <select id="form-emp" class="form-control" required>
+                                    <option value="">Select Employee</option>
+                                    <option>John Dev</option>
+                                    <option>Sarah Johnson</option>
+                                    <option>Mike Davis</option>
+                                    <option>Emma Wilson</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Task Title</label>
+                                <input id="form-title" class="form-control" placeholder="e.g. Implement OAuth" required>
+                            </div>
+                            
+                            <div class="form-group full-width">
+                                <label>Description</label>
+                                <textarea id="form-desc" class="form-control" placeholder="Detailed task requirements..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Estimated Hours</label>
+                                <input type="number" id="form-hours" class="form-control" placeholder="e.g. 16" required min="1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Deadline</label>
+                                <input type="date" id="form-deadline" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn-submit">
+                                    <i class="ph ph-paper-plane-right"></i> Send Assignment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+        
+                    <!-- TASK TABLE -->
+                    <div class="ts-card">
+                        <h3><i class="ph-fill ph-list-dashes"></i> Assigned Tasks</h3>
+                        <div class="table-overflow">
+                            <table class="ts-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Employee</th>
+                                        <th>Title</th>
+                                        <th>Description</th>
+                                        <th>Hours</th>
+                                        <th>Deadline</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ts-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUMMARY CARDS BELOW TABLE -->
+                    <div id="ts-summary-container" class="ts-summary-grid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/teamlead/tasks.js"></script>
+</body>
+</html>

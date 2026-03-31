@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Issue Management</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div id="page-title" style="display:none;">Issue Management</div>
+                
+                <div style="max-width: 1200px; margin: 0 auto; display:flex; flex-direction:column; gap: 32px; padding-bottom: 40px;">
+            
+                    <!-- SECTION 1: TOP METRIC CARDS -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px;">
+                        <div class="card" style="padding: 24px; display:flex; align-items:center; gap: 16px;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:var(--primary-light); color:var(--primary-color); display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-warning-circle" style="font-size:24px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px; color:var(--text-muted); font-weight:var(--font-medium);">Total Issues</div>
+                                <div id="stat-total" style="font-size: 28px; font-weight: var(--font-bold); color: var(--text-main);">0</div>
+                            </div>
+                        </div>
+                        <div class="card" style="padding: 24px; display:flex; align-items:center; gap: 16px;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:#FEF3C7; color:#F59E0B; display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-envelope-open" style="font-size:24px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px; color:var(--text-muted); font-weight:var(--font-medium);">Open Issues</div>
+                                <div id="stat-open" style="font-size: 28px; font-weight: var(--font-bold); color: var(--text-main);">0</div>
+                            </div>
+                        </div>
+                        <div class="card" style="padding: 24px; display:flex; align-items:center; gap: 16px;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:#DBEAFE; color:#2563EB; display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-spinner-gap" style="font-size:24px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px; color:var(--text-muted); font-weight:var(--font-medium);">In Progress</div>
+                                <div id="stat-progress" style="font-size: 28px; font-weight: var(--font-bold); color: var(--text-main);">0</div>
+                            </div>
+                        </div>
+                        <div class="card" style="padding: 24px; display:flex; align-items:center; gap: 16px;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:#D1FAE5; color:#059669; display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-check-circle" style="font-size:24px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:13px; color:var(--text-muted); font-weight:var(--font-medium);">Resolved</div>
+                                <div id="stat-resolved" style="font-size: 28px; font-weight: var(--font-bold); color: var(--text-main);">0</div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- SECTION 2: FILTER SECTION -->
+                    <div class="card" style="padding: 20px; display:flex; gap: 16px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:200px;">
+                            <select id="filter-status" class="form-control" style="background-color:#F8FAFC;">
+                                <option value="">Filter by Status mapping...</option>
+                                <option value="Open">Open</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Resolved">Resolved</option>
+                            </select>
+                        </div>
+                        <div style="flex:1; min-width:200px;">
+                            <select id="filter-priority" class="form-control" style="background-color:#F8FAFC;">
+                                <option value="">Filter by Priority bounds...</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                        <div style="flex:1; min-width:200px;">
+                            <input type="text" id="search-emp" class="form-control" placeholder="Search by Employee..." style="background-color:#F8FAFC;">
+                        </div>
+                        <div style="flex:1; min-width:200px;">
+                            <input type="text" id="search-assigned" class="form-control" placeholder="Search by Assigned To..." style="background-color:#F8FAFC;">
+                        </div>
+                    </div>
+        
+                    <!-- SECTION 3: TEAM ISSUES TABLE -->
+                    <div class="card table-modern" style="padding: 0; overflow:hidden;">
+                        <div style="padding: 24px; border-bottom: 1px solid var(--border-light);">
+                            <h3 style="margin:0; font-size:var(--text-lg);">Team Issues</h3>
+                        </div>
+                        <div class="table-container" style="border-radius: var(--radius-md);">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="background-color: var(--bg-surface); border-bottom: 2px solid var(--border-color);">
+                                        <th style="padding: 16px;">Issue Info</th>
+                                        <th style="padding: 16px;">Employee</th>
+                                        <th style="padding: 16px;">Task</th>
+                                        <th style="padding: 16px;">Priority</th>
+                                        <th style="padding: 16px;">Status</th>
+                                        <th style="padding: 16px;">Assigned To</th>
+                                        <th style="padding: 16px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="issues-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+        
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/teamlead/issue-management.js"></script>
+</body>
+</html>

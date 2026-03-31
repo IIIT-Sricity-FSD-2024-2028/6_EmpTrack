@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Work Logs</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div id="page-title" style="display:none;">Work Logs</div>
+                
+                <div style="max-width: 1000px; margin: 0 auto; display:flex; flex-direction:column; gap: 32px; padding-bottom: 40px;">
+                    
+                    <!-- SECTION 1: LOG WORK ACTIVITY -->
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="margin:0 0 24px 0; font-size:var(--text-lg); border-bottom:1px solid var(--border-light); padding-bottom:16px;">Log Work Activity</h3>
+                        <form id="work-log-form">
+                            <!-- Row 1 -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                                <div class="form-group" style="margin:0;">
+                                    <label class="form-label" style="font-weight:var(--font-medium);">Task ID</label>
+                                    <select id="wl_task_id" class="form-control" style="border-radius: var(--radius-md); padding: 12px 16px;" required>
+                                        <option value="" disabled selected>Select assigned task</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin:0;">
+                                    <label class="form-label" style="font-weight:var(--font-medium);">Hours Spent</label>
+                                    <input type="number" id="wl_hours" class="form-control" placeholder="Enter Hours" min="1" max="24" required style="border-radius: var(--radius-md); padding: 12px 16px;">
+                                </div>
+                            </div>
+        
+                            <!-- Row 2 -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                                <div class="form-group" style="margin:0;">
+                                    <label class="form-label" style="font-weight:var(--font-medium);">Work Start Time</label>
+                                    <input type="datetime-local" id="wl_start" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px;">
+                                </div>
+                                <div class="form-group" style="margin:0;">
+                                    <label class="form-label" style="font-weight:var(--font-medium);">Work End Time</label>
+                                    <input type="datetime-local" id="wl_end" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px;">
+                                </div>
+                            </div>
+        
+                            <!-- Row 3 -->
+                            <div class="form-group" style="margin-bottom: 24px;">
+                                <label class="form-label" style="font-weight:var(--font-medium);">Work Description</label>
+                                <textarea id="wl_desc" class="form-control" rows="4" placeholder="Describe the work completed in this session" required style="border-radius: var(--radius-md); padding: 16px; resize:vertical;"></textarea>
+                            </div>
+        
+                            <!-- Primary Action -->
+                            <button type="submit" class="btn btn-purple" style="width:100%; padding: 16px; font-size:var(--text-md); display:flex; justify-content:center; align-items:center; gap:10px; border-radius: 50px; box-shadow: 0 4px 6px rgba(91, 46, 255, 0.2);">
+                                <i class="ph ph-floppy-disk" style="font-size:20px;"></i> Save Work Log
+                            </button>
+                        </form>
+                    </div>
+        
+                    <!-- SECTION 2: PREVIOUS WORK LOGS -->
+                    <div class="card table-modern" style="padding: 0; overflow:hidden;">
+                        <div style="padding: 24px; border-bottom: 1px solid var(--border-light);">
+                            <h3 style="margin:0; font-size:var(--text-lg);">Previous Work Logs</h3>
+                        </div>
+                        <div class="table-container" style="border-radius: var(--radius-md);">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="background-color: var(--bg-surface); border-bottom: 2px solid var(--border-color);">
+                                        <th style="padding: 16px;">Log ID</th>
+                                        <th style="padding: 16px;">Task ID</th>
+                                        <th style="padding: 16px;">Task Title</th>
+                                        <th style="padding: 16px;">Start Time</th>
+                                        <th style="padding: 16px;">End Time</th>
+                                        <th style="padding: 16px;">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="work-logs-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+        
+                    <!-- SECTION 3: SUMMARY METRICS -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px;">
+                        <div class="card" style="padding: 24px; text-align:center;">
+                            <div id="wl-hrs" style="font-size: 36px; font-weight: var(--font-bold); color: var(--text-main); margin-bottom:4px;">0</div>
+                            <div style="font-size: 13px; color: var(--text-muted); font-weight:var(--font-medium);">Total Hours This Week</div>
+                        </div>
+                        <div class="card" style="padding: 24px; text-align:center;">
+                            <div id="wl-total" style="font-size: 36px; font-weight: var(--font-bold); color: var(--text-main); margin-bottom:4px;">0</div>
+                            <div style="font-size: 13px; color: var(--text-muted); font-weight:var(--font-medium);">Total Logs this Month</div>
+                        </div>
+                        <div class="card" style="padding: 24px; text-align:center;">
+                            <div id="wl-avg" style="font-size: 36px; font-weight: var(--font-bold); color: var(--text-main); margin-bottom:4px;">0</div>
+                            <div style="font-size: 13px; color: var(--text-muted); font-weight:var(--font-medium);">Average Hours Per Day</div>
+                        </div>
+                    </div>
+        
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/employee/work-logs.js"></script>
+</body>
+</html>

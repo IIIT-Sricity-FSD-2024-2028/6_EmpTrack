@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Attendance</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div style="max-width: 1000px; margin: 0 auto; display:flex; flex-direction:column; gap: 32px; padding-bottom: 40px;">
+                    
+                    <!-- SECTION 1: MARK ATTENDANCE -->
+                    <div class="card" style="padding: 24px; text-align:center; max-width: 600px; margin: 0 auto; width: 100%;">
+                        <h3 style="margin:0 0 8px 0; font-size:var(--text-lg);">Mark your Attendance</h3>
+                        <div style="color:var(--text-muted); font-size:var(--text-sm); margin-bottom: 24px;">Select your work location and mark check-in/check-out</div>
+                        
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-weight:var(--font-medium); margin-bottom:12px; font-size:var(--text-sm);">Work Location</div>
+                            <div style="display:inline-flex; border: 1px solid var(--border-light); border-radius:var(--radius-full); padding: 4px; background-color: var(--bg-main);">
+                                <button id="loc-office" class="location-toggle" style="border:none;">Office</button>
+                                <button id="loc-home" class="location-toggle" style="border:none;">Home</button>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:center; gap: 16px;">
+                            <button id="btn-checkin" class="btn btn-purple" style="border-radius:var(--radius-full); padding: 12px 32px; min-width: 140px;">Check-in</button>
+                            <button id="btn-checkout" class="btn btn-outline" style="border-radius:var(--radius-full); padding: 12px 32px; min-width: 140px;">Check-out</button>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: TODAY'S SUMMARY CARDS -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px;">
+                        <div class="card" style="padding: 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap: 10px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color:#D1FAE5; color:#10B981; display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-check-circle" style="font-size:24px;"></i>
+                            </div>
+                            <div id="summary-status" style="font-weight:bold; font-size:var(--text-lg);">Pending</div>
+                            <div style="font-size:12px; color:var(--text-muted);">Today's Status</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap: 10px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color:var(--bg-main); color:var(--text-main); display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-clock" style="font-size:24px;"></i>
+                            </div>
+                            <div id="summary-hours" style="font-weight:bold; font-size:var(--text-lg);">0h</div>
+                            <div style="font-size:12px; color:var(--text-muted);">Work Hours Today</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap: 10px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color:var(--primary-light); color:var(--primary-color); display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-check-square-offset" style="font-size:24px;"></i>
+                            </div>
+                            <div id="summary-progress" style="font-weight:bold; font-size:var(--text-lg); color:var(--primary-color);">0%</div>
+                            <div style="font-size:12px; color:var(--text-muted);">Today's Progress</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap: 10px;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color:var(--bg-main); color:var(--text-main); display:flex; align-items:center; justify-content:center;">
+                                <i class="ph-fill ph-calendar-blank" style="font-size:24px;"></i>
+                            </div>
+                            <div id="summary-month" style="font-weight:bold; font-size:var(--text-lg);">0/22</div>
+                            <div style="font-size:12px; color:var(--text-muted);">This Month</div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: MONTHLY ATTENDANCE RECORDS -->
+                    <div class="card table-modern" style="padding: 0; overflow:hidden;">
+                        <div style="padding: 24px; border-bottom: 1px solid var(--border-light);">
+                            <h3 style="margin:0; font-size:var(--text-lg);">Monthly Attendance Records</h3>
+                        </div>
+                        <div class="table-container" style="border-radius: var(--radius-md);">
+                            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="background-color: var(--bg-surface); border-bottom: 2px solid var(--border-color);">
+                                        <th style="padding: 16px;">Date</th>
+                                        <th style="padding: 16px;">Status</th>
+                                        <th style="padding: 16px;">Hours Spent</th>
+                                        <th style="padding: 16px;">Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendance-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4: PERFORMANCE METRICS -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px;">
+                        <div class="card" style="padding: 24px; text-align:center;">
+                            <svg viewBox="0 0 36 36" class="circular-chart">
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="rate-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <text id="rate-text" x="18" y="20.35" class="percentage">0%</text>
+                            </svg>
+                            <div style="font-size: 14px; font-weight:var(--font-bold); margin-top: 16px;">Attendance Rate</div>
+                        </div>
+                        <div class="card" style="padding: 24px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                            <div id="metric-avg" style="font-size: 36px; font-weight: var(--font-bold); color: var(--text-main); margin-bottom:4px;">0%</div>
+                            <div style="font-size: 14px; font-weight:var(--font-bold); margin-bottom:4px;">Average Daily Progress</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Based on last 30 days</div>
+                        </div>
+                        <div class="card" style="padding: 24px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                            <div id="metric-escalations" style="font-size: 36px; font-weight: var(--font-bold); color: #EA580C; margin-bottom:4px;">0</div>
+                            <div style="font-size: 14px; font-weight:var(--font-bold); margin-bottom:4px;">Escalation Count</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Issues escalated this month</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- App Initialization -->
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/employee/attendance.js"></script>
+</body>
+</html>

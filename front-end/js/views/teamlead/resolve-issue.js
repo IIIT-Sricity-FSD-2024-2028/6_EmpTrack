@@ -2,10 +2,15 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-export function renderResolveIssue(container, issueId) {
+document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
-    
-    // Find absolute DB node mapping
+    if (!user) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const issueId = urlParams.get('id');
+
+    const container = document.getElementById('resolve-issue-container');
+
     const issueArray = db.data.issue || [];
     const issueData = issueArray.find(i => i.issue_id === issueId);
 
@@ -13,22 +18,20 @@ export function renderResolveIssue(container, issueId) {
         container.innerHTML = `
             <div class="card" style="text-align:center; padding: 40px;">
                 <h2>Issue Not Found</h2>
-                <p style="color:var(--text-muted);">The requested issue ${issueId} could not be located in the database cache.</p>
-                <a href="#issue-management" class="btn btn-primary" style="margin-top:20px; text-decoration:none;">Return to Tracker</a>
+                <p style="color:var(--text-muted);">The requested issue ${issueId || 'undefined'} could not be located.</p>
+                <a href="issue-management.html" class="btn btn-primary" style="margin-top:20px; text-decoration:none; display:inline-block;">Return to Tracker</a>
             </div>
         `;
         return;
     }
 
-    // Days open approximation
     const raisedDate = issueData.raised_date ? new Date(issueData.raised_date) : new Date();
     const daysOpen = Math.max(0, Math.floor((new Date() - raisedDate) / (1000 * 60 * 60 * 24)));
 
-    // Header Back Row
     document.getElementById('page-title').innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
             <div style="display:flex; align-items:center; gap: 12px;">
-                <a href="#issue-management" style="color:var(--text-main); font-size:20px; display:flex; align-items:center; padding:4px; text-decoration:none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-main)'">
+                <a href="issue-management.html" style="color:var(--text-main); font-size:20px; display:flex; align-items:center; padding:4px; text-decoration:none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-main)'">
                     <i class="ph-bold ph-arrow-left"></i>
                 </a>
                 <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Resolve Issue / Take Action</span>
@@ -39,16 +42,13 @@ export function renderResolveIssue(container, issueId) {
         </div>
     `;
 
-    // Map strict DB metadata dynamically
     const empRef = db.getUserById(issueData.emp_id);
     const empNameNode = empRef ? empRef.emp_name : "Unknown Employee";
 
-    // Priority badge lookup
     let badgePri = 'badge-low';
     if(issueData.priority === 'Medium') badgePri = 'badge-medium';
     if(issueData.priority === 'High') badgePri = 'badge-high';
 
-    // Status badge lookup
     let statBadge = 'badge-open';
     if(issueData.status === 'In Progress') statBadge = 'badge-info';
     if(issueData.status === 'Resolved') statBadge = 'badge-completed';
@@ -178,7 +178,7 @@ export function renderResolveIssue(container, issueId) {
                             <button type="submit" class="btn" style="background-color:#10B981; color:white; flex:2; padding: 14px; font-size:14px; font-weight:var(--font-bold); justify-content:center; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                                 Mark as Resolved
                             </button>
-                            <a href="#issue-management" class="btn btn-outline" style="flex:1; padding: 14px; justify-content:center; text-decoration:none; border-radius: var(--radius-full); background-color:#F1F5F9; border:none; color:#475569;">
+                            <a href="issue-management.html" class="btn btn-outline" style="flex:1; padding: 14px; justify-content:center; text-decoration:none; border-radius: var(--radius-full); background-color:#F1F5F9; border:none; color:#475569;">
                                 Cancel
                             </a>
                         </div>
@@ -276,17 +276,13 @@ export function renderResolveIssue(container, issueId) {
         </div>
     `;
 
-    // Handle Form submission
     document.getElementById('resolve-issue-form').addEventListener('submit', (e) => {
         e.preventDefault();
         
-        // Grab the form button to provide visual feedback
         const btn = e.submitter;
-        const ogText = btn.innerHTML;
         btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> Saving...';
         btn.disabled = true;
 
-        // Perform Database Mutation
         issueData.status = 'Resolved';
         issueData.resolution = {
             type: document.getElementById('res_type').value,
@@ -300,7 +296,6 @@ export function renderResolveIssue(container, issueId) {
             resolved_date: new Date().toISOString()
         };
         
-        // Append an update trace explicitly!
         if (!issueData.updates) issueData.updates = [];
         issueData.updates.push({
             sender: user.emp_id,
@@ -308,12 +303,10 @@ export function renderResolveIssue(container, issueId) {
             message: `Issue resolved: ${issueData.resolution.summary}`
         });
 
-        // Trigger permanent save
         db.saveData();
 
-        // Simulate a small network delay for UX then redirect
         setTimeout(() => {
-            window.location.hash = '#issue-management';
+            window.location.href = 'issue-management.html';
         }, 500);
     });
-}
+});

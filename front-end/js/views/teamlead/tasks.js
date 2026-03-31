@@ -1,9 +1,9 @@
 // /js/views/teamlead/tasks.js
+import { auth } from '../../auth.js';
 
-export function renderTeamLeadTasks(container) {
-
-    const titleEl = document.getElementById('page-title');
-    if (titleEl) titleEl.textContent = 'Assign Tasks';
+document.addEventListener('DOMContentLoaded', () => {
+    const user = auth.getCurrentUser();
+    if (!user) return; // Guarded
 
     /* -------------------------------
        FRONTEND STATE
@@ -23,9 +23,7 @@ export function renderTeamLeadTasks(container) {
        TOAST NOTIFICATION
     --------------------------------*/
     const showToast = (message, type = 'success') => {
-
         let toastContainer = document.getElementById('toast-container');
-
         if (!toastContainer) {
             toastContainer = document.createElement('div');
             toastContainer.id = 'toast-container';
@@ -42,7 +40,6 @@ export function renderTeamLeadTasks(container) {
         }
 
         const toast = document.createElement('div');
-
         toast.style.cssText = `
             background:${type === 'success' ? '#16A34A' : '#DC2626'};
             color:white;
@@ -51,10 +48,8 @@ export function renderTeamLeadTasks(container) {
             font-weight:500;
             box-shadow:0 4px 12px rgba(0,0,0,0.15);
         `;
-
         toast.innerHTML = message;
         toastContainer.appendChild(toast);
-
         setTimeout(() => toast.remove(), 3000);
     };
 
@@ -62,43 +57,38 @@ export function renderTeamLeadTasks(container) {
        SUMMARY STATS
     --------------------------------*/
     const countTasks = () => {
-
         const total = stateTasks.length;
         const active = stateTasks.filter(t => t.status === 'In Progress').length;
         const completed = stateTasks.filter(t => t.status === 'Completed').length;
         const pending = Math.max(0, 8 - total % 8);
-
         return { total, active, completed, pending };
     };
 
     const renderSummaryCards = () => {
-
         const stats = countTasks();
-
         const html = `
         <div class="ts-stat-card">
+            <i class="ph-fill ph-briefcase stat-icon" style="color:var(--tl-primary);"></i>
             <h4>Total Assigned</h4>
             <p>${stats.total}</p>
         </div>
-
         <div class="ts-stat-card">
-            <h4>In Progress</h4>
+            <i class="ph-fill ph-rocket stat-icon" style="color:var(--tl-warning);"></i>
+            <h4>Active This Week</h4>
             <p>${stats.active}</p>
         </div>
-
         <div class="ts-stat-card">
+            <i class="ph-fill ph-check-circle stat-icon" style="color:var(--tl-success);"></i>
             <h4>Completed</h4>
             <p>${stats.completed}</p>
         </div>
-
         <div class="ts-stat-card">
-            <h4>Pending</h4>
+            <i class="ph-fill ph-hourglass-high stat-icon" style="color:var(--tl-info);"></i>
+            <h4>Pending Assignment</h4>
             <p>${stats.pending}</p>
         </div>
         `;
-
         const container = document.getElementById("ts-summary-container");
-
         if (container) container.innerHTML = html;
     };
 
@@ -106,11 +96,9 @@ export function renderTeamLeadTasks(container) {
        BADGE COLOR
     --------------------------------*/
     const getBadgeClass = (status) => {
-
         if (status === 'Assigned') return 'badge-blue';
         if (status === 'In Progress') return 'badge-orange';
         if (status === 'Completed') return 'badge-green';
-
         return '';
     };
 
@@ -118,86 +106,68 @@ export function renderTeamLeadTasks(container) {
        FILTER + SORT
     --------------------------------*/
     const getFilteredTasks = () => {
-
         let filtered = stateTasks.filter(task => {
-
-            const searchMatch =
-                task.title.toLowerCase().includes(filterSearch.toLowerCase()) ||
-                task.employee.toLowerCase().includes(filterSearch.toLowerCase());
-
-            const statusMatch =
-                filterStatus === "All" || task.status === filterStatus;
-
+            const searchMatch = task.title.toLowerCase().includes(filterSearch.toLowerCase()) ||
+                                task.employee.toLowerCase().includes(filterSearch.toLowerCase());
+            const statusMatch = filterStatus === "All" || task.status === filterStatus;
             return searchMatch && statusMatch;
         });
 
         filtered.sort((a, b) => {
-
             if (sortBy === 'Hours') return b.hours - a.hours;
-
-            if (sortBy === 'Deadline')
-                return new Date(a.deadline) - new Date(b.deadline);
-
+            if (sortBy === 'Deadline') return new Date(a.deadline) - new Date(b.deadline);
             return 0;
         });
-
         return filtered;
     };
 
     /* -------------------------------
        TABLE RENDER
     --------------------------------*/
-    const renderTaskTable = () => {
-
+    const attachTableEvents = () => {
         const tbody = document.getElementById("ts-table-body");
+        tbody.querySelectorAll(".btn-delete").forEach(btn => {
+            btn.addEventListener("click", e => {
+                const row = e.target.closest("tr");
+                const id = row.dataset.id;
+                if (!confirm("Delete this task?")) return;
+                stateTasks = stateTasks.filter(t => t.id !== id);
+                renderTaskTable();
+                renderSummaryCards();
+                showToast("Task deleted", "danger");
+            });
+        });
+    };
 
+    const renderTaskTable = () => {
+        const tbody = document.getElementById("ts-table-body");
         if (!tbody) return;
-
         tbody.innerHTML = "";
-
+        
         const tasks = getFilteredTasks();
-
         if (tasks.length === 0) {
-
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align:center;padding:40px;">
-                    No tasks assigned yet
-                </td>
-            </tr>
-            `;
-
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;">No tasks assigned yet</td></tr>`;
             return;
         }
 
         tasks.forEach(task => {
-
             const tr = document.createElement("tr");
             tr.dataset.id = task.id;
-
             tr.innerHTML = `
             <td><strong>${task.id}</strong></td>
-
             <td>${task.employee}</td>
-
             <td class="td-title">${task.title}</td>
-
             <td class="td-desc">${task.description}</td>
-
             <td class="td-hours">${task.hours}h</td>
-
             <td class="td-deadline">${task.deadline}</td>
-
             <td class="td-status">
                 <span class="${getBadgeClass(task.status)}">${task.status}</span>
             </td>
-
             <td>
                 <button class="btn-edit">Edit</button>
                 <button class="btn-delete">Delete</button>
             </td>
             `;
-
             tbody.appendChild(tr);
         });
 
@@ -205,108 +175,7 @@ export function renderTeamLeadTasks(container) {
     };
 
     /* -------------------------------
-       DELETE / EDIT EVENTS
-    --------------------------------*/
-    const attachTableEvents = () => {
-
-        const tbody = document.getElementById("ts-table-body");
-
-        /* DELETE */
-
-        tbody.querySelectorAll(".btn-delete").forEach(btn => {
-
-            btn.addEventListener("click", e => {
-
-                const row = e.target.closest("tr");
-                const id = row.dataset.id;
-
-                if (!confirm("Delete this task?")) return;
-
-                stateTasks = stateTasks.filter(t => t.id !== id);
-
-                renderTaskTable();
-                renderSummaryCards();
-
-                showToast("Task deleted", "danger");
-            });
-        });
-    };
-
-    /* -------------------------------
-       PAGE HTML
-    --------------------------------*/
-    container.innerHTML = `
-
-    <div class="ts-assign-wrapper">
-
-        <div id="ts-summary-container" class="ts-summary-grid"></div>
-
-        <div class="ts-layout-stack">
-
-            <!-- ASSIGN TASK FORM -->
-
-            <div class="ts-card">
-
-                <h3>Assign New Task</h3>
-
-                <form id="assign-task-form">
-
-                    <select id="form-emp" required>
-                        <option value="">Select Employee</option>
-                        <option>John Dev</option>
-                        <option>Sarah Johnson</option>
-                        <option>Mike Davis</option>
-                        <option>Emma Wilson</option>
-                    </select>
-
-                    <input id="form-title" placeholder="Task Title" required>
-
-                    <textarea id="form-desc" placeholder="Description"></textarea>
-
-                    <input type="number" id="form-hours" placeholder="Hours" required>
-
-                    <input type="date" id="form-deadline" required>
-
-                    <button type="submit">Assign Task</button>
-
-                </form>
-
-            </div>
-
-            <!-- TASK TABLE -->
-
-            <div class="ts-card">
-
-                <h3>Assigned Task List</h3>
-
-                <table class="ts-table">
-
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Employee</th>
-                            <th>Title</th>
-                            <th>Description</th>
-                            <th>Hours</th>
-                            <th>Deadline</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody id="ts-table-body"></tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-    </div>
-    `;
-
-    /* -------------------------------
-       TOOLBAR EVENTS
+       INITIALIZATION
     --------------------------------*/
     renderSummaryCards();
     renderTaskTable();
@@ -314,12 +183,10 @@ export function renderTeamLeadTasks(container) {
     /* -------------------------------
        FORM SUBMIT
     --------------------------------*/
-    document
-        .getElementById("assign-task-form")
-        .addEventListener("submit", e => {
-
+    const assignForm = document.getElementById("assign-task-form");
+    if (assignForm) {
+        assignForm.addEventListener("submit", e => {
             e.preventDefault();
-
             const emp = document.getElementById("form-emp").value;
             const title = document.getElementById("form-title").value;
             const desc = document.getElementById("form-desc").value;
@@ -327,9 +194,7 @@ export function renderTeamLeadTasks(container) {
             const deadline = document.getElementById("form-deadline").value;
 
             const newTask = {
-
                 id: "T-" + Math.floor(100 + Math.random() * 900),
-
                 employee: emp,
                 title: title,
                 description: desc,
@@ -338,16 +203,11 @@ export function renderTeamLeadTasks(container) {
                 status: "Assigned"
             };
 
-            /* IMPORTANT
-               Adds task to bottom */
             stateTasks.push(newTask);
-
             renderTaskTable();
             renderSummaryCards();
-
             e.target.reset();
-
             showToast("Task Assigned Successfully");
         });
-
-}
+    }
+});

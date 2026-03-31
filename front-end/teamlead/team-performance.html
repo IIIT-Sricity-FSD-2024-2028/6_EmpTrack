@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Team Performance</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .perf-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .hover-card:hover { transform: scale(1.02); box-shadow: var(--shadow-md); }
+        .hover-row:hover { background-color: var(--bg-main) !important; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div id="page-title" style="display:none;">Team Performance</div>
+                
+                <div style="display:flex; flex-direction:column; gap:var(--spacing-lg); max-width: 1440px; margin: 0 auto; animation: fade-in 0.4s ease-out;">
+            
+                    <!-- SECTION 1: Top Row Stats Cards -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-lg);">
+                        
+                        <div class="perf-card" style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid var(--border-light);">
+                            <div style="width: 48px; height: 48px; border-radius: 12px; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                <i class="ph-fill ph-users"></i>
+                            </div>
+                            <div>
+                                <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Team Size</p>
+                                <h3 id="stat-team-size" style="margin:4px 0 0 0; font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--text-main);">0</h3>
+                            </div>
+                        </div>
+        
+                        <div class="perf-card" style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid var(--border-light);">
+                            <div style="width: 48px; height: 48px; border-radius: 12px; background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color); display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                <i class="ph-fill ph-target"></i>
+                            </div>
+                            <div>
+                                <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Avg. Productivity</p>
+                                <h3 id="stat-avg-prod" style="margin:4px 0 0 0; font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--secondary-color);">0%</h3>
+                            </div>
+                        </div>
+        
+                        <div class="perf-card" style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid var(--border-light);">
+                            <div style="width: 48px; height: 48px; border-radius: 12px; background-color: rgba(106, 17, 203, 0.1); color: #6A11CB; display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                <i class="ph-fill ph-star"></i>
+                            </div>
+                            <div>
+                                <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Avg. Rating</p>
+                                <h3 id="stat-avg-rating" style="margin:4px 0 0 0; font-size: var(--text-2xl); font-weight: var(--font-bold); color: #6A11CB;">0.0/5</h3>
+                            </div>
+                        </div>
+        
+                        <div class="perf-card" style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease, box-shadow 0.2s ease; border: 1px solid var(--border-light);">
+                            <div style="width: 48px; height: 48px; border-radius: 12px; background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color); display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                <i class="ph-fill ph-trend-up"></i>
+                            </div>
+                            <div>
+                                <p style="margin:0; font-size: var(--text-sm); color: var(--text-muted); font-weight: var(--font-medium);">Team Growth</p>
+                                <h3 id="stat-growth" style="margin:4px 0 0 0; font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--warning-color);">+0%</h3>
+                            </div>
+                        </div>
+        
+                    </div>
+        
+                    <!-- SECTION 2: Individual Performance Table -->
+                    <div style="background-color: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); overflow:hidden; border: 1px solid var(--border-light);">
+                        <div style="padding: var(--spacing-lg) var(--spacing-xl); border-bottom: 1px solid var(--border-light);">
+                            <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main); margin:0;">Individual Performance</h3>
+                        </div>
+                        
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                                <thead style="background-color: var(--bg-main);">
+                                    <tr>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-light);">Employee Name</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-light);">Tasks Completed</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-light);">Avg. Rating</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-light); width: 25%;">Productivity</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-light);">Attendance</th>
+                                        <th style="padding: var(--spacing-md); font-weight: var(--font-semibold); color: var(--text-muted); font-size: var(--text-sm); border-bottom: 1px solid var(--border-light);">Performance Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="perf-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+        
+                    <!-- SECTION 3: Charts Section -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--spacing-lg);">
+                        
+                        <div class="perf-card" style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display:flex; flex-direction:column; gap: var(--spacing-md);">
+                            <h3 style="font-size: var(--text-base); font-weight: var(--font-bold); color: var(--text-main); margin:0;">Monthly Performance Trend</h3>
+                            <div style="position:relative; height: 250px; width: 100%;">
+                                <canvas id="monthlyTrendChart"></canvas>
+                            </div>
+                        </div>
+        
+                        <div class="perf-card" style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display:flex; flex-direction:column; gap: var(--spacing-md);">
+                            <h3 style="font-size: var(--text-base); font-weight: var(--font-bold); color: var(--text-main); margin:0;">Weekly Task Completion</h3>
+                            <div style="position:relative; height: 250px; width: 100%;">
+                                <canvas id="weeklyTaskChart"></canvas>
+                            </div>
+                        </div>
+        
+                    </div>
+        
+                    <!-- SECTION 4: Team Distribution Summary -->
+                    <div style="display:flex; flex-direction:column; gap: var(--spacing-md);">
+                        <h3 style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main); margin:0;">Team Distribution Summary</h3>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-lg);">
+                            
+                            <div style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display:flex; align-items:center; gap: var(--spacing-md); border-left: 4px solid #10B981; transition: transform 0.2s ease;" class="hover-card">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background-color: rgba(16, 185, 129, 0.1); color: #10B981; display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                    <i class="ph-fill ph-trophy"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin:0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main);">Top Performers</h3>
+                                    <p style="margin: 4px 0 0 0; font-size: var(--text-sm); color: var(--text-muted);">Count: <b>4</b></p>
+                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #10B981; font-weight:var(--font-medium);">Members exceeding expectations</p>
+                                </div>
+                            </div>
+        
+                            <div style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display:flex; align-items:center; gap: var(--spacing-md); border-left: 4px solid #3B82F6; transition: transform 0.2s ease;" class="hover-card">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background-color: rgba(59, 130, 246, 0.1); color: #3B82F6; display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                    <i class="ph-fill ph-check-circle"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin:0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main);">Meeting Goals</h3>
+                                    <p style="margin: 4px 0 0 0; font-size: var(--text-sm); color: var(--text-muted);">Count: <b>1</b></p>
+                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #3B82F6; font-weight:var(--font-medium);">Members on track</p>
+                                </div>
+                            </div>
+        
+                            <div style="background-color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display:flex; align-items:center; gap: var(--spacing-md); border-left: 4px solid #EF4444; transition: transform 0.2s ease;" class="hover-card">
+                                <div style="width: 50px; height: 50px; border-radius: 50%; background-color: rgba(239, 68, 68, 0.1); color: #EF4444; display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                    <i class="ph-fill ph-warning-circle"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin:0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main);">Needs Support</h3>
+                                    <p style="margin: 4px 0 0 0; font-size: var(--text-sm); color: var(--text-muted);">Count: <b>1</b></p>
+                                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #EF4444; font-weight:var(--font-medium);">Members requiring guidance</p>
+                                </div>
+                            </div>
+        
+                        </div>
+                    </div>
+        
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/teamlead/team-performance.js"></script>
+</body>
+</html>

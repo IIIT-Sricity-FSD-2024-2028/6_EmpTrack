@@ -1,216 +1,47 @@
 // /js/views/teamlead/dashboard.js
 import { auth } from '../../auth.js';
 
-export function renderTeamLeadDashboard(container) {
+document.addEventListener('DOMContentLoaded', () => {
+    const user = auth.getCurrentUser();
+    if (!user) return; // Guarded by app.js
+    
+    const nameEl = document.getElementById('tl-name');
+    if (nameEl) nameEl.textContent = user.emp_name.split(' ')[0];
 
-    container.innerHTML = `
-        <div class="tl-welcome-banner">
-            <div>
-                <h2>Welcome Back, Rinku!</h2>
-                <p>Monitor your team's performance and manage tasks</p>
-            </div>
-            <div style="font-size: 3rem; opacity: 0.8;">
-                <i class="ph ph-chart-line-up"></i>
-            </div>
-        </div>
+    // Added approval/rejection logic implementation from previous conversational design
+    const toastContainer = document.getElementById('toast-container');
+    const showToast = (message, type = 'success') => {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            background:${type === 'success' ? '#16A34A' : '#DC2626'};
+            color:white;
+            padding:12px 20px;
+            border-radius:8px;
+            font-weight:500;
+            box-shadow:0 4px 12px rgba(0,0,0,0.15);
+        `;
+        toast.innerHTML = message;
+        toastContainer.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    };
 
-        <div class="tl-stats-grid">
-            <div class="tl-stat-card">
-                <div class="tl-stat-icon icon-blue"><i class="ph-fill ph-users"></i></div>
-                <div class="tl-stat-info">
-                    <span class="tl-stat-value">12</span>
-                    <span class="tl-stat-label">Team Members</span>
-                </div>
-            </div>
-            <div class="tl-stat-card">
-                <div class="tl-stat-icon icon-orange"><i class="ph-fill ph-briefcase"></i></div>
-                <div class="tl-stat-info">
-                    <span class="tl-stat-value">48</span>
-                    <span class="tl-stat-label">Active Tasks</span>
-                </div>
-            </div>
-            <div class="tl-stat-card">
-                <div class="tl-stat-icon icon-red"><i class="ph-fill ph-warning-octagon"></i></div>
-                <div class="tl-stat-info">
-                    <span class="tl-stat-value">3</span>
-                    <span class="tl-stat-label">Escalations</span>
-                </div>
-            </div>
-            <div class="tl-stat-card">
-                <div class="tl-stat-icon icon-green"><i class="ph-fill ph-check-circle"></i></div>
-                <div class="tl-stat-info">
-                    <span class="tl-stat-value">15</span>
-                    <span class="tl-stat-label">Completed Today</span>
-                </div>
-            </div>
-        </div>
+    document.querySelectorAll('.btn-approve').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.tl-approval-card');
+            if (card) {
+                card.remove();
+                showToast("Request Approved", "success");
+            }
+        });
+    });
 
-        <div class="tl-dashboard-grid">
-            <!-- LEFT COLUMN -->
-            <div class="tl-left-col" style="display:flex; flex-direction:column; gap:var(--spacing-xl);">
-                
-                <!-- Team Progress Overview -->
-                <div class="tl-card">
-                    <h3 class="tl-card-title">Team Progress Overview</h3>
-                    <div class="tl-progress-list">
-                        <!-- Member 1 -->
-                        <div class="tl-progress-item">
-                            <div class="tl-progress-header">
-                                <span class="tl-progress-name">John Smith</span>
-                                <span class="tl-progress-percent" style="color:#16A34A;">75%</span>
-                            </div>
-                            <div class="tl-progress-desc">3 completed &bull; 2 in progress</div>
-                            <div class="tl-progress-bar-bg">
-                                <div class="tl-progress-bar-fill fill-green" style="width: 75%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Member 2 -->
-                        <div class="tl-progress-item member-highlight">
-                            <div class="tl-progress-header">
-                                <span class="tl-progress-name">Sarah Johnson</span>
-                                <span class="tl-progress-percent" style="color:#16A34A;">82%</span>
-                            </div>
-                            <div class="tl-progress-desc">4 completed &bull; 1 in progress</div>
-                            <div class="tl-progress-bar-bg">
-                                <div class="tl-progress-bar-fill fill-green" style="width: 82%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Member 3 -->
-                        <div class="tl-progress-item">
-                            <div class="tl-progress-header">
-                                <span class="tl-progress-name">Mike Davis</span>
-                                <span class="tl-progress-percent" style="color:#F97316;">60%</span>
-                            </div>
-                            <div class="tl-progress-desc">2 completed &bull; 3 in progress</div>
-                            <div class="tl-progress-bar-bg">
-                                <div class="tl-progress-bar-fill fill-orange" style="width: 60%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Member 4 -->
-                        <div class="tl-progress-item">
-                            <div class="tl-progress-header">
-                                <span class="tl-progress-name">Emma Wilson</span>
-                                <span class="tl-progress-percent" style="color:#16A34A;">88%</span>
-                            </div>
-                            <div class="tl-progress-desc">5 completed &bull; 1 in progress</div>
-                            <div class="tl-progress-bar-bg">
-                                <div class="tl-progress-bar-fill fill-green" style="width: 88%;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Member 5 -->
-                        <div class="tl-progress-item member-highlight-red">
-                            <div class="tl-progress-header">
-                                <span class="tl-progress-name">James Brown</span>
-                                <span class="tl-progress-percent" style="color:#DC2626;">45%</span>
-                            </div>
-                            <div class="tl-progress-desc">1 completed &bull; 4 in progress</div>
-                            <div class="tl-progress-bar-bg">
-                                <div class="tl-progress-bar-fill fill-red" style="width: 45%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Task Distribution -->
-                <div class="tl-card">
-                    <h3 class="tl-card-title">Task Distribution</h3>
-                    <div class="tl-stats-list">
-                        <div class="tl-stats-list-item">
-                            <span style="font-weight:var(--font-medium);"><i class="ph-fill ph-check-circle" style="color:#16A34A; margin-right:8px;"></i> Completed Tasks</span>
-                            <strong>28</strong>
-                        </div>
-                        <div class="tl-stats-list-item">
-                            <span style="font-weight:var(--font-medium);"><i class="ph-fill ph-clock-countdown" style="color:#3B82F6; margin-right:8px;"></i> In Progress</span>
-                            <strong>20</strong>
-                        </div>
-                        <div class="tl-stats-list-item">
-                            <span style="font-weight:var(--font-medium);"><i class="ph-fill ph-circle-dashed" style="color:#6B7280; margin-right:8px;"></i> Not Started</span>
-                            <strong>5</strong>
-                        </div>
-                        <div class="tl-stats-list-item">
-                            <span style="font-weight:var(--font-medium);"><i class="ph-fill ph-warning-circle" style="color:#DC2626; margin-right:8px;"></i> Overdue</span>
-                            <strong>2</strong>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- RIGHT COLUMN -->
-            <div class="tl-right-col" style="display:flex; flex-direction:column; gap:var(--spacing-xl);">
-                
-                <!-- Escalated Issues -->
-                <div class="tl-card">
-                    <h3 class="tl-card-title" style="color:var(--danger-color); display:flex; align-items:center; gap:8px;">
-                        <i class="ph-fill ph-warning-octagon"></i> Escalated Issues
-                    </h3>
-                    
-                    <div class="tl-issue-card" style="border-left: 4px solid #DC2626;">
-                        <div class="tl-issue-header">
-                            <span class="tl-issue-title">James Brown</span>
-                            <span style="font-size:var(--text-xs); color:var(--text-muted);">#TK-104</span>
-                        </div>
-                        <div class="tl-issue-desc">Low productivity - 45% completion rate across active sprint.</div>
-                        <button class="btn btn-danger" style="width:100%; padding: 6px; font-size:var(--text-sm);">Take Action</button>
-                    </div>
-
-                    <div class="tl-issue-card" style="border-left: 4px solid #F97316;">
-                        <div class="tl-issue-header">
-                            <span class="tl-issue-title">Mike Davis</span>
-                            <span style="font-size:var(--text-xs); color:var(--text-muted);">#TK-092</span>
-                        </div>
-                        <div class="tl-issue-desc">Technical blocker - Needs API access approval from HR.</div>
-                        <button class="btn btn-danger" style="width:100%; padding: 6px; font-size:var(--text-sm);">Take Action</button>
-                    </div>
-
-                    <div class="tl-issue-card" style="border-left: 4px solid #F97316;">
-                        <div class="tl-issue-header">
-                            <span class="tl-issue-title">John Smith</span>
-                            <span style="font-size:var(--text-xs); color:var(--text-muted);">#TK-071</span>
-                        </div>
-                        <div class="tl-issue-desc">Resource unavailable - Waiting on design files from external team.</div>
-                        <button class="btn btn-danger" style="width:100%; padding: 6px; font-size:var(--text-sm);">Take Action</button>
-                    </div>
-                </div>
-
-                <!-- Pending Approvals -->
-                <div class="tl-card">
-                    <h3 class="tl-card-title">Pending Approvals</h3>
-
-                    <div class="tl-approval-card">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                            <strong>Sarah Johnson</strong>
-                            <span class="badge-pending">Pending</span>
-                        </div>
-                        <div style="font-size:var(--text-sm); color:var(--text-muted); margin-bottom:12px;">
-                            Leave Request &bull; 2026-03-15
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-primary" style="flex:1; background-color:#16A34A; padding:6px; font-size:var(--text-sm);">Approve</button>
-                            <button class="btn btn-danger" style="flex:1; padding:6px; font-size:var(--text-sm);">Reject</button>
-                        </div>
-                    </div>
-
-                    <div class="tl-approval-card">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                            <strong>Mike Davis</strong>
-                            <span class="badge-pending">Pending</span>
-                        </div>
-                        <div style="font-size:var(--text-sm); color:var(--text-muted); margin-bottom:12px;">
-                            Task Extension &bull; #TK-092 &bull; 2026-03-10
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-primary" style="flex:1; background-color:#16A34A; padding:6px; font-size:var(--text-sm);">Approve</button>
-                            <button class="btn btn-danger" style="flex:1; padding:6px; font-size:var(--text-sm);">Reject</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    `;
-}
+    document.querySelectorAll('.btn-reject').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const card = e.target.closest('.tl-approval-card');
+            if (card) {
+                card.remove();
+                showToast("Request Rejected", "danger");
+            }
+        });
+    });
+});

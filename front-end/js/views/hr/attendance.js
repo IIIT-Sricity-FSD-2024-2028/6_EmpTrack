@@ -1,13 +1,9 @@
 // /js/views/hr/attendance.js
-export function renderHRAttendance(container) {
-    document.getElementById('page-title').innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-            <div style="display:flex; flex-direction:column;">
-                <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Attendance Management</span>
-                <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">HR Portal</span>
-            </div>
-        </div>
-    `;
+import { auth } from '../../auth.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    const user = auth.getCurrentUser();
+    if (!user) return; // Guarded
 
     // Dummy JSON Data mapping
     const employees = [
@@ -21,322 +17,13 @@ export function renderHRAttendance(container) {
         { id: 'EMP-108', name: 'Hannah Abbott', dept: 'engineering', checkIn: '09:02 AM', hours: 6, estHours: 8, status: 'present' }
     ];
 
-    container.innerHTML = `
-        <style>
-            .hr-attendance-dashboard {
-                --hr-primary: #7C3AED;
-                --hr-success: #22C55E;
-                --hr-danger: #EF4444;
-                --hr-warning: #F97316;
-                --hr-info: #3B82F6;
-                font-family: 'Inter', sans-serif;
-            }
-
-            .hr-attendance-dashboard .summary-cards {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                gap: 20px;
-                margin-bottom: 32px;
-            }
-
-            .hr-attendance-dashboard .data-card {
-                background-color: var(--bg-surface);
-                border-radius: var(--radius-lg);
-                padding: 20px;
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                box-shadow: var(--shadow-sm);
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-                border: 1px solid var(--border-color);
-                position: relative;
-                overflow: hidden;
-            }
-
-            .hr-attendance-dashboard .data-card:hover {
-                transform: translateY(-5px);
-                box-shadow: var(--shadow-md);
-            }
-
-            .hr-attendance-dashboard .card-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 24px;
-                transition: transform 0.3s ease;
-            }
-
-            .hr-attendance-dashboard .data-card:hover .card-icon {
-                transform: scale(1.1);
-            }
-
-            .hr-attendance-dashboard .card-blue .card-icon { background-color: rgba(59, 130, 246, 0.1); color: var(--hr-info); }
-            .hr-attendance-dashboard .card-green .card-icon { background-color: rgba(34, 197, 94, 0.1); color: var(--hr-success); }
-            .hr-attendance-dashboard .card-red .card-icon { background-color: rgba(239, 68, 68, 0.1); color: var(--hr-danger); }
-            .hr-attendance-dashboard .card-orange .card-icon { background-color: rgba(249, 115, 22, 0.1); color: var(--hr-warning); }
-            .hr-attendance-dashboard .card-purple .card-icon { background-color: rgba(124, 58, 237, 0.1); color: var(--hr-primary); }
-
-            .hr-attendance-dashboard .filters-section {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 24px;
-                gap: 16px;
-                flex-wrap: wrap;
-            }
-
-            .hr-attendance-dashboard .search-bar {
-                position: relative;
-                flex-grow: 1;
-                max-width: 320px;
-            }
-
-            .hr-attendance-dashboard .search-bar i {
-                position: absolute;
-                left: 16px;
-                top: 50%;
-                transform: translateY(-50%);
-                color: var(--text-muted);
-            }
-
-            .hr-attendance-dashboard .search-bar input {
-                width: 100%;
-                padding: 12px 16px 12px 40px;
-                border: 1px solid var(--border-color);
-                border-radius: var(--radius-md);
-                outline: none;
-                font-size: 14px;
-                transition: 0.2s ease;
-                background-color: var(--bg-surface);
-                color: var(--text-main);
-            }
-
-            .hr-attendance-dashboard .search-bar input:focus {
-                border-color: var(--hr-primary);
-                box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-            }
-
-            .hr-attendance-dashboard .filter-dropdowns {
-                display: flex;
-                gap: 12px;
-            }
-
-            .hr-attendance-dashboard .filter-dropdowns select, 
-            .hr-attendance-dashboard .filter-dropdowns input {
-                padding: 10px 16px;
-                border: 1px solid var(--border-color);
-                border-radius: var(--radius-md);
-                background-color: var(--bg-surface);
-                color: var(--text-main);
-                font-size: 14px;
-                cursor: pointer;
-                outline: none;
-            }
-
-            .hr-attendance-dashboard .table-section {
-                background-color: var(--bg-surface);
-                border-radius: var(--radius-lg);
-                box-shadow: var(--shadow-sm);
-                border: 1px solid var(--border-color);
-                overflow-x: auto;
-                margin-bottom: 32px;
-            }
-
-            .hr-attendance-dashboard table {
-                width: 100%;
-                border-collapse: collapse;
-                text-align: left;
-            }
-
-            .hr-attendance-dashboard th, .hr-attendance-dashboard td {
-                padding: 16px 24px;
-            }
-
-            .hr-attendance-dashboard th {
-                background-color: var(--bg-main);
-                color: var(--text-muted);
-                font-size: 13px;
-                font-weight: 600;
-                text-transform: uppercase;
-                border-bottom: 1px solid var(--border-color);
-            }
-
-            .hr-attendance-dashboard td {
-                border-bottom: 1px solid var(--border-color);
-                font-size: 14px;
-            }
-
-            .hr-attendance-dashboard tbody tr:hover {
-                background-color: var(--bg-main);
-            }
-
-            .hr-attendance-dashboard .progress-container {
-                width: 100%;
-                background-color: var(--border-color);
-                border-radius: 4px;
-                height: 8px;
-                overflow: hidden;
-                margin-top: 4px;
-            }
-
-            .hr-attendance-dashboard .progress-bar {
-                height: 100%;
-                border-radius: 4px;
-                width: 0%;
-                transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .hr-attendance-dashboard .status-badge {
-                padding: 6px 12px;
-                border-radius: 20px;
-                font-size: 12px;
-                font-weight: 600;
-                display: inline-block;
-                position: relative;
-                cursor: default;
-            }
-
-            .hr-attendance-dashboard .status-badge:hover::after {
-                content: attr(data-tooltip);
-                position: absolute;
-                bottom: 120%;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #1F2937;
-                color: #fff;
-                padding: 6px 10px;
-                border-radius: 4px;
-                font-size: 11px;
-                white-space: nowrap;
-                z-index: 20;
-            }
-
-            .hr-attendance-dashboard .logic-card {
-                background-color: var(--bg-surface);
-                border-radius: var(--radius-lg);
-                padding: 24px;
-                box-shadow: var(--shadow-sm);
-                border: 1px solid var(--border-color);
-                max-width: 600px;
-            }
-        </style>
-
-        <div class="hr-attendance-dashboard">
-            <!-- Summary Cards -->
-            <section class="summary-cards">
-                <div class="data-card card-blue">
-                    <div class="card-icon"><i class="ph-fill ph-calendar-blank"></i></div>
-                    <div>
-                        <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Working Days</div>
-                        <div style="font-size: 24px; font-weight: 700;">20</div>
-                    </div>
-                </div>
-                <div class="data-card card-green">
-                    <div class="card-icon"><i class="ph-fill ph-user-check"></i></div>
-                    <div>
-                        <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Present Today</div>
-                        <div id="count-present" style="font-size: 24px; font-weight: 700;">0</div>
-                    </div>
-                </div>
-                <div class="data-card card-red">
-                    <div class="card-icon"><i class="ph-fill ph-user-minus"></i></div>
-                    <div>
-                        <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Absent Today</div>
-                        <div id="count-absent" style="font-size: 24px; font-weight: 700;">0</div>
-                    </div>
-                </div>
-                <div class="data-card card-orange">
-                    <div class="card-icon"><i class="ph-fill ph-clock-user"></i></div>
-                    <div>
-                        <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">On Leave</div>
-                        <div id="count-leave" style="font-size: 24px; font-weight: 700;">0</div>
-                    </div>
-                </div>
-                <div class="data-card card-purple">
-                    <div class="card-icon"><i class="ph-fill ph-chart-line-up"></i></div>
-                    <div>
-                        <div style="font-size: 13px; color: var(--text-muted); font-weight: 500;">Avg Attendance</div>
-                        <div style="font-size: 24px; font-weight: 700;">91%</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Filters Section -->
-            <section class="filters-section">
-                <div class="search-bar">
-                    <i class="ph ph-magnifying-glass"></i>
-                    <input type="text" id="hrSearchInput" placeholder="Search by name or ID...">
-                </div>
-                <div class="filter-dropdowns">
-                    <select id="hrDeptFilter">
-                        <option value="all">All Departments</option>
-                        <option value="engineering">Engineering</option>
-                        <option value="marketing">Marketing</option>
-                        <option value="design">Design</option>
-                        <option value="hr">HR</option>
-                    </select>
-                    <select id="hrStatusFilter">
-                        <option value="all">All Status</option>
-                        <option value="present">Present</option>
-                        <option value="absent">Absent</option>
-                        <option value="late">Late</option>
-                        <option value="leave">On Leave</option>
-                    </select>
-                    <input type="date" id="hrDatePicker" value="${new Date().toISOString().split('T')[0]}">
-                </div>
-            </section>
-
-            <!-- Attendance Table -->
-            <section class="table-section">
-                <table id="hrAttendanceTable">
-                    <thead>
-                        <tr>
-                            <th>Employee ID</th>
-                            <th>Name</th>
-                            <th>Department</th>
-                            <th>Check-in Time</th>
-                            <th>Work Hours</th>
-                            <th>Work Progress</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="hrTableBody">
-                    </tbody>
-                </table>
-            </section>
-
-            <!-- Footer Logic Section -->
-            <section style="display: flex; justify-content: flex-start;">
-                <div class="logic-card">
-                    <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">
-                        <i class="ph-fill ph-calculator" style="color:var(--hr-primary);"></i> Attendance Calculation Method
-                    </h3>
-                    <div style="background-color: var(--bg-main); padding: 16px; border-radius: var(--radius-md); font-family: monospace; font-weight: 600; margin-bottom: 16px;">
-                        Progress % = (Total Hours Spent / Estimated Hours) * 100
-                    </div>
-                    <ul style="list-style:none; padding:0; margin:0;">
-                        <li style="margin-bottom: 8px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                            <i class="ph-fill ph-check-circle" style="color:var(--hr-success);"></i> <strong>Marked Present</strong> → if progress ≥ 50%
-                        </li>
-                        <li style="font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                            <i class="ph-fill ph-warning-circle" style="color:var(--hr-warning);"></i> <strong>Escalated</strong> → if progress &lt; 50%
-                        </li>
-                    </ul>
-                </div>
-            </section>
-        </div>
-    `;
-
-    // JavaScript Logic
     const tableBody = document.getElementById('hrTableBody');
     const searchInput = document.getElementById('hrSearchInput');
     const deptFilter = document.getElementById('hrDeptFilter');
     const statusFilter = document.getElementById('hrStatusFilter');
 
     function renderTable(data) {
+        if (!tableBody) return;
         tableBody.innerHTML = '';
         if (data.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:32px;">No results found</td></tr>';
@@ -380,8 +67,9 @@ export function renderHRAttendance(container) {
             tableBody.appendChild(tr);
         });
 
+        // Trigger animations
         setTimeout(() => {
-            const bars = container.querySelectorAll('.progress-bar');
+            const bars = document.querySelectorAll('.progress-bar');
             bars.forEach(bar => {
                 bar.style.width = bar.getAttribute('data-target');
             });
@@ -412,15 +100,19 @@ export function renderHRAttendance(container) {
             if(e.status === 'leave') lev++;
         });
 
-        document.getElementById('count-present').innerText = pres;
-        document.getElementById('count-absent').innerText = abs;
-        document.getElementById('count-leave').innerText = lev;
+        const cPresent = document.getElementById('count-present');
+        const cAbsent = document.getElementById('count-absent');
+        const cLeave = document.getElementById('count-leave');
+
+        if (cPresent) cPresent.innerText = pres;
+        if (cAbsent) cAbsent.innerText = abs;
+        if (cLeave) cLeave.innerText = lev;
     }
 
-    searchInput.addEventListener('input', applyFilters);
-    deptFilter.addEventListener('change', applyFilters);
-    statusFilter.addEventListener('change', applyFilters);
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (deptFilter) deptFilter.addEventListener('change', applyFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
 
     renderTable(employees);
     updateStats(employees);
-}
+});

@@ -1,12 +1,9 @@
 // /js/views/teamlead/work-monitoring.js
 import { auth } from '../../auth.js';
 
-export function renderTeamLeadWorkMonitoring(container) {
-    // Update Page Title
-    const titleEl = document.getElementById('page-title');
-    if (titleEl) {
-        titleEl.textContent = 'Work Monitoring';
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const user = auth.getCurrentUser();
+    if (!user) return; // Guarded
 
     const mockData = [
         { name: 'John Smith', id: 'T-001', title: 'Update User Dashboard UI', est: '40h', worked: '30h', progress: 75 },
@@ -59,73 +56,8 @@ export function renderTeamLeadWorkMonitoring(container) {
         }).join('');
     };
 
-    container.innerHTML = `
-        <div class="wm-container" style="display:flex; flex-direction:column; gap:var(--spacing-xl);">
-            
-            <!-- Filters & Search -->
-            <div class="wm-filter-bar" style="background-color:var(--bg-surface); padding:var(--spacing-lg); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--spacing-md);">
-                
-                <div class="wm-search-group" style="flex:1; min-width:250px; position:relative;">
-                    <i class="ph ph-magnifying-glass" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:var(--text-lg);"></i>
-                    <input type="text" placeholder="Search tasks..." style="width:100%; padding:10px 12px 10px 40px; border:1px solid var(--border-color); border-radius:var(--radius-md); font-family:var(--font-family); font-size:var(--text-sm); outline:none; transition:border-color var(--transition-fast);">
-                </div>
-
-                <div class="wm-filters-group" style="display:flex; gap:var(--spacing-md); flex-wrap:wrap;">
-                    <select class="wm-select" style="padding:10px 16px; border:1px solid var(--border-color); border-radius:var(--radius-md); font-family:var(--font-family); font-size:var(--text-sm); color:var(--text-main); background-color:var(--bg-surface); outline:none; cursor:pointer;">
-                        <option value="">All Employees</option>
-                        <option value="john">John Smith</option>
-                        <option value="sarah">Sarah Johnson</option>
-                        <option value="mike">Mike Davis</option>
-                        <option value="emma">Emma Wilson</option>
-                    </select>
-
-                    <select class="wm-select" style="padding:10px 16px; border:1px solid var(--border-color); border-radius:var(--radius-md); font-family:var(--font-family); font-size:var(--text-sm); color:var(--text-main); background-color:var(--bg-surface); outline:none; cursor:pointer;">
-                        <option value="">All Status</option>
-                        <option value="progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="overdue">Overdue</option>
-                    </select>
-
-                    <select class="wm-select" style="padding:10px 16px; border:1px solid var(--border-color); border-radius:var(--radius-md); font-family:var(--font-family); font-size:var(--text-sm); color:var(--text-main); background-color:var(--bg-surface); outline:none; cursor:pointer;">
-                        <option value="">All Progress</option>
-                        <option value="high">75% - 100%</option>
-                        <option value="med">50% - 74%</option>
-                        <option value="low">Below 50%</option>
-                    </select>
-
-                    <button style="padding:10px 20px; border:1px solid var(--primary-color); background-color:transparent; color:var(--primary-color); border-radius:var(--radius-md); font-family:var(--font-family); font-weight:var(--font-semibold); font-size:var(--text-sm); cursor:pointer; display:flex; align-items:center; gap:8px; transition:all var(--transition-fast);">
-                        <i class="ph ph-sliders-horizontal"></i> Filters
-                    </button>
-                </div>
-            </div>
-
-            <!-- Team Work Progress Table Card -->
-            <div class="wm-table-card" style="background-color:var(--bg-surface); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm); overflow:hidden;">
-                
-                <div style="padding:var(--spacing-lg) var(--spacing-xl); border-bottom:1px solid var(--border-color);">
-                    <h3 style="font-size:var(--text-lg); font-weight:var(--font-bold); color:var(--text-main); margin:0;">Team Work Progress</h3>
-                </div>
-
-                <div class="table-responsive" style="overflow-x:auto;">
-                    <table class="wm-table" style="width:100%; border-collapse:collapse; text-align:left;">
-                        <thead style="background-color:var(--bg-main);">
-                            <tr>
-                                <th style="padding:var(--spacing-md) var(--spacing-xl); font-weight:var(--font-semibold); color:var(--text-muted); font-size:var(--text-sm); border-bottom:1px solid var(--border-color);">Employee Name</th>
-                                <th style="padding:var(--spacing-md) var(--spacing-sm); font-weight:var(--font-semibold); color:var(--text-muted); font-size:var(--text-sm); border-bottom:1px solid var(--border-color);">Task ID</th>
-                                <th style="padding:var(--spacing-md) var(--spacing-sm); font-weight:var(--font-semibold); color:var(--text-muted); font-size:var(--text-sm); border-bottom:1px solid var(--border-color);">Task Title</th>
-                                <th style="padding:var(--spacing-md) var(--spacing-sm); font-weight:var(--font-semibold); color:var(--text-muted); font-size:var(--text-sm); border-bottom:1px solid var(--border-color);">Est. Hours</th>
-                                <th style="padding:var(--spacing-md) var(--spacing-sm); font-weight:var(--font-semibold); color:var(--text-muted); font-size:var(--text-sm); border-bottom:1px solid var(--border-color);">Hours Worked</th>
-                                <th style="padding:var(--spacing-md) var(--spacing-xl); font-weight:var(--font-semibold); color:var(--text-muted); font-size:var(--text-sm); border-bottom:1px solid var(--border-color); width: 25%;">Progress</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${generateTableRows()}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-    `;
-}
-  
+    const tbody = document.getElementById('work-monitoring-body');
+    if (tbody) {
+        tbody.innerHTML = generateTableRows();
+    }
+});
