@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - HR Settings</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/hr/settings.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom: 24px;">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">System Settings</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">HR Portal</span>
+                    </div>
+                </div>
+
+                <div class="hr-settings-root">
+                    <div class="settings-grid">
+                        
+                        <!-- A. General Settings -->
+                        <div class="card">
+                            <div class="card-title"><i class="ph-fill ph-buildings"></i> General Settings</div>
+                            <form class="settings-form">
+                                <div class="form-group">
+                                    <label>Company Name</label>
+                                    <input type="text" required value="EmpTrack Inc.">
+                                </div>
+                                <div class="form-group">
+                                    <label>Working Hours Per Day</label>
+                                    <input type="number" required value="8" min="1" max="24">
+                                </div>
+                                <div class="form-group">
+                                    <label>Working Days Per Week</label>
+                                    <input type="number" required value="5" min="1" max="7">
+                                </div>
+                                <br>
+                                <button type="submit" class="btn-save"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+                            </form>
+                        </div>
+
+                        <!-- B. Attendance Settings -->
+                        <div class="card">
+                            <div class="card-title"><i class="ph-fill ph-calendar-check"></i> Attendance Settings</div>
+                            <form class="settings-form">
+                                <div class="form-group">
+                                    <label>Min Progress for Full Attendance (%)</label>
+                                    <input type="number" required value="70" min="1" max="100">
+                                </div>
+                                <div class="form-group">
+                                    <label>Late Check-in Threshold (mins)</label>
+                                    <input type="number" required value="15" min="0">
+                                </div>
+                                <div class="toggle-row" style="margin-top:16px;">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Auto Mark Attendance</span>
+                                        <span class="toggle-desc">Automatically determine attendance based on tasks</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Daily Summary Emails</span>
+                                        <span class="toggle-desc">Send end-of-day attendance reports to HR</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                </div>
+                                <br>
+                                <button type="submit" class="btn-save"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+                            </form>
+                        </div>
+
+                        <!-- C. Notification Settings -->
+                        <div class="card">
+                            <div class="card-title"><i class="ph-fill ph-bell-ringing"></i> Notification Settings</div>
+                            <form class="settings-form">
+                                <div class="toggle-row">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Task Assignments</span>
+                                        <span class="toggle-desc">Notify employees when new tasks arrive</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Issue Escalations</span>
+                                        <span class="toggle-desc">Alert HR team instantly for critical matters</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Leave Requests</span>
+                                        <span class="toggle-desc">Trigger manager approval notifications</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Weekly Performance</span>
+                                        <span class="toggle-desc">Summarized automated analytics every Friday</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                                </div>
+                                <br>
+                                <button type="submit" class="btn-save"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+                            </form>
+                        </div>
+
+                        <!-- D. Email Settings -->
+                        <div class="card">
+                            <div class="card-title"><i class="ph-fill ph-envelope-simple"></i> Email Settings</div>
+                            <form class="settings-form">
+                                <div class="form-group">
+                                    <label>SMTP Server</label>
+                                    <input type="text" required value="smtp.mailtrap.io">
+                                </div>
+                                <div class="form-group">
+                                    <label>SMTP Port</label>
+                                    <input type="number" required value="2525">
+                                </div>
+                                <div class="form-group">
+                                    <label>From Email</label>
+                                    <input type="email" required value="no-reply@emptrack.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>From Name</label>
+                                    <input type="text" required value="EmpTrack System">
+                                </div>
+                                <br>
+                                <button type="submit" class="btn-save"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+                            </form>
+                        </div>
+
+                        <!-- E. Security Settings -->
+                        <div class="card">
+                            <div class="card-title"><i class="ph-fill ph-shield-check"></i> Security Settings</div>
+                            <form class="settings-form">
+                                <div class="toggle-row">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Two-Factor Auth (2FA)</span>
+                                        <span class="toggle-desc">Require OTP for all admin accounts</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                                </div>
+                                <div class="toggle-row">
+                                    <div class="toggle-text">
+                                        <span class="toggle-title">Session Timeout</span>
+                                        <span class="toggle-desc">Logout inactive users after 30 minutes</span>
+                                    </div>
+                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                </div>
+                                
+                                <div style="margin-top:16px;">
+                                    <label style="display:block; margin-bottom:12px;">Password Policy Requirements:</label>
+                                    <label class="check-row"><input type="checkbox" checked> Minimum 8 characters</label>
+                                    <label class="check-row"><input type="checkbox" checked> Uppercase & Lowercase letters</label>
+                                    <label class="check-row"><input type="checkbox" checked> At least one number</label>
+                                    <label class="check-row"><input type="checkbox"> At least one special character</label>
+                                </div>
+                                <br>
+                                <button type="submit" class="btn-save"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+                            </form>
+                        </div>
+
+                        <!-- F. User Roles & Permissions -->
+                        <div class="card">
+                            <div class="card-title"><i class="ph-fill ph-users"></i> User Roles & Permissions</div>
+                            <form class="settings-form">
+                                
+                                <div class="role-block">
+                                    <div class="role-block-title">Employee Role</div>
+                                    <label class="check-row"><input type="radio" name="empRole" checked> View assigned tasks</label>
+                                    <label class="check-row"><input type="radio" name="empRole"> Report issues</label>
+                                    <label class="check-row"><input type="radio" name="empRole"> Log work hours</label>
+                                    <label class="check-row"><input type="radio" name="empRole"> Request leave</label>
+                                </div>
+                                
+                                <div class="role-block">
+                                    <div class="role-block-title">Team Lead Role</div>
+                                    <label class="check-row"><input type="checkbox" checked> Assign tasks</label>
+                                    <label class="check-row"><input type="checkbox" checked> Manage escalations</label>
+                                    <label class="check-row"><input type="checkbox" checked> Monitor team work</label>
+                                    <label class="check-row"><input type="checkbox"> View reports</label>
+                                </div>
+
+                                <div class="role-block" style="margin-bottom:0;">
+                                    <div class="role-block-title">HR/Admin Role</div>
+                                    <label class="check-row"><input type="checkbox" checked disabled> Manage employees</label>
+                                    <label class="check-row"><input type="checkbox" checked disabled> View reports</label>
+                                    <label class="check-row"><input type="checkbox" checked disabled> Approve leave</label>
+                                    <label class="check-row"><input type="checkbox" checked disabled> System settings</label>
+                                </div>
+                                
+                                <br>
+                                <button type="submit" class="btn-save"><i class="ph ph-floppy-disk"></i> Save Changes</button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div id="toast-container"><i class="ph-fill ph-check-circle"></i> Settings saved successfully!</div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/hr/settings.js"></script>
+</body>
+</html>

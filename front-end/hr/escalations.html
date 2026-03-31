@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - HR Escalations</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/hr/escalations.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom: 24px;">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Escalations</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">HR Portal</span>
+                    </div>
+                    <div id="escBreadcrumbs" style="font-size:13px; font-weight:500; color:var(--emp-primary, #7B2CBF); cursor:pointer;">
+                        <!-- Breadcrumbs populated by JS -->
+                    </div>
+                </div>
+                
+                <div class="hr-esc-root">
+
+                    <!-- Page 1: Dashboard -->
+                    <div id="view-dashboard" class="page-view active">
+                        <div class="alert-banner">
+                            <i class="ph-fill ph-warning-circle" style="font-size:24px;"></i>
+                            <div>
+                                <div style="font-weight:700; font-size:15px;">Critical Escalations Requiring Immediate Attention</div>
+                                <div style="font-size:13px; margin-top:4px;">2 escalations have breached SLA.</div>
+                            </div>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="card stat-card">
+                                <div class="stat-icon" style="background:rgba(123,44,191,0.1); color:var(--esc-primary);"><i class="ph-fill ph-stack"></i></div>
+                                <div><div class="stat-val">24</div><div class="stat-label">Total Escalations</div></div>
+                            </div>
+                            <div class="card stat-card">
+                                <div class="stat-icon" style="background:var(--color-high-bg); color:var(--color-high);"><i class="ph-fill ph-warning"></i></div>
+                                <div><div class="stat-val">3</div><div class="stat-label">Critical</div></div>
+                            </div>
+                            <div class="card stat-card">
+                                <div class="stat-icon" style="background:rgba(59,130,246,0.1); color:#3B82F6;"><i class="ph-fill ph-magnifying-glass"></i></div>
+                                <div><div class="stat-val">8</div><div class="stat-label">Under Review</div></div>
+                            </div>
+                            <div class="card stat-card">
+                                <div class="stat-icon" style="background:var(--color-med-bg); color:var(--color-med);"><i class="ph-fill ph-clock-counter-clockwise"></i></div>
+                                <div><div class="stat-val">10</div><div class="stat-label">Pending</div></div>
+                            </div>
+                            <div class="card stat-card">
+                                <div class="stat-icon" style="background:rgba(247,37,133,0.1); color:var(--esc-accent);"><i class="ph-fill ph-users-three"></i></div>
+                                <div><div class="stat-val">5</div><div class="stat-label">Team Leads</div></div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding:0; overflow-x:auto;">
+                            <div style="padding:20px; border-bottom:1px solid var(--esc-border); display:flex; justify-content:space-between; align-items:center;">
+                                <span style="font-weight:600; font-size:16px;">Active Escalations Queue</span>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" id="btn-filter-all">All</button>
+                                    <button class="btn btn-outline" style="padding:6px 12px; font-size:12px; color:var(--color-high); border-color:var(--color-high);" id="btn-filter-crit">Filter Critical</button>
+                                    <button class="btn btn-outline" style="padding:6px 12px; font-size:12px; color:var(--color-med); border-color:var(--color-med);" id="btn-filter-pend">Filter Pending</button>
+                                </div>
+                            </div>
+                            <table id="escTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th><th>Issue Title</th><th>Team Lead</th><th>Priority</th><th>Employee</th><th>Status</th><th>Date</th><th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="escTbody">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:16px; margin-top:24px;">
+                            <div class="card" style="padding:16px; text-align:center; font-weight:600; font-size:14px; color:var(--esc-primary);">Policy Violation</div>
+                            <div class="card" style="padding:16px; text-align:center; font-weight:600; font-size:14px; color:var(--esc-secondary);">Team Conflicts</div>
+                            <div class="card" style="padding:16px; text-align:center; font-weight:600; font-size:14px; color:#3B82F6;">Resource Requests</div>
+                            <div class="card" style="padding:16px; text-align:center; font-weight:600; font-size:14px; color:var(--color-high);">Serious Complaints</div>
+                        </div>
+                        
+                        <div class="card" style="margin-top:24px;">
+                            <h3 style="margin-top:0; color:var(--esc-text);">Unauthorized Leave Alerts</h3>
+                            <div style="color:var(--color-high); font-weight:600; font-size:14px; margin-bottom:16px;">Policy: Unauthorized absence over 2 days mandates automatic disciplinary review.</div>
+                            <table style="margin-top:16px;">
+                                <thead><tr><th>Employee</th><th>Date</th><th>Days</th><th>Reason</th><th>Status</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight:500;">Sarah Johnson</td><td>Oct 20 - 23</td><td style="color:var(--color-high); font-weight:700;">3</td><td>No call, no show</td>
+                                        <td><span class="badge" style="background:var(--color-med-bg); color:var(--color-med);">Pending</span></td>
+                                        <td style="display:flex; gap:8px;">
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px; border-color:var(--color-med); color:var(--color-med);" onclick="alert('Warning Issued')">Issue Warning</button>
+                                            <button class="btn btn-danger btn-disc-action" data-id="HR-ESC-001" style="padding:4px 8px; font-size:11px;">Disciplinary Action</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight:500;">Mike Ross</td><td>Oct 15 - 16</td><td style="font-weight:700;">2</td><td>Sick (late notice)</td>
+                                        <td><span class="badge" style="background:var(--color-low-bg); color:var(--color-low);">Resolved</span></td>
+                                        <td style="display:flex; gap:8px;">
+                                            <button class="btn btn-outline" style="padding:4px 8px; font-size:11px;" onclick="alert('Viewing Details')">View Details</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div style="color:var(--color-high); font-weight:600; font-size:14px; margin-top:20px;">Recommended Action: Issue formal warning for pending alerts.</div>
+                        </div>
+                    </div>
+
+                    <!-- Page 2: Details -->
+                    <div id="view-details" class="page-view">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Page 3: Action Center -->
+                    <div id="view-action" class="page-view">
+                        <!-- Populated by JS -->
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/hr/escalations.js"></script>
+</body>
+</html>

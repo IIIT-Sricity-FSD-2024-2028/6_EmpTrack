@@ -44,7 +44,6 @@ export function initLayout() {
             <a href="/front-end/hr/attendance.html" class="nav-item ${isActive('attendance')}"><i class="ph ph-calendar-check"></i> Attendance</a>
             <a href="/front-end/hr/escalations.html" class="nav-item ${isActive('escalations')}"><i class="ph ph-warning-circle"></i> Escalations</a>
             <a href="/front-end/hr/reports.html" class="nav-item ${isActive('reports')}"><i class="ph ph-file-text"></i> Reports</a>
-            <a href="/front-end/hr/notifications.html" class="nav-item ${isActive('notifications')}"><i class="ph ph-bell"></i> Notifications</a>
             <a href="/front-end/hr/settings.html" class="nav-item ${isActive('settings')}"><i class="ph ph-gear"></i> Settings</a>
         `;
     }
@@ -99,16 +98,12 @@ export function initLayout() {
                     <div class="theme-toggle" id="themeToggleBtn" style="font-size: var(--text-xl); color: var(--text-muted); cursor: pointer; transition: 0.2s;">
                         <i class="ph ph-moon"></i>
                     </div>
-                    <div class="notification-wrapper" style="position:relative;">
-                        <div class="notification-bell" id="notifBellBtn" style="font-size: var(--text-xl); color: var(--text-muted); cursor: pointer; transition: 0.2s;">
+                    <a href="/front-end/${user.role.toLowerCase()}/notifications.html" style="text-decoration:none; color:inherit;">
+                        <div class="notification-bell ${isActive('notifications') ? 'active-bell' : ''}" style="font-size: var(--text-xl); color: ${isActive('notifications') ? 'var(--nt-primary)' : 'var(--text-muted)'}; cursor: pointer; transition: 0.2s; position:relative;">
                             <i class="ph ph-bell"></i>
                             <span style="position:absolute; top:-4px; right:-4px; background:var(--danger-color, #ef4444); width:8px; height:8px; border-radius:50%;"></span>
                         </div>
-                        <div id="notifDropdown" style="display:none; position:absolute; top:120%; right:0; width:280px; background:var(--bg-surface, #fff); border:1px solid var(--border-color); border-radius:8px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); z-index:100; padding:12px; font-size:13px; color:var(--text-main);">
-                            <div style="font-weight:600; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border-color);">Notifications</div>
-                            <div style="padding:8px 0; border-bottom:1px solid var(--border-light);">No new notifications.</div>
-                        </div>
-                    </div>
+                    </a>
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none;" title="My Profile">
                         <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px; margin-left: var(--spacing-lg); box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease; cursor: pointer;">
                             ${user.role === 'TEAMLEAD' ? 'RS' : user.emp_name.charAt(0)}
@@ -148,16 +143,5 @@ export function initLayout() {
         });
     }
 
-    const notifBtn = document.getElementById('notifBellBtn');
-    const notifDrop = document.getElementById('notifDropdown');
-    if (notifBtn && notifDrop) {
-        notifBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            notifDrop.style.display = notifDrop.style.display === 'none' ? 'block' : 'none';
-        });
-        document.addEventListener('click', () => {
-            notifDrop.style.display = 'none';
-        });
-        notifDrop.addEventListener('click', e => e.stopPropagation());
-    }
+    // Notification dropdown removed in favor of direct page link
 }

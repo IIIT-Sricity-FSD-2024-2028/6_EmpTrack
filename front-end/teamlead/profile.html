@@ -13,25 +13,7 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slide-in {
-            from { opacity: 0; transform: translateX(100%); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .stat-bounce:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: rgba(106, 17, 203, 0.2); }
-        .info-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .hover-pill:hover { transform: scale(1.05); filter: brightness(1.1); }
-        .hover-btn-white:hover { transform: scale(1.02); box-shadow: 0 4px 15px rgba(255,255,255,0.3); }
-        
-        #update-pwd-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106, 17, 203, 0.3); filter: brightness(1.1); }
-        #update-pwd-btn:active { transform: scale(0.98); }
-
-        .custom-input:focus { border-color: #6A11CB !important; box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.1) !important; }
-    </style>
+    <link rel="stylesheet" href="../css/views/teamlead/profile.css">
 </head>
 <body>
     <div class="app-container">
@@ -58,7 +40,7 @@
                                 <h2 id="profile-name" style="margin: 0; font-size: 2rem; font-weight: var(--font-bold);"></h2>
                                 <span id="profile-role" style="font-size: var(--text-base); color: rgba(255,255,255,0.85); font-weight: var(--font-medium);"></span>
                                 <div style="display: flex; gap: var(--spacing-md); margin-top: 8px;">
-                                    <button class="hover-btn-white" style="background: white; color: #6A11CB; border: none; padding: 8px 16px; border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: transform 0.2s ease;">
+                                    <button id="edit-profile-btn" class="hover-btn-white" style="background: white; color: #6A11CB; border: none; padding: 8px 16px; border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: transform 0.2s ease;">
                                         <i class="ph ph-pencil-simple"></i> Edit Profile
                                     </button>
                                 </div>
@@ -269,6 +251,23 @@
                     </div>
                 </div>
         
+                <!-- Edit Profile Modal -->
+                <div id="edit-profile-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+                    <div style="background:var(--bg-surface); padding:var(--spacing-xl); border-radius:var(--radius-xl); box-shadow:0 15px 30px rgba(0,0,0,0.2); width:100%; max-width:400px; animation:fade-in 0.2s ease-out;">
+                        <h3 style="margin:0 0 var(--spacing-lg) 0; color:var(--text-main); font-size:var(--text-xl);">Edit Profile</h3>
+                        <form id="edit-profile-form" style="display:flex; flex-direction:column; gap:var(--spacing-md);">
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                <label style="font-size:var(--text-sm); font-weight:var(--font-medium); color:var(--text-main);">Full Name</label>
+                                <input type="text" id="edit-name-input" required class="custom-input" style="padding:12px; border-radius:var(--radius-md); border:1px solid var(--border-color); font-family:var(--font-family); font-size:var(--text-sm); outline:none;">
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:var(--spacing-md); margin-top:var(--spacing-sm);">
+                                <button type="button" id="close-edit-modal" style="padding:10px 16px; border-radius:var(--radius-md); border:1px solid var(--border-color); background:transparent; color:var(--text-muted); cursor:pointer;">Cancel</button>
+                                <button type="submit" style="padding:10px 16px; border-radius:var(--radius-md); border:none; background:#6A11CB; color:white; font-weight:var(--font-semibold); cursor:pointer;">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <!-- Local Toast Notification Area -->
                 <div id="profile-toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; display:flex; flex-direction:column; gap:10px;"></div>
             </div>

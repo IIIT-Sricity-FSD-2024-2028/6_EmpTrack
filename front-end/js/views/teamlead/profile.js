@@ -49,6 +49,41 @@ document.addEventListener('DOMContentLoaded', () => {
         skillsContainer.innerHTML = skills.map(s => `<span class="skill-pill hover-pill" style="background: linear-gradient(135deg, #6A11CB 0%, #852DE0 100%); color: white; padding: 6px 16px; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: var(--font-medium); box-shadow: 0 3px 8px rgba(106, 17, 203, 0.2); transition: transform 0.2s ease; cursor: default;">${s}</span>`).join('');
     }
 
+    // Edit Profile Logic
+    const editBtn = document.getElementById('edit-profile-btn');
+    const editModal = document.getElementById('edit-profile-modal');
+    const closeEditBtn = document.getElementById('close-edit-modal');
+    const editForm = document.getElementById('edit-profile-form');
+    const editNameInput = document.getElementById('edit-name-input');
+
+    if (editBtn && editModal) {
+        editBtn.addEventListener('click', () => {
+            editNameInput.value = userData.name;
+            editModal.style.display = 'flex';
+        });
+
+        closeEditBtn.addEventListener('click', () => {
+            editModal.style.display = 'none';
+        });
+
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) editModal.style.display = 'none';
+        });
+
+        editForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newName = editNameInput.value.trim();
+            if (newName) {
+                userData.name = newName;
+                document.getElementById('profile-name').textContent = userData.name;
+                const newInitials = userData.name.split(' ').map(n => n[0] ? n[0].toUpperCase() : '').join('');
+                document.getElementById('profile-initials').textContent = newInitials;
+                showProfileToast('Profile Updated', 'Your name has been successfully updated.', 'success');
+                editModal.style.display = 'none';
+            }
+        });
+    }
+
     const pwdForm = document.getElementById('password-form');
     const newPwdObj = document.getElementById('new-pwd');
     const confirmPwdObj = document.getElementById('confirm-pwd');

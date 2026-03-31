@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - HR Reports & Analytics</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/hr/reports.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom: 24px;">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Reports & Analytics</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">HR Portal</span>
+                    </div>
+                </div>
+
+                <div class="hr-reports-root" id="reports-container">
+                    <!-- KPI Row -->
+                    <div class="kpi-grid">
+                        <div class="card hr-tooltip" data-tip="Total active personnel">
+                            <div class="kpi-icon" style="background:rgba(59,130,246,0.1); color:var(--rep-blue);"><i class="ph-fill ph-users"></i></div>
+                            <div class="kpi-label">Total Employees</div>
+                            <div class="kpi-val num-anim" data-val="156">0</div>
+                            <div class="kpi-trend" style="color:var(--rep-green);">+8% from last month</div>
+                        </div>
+                        <div class="card hr-tooltip" data-tip="Based on completed evaluations">
+                            <div class="kpi-icon" style="background:rgba(34,197,94,0.1); color:var(--rep-green);"><i class="ph-fill ph-chart-line-up"></i></div>
+                            <div class="kpi-label">Avg. Productivity</div>
+                            <div class="kpi-val"><span class="num-anim" data-val="88">0</span>%</div>
+                            <div class="kpi-trend" style="color:var(--rep-green);">+2% from last month</div>
+                        </div>
+                        <div class="card hr-tooltip" data-tip="30-day aggregate">
+                            <div class="kpi-icon" style="background:rgba(124,58,237,0.1); color:var(--rep-primary);"><i class="ph-fill ph-calendar-check"></i></div>
+                            <div class="kpi-label">Attendance Rate</div>
+                            <div class="kpi-val"><span class="num-anim" data-val="91">0</span>%</div>
+                            <div class="kpi-trend" style="color:var(--rep-red);">-1% from last month</div>
+                        </div>
+                        <div class="card hr-tooltip" data-tip="Tasks finished within estimates">
+                            <div class="kpi-icon" style="background:rgba(249,115,22,0.1); color:var(--rep-orange);"><i class="ph-fill ph-check-square-offset"></i></div>
+                            <div class="kpi-label">Task Completion</div>
+                            <div class="kpi-val"><span class="num-anim" data-val="95">0</span>%</div>
+                            <div class="kpi-trend" style="color:var(--rep-green);">+5% from last month</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Tier 1 -->
+                    <div class="chart-grid">
+                        <div class="card chart-item">
+                            <div class="chart-title">Employee Productivity Trend</div>
+                            <div class="chart-wrapper">
+                                <div class="skeleton" id="skel-prod"></div>
+                                <canvas id="chartProductivity"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-item">
+                            <div class="chart-title">Task Completion Rate</div>
+                            <div class="chart-wrapper">
+                                <div class="skeleton" id="skel-task"></div>
+                                <canvas id="chartTask"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Tier 2 -->
+                    <div class="chart-grid">
+                        <div class="card chart-item">
+                            <div class="chart-title">Current Attendance Statistics</div>
+                            <div class="chart-wrapper">
+                                <div class="skeleton" id="skel-att"></div>
+                                <canvas id="chartAttendance"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-item">
+                            <div class="chart-title">Issue Resolution Report</div>
+                            <div class="chart-wrapper">
+                                <div class="skeleton" id="skel-issue"></div>
+                                <canvas id="chartIssues"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Tier 3 -->
+                    <div class="card chart-item">
+                        <div class="chart-title">Department Performance Scores</div>
+                        <div class="chart-wrapper" style="height:350px;">
+                            <div class="skeleton" id="skel-dept"></div>
+                            <canvas id="chartDept"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Summary -->
+                    <div class="card bottom-summary">
+                        <div class="bs-item" style="border-left-color: var(--rep-blue);">
+                            <div class="bs-label">Total Work Hours</div>
+                            <div class="bs-val">12,450 hrs</div>
+                            <div class="bs-trend" style="color:var(--rep-green);">+6% vs last month</div>
+                        </div>
+                        <div class="bs-item" style="border-left-color: var(--rep-green);">
+                            <div class="bs-label">Projects Completed</div>
+                            <div class="bs-val">18</div>
+                            <div class="bs-trend" style="color:var(--rep-green);">+3 vs last month</div>
+                        </div>
+                        <div class="bs-item" style="border-left-color: var(--rep-primary);">
+                            <div class="bs-label">Average Task Time</div>
+                            <div class="bs-val">26 hrs</div>
+                            <div class="bs-trend" style="color:var(--rep-green);">-4 hrs improvement</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/hr/reports.js"></script>
+</body>
+</html>
