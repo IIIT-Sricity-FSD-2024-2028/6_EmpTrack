@@ -25,6 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
             taskDrop.value = taskIdParam;
         }
     }
+    // ønce start time and end time are filled, we have to calculate hours spend like end time - start time
+    const hoursSpent = document.getElementById('hours-spent-wl');
+    const startTime = document.getElementById('wl_start');
+    const endTime = document.getElementById('wl_end');
+    startTime.addEventListener('change', () => {
+        const start = new Date(startTime.value);
+        const end = new Date(endTime.value);
+        const diff = end - start;
+        const hours = Math.floor(diff / 1000 / 60 / 60);
+        hoursSpent.value = hours;
+    });
+    endTime.addEventListener('change', () => {
+        const start = new Date(startTime.value);
+        const end = new Date(endTime.value);
+        const diff = end - start;
+        const hours = Math.floor(diff / 1000 / 60 / 60);
+        hoursSpent.value = hours;
+    });
 
     // 3. Render Table
     function renderTable() {
@@ -93,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 emp_id: user.emp_id,
                 task_id: taskDrop.value,
                 task_title: selectedOption.getAttribute('data-title'),
-                hours_spent: document.getElementById('wl_hours').value,
+                hours_spent: document.getElementById('hours-spent-wl').value,
                 start_time: startTime,
                 end_time: endTime,
                 description: document.getElementById('wl_desc').value
