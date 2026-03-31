@@ -24,7 +24,6 @@ export function initLayout() {
             <a href="/front-end/employee/issues-list.html" class="nav-item ${isActive('issue')}"><i class="ph ph-warning-circle"></i> View Issue Status</a>
             <a href="/front-end/employee/work-logs.html" class="nav-item ${isActive('work-logs')}"><i class="ph ph-clock"></i> Work Logs</a>
             <a href="/front-end/employee/attendance.html" class="nav-item ${isActive('attendance')}"><i class="ph ph-calendar-check"></i> Attendance</a>
-            <a href="/front-end/employee/leave.html" class="nav-item ${isActive('leave')}"><i class="ph ph-calendar-check"></i> Leave Management</a>
             <a href="/front-end/employee/leave-request.html" class="nav-item ${isActive('leave-request')}"><i class="ph ph-calendar-x"></i> Leave Request</a>`;
     } else if (user.role === 'TEAMLEAD') {
         navItems = `
