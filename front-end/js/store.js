@@ -46,7 +46,7 @@ class Store {
     }
 
     loadData() {
-        const stored = localStorage.getItem('empTrackDataV6');
+        const stored = localStorage.getItem('empTrackDataV8');
         if (stored) {
             return JSON.parse(stored);
         }
@@ -55,7 +55,7 @@ class Store {
     }
 
     saveData(data = this.data) {
-        localStorage.setItem('empTrackDataV6', JSON.stringify(data));
+        localStorage.setItem('empTrackDataV8', JSON.stringify(data));
         this.data = data;
     }
 
