@@ -1,5 +1,6 @@
 // /js/views/auth/login.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Feature disabled: Let users see the login page to switch accounts or verify navigation
@@ -13,6 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
+            
+            // Compulsory HTML5 Validation Check
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
             
             const emailInput = document.getElementById('email');
             const passInput = document.getElementById('password');
@@ -51,4 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+
 });

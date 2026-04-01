@@ -35,7 +35,11 @@
                         <div class="form-error"></div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                    <div style="text-align: right; margin-top: -8px; margin-bottom: 16px;">
+                        <a href="forgot-password.html" id="forgot-pwd-link" style="color: var(--primary-color); font-size: 13px; font-weight: 500; text-decoration: none;">Forgot Password?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
                         Login <i class="ph ph-arrow-right"></i>
                     </button>
                     
@@ -44,6 +48,11 @@
             </div>
         </div>
     </div>
+
+
+
+    <!-- Toast Container -->
+    <div id="toast-container" style="position:fixed; top:20px; right:20px; z-index:200; display:flex; flex-direction:column; gap:10px;"></div>
 
     <!-- Logic -->
     <script type="module" src="js/views/auth/login.js"></script>
