@@ -62,7 +62,7 @@
                                 <!-- Related Employee -->
                                 <div id="related-employee-wrapper" style="display:flex; flex-direction:column; gap: 8px;">
                                     <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Related Employee Name (Optional)</label>
-                                    <input type="text" placeholder="Start typing the name..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
+                                    <input type="text" id="related-emp-input" placeholder="Start typing the name..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
                                 </div>
         
                                 <!-- Issue Category Grid -->
@@ -94,12 +94,12 @@
                                 <!-- Text Inputs -->
                                 <div style="display:flex; flex-direction:column; gap: 8px;">
                                     <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Issue Title <span style="color:var(--danger-color);">*</span></label>
-                                    <input type="text" placeholder="Short and descriptive title..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
+                                    <input type="text" id="issue-title-input" placeholder="Short and descriptive title..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
                                 </div>
         
                                 <div style="display:flex; flex-direction:column; gap: 8px;">
                                     <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Detailed Description <span style="color:var(--danger-color);">*</span></label>
-                                    <textarea placeholder="Please describe the core situation objectively, including dates or evidence if any..." rows="5" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; resize:vertical; transition: border-color var(--transition-fast);"></textarea>
+                                    <textarea id="issue-desc-textarea" placeholder="Please describe the core situation objectively, including dates or evidence if any..." rows="5" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; resize:vertical; transition: border-color var(--transition-fast);"></textarea>
                                 </div>
         
                                 <!-- Confidentiality Box -->
@@ -112,13 +112,16 @@
                                 </div>
         
                                 <!-- Action Buttons -->
-                                <div style="display:flex; justify-content:flex-end; gap: var(--spacing-md); margin-top: var(--spacing-sm);">
-                                    <button style="padding: 10px 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); background-color: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;">
-                                        Save as Draft
-                                    </button>
-                                    <button id="submit-escalation-btn" style="background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; border: none; padding: 10px 24px; border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); display:flex; align-items:center; gap: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;">
-                                        Submit Escalation
-                                    </button>
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-top: var(--spacing-sm);">
+                                    <div id="form-error-msg" style="color: var(--danger-color); font-size: var(--text-sm); font-weight: var(--font-medium); display: none;"></div>
+                                    <div style="display:flex; gap: var(--spacing-md);">
+                                        <button style="padding: 10px 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); background-color: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;">
+                                            Save as Draft
+                                        </button>
+                                        <button id="submit-escalation-btn" style="background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; border: none; padding: 10px 24px; border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); display:flex; align-items:center; gap: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                                            Submit Escalation
+                                        </button>
+                                    </div>
                                 </div>
         
                             </div>

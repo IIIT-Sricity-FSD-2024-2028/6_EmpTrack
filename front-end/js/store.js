@@ -21,8 +21,8 @@ const INITIAL_MOCK_DATA = {
         { leave_id: "LR-008", emp_id: "EM001", start_date: "2026-02-15", end_date: "2026-02-16", days: "2", leave_type: "UNPAID", reason: "Personal appointments", status: "REJECTED", applied_date: "2026-02-10", approved_date: "2026-02-11", approved_by: "TL001", reject_reason: "Insufficient notice period during critical delivery milestone." }
     ],
     task: [
-        { task_id: "TK001", task_title: "Create Frontend Layout", allocation_id: "W001", assigned_to: "EM001", task_description: "Design the base SPA layout", priority: "HIGH", deadline: "2026-03-30", status: "IN_PROGRESS", progress_percentage: 50, updated_date: "2026-03-28" },
-        { task_id: "TK002", task_title: "Database Schema Updates", allocation_id: "W002", assigned_to: "EM002", task_description: "Match local DB variables with SQL", priority: "MEDIUM", deadline: "2026-03-25", status: "COMPLETED", progress_percentage: 100, updated_date: "2026-03-25" }
+        { task_id: "TK001", task_title: "Create Frontend Layout", allocation_id: "W001", assigned_to: "EM001", task_description: "Design the base SPA layout", priority: "HIGH", deadline: "2026-03-30", status: "IN_PROGRESS", progress_percentage: 50, updated_date: "2026-03-28", warning_sent: false },
+        { task_id: "TK002", task_title: "Database Schema Updates", allocation_id: "W002", assigned_to: "EM002", task_description: "Match local DB variables with SQL", priority: "MEDIUM", deadline: "2026-03-25", status: "COMPLETED", progress_percentage: 100, updated_date: "2026-03-25", warning_sent: false }
     ],
     escalation: [
         { escalation_id: "E001", reference_type: "ATTENDANCE", reference_id: "A001", escalated_from: "EM001", escalated_to: "HR001", escalation_reason: "Swipe system error", escalation_date: "2026-03-28", status: "OPEN" }
@@ -37,7 +37,8 @@ const INITIAL_MOCK_DATA = {
         { worklog_id: "WL-001", emp_id: "EM001", task_id: "TK001", task_title: "Build Front-End UI", start_time: "2026-03-28T09:00", end_time: "2026-03-28T13:00", hours_spent: 4, description: "Completed the main dashboard layout and component structure.", log_date: "2026-03-28" },
         { worklog_id: "WL-002", emp_id: "EM001", task_id: "TK001", task_title: "Build Front-End UI", start_time: "2026-03-28T14:00", end_time: "2026-03-28T16:00", hours_spent: 2, description: "Integrated primary navigation sidebar and fixed hover states.", log_date: "2026-03-28" },
         { worklog_id: "WL-003", emp_id: "EM001", task_id: "TK002", task_title: "Database Schema Map", start_time: "2026-03-29T09:00", end_time: "2026-03-29T11:00", hours_spent: 2, description: "Started mapping variables from SQL mock format to the class constructs.", log_date: "2026-03-29" }
-    ]
+    ],
+    notifications: []
 };
 
 class Store {
@@ -200,6 +201,17 @@ updateUserPassword(empId, newPassword) {
         return false;
     }
 
+    updateTaskDetails(taskId, updates) {
+        const task = this.data.task.find(t => t.task_id === taskId);
+        if (task) {
+            Object.assign(task, updates);
+            task.updated_date = new Date().toISOString().split('T')[0];
+            this.saveData();
+            return task;
+        }
+        return false;
+    }
+
     // --- Issues (Custom Module) ---
     getIssuesForUser(empId) {
         return this.data.issue ? this.data.issue.filter(i => i.emp_id === empId) : [];
@@ -235,6 +247,39 @@ updateUserPassword(empId, newPassword) {
         this.data.work_logs.push(newLog);
         this.saveData();
         return newLog;
+    }
+
+    // --- Notifications ---
+    getNotificationsForUser(empId) {
+        return this.data.notifications ? this.data.notifications.filter(n => n.employee_id === empId).reverse() : [];
+    }
+
+    createNotification(empId, message, type = "info") {
+        if (!this.data.notifications) this.data.notifications = [];
+        const newNotif = {
+            id: 'NOTIF-' + Math.floor(1000 + Math.random() * 9000),
+            employee_id: empId,
+            message: message,
+            type: type, // 'warning', 'info', etc.
+            timestamp: new Date().toISOString()
+        };
+        this.data.notifications.push(newNotif);
+        this.saveData();
+        return newNotif;
+    }
+
+    // --- Escalations (HR Form) ---
+    createEscalationRecord(data) {
+        if (!this.data.escalation) this.data.escalation = [];
+        const newEsc = {
+            escalation_id: 'ESC-' + Math.floor(1000 + Math.random() * 9000),
+            ...data,
+            escalation_date: new Date().toISOString().split('T')[0],
+            status: "OPEN"
+        };
+        this.data.escalation.push(newEsc);
+        this.saveData();
+        return newEsc;
     }
 }
 

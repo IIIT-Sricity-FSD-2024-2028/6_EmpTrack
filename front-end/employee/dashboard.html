@@ -27,104 +27,104 @@
             
             <div class="content-area" id="main-content">
                 <!-- Welcome Banner -->
-                <div class="card" style="margin-bottom: var(--spacing-lg); background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%); color: white; display: flex; justify-content: space-between; align-items: center;">
+                <div class="card dashboard-welcome-banner">
                     <div>
-                        <h2 id="welcome-message" style="color: white; margin:0 0 5px 0; font-size: var(--text-2xl);">Welcome back!</h2>
-                        <p style="color: var(--primary-light); margin:0; font-size: var(--text-sm);">Here is your work summary for today</p>
+                        <h2 id="welcome-message" class="welcome-title">Welcome back!</h2>
+                        <p class="welcome-subtitle">Here is your work summary for today</p>
                     </div>
-                    <div style="font-size: 64px; opacity: 0.8; height: 60px; display: flex; align-items: flex-end;">
+                    <div class="welcome-icon">
                         <i class="ph ph-trend-up"></i>
                     </div>
                 </div>
 
                 <!-- 5 Small Components -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: var(--spacing-md);">
-                        <div style="display:flex; flex-direction:column;">
-                            <span id="stat-total" style="font-size:var(--text-xl); font-weight:var(--font-bold);">0</span>
-                            <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:var(--font-semibold);">Total Tasks</span>
+                <div class="dashboard-stats-grid">
+                    <div class="card stat-card">
+                        <div class="stat-info">
+                            <span id="stat-total" class="stat-value">0</span>
+                            <span class="stat-label">Total Tasks</span>
                         </div>
-                        <div style="width:40px; height:40px; border-radius:50%; background-color:var(--primary-light); color:var(--primary-color); display:flex; align-items:center; justify-content:center; font-size:var(--text-lg);">
+                        <div class="stat-icon icon-primary">
                             <i class="ph-fill ph-briefcase"></i>
                         </div>
                     </div>
 
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: var(--spacing-md);">
-                        <div style="display:flex; flex-direction:column;">
-                            <span id="stat-progress" style="font-size:var(--text-xl); font-weight:var(--font-bold);">0</span>
-                            <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:var(--font-semibold);">In Progress</span>
+                    <div class="card stat-card">
+                        <div class="stat-info">
+                            <span id="stat-progress" class="stat-value">0</span>
+                            <span class="stat-label">In Progress</span>
                         </div>
-                        <div style="width:40px; height:40px; border-radius:50%; background-color:#EFF6FF; color:#3B82F6; display:flex; align-items:center; justify-content:center; font-size:var(--text-lg);">
+                        <div class="stat-icon icon-blue">
                             <i class="ph-fill ph-spinner-gap"></i>
                         </div>
                     </div>
 
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: var(--spacing-md);">
-                        <div style="display:flex; flex-direction:column;">
-                            <span id="stat-pending" style="font-size:var(--text-xl); font-weight:var(--font-bold);">0</span>
-                            <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:var(--font-semibold);">Pending</span>
+                    <div class="card stat-card">
+                        <div class="stat-info">
+                            <span id="stat-pending" class="stat-value">0</span>
+                            <span class="stat-label">Pending</span>
                         </div>
-                        <div style="width:40px; height:40px; border-radius:50%; background-color:#FEF3C7; color:#F59E0B; display:flex; align-items:center; justify-content:center; font-size:var(--text-lg);">
+                        <div class="stat-icon icon-yellow">
                             <i class="ph-fill ph-clock"></i>
                         </div>
                     </div>
 
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: var(--spacing-md);">
-                        <div style="display:flex; flex-direction:column;">
-                            <span id="stat-completed" style="font-size:var(--text-xl); font-weight:var(--font-bold);">0</span>
-                            <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:var(--font-semibold);">Completed</span>
+                    <div class="card stat-card">
+                        <div class="stat-info">
+                            <span id="stat-completed" class="stat-value">0</span>
+                            <span class="stat-label">Completed</span>
                         </div>
-                        <div style="width:40px; height:40px; border-radius:50%; background-color:#D1FAE5; color:#10B981; display:flex; align-items:center; justify-content:center; font-size:var(--text-lg);">
+                        <div class="stat-icon icon-green">
                             <i class="ph-fill ph-check-circle"></i>
                         </div>
                     </div>
 
-                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding: var(--spacing-md);">
-                        <div style="display:flex; flex-direction:column;">
-                            <span id="stat-attendance" style="font-size:var(--text-xl); font-weight:var(--font-bold);">0%</span>
-                            <span style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:var(--font-semibold);">Attendance %</span>
+                    <div class="card stat-card">
+                        <div class="stat-info">
+                            <span id="stat-attendance" class="stat-value">0%</span>
+                            <span class="stat-label">Attendance %</span>
                         </div>
-                        <div style="width:40px; height:40px; border-radius:50%; background-color:#F3F4F6; color:#4B5563; display:flex; align-items:center; justify-content:center; font-size:var(--text-lg);">
+                        <div class="stat-icon icon-gray">
                             <i class="ph-fill ph-calendar-check"></i>
                         </div>
                     </div>
                 </div>
 
                 <!-- Assigned Tasks Summary -->
-                <div class="card" style="margin-bottom: var(--spacing-xl);">
+                <div class="card dashboard-tasks-section">
                     <div class="card-header">
-                        <h3 style="margin:0; font-size:var(--text-lg);">Assigned Tasks Summary</h3>
-                        <a href="tasks.html" class="btn btn-outline" style="padding: 4px 8px; font-size: var(--text-xs);">View All</a>
+                        <h3 class="section-title">Assigned Tasks Summary</h3>
+                        <a href="tasks.html" class="btn btn-outline btn-sm-link">View All</a>
                     </div>
-                    <div id="tasks-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                    <div id="tasks-container" class="dashboard-tasks-list">
                         <!-- Tasks dynamically injected here -->
                     </div>
                 </div>
                 
                 <!-- Bottom Halves -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+                <div class="dashboard-bottom-grid">
                     <div class="card">
                         <div class="card-header">
-                            <h3 style="margin:0; font-size:var(--text-lg);">Attendance Status</h3>
+                            <h3 class="section-title">Attendance Status</h3>
                         </div>
-                        <div style="display: flex; flex-direction: column; gap: var(--spacing-md); margin-top: 10px;">
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
-                                <span style="color: var(--text-muted);">Today's Status</span>
+                        <div class="attendance-status-list">
+                            <div class="attendance-status-item border-bottom">
+                                <span class="status-label">Today's Status</span>
                                 <span id="att-today-badge" class="badge">--</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
-                                <span style="color: var(--text-muted);">Check-In Time</span>
-                                <span id="att-checkin" style="font-weight: var(--font-semibold);">--:--</span>
+                            <div class="attendance-status-item border-bottom">
+                                <span class="status-label">Check-In Time</span>
+                                <span id="att-checkin" class="status-value font-semibold">--:--</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
-                                <span style="color: var(--text-muted);">Work Hours Built</span>
-                                <span id="att-hours" style="font-weight: var(--font-semibold);">0 hrs</span>
+                            <div class="attendance-status-item border-bottom">
+                                <span class="status-label">Work Hours Built</span>
+                                <span id="att-hours" class="status-value font-semibold">0 hrs</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; padding-top: 10px;">
-                                <span style="color: var(--text-muted);">This Month</span>
-                                <div style="text-align: right;">
-                                    <span id="att-month-days" style="font-weight: var(--font-bold); color: var(--primary-color); font-size: var(--text-lg);">0</span>
-                                    <span id="att-month-total" style="font-size: var(--text-xs); color: var(--text-muted);"> / 22 Days Present</span>
+                            <div class="attendance-status-item pt-10">
+                                <span class="status-label">This Month</span>
+                                <div class="month-status">
+                                    <span id="att-month-days" class="month-days">0</span>
+                                    <span id="att-month-total" class="month-total"> / 22 Days Present</span>
                                 </div>
                             </div>
                         </div>
@@ -132,9 +132,9 @@
                     
                     <div class="card">
                         <div class="card-header">
-                            <h3 style="margin:0; font-size:var(--text-lg);">Recent Leave Requests</h3>
+                            <h3 class="section-title">Recent Leave Requests</h3>
                         </div>
-                        <ul id="leaves-list" style="margin-top: 10px; padding: 0; list-style: none;">
+                        <ul id="leaves-list" class="recent-leaves-list">
                             <!-- Leaves injected here -->
                         </ul>
                     </div>

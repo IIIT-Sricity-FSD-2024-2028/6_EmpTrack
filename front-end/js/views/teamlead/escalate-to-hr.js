@@ -1,9 +1,18 @@
 // /js/views/teamlead/escalate-to-hr.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
+
+    // Force Navbar Highlight
+    setTimeout(() => {
+        const navLinks = document.querySelectorAll('.nav-link'); // Assuming modern class
+        navLinks.forEach(l => l.classList.remove('active'));
+        const escLink = Array.from(navLinks).find(l => l.href && l.href.includes('escalations.html'));
+        if (escLink) escLink.classList.add('active');
+    }, 100);
 
     const recentEscalations = [
         { id: 'ESC-402', title: 'Recurring harassment complaint', priority: 'High', status: 'Under Review', date: '2026-03-25', priorityColor: 'var(--danger-color)' },
@@ -87,10 +96,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Submission placeholder
+    // Submission and Validation Logic
     const submitBtn = document.getElementById('submit-escalation-btn');
+    const errorMsg = document.getElementById('form-error-msg');
+    
     if(submitBtn) {
         submitBtn.addEventListener('click', () => {
+            // Reset error
+            if(errorMsg) { 
+                errorMsg.style.display = 'none'; 
+                errorMsg.textContent = ''; 
+            }
+
+            const titleInput = document.getElementById('issue-title-input').value.trim();
+            const descInput = document.getElementById('issue-desc-textarea').value.trim();
+            const empName = document.getElementById('personal-issue-toggle').checked ? 'Personal' : document.getElementById('related-emp-input').value.trim();
+            
+            const activeCat = document.querySelector('.cat-btn.selected');
+            const category = activeCat ? activeCat.getAttribute('data-value') : null;
+            
+            const activePriority = document.querySelector('.priority-chip.active');
+            const priority = activePriority ? activePriority.textContent : null;
+
+            if (!category || !priority || !titleInput || !descInput) {
+                if(errorMsg) {
+                    errorMsg.style.display = 'block';
+                    errorMsg.textContent = 'Please fill out all required fields marked with *';
+                } else {
+                    alert('Please fill out all required fields.');
+                }
+                return;
+            }
+
+            if (!document.getElementById('personal-issue-toggle').checked && !empName) {
+                if(errorMsg) {
+                    errorMsg.style.display = 'block';
+                    errorMsg.textContent = 'Please provide a related employee name.';
+                }
+                return;
+            }
+
+            // Save to DB
+            db.createEscalationRecord({
+                title: titleInput,
+                description: descInput,
+                category: category,
+                priority: priority,
+                related_employee: empName,
+                escalated_by: user.emp_id
+            });
+
             alert('Escalation created successfully!');
             window.location.href = 'escalations.html';
         });
