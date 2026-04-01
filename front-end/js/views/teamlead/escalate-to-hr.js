@@ -5,12 +5,45 @@ import { db } from '../../store.js';
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
-    
+<<<<<<< HEAD
+
+    // Force Navbar Highlight
+    setTimeout(() => {
+        const navLinks = document.querySelectorAll('.nav-link'); // Assuming modern class
+        navLinks.forEach(l => l.classList.remove('active'));
+        const escLink = Array.from(navLinks).find(l => l.href && l.href.includes('escalations.html'));
+        if (escLink) escLink.classList.add('active');
+    }, 100);
+
+    const recentEscalations = [
+        { id: 'ESC-402', title: 'Recurring harassment complaint', priority: 'High', status: 'Under Review', date: '2026-03-25', priorityColor: 'var(--danger-color)' },
+        { id: 'ESC-391', title: 'Request for server upgrades', priority: 'Medium', status: 'Approved', date: '2026-03-15', priorityColor: 'var(--warning-color)' },
+        { id: 'ESC-385', title: 'Prolonged absence without leave', priority: 'High', status: 'Resolved', date: '2026-03-01', priorityColor: 'var(--danger-color)' }
+    ];
+
+    const tbody = document.getElementById('recent-escalations-body');
+    if (tbody) {
+        tbody.innerHTML = recentEscalations.map(esc => `
+            <div style="background-color: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--spacing-md); display:flex; flex-direction:column; gap: var(--spacing-sm); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor:pointer;" class="recent-card">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <span style="font-size: var(--text-xs); color: var(--text-muted); font-weight: var(--font-bold);">${esc.id}</span>
+                    <span style="padding: 2px 8px; border-radius: var(--radius-full); font-size: 10px; background-color: var(--bg-main); color: var(--text-main); font-weight: var(--font-medium);">${esc.date}</span>
+                </div>
+                <h4 style="margin:0; font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${esc.title}">${esc.title}</h4>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: auto;">
+                    <span style="padding: 4px 8px; border-radius: var(--radius-full); font-size: 10px; background-color: ${esc.priorityColor}20; color: ${esc.priorityColor}; font-weight: var(--font-bold);">${esc.priority}</span>
+                    <span style="font-size: 12px; color: ${esc.status === 'Resolved' || esc.status === 'Approved' ? 'var(--secondary-color)' : 'var(--warning-color)'}; font-weight: var(--font-medium);">${esc.status}</span>
+                </div>
+            </div>
+        `).join('');
+=======
+
     // Draft loader if escalated from previous page
     const draftId = localStorage.getItem('escalate_draft_id');
     if (draftId) {
         localStorage.removeItem('escalate_draft_id');
         // If we wanted to pre-fill from draft we could match it here.
+>>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
     }
 
     const renderRecent = () => {
@@ -19,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let priorityColor = 'var(--secondary-color)';
             if (e.priority === 'High') priorityColor = 'var(--danger-color)';
             else if (e.priority === 'Medium') priorityColor = 'var(--warning-color)';
-            
+
             return {
                 id: e.escalation_id,
                 title: e.title || e.escalation_reason || 'Escalation',
@@ -45,13 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             `).join('');
-            
-            if(recentEscalations.length === 0) {
+
+            if (recentEscalations.length === 0) {
                 tbody.innerHTML = '<div style="padding: 20px; text-align:center; color: var(--text-muted); font-size: var(--text-sm);">No active escalations</div>';
             }
         }
     };
-    
+
     renderRecent();
 
     // Back arrow navigation
@@ -116,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navbar highlight hook for 'Escalations' when visiting this page
     setTimeout(() => {
         document.querySelectorAll('.menu-item').forEach(item => {
-            if(item.textContent.trim().includes('Escalations')) {
+            if (item.textContent.trim().includes('Escalations')) {
                 item.classList.add('active');
             } else {
                 item.classList.remove('active');
@@ -125,18 +158,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 
     // Submission logic
+>>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
     const submitBtn = document.getElementById('submit-escalation-btn');
-    if(submitBtn) {
+    const errorMsg = document.getElementById('form-error-msg');
+
+    if (submitBtn) {
         submitBtn.addEventListener('click', (e) => {
             e.preventDefault();
 
             const titleInput = document.querySelector('input[placeholder="Short and descriptive title..."]');
             const descInput = document.querySelector('textarea');
             const relInput = document.querySelector('input[placeholder="Start typing the name..."]');
-            
+
             const catSelected = document.querySelector('.cat-btn.selected');
             const prioSelected = document.querySelector('.priority-chip.active');
-            
+
             const errTitle = document.getElementById('err-title');
             const errDesc = document.getElementById('err-desc');
             const errEmp = document.getElementById('err-emp');
@@ -186,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 category: catSelected.getAttribute('data-value'),
                 priority: prioSelected.textContent.trim(),
                 related_employee: relInput.value || null
+>>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
             });
 
             alert('Escalation created successfully!');

@@ -25,6 +25,8 @@ const INITIAL_MOCK_DATA = {
     task: [
         { task_id: "TK001", task_title: "Create Frontend Layout", allocation_id: "W001", assigned_to: "EM001", task_description: "Design the base SPA layout", priority: "HIGH", deadline: "2026-03-30", status: "IN_PROGRESS", progress_percentage: 50, updated_date: "2026-03-28", warning_sent: false },
         { task_id: "TK002", task_title: "Database Schema Updates", allocation_id: "W002", assigned_to: "EM002", task_description: "Match local DB variables with SQL", priority: "MEDIUM", deadline: "2026-03-25", status: "COMPLETED", progress_percentage: 100, updated_date: "2026-03-25", warning_sent: false }
+        { task_id: "TK001", task_title: "Create Frontend Layout", allocation_id: "W001", assigned_to: "EM001", task_description: "Design the base SPA layout", priority: "HIGH", deadline: "2026-03-30", status: "IN_PROGRESS", progress_percentage: 50, updated_date: "2026-03-28", warning_sent: false },
+        { task_id: "TK002", task_title: "Database Schema Updates", allocation_id: "W002", assigned_to: "EM002", task_description: "Match local DB variables with SQL", priority: "MEDIUM", deadline: "2026-03-25", status: "COMPLETED", progress_percentage: 100, updated_date: "2026-03-25", warning_sent: false }
     ],
     notifications: [],
     escalation: [
@@ -40,7 +42,8 @@ const INITIAL_MOCK_DATA = {
         { worklog_id: "WL-001", emp_id: "EM001", task_id: "TK001", task_title: "Build Front-End UI", start_time: "2026-03-28T09:00", end_time: "2026-03-28T13:00", hours_spent: 4, description: "Completed the main dashboard layout and component structure.", log_date: "2026-03-28" },
         { worklog_id: "WL-002", emp_id: "EM001", task_id: "TK001", task_title: "Build Front-End UI", start_time: "2026-03-28T14:00", end_time: "2026-03-28T16:00", hours_spent: 2, description: "Integrated primary navigation sidebar and fixed hover states.", log_date: "2026-03-28" },
         { worklog_id: "WL-003", emp_id: "EM001", task_id: "TK002", task_title: "Database Schema Map", start_time: "2026-03-29T09:00", end_time: "2026-03-29T11:00", hours_spent: 2, description: "Started mapping variables from SQL mock format to the class constructs.", log_date: "2026-03-29" }
-    ]
+    ],
+    notifications: []
 };
 
 class Store {
@@ -78,14 +81,14 @@ class Store {
     getUsersByManager(managerId) {
         return this.data.employee.filter(u => u.manager_id === managerId);
     }
-updateUserPassword(empId, newPassword) {
-    const user = this.data.employee.find(u => u.emp_id === empId);
-    if (!user) return { error: "User not found" };
+    updateUserPassword(empId, newPassword) {
+        const user = this.data.employee.find(u => u.emp_id === empId);
+        if (!user) return { error: "User not found" };
 
-    user.password = newPassword;
-    this.saveData();
-    return { success: true };
-}
+        user.password = newPassword;
+        this.saveData();
+        return { success: true };
+    }
     // --- Attendance ---
     getAttendanceForUser(empId) {
         return this.data.attendance.filter(a => a.emp_id === empId);
@@ -203,6 +206,17 @@ updateUserPassword(empId, newPassword) {
         return false;
     }
 
+<<<<<<< HEAD
+    updateTaskDetails(taskId, updates) {
+        const task = this.data.task.find(t => t.task_id === taskId);
+        if (task) {
+            Object.assign(task, updates);
+            task.updated_date = new Date().toISOString().split('T')[0];
+            this.saveData();
+            return task;
+        }
+        return false;
+=======
     deleteTask(taskId) {
         this.data.task = this.data.task.filter(t => t.task_id !== taskId);
         this.saveData();
@@ -282,6 +296,35 @@ updateUserPassword(empId, newPassword) {
         return newLog;
     }
 
+<<<<<<< HEAD
+    // --- Notifications ---
+    getNotificationsForUser(empId) {
+        return this.data.notifications ? this.data.notifications.filter(n => n.employee_id === empId).reverse() : [];
+    }
+
+    createNotification(empId, message, type = "info") {
+        if (!this.data.notifications) this.data.notifications = [];
+        const newNotif = {
+            id: 'NOTIF-' + Math.floor(1000 + Math.random() * 9000),
+            employee_id: empId,
+            message: message,
+            type: type, // 'warning', 'info', etc.
+            timestamp: new Date().toISOString()
+        };
+        this.data.notifications.push(newNotif);
+        this.saveData();
+        return newNotif;
+    }
+
+    // --- Escalations (HR Form) ---
+    createEscalationRecord(data) {
+        if (!this.data.escalation) this.data.escalation = [];
+        const newEsc = {
+            escalation_id: 'ESC-' + Math.floor(1000 + Math.random() * 9000),
+            ...data,
+            escalation_date: new Date().toISOString().split('T')[0],
+            status: "OPEN"
+=======
     // --- Escalation ---
     getAllEscalations() {
         return this.data.escalation || [];
@@ -294,11 +337,14 @@ updateUserPassword(empId, newPassword) {
             escalation_date: new Date().toISOString().split('T')[0],
             status: 'OPEN',
             ...escData
-        };
+>>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
+    };
         this.data.escalation.push(newEsc);
-        this.saveData();
-        return newEsc;
+this.saveData();
+return newEsc;
     }
+<<<<<<< HEAD
+=======
 
     updateEscalation(id, updates) {
         const esc = (this.data.escalation || []).find(e => e.escalation_id === id);
