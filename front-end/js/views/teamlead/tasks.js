@@ -1,5 +1,6 @@
 // /js/views/teamlead/tasks.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
@@ -8,12 +9,24 @@ document.addEventListener('DOMContentLoaded', () => {
     /* -------------------------------
        FRONTEND STATE
     --------------------------------*/
-    let stateTasks = [
-        { id: "T-045", employee: "John Dev", title: "Payment Gateway", description: "Integrate Stripe", hours: 40, deadline: "2026-03-20", status: "Assigned" },
-        { id: "T-046", employee: "Sarah Johnson", title: "Profile Enhancement", description: "Add validation", hours: 24, deadline: "2026-03-15", status: "Assigned" },
-        { id: "T-047", employee: "Mike Davis", title: "Performance Optimization", description: "Optimize queries", hours: 32, deadline: "2026-03-18", status: "In Progress" },
-        { id: "T-048", employee: "Emma Wilson", title: "Mobile Design", description: "Responsive UI", hours: 48, deadline: "2026-03-25", status: "Assigned" }
-    ];
+    const getTasksFromDB = () => {
+        return db.getAllTasksForManager(user.emp_id).map(t => {
+            const emp = db.getUserById(t.assigned_to) || {emp_name: 'Employee'};
+            let status = 'Assigned';
+            if (t.status === 'IN_PROGRESS') status = 'In Progress';
+            if (t.status === 'COMPLETED') status = 'Completed';
+            
+            return {
+                id: t.task_id,
+                employee: emp.emp_name.split(' (')[0],
+                title: t.task_title,
+                description: t.task_description,
+                hours: t.est_hours || 40,
+                deadline: t.deadline,
+                status: status
+            };
+        });
+    };
 
     let filterSearch = '';
     let filterStatus = 'All';
@@ -57,9 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
        SUMMARY STATS
     --------------------------------*/
     const countTasks = () => {
-        const total = stateTasks.length;
-        const active = stateTasks.filter(t => t.status === 'In Progress').length;
-        const completed = stateTasks.filter(t => t.status === 'Completed').length;
+        const all = getTasksFromDB();
+        const total = all.length;
+        const active = all.filter(t => t.status === 'In Progress').length;
+        const completed = all.filter(t => t.status === 'Completed').length;
         const pending = Math.max(0, 8 - total % 8);
         return { total, active, completed, pending };
     };
@@ -106,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
        FILTER + SORT
     --------------------------------*/
     const getFilteredTasks = () => {
-        let filtered = stateTasks.filter(task => {
+        let filtered = getTasksFromDB().filter(task => {
             const searchMatch = task.title.toLowerCase().includes(filterSearch.toLowerCase()) ||
                                 task.employee.toLowerCase().includes(filterSearch.toLowerCase());
             const statusMatch = filterStatus === "All" || task.status === filterStatus;
@@ -131,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const row = e.target.closest("tr");
                 const id = row.dataset.id;
                 if (!confirm("Delete this task?")) return;
-                stateTasks = stateTasks.filter(t => t.id !== id);
+                db.deleteTask(id);
                 renderTaskTable();
                 renderSummaryCards();
                 showToast("Task deleted", "danger");
@@ -187,23 +201,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (assignForm) {
         assignForm.addEventListener("submit", e => {
             e.preventDefault();
-            const emp = document.getElementById("form-emp").value;
+            const empNameStr = document.getElementById("form-emp").value;
+            // The value gives name, need to find emp_id.
+            // Simplified: let's try to match it first.
+            const empObj = db.getUsersByManager(user.emp_id).find(e => e.emp_name.includes(empNameStr)) || {emp_id: "EM001"};
+            
             const title = document.getElementById("form-title").value;
             const desc = document.getElementById("form-desc").value;
             const hours = document.getElementById("form-hours").value;
             const deadline = document.getElementById("form-deadline").value;
 
-            const newTask = {
-                id: "T-" + Math.floor(100 + Math.random() * 900),
-                employee: emp,
-                title: title,
-                description: desc,
-                hours: parseInt(hours),
+            db.createTask({
+                task_title: title,
+                allocation_id: "W" + Math.floor(100+Math.random()*900),
+                assigned_to: empObj.emp_id,
+                task_description: desc,
+                priority: "HIGH",
                 deadline: deadline,
-                status: "Assigned"
-            };
+                est_hours: parseInt(hours) || 40
+            });
 
-            stateTasks.push(newTask);
             renderTaskTable();
             renderSummaryCards();
             e.target.reset();

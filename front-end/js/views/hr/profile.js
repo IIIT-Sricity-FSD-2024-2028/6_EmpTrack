@@ -17,10 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailContainer = document.getElementById('info-email');
     if (emailContainer) emailContainer.textContent = user.email || 'user@company.com';
 
-    // Mock specific HR data
-    document.getElementById('profile-role').textContent = 'HR Manager - Human Resources';
-    document.getElementById('profile-exp').textContent = '8 Years Experience';
-    document.getElementById('profile-joined').textContent = 'Joined 2017-06-01';
+    document.getElementById('profile-role').textContent = 'HR - ' + (user.department_id === 'D01' ? 'Human Resources' : user.department_id);
+    document.getElementById('profile-exp').textContent = user.phone ? 'Verified Contact' : 'New Employee';
+    document.getElementById('profile-joined').textContent = 'Joined ' + (user.date_of_joining || 'Recently');
 
     // Handle Picture Upload Click
     const uploadBtn = document.getElementById('upload-avatar-btn');

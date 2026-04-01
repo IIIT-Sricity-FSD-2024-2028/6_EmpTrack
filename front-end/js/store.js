@@ -202,6 +202,11 @@ updateUserPassword(empId, newPassword) {
         return false;
     }
 
+    deleteTask(taskId) {
+        this.data.task = this.data.task.filter(t => t.task_id !== taskId);
+        this.saveData();
+    }
+
     // --- Issues (Custom Module) ---
     getIssuesForUser(empId) {
         return this.data.issue ? this.data.issue.filter(i => i.emp_id === empId) : [];
@@ -222,6 +227,32 @@ updateUserPassword(empId, newPassword) {
         return newIssue;
     }
 
+    getAllIssues() {
+        return this.data.issue || [];
+    }
+
+    deleteIssue(issueId) {
+        if (this.data.issue) {
+            this.data.issue = this.data.issue.filter(i => i.issue_id !== issueId);
+            this.saveData();
+        }
+    }
+
+    getIssuesForManager(managerId) {
+        const teamIds = this.getUsersByManager(managerId).map(m => m.emp_id);
+        return (this.data.issue || []).filter(i => teamIds.includes(i.emp_id));
+    }
+
+    updateIssue(issueId, updates) {
+        const issue = (this.data.issue || []).find(i => i.issue_id === issueId);
+        if (issue) {
+            Object.assign(issue, updates);
+            this.saveData();
+            return issue;
+        }
+        return null;
+    }
+
     // --- Work Logs ---
     getWorkLogsForUser(empId) {
         return this.data.work_logs ? this.data.work_logs.filter(wl => wl.emp_id === empId) : [];
@@ -237,6 +268,34 @@ updateUserPassword(empId, newPassword) {
         this.data.work_logs.push(newLog);
         this.saveData();
         return newLog;
+    }
+
+    // --- Escalation ---
+    getAllEscalations() {
+        return this.data.escalation || [];
+    }
+
+    createEscalation(escData) {
+        if (!this.data.escalation) this.data.escalation = [];
+        const newEsc = {
+            escalation_id: 'E' + Math.floor(1000 + Math.random() * 9000),
+            escalation_date: new Date().toISOString().split('T')[0],
+            status: 'OPEN',
+            ...escData
+        };
+        this.data.escalation.push(newEsc);
+        this.saveData();
+        return newEsc;
+    }
+
+    updateEscalation(id, updates) {
+        const esc = (this.data.escalation || []).find(e => e.escalation_id === id);
+        if (esc) {
+            Object.assign(esc, updates);
+            this.saveData();
+            return esc;
+        }
+        return null;
     }
 }
 
