@@ -30,6 +30,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'badge-open'; 
     };
 
+    document.getElementById('update-comment-btn').addEventListener('click', () => {
+        const comment = document.getElementById('comment').value;
+        if(!comment) {
+            alert("Please enter a comment");
+            return;
+        }else{
+            alert("Comment is Updated")
+        }
+    });
+    document.getElementById('close-issue-btn').addEventListener('click', () => {
+        alert("Issue is closed")
+        window.location.href = 'issues-list.html';
+    });
+    
+
     let progressPerc = 25; // Open
     let timelineIndex = 0;
     if(issue.status === 'In Progress') { progressPerc = 60; timelineIndex = 3; }

@@ -2,12 +2,12 @@
 import { auth } from '../../auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // If already authenticated, redirect to dashboard based on role
-    if (auth.isAuthenticated()) {
-        const role = auth.getRole();
-        window.location.href = `/front-end/${role.toLowerCase()}/dashboard.html`;
-        return;
-    }
+    // Feature disabled: Let users see the login page to switch accounts or verify navigation
+    // if (auth.isAuthenticated()) {
+    //     const role = auth.getRole();
+    //     window.location.href = `/front-end/${role.toLowerCase()}/dashboard.html`;
+    //     return;
+    // }
 
     const form = document.getElementById('login-form');
     if (form) {

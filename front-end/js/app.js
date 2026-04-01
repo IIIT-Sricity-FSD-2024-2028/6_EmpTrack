@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize layout (sidebar and header injection) on generic pages
-    if (!window.location.pathname.includes('login.html')) {
+    if (!window.location.pathname.includes('login.html') && !window.location.pathname.endsWith('index.html') && window.location.pathname !== '/front-end/') {
         initLayout();
     }
 });

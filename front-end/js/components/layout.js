@@ -118,7 +118,7 @@ export function initLayout() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
             auth.logout();
-            window.location.href = '/front-end/login.html';
+            window.location.href = '/front-end/index.html';
         });
     }
 
