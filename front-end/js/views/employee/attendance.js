@@ -21,12 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Summary Metrics
         let todayStatusText = todaysRecord ? "Present" : "Absent";
-        if(!todaysRecord) todayStatusText = "Pending";
+        if (!todaysRecord) todayStatusText = "Pending";
         let statusColor = todaysRecord ? "var(--secondary-color)" : "var(--text-muted)";
-        
-        let hoursToday = todaysRecord?.hours_spent || "0h";
+        let hoursToday = todaysRecord?.hours_spent || 0;
         let progressPerc = isCheckedIn ? 40 : (isCheckedOut ? 100 : 0);
-        
+
         let presentDays = attendanceRecords.filter(a => a.status === 'PRESENT' && a.attendance_date.startsWith(todayStr.slice(0, 7))).length;
         let monthString = `${presentDays}/22`; // Assuming 22 work days mapped "this month"
 
@@ -83,11 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tbody) {
             tbody.innerHTML = attendanceRecords.reverse().map(a => {
                 let badge = 'badge-not-started';
-                if(a.status === 'PRESENT') badge = 'badge-present';
-                if(a.status === 'ABSENT') badge = 'badge-absent';
-                if(a.status === 'WEEKEND') badge = 'badge-weekend';
-                if(a.status === 'ESCALATED') badge = 'badge-escalated';
-                
+                if (parseInt(a.hours_spent) < 4.0) {
+                    a.status = 'ESCALATED'
+                }
+                if (a.status === 'PRESENT') badge = 'badge-present';
+                if (a.status === 'ABSENT') badge = 'badge-absent';
+                if (a.status === 'WEEKEND') badge = 'badge-weekend';
+                if (a.status === 'ESCALATED') badge = 'badge-escalated';
+
                 let highlightRow = a.attendance_date === todayStr ? 'background-color:#F5F3FF;' : '';
 
                 return `
@@ -139,13 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (todaysRecord && todaysRecord.check_in_time) return;
 
         const now = new Date();
-        const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-        
+        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
         const overrideLocElement = document.getElementById('loc-home');
         if (overrideLocElement && overrideLocElement.classList.contains('active')) activeLocation = 'Home';
 
         const res = db.markAttendance(user.emp_id, timeStr, activeLocation === "Home" ? "REMOTE" : "OFFICE");
-        if(res && !res.error) {
+        if (res && !res.error) {
             res.remarks = "Checked In";
             db.saveData();
             render();
@@ -154,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btn-checkout')?.addEventListener('click', () => {
         const res = db.markCheckOut(user.emp_id);
-        if(res && !res.error) {
+        if (res && !res.error) {
             res.remarks = "Completed";
             db.saveData();
             render();

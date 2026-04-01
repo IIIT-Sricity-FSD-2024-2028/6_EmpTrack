@@ -59,7 +59,7 @@ export function initLayout() {
                     ${navItems}
                 </nav>
                 <div class="sidebar-footer" style="padding-bottom: var(--spacing-md);">
-                    <button id="logout-btn" class="nav-item" style="width: 100%; justify-content:flex-start; outline:none; margin-bottom: var(--spacing-md); background: transparent; border: none; cursor: pointer; color: var(--text-muted); font-size: var(--text-sm);">
+                    <button id="logout-btn" class="nav-item" style="width: 100%; justify-content:flex-start; outline:none; margin-bottom: var(--spacing-md); background: transparent; border: none; cursor: pointer; color: white; font-size: var(--text-sm);">
                         <i class="ph ph-sign-out"></i> Logout
                     </button>
                     
@@ -94,9 +94,6 @@ export function initLayout() {
                     <span style="font-size:var(--text-xs); color:var(--text-muted); font-weight:var(--font-medium);">${rolePortal}</span>
                 </div>
                 <div class="header-right" style="display:flex; gap:16px; align-items:center;">
-                    <div class="theme-toggle" id="themeToggleBtn" style="font-size: var(--text-xl); color: var(--text-muted); cursor: pointer; transition: 0.2s;">
-                        <i class="ph ph-moon"></i>
-                    </div>
                     <a href="/front-end/${user.role.toLowerCase()}/notifications.html" style="text-decoration:none; color:inherit;">
                         <div class="notification-bell ${isActive('notifications') ? 'active-bell' : ''}" style="font-size: var(--text-xl); color: ${isActive('notifications') ? 'var(--nt-primary)' : 'var(--text-muted)'}; cursor: pointer; transition: 0.2s; position:relative;">
                             <i class="ph ph-bell"></i>
@@ -119,26 +116,6 @@ export function initLayout() {
         logoutBtn.addEventListener('click', () => {
             auth.logout();
             window.location.href = '/front-end/index.html';
-        });
-    }
-
-    const body = document.body;
-    const themeBtn = document.getElementById('themeToggleBtn');
-    if (themeBtn) {
-        const themeIcon = themeBtn.querySelector('i');
-        themeBtn.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            if (body.classList.contains('dark-mode')) {
-                themeIcon.className = 'ph ph-sun';
-                if (!document.getElementById('dark-theme-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'dark-theme-style';
-                    style.innerHTML = "body.dark-mode { --bg-main: #0F172A; --bg-surface: #1E293B; --text-main: #F8FAFC; --text-muted: #94A3B8; --border-color: #334155; --border-light: #1E293B; background: var(--bg-main); color: var(--text-main); }";
-                    document.head.appendChild(style);
-                }
-            } else {
-                themeIcon.className = 'ph ph-moon';
-            }
         });
     }
 

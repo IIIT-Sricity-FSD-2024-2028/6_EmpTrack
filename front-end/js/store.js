@@ -10,10 +10,10 @@ const INITIAL_MOCK_DATA = {
         { emp_id: "EM002", emp_name: "Jane Smith (EMP)", email: "jane@emp.com", phone: "4445556666", password: "password123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001" }
     ],
     attendance: [
-        { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: "6.5h", remarks: "On track", status: "PRESENT" },
-        { attendance_id: "A002", emp_id: "EM001", attendance_date: "2026-03-05", attendance_mode: null, check_in_time: null, check_out_time: null, screen_time: 0, hours_spent: "-", remarks: "Absent", status: "ABSENT" },
-        { attendance_id: "A003", emp_id: "EM001", attendance_date: "2026-03-02", attendance_mode: null, check_in_time: null, check_out_time: null, screen_time: 0, hours_spent: "-", remarks: "Off day", status: "WEEKEND" },
-        { attendance_id: "A004", emp_id: "EM001", attendance_date: "2026-02-27", attendance_mode: "REMOTE", check_in_time: "09:00", check_out_time: "13:00", screen_time: 240, hours_spent: "4h", remarks: "Below target", status: "ESCALATED" }
+        { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: 6, remarks: "On track", status: "PRESENT" },
+        { attendance_id: "A002", emp_id: "EM001", attendance_date: "2026-03-05", attendance_mode: null, check_in_time: null, check_out_time: null, screen_time: 0, hours_spent: 0, remarks: "Absent", status: "ABSENT" },
+        { attendance_id: "A003", emp_id: "EM001", attendance_date: "2026-03-02", attendance_mode: null, check_in_time: null, check_out_time: null, screen_time: 0, hours_spent: 0, remarks: "Off day", status: "WEEKEND" },
+        { attendance_id: "A004", emp_id: "EM001", attendance_date: "2026-02-27", attendance_mode: "REMOTE", check_in_time: "09:00", check_out_time: "13:00", screen_time: 240, hours_spent: 4, remarks: "Below target", status: "ESCALATED" }
     ],
     leave_details: [
         { leave_id: "LR-015", emp_id: "EM001", start_date: "2026-03-20", end_date: "2026-03-25", days: "6", leave_type: "CASUAL", reason: "Family vacation", status: "PENDING", applied_date: "2026-03-07", approved_date: null, approved_by: null, reject_reason: null },
@@ -59,15 +59,15 @@ class Store {
         this.data = data;
     }
 
-// ... keeping internal methods but expanding below explicitly
-// The previous lines weren't matched perfectly because I need to replace V5 first
+    // ... keeping internal methods but expanding below explicitly
+    // The previous lines weren't matched perfectly because I need to replace V5 first
 
 
     // --- Employee ---
     getUserByEmail(email) {
         return this.data.employee.find(u => u.email === email);
     }
-    
+
     getUserById(id) {
         return this.data.employee.find(u => u.emp_id === id);
     }
@@ -115,10 +115,10 @@ class Store {
         // Calculate generic diff
         const [inH, inM] = record.check_in_time.split(':').map(Number);
         const [outH, outM] = record.check_out_time.split(':').map(Number);
-        let diffHrs = (outH + outM/60) - (inH + inM/60);
-        if(diffHrs < 0) diffHrs = 0;
+        let diffHrs = (outH + outM / 60) - (inH + inM / 60);
+        if (diffHrs < 0) diffHrs = 0;
 
-        record.hours_spent = diffHrs.toFixed(1) + 'h';
+        record.hours_spent = diffHrs.toFixed(1);
         this.saveData();
         return record;
     }
@@ -185,7 +185,7 @@ class Store {
         const task = this.data.task.find(t => t.task_id === taskId);
         if (task) {
             task.status = status;
-            if(percentage !== undefined) task.progress_percentage = percentage;
+            if (percentage !== undefined) task.progress_percentage = percentage;
             task.updated_date = new Date().toISOString().split('T')[0];
             this.saveData();
             return task;
@@ -199,7 +199,7 @@ class Store {
     }
 
     createIssue(issueData) {
-        if(!this.data.issue) this.data.issue = [];
+        if (!this.data.issue) this.data.issue = [];
         const newIssue = {
             issue_id: 'ISS-' + Math.floor(1000 + Math.random() * 9000),
             ...issueData,
@@ -219,7 +219,7 @@ class Store {
     }
 
     createWorkLog(logData) {
-        if(!this.data.work_logs) this.data.work_logs = [];
+        if (!this.data.work_logs) this.data.work_logs = [];
         const newLog = {
             worklog_id: 'WL-' + Math.floor(1000 + Math.random() * 9000),
             ...logData,
