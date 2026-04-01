@@ -1,5 +1,6 @@
 // /js/views/teamlead/dashboard.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
@@ -8,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameEl = document.getElementById('tl-name');
     if (nameEl) nameEl.textContent = user.emp_name.split(' ')[0];
 
-    // Added approval/rejection logic implementation from previous conversational design
+    // Toast Container Logic
     const toastContainer = document.getElementById('toast-container');
     const showToast = (message, type = 'success') => {
         const toast = document.createElement('div');
@@ -25,23 +26,69 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => toast.remove(), 3000);
     };
 
-    document.querySelectorAll('.btn-approve').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.tl-approval-card');
-            if (card) {
-                card.remove();
-                showToast("Request Approved", "success");
-            }
-        });
-    });
+    const pendingContainer = document.getElementById('pending-approvals-container');
 
-    document.querySelectorAll('.btn-reject').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const card = e.target.closest('.tl-approval-card');
-            if (card) {
-                card.remove();
-                showToast("Request Rejected", "danger");
-            }
+    function renderPendingLeaves() {
+        if (!pendingContainer) return;
+
+        // Get members reporting to this Team Lead
+        const teamMembers = db.getUsersByManager(user.emp_id);
+        const memberIds = teamMembers.map(m => m.emp_id);
+
+        const allLeaves = db.getAllLeaves();
+        const pendingLeaves = allLeaves.filter(l => l.status === 'PENDING' && memberIds.includes(l.emp_id));
+
+        if (pendingLeaves.length === 0) {
+            pendingContainer.innerHTML = '<div style="color:var(--text-muted); font-size:var(--text-sm); margin-top:20px;">No pending approvals at this time.</div>';
+            return;
+        }
+
+        pendingContainer.innerHTML = pendingLeaves.reverse().map(l => {
+            const emp = teamMembers.find(m => m.emp_id === l.emp_id);
+            const empName = emp ? emp.emp_name.split(' (')[0] : 'Employee';
+            return `
+                <div class="tl-approval-card" data-leave-id="${l.leave_id}">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <strong>${empName}</strong>
+                        <span class="badge-pending">Pending</span>
+                    </div>
+                    <div style="font-size:var(--text-sm); color:var(--text-muted); margin-bottom:12px;">
+                        Leave Request &bull; ${l.leave_type.charAt(0).toUpperCase() + l.leave_type.slice(1).toLowerCase()} &bull; ${l.applied_date}
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-primary btn-approve" data-id="${l.leave_id}" style="flex:1; background-color:#16A34A; padding:6px; font-size:var(--text-sm);">Approve</button>
+                        <button class="btn btn-danger btn-reject" data-id="${l.leave_id}" style="flex:1; padding:6px; font-size:var(--text-sm);">Reject</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        attachApprovalListeners();
+    }
+
+    function attachApprovalListeners() {
+        document.querySelectorAll('.btn-approve').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const leaveId = e.target.getAttribute('data-id');
+                if (leaveId) {
+                    db.updateLeaveStatus(leaveId, 'APPROVED', user.emp_id);
+                    renderPendingLeaves();
+                    showToast("Request Approved", "success");
+                }
+            });
         });
-    });
+
+        document.querySelectorAll('.btn-reject').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const leaveId = e.target.getAttribute('data-id');
+                if (leaveId) {
+                    db.updateLeaveStatus(leaveId, 'REJECTED', user.emp_id);
+                    renderPendingLeaves();
+                    showToast("Request Rejected", "danger");
+                }
+            });
+        });
+    }
+
+    renderPendingLeaves();
 });
