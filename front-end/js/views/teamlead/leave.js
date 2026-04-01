@@ -1,31 +1,58 @@
 // /js/views/teamlead/leave.js
 import { auth } from '../../auth.js';
-
-document.addEventListener('DOMContentLoaded', () => {
+import { db } from '../../store.js';document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
     let currentFilter = 'Pending'; // 'Pending' or 'Approved'
-
-    const summaryStats = {
-        pending: 3,
-        approved: 12,
-        unauthorized: 2,
-        availability: '85%'
-    };
 
     const unauthorizedData = [
         { id: 'UA-001', name: 'Mike Davis', days: 1, date: '2026-03-29', escalated: '2026-03-30', reason: 'No-Call No-Show' },
         { id: 'UA-002', name: 'James Brown', days: 2, date: '2026-03-27 to 2026-03-28', escalated: '2026-03-29', reason: 'Unreachable during shift' }
     ];
 
-    let leaveRequests = [
-        { id: 'LR-1045', emp: 'Sarah Johnson', type: 'Vacation', start: '2026-04-10', end: '2026-04-14', days: 4, reason: 'Family trip', balance: 12, status: 'Pending' },
-        { id: 'LR-1048', emp: 'Emma Wilson', type: 'Sick Leave', start: '2026-03-31', end: '2026-03-31', days: 1, reason: 'Doctor appointment', balance: 8, status: 'Pending' },
-        { id: 'LR-1050', emp: 'Lisa Anderson', type: 'Personal Leave', start: '2026-04-05', end: '2026-04-05', days: 1, reason: 'Attending wedding', balance: 5, status: 'Pending' },
-        { id: 'LR-1033', emp: 'John Smith', type: 'Emergency', start: '2026-03-25', end: '2026-03-26', days: 2, reason: 'Family emergency', balance: 6, status: 'Approved' },
-        { id: 'LR-1029', emp: 'Mike Davis', type: 'Vacation', start: '2026-03-15', end: '2026-03-18', days: 4, reason: 'Out of town', balance: 10, status: 'Approved' },
-    ];
+    const getLeaveRequestsFromDB = () => {
+        const teamMembers = db.getUsersByManager(user.emp_id);
+        const memberIds = teamMembers.map(m => m.emp_id);
+        const allLeaves = db.getAllLeaves();
+        
+        return allLeaves
+            .filter(l => memberIds.includes(l.emp_id))
+            .map(l => {
+                const emp = teamMembers.find(m => m.emp_id === l.emp_id);
+                const empName = emp ? emp.emp_name.split(' (')[0] : 'Employee';
+                let type = l.leave_type || '';
+                if(type === 'CASUAL') type = 'Vacation';
+                else if(type === 'SICK') type = 'Sick Leave';
+                else if(type === 'UNPAID') type = 'Personal Leave';
+                else if(type === 'EMERGENCY') type = 'Emergency';
+                else type = 'Vacation';
+                
+                let leaveStatus = l.status === 'PENDING' ? 'Pending' :
+                                  l.status === 'APPROVED' ? 'Approved' : 'Rejected';
+
+                let days = l.days;
+                if (!days && l.start_date && l.end_date) {
+                    const d1 = new Date(l.start_date);
+                    const d2 = new Date(l.end_date);
+                    days = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+                }
+
+                return {
+                    id: l.leave_id,
+                    emp: empName,
+                    type: type,
+                    start: l.start_date,
+                    end: l.end_date,
+                    days: days || 1, 
+                    reason: l.reason || '',
+                    balance: 12, // Mock balance
+                    status: leaveStatus
+                };
+            }).reverse();
+    };
+
+    let leaveRequests = [];
 
     const getLeaveTypeBadge = (type) => {
         let bg, color;
@@ -52,10 +79,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateSummaryCards = () => {
-        document.getElementById('stat-pending').textContent = summaryStats.pending;
-        document.getElementById('stat-approved').textContent = summaryStats.approved;
-        document.getElementById('stat-unauthorized').textContent = summaryStats.unauthorized;
-        document.getElementById('stat-availability').textContent = summaryStats.availability;
+        const reqs = getLeaveRequestsFromDB();
+        const pendingCount = reqs.filter(r => r.status === 'Pending').length;
+        const approvedCount = reqs.filter(r => r.status === 'Approved').length;
+        
+        const elPending = document.getElementById('stat-pending');
+        if(elPending) elPending.textContent = pendingCount;
+        
+        const elApproved = document.getElementById('stat-approved');
+        if(elApproved) elApproved.textContent = approvedCount;
+        
+        const elUnauthorized = document.getElementById('stat-unauthorized');
+        if(elUnauthorized) elUnauthorized.textContent = unauthorizedData.length;
+        
+        const elAvailability = document.getElementById('stat-availability');
+        if(elAvailability) elAvailability.textContent = '85%';
     };
 
     const renderUnauthorizedData = () => {
@@ -82,6 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderLeaveRequests = () => {
+        leaveRequests = getLeaveRequestsFromDB();
         const filteredLeaves = leaveRequests.filter(lr => lr.status === currentFilter);
         const tbody = document.getElementById('leave-table-body');
         const actionTh = document.getElementById('leave-action-th');
@@ -133,27 +172,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.approve-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
-                const req = leaveRequests.find(lr => lr.id === id);
-                if (req) {
-                    req.status = 'Approved';
-                    summaryStats.pending--;
-                    summaryStats.approved++;
-                    renderLeaveRequests();
-                    updateSummaryCards();
-                }
+                db.updateLeaveStatus(id, 'APPROVED', user.emp_id);
+                renderLeaveRequests();
+                updateSummaryCards();
             });
         });
 
         document.querySelectorAll('.reject-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
-                const req = leaveRequests.find(lr => lr.id === id);
-                if (req) {
-                    req.status = 'Rejected';
-                    summaryStats.pending--;
-                    renderLeaveRequests();
-                    updateSummaryCards();
-                }
+                db.updateLeaveStatus(id, 'REJECTED', user.emp_id);
+                renderLeaveRequests();
+                updateSummaryCards();
             });
         });
     };

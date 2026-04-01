@@ -4,10 +4,12 @@
 
 const INITIAL_MOCK_DATA = {
     employee: [
-        { emp_id: "HR001", emp_name: "Super Admin", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01" },
-        { emp_id: "TL001", emp_name: "Rinku Singh (TL)", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
-        { emp_id: "EM001", emp_name: "John Doe (EMP)", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001" },
-        { emp_id: "EM002", emp_name: "Jane Smith (EMP)", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001" }
+        { emp_id: "HR001", emp_name: "Rohini Sai", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01" },
+        { emp_id: "TL001", emp_name: "Rinku Singh", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
+        { emp_id: "HR001", emp_name: "Rohini Sai", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01" },
+        { emp_id: "TL001", emp_name: "Rinku Singh", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
+        { emp_id: "EM001", emp_name: "John Doe", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001" },
+        { emp_id: "EM002", emp_name: "Jane Smith", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001" }
     ],
     attendance: [
         { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: 6, remarks: "On track", status: "PRESENT" },
@@ -201,6 +203,7 @@ updateUserPassword(empId, newPassword) {
         return false;
     }
 
+<<<<<<< HEAD
     updateTaskDetails(taskId, updates) {
         const task = this.data.task.find(t => t.task_id === taskId);
         if (task) {
@@ -210,6 +213,11 @@ updateUserPassword(empId, newPassword) {
             return task;
         }
         return false;
+=======
+    deleteTask(taskId) {
+        this.data.task = this.data.task.filter(t => t.task_id !== taskId);
+        this.saveData();
+>>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
     }
 
     // --- Issues (Custom Module) ---
@@ -232,6 +240,32 @@ updateUserPassword(empId, newPassword) {
         return newIssue;
     }
 
+    getAllIssues() {
+        return this.data.issue || [];
+    }
+
+    deleteIssue(issueId) {
+        if (this.data.issue) {
+            this.data.issue = this.data.issue.filter(i => i.issue_id !== issueId);
+            this.saveData();
+        }
+    }
+
+    getIssuesForManager(managerId) {
+        const teamIds = this.getUsersByManager(managerId).map(m => m.emp_id);
+        return (this.data.issue || []).filter(i => teamIds.includes(i.emp_id));
+    }
+
+    updateIssue(issueId, updates) {
+        const issue = (this.data.issue || []).find(i => i.issue_id === issueId);
+        if (issue) {
+            Object.assign(issue, updates);
+            this.saveData();
+            return issue;
+        }
+        return null;
+    }
+
     // --- Work Logs ---
     getWorkLogsForUser(empId) {
         return this.data.work_logs ? this.data.work_logs.filter(wl => wl.emp_id === empId) : [];
@@ -249,6 +283,7 @@ updateUserPassword(empId, newPassword) {
         return newLog;
     }
 
+<<<<<<< HEAD
     // --- Notifications ---
     getNotificationsForUser(empId) {
         return this.data.notifications ? this.data.notifications.filter(n => n.employee_id === empId).reverse() : [];
@@ -276,11 +311,38 @@ updateUserPassword(empId, newPassword) {
             ...data,
             escalation_date: new Date().toISOString().split('T')[0],
             status: "OPEN"
+=======
+    // --- Escalation ---
+    getAllEscalations() {
+        return this.data.escalation || [];
+    }
+
+    createEscalation(escData) {
+        if (!this.data.escalation) this.data.escalation = [];
+        const newEsc = {
+            escalation_id: 'E' + Math.floor(1000 + Math.random() * 9000),
+            escalation_date: new Date().toISOString().split('T')[0],
+            status: 'OPEN',
+            ...escData
+>>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
         };
         this.data.escalation.push(newEsc);
         this.saveData();
         return newEsc;
     }
+<<<<<<< HEAD
+=======
+
+    updateEscalation(id, updates) {
+        const esc = (this.data.escalation || []).find(e => e.escalation_id === id);
+        if (esc) {
+            Object.assign(esc, updates);
+            this.saveData();
+            return esc;
+        }
+        return null;
+    }
+>>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
 }
 
 // Export singleton

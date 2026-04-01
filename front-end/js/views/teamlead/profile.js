@@ -1,21 +1,24 @@
 // /js/views/teamlead/profile.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
+    const teamMembersCount = db.getUsersByManager(user.emp_id).length;
+
     const userData = {
-        name: 'Rinku Singh',
-        role: 'Team Lead – Engineering',
-        exp: '6 years experience',
-        managing: 'Managing 8 members',
-        joined: 'Joined: 2023-03-10',
-        empId: 'TL-001',
-        email: 'rinku.singh@company.com',
-        phone: '+1 (555) 234-5678',
-        address: '456 Leadership Ave, San Francisco',
-        dept: 'Engineering',
+        name: user.emp_name,
+        role: 'Team Lead – ' + (user.department_id === 'D02' ? 'Engineering' : user.department_id),
+        exp: 'Active Member',
+        managing: `Managing ${teamMembersCount} members`,
+        joined: `Joined: ${user.date_of_joining}`,
+        empId: user.emp_id,
+        email: user.email,
+        phone: user.phone || 'N/A',
+        address: 'Remote / Office',
+        dept: user.department_id === 'D02' ? 'Engineering' : user.department_id,
         reportsTo: 'HR Manager'
     };
 
@@ -74,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const newName = editNameInput.value.trim();
             if (newName) {
+                user.emp_name = newName;
+                db.saveData(); // simple writeback
                 userData.name = newName;
                 document.getElementById('profile-name').textContent = userData.name;
                 const newInitials = userData.name.split(' ').map(n => n[0] ? n[0].toUpperCase() : '').join('');
