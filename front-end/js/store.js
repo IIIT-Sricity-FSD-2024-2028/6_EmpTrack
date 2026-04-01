@@ -8,8 +8,8 @@ const INITIAL_MOCK_DATA = {
         { emp_id: "TL001", emp_name: "Rinku Singh", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
         { emp_id: "HR001", emp_name: "Rohini Sai", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01" },
         { emp_id: "TL001", emp_name: "Rinku Singh", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
-        { emp_id: "EM001", emp_name: "John Doe (EMP)", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001" },
-        { emp_id: "EM002", emp_name: "Jane Smith (EMP)", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001" }
+        { emp_id: "EM001", emp_name: "John Doe", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001" },
+        { emp_id: "EM002", emp_name: "Jane Smith", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001" }
     ],
     attendance: [
         { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: 6, remarks: "On track", status: "PRESENT" },
