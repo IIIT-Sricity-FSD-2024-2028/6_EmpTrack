@@ -6,7 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const session = auth.getCurrentUser();
     if (!session) return; // Guarded
     const user = db.getUserById(session.emp_id);
-
+  function isStrongPassword(password) {
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(password);
+    }
     // Skills payload
     const skills = ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'MongoDB', 'GraphQL'];
 
@@ -39,18 +41,56 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const currentField = document.getElementById('current_pw');
             const newField = document.getElementById('new_pw');
-            const countField = document.getElementById('confirm_pw');
-            
+            const confirmField = document.getElementById('confirm_pw');
+            console.log("Entered current:", currentField.value);
+            console.log("Actual password:", user.password);
             const errNode = document.getElementById('pw_error');
             const sucNode = document.getElementById('pw_success');
 
             errNode.style.display = 'none';
             sucNode.style.display = 'none';
-
-            // Basic Math constraint validation
-            if (newField.value !== countField.value) {
+  currentField.style.borderColor = 'var(--border-color)';
+            newField.style.borderColor = 'var(--border-color)';
+    confirmField.style.borderColor = 'var(--border-color)';
+       
+          
+            //  1. Validate current password
+            if (currentField.value !== user.password) {
+                errNode.textContent = "Incorrect current password!";
                 errNode.style.display = 'block';
-                countField.style.borderColor = 'var(--danger-color)';
+                currentField.style.borderColor = 'var(--danger-color)';
+                return;
+            }
+          
+          
+            //  2. Strong password check
+            if (!isStrongPassword(newField.value)) {
+                errNode.textContent = "Weak password! Use 8+ chars, uppercase, lowercase, number & special character.";
+                errNode.style.display = 'block';
+                newField.style.borderColor = 'var(--danger-color)';
+                return;
+            }
+          
+             //  3. Confirm match
+            if (newField.value !== confirmField.value) {
+                errNode.textContent = "Passwords do not match!";
+                errNode.style.display = 'block';
+                confirmField.style.borderColor = 'var(--danger-color)';
+                return;
+            }
+            //  4. Prevent reuse
+            if (newField.value === user.password) {
+                errNode.textContent = "New password cannot be same as current password!";
+                errNode.style.display = 'block';
+                return;
+            }
+
+            //  5. Update password in store
+            const res = db.updateUserPassword(user.emp_id, newField.value);
+
+            if (res.error) {
+                errNode.textContent = res.error;
+                errNode.style.display = 'block';
                 return;
             }
 

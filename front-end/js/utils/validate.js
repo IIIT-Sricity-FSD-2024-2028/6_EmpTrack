@@ -1,5 +1,7 @@
 // /js/utils/validate.js
-
+function isStrongPassword(password) {
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(password);
+}
 export const validate = {
     isRequired: (val) => {
         return val !== null && val !== undefined && val.toString().trim().length > 0;
