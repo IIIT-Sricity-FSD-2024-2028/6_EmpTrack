@@ -53,6 +53,27 @@ document.addEventListener('DOMContentLoaded', () => {
         // Some basic static system notifications to pad it
         notifs.push({ id: idCount++, type: 'info', icon: 'ph-megaphone', color: '#8B5CF6', title: 'System Welcome', desc: 'Welcome to the new unified EmpTrack system!', source: 'Internal Comms', time: 'Initial', tags: [{label:'SYSTEM', bg:'#ede9fe', text:'#7c3aed'}], unread: false });
 
+        // Database Notifications (Warnings, Deadline Extensions, etc)
+        const dbNotifs = db.getNotificationsForUser(user.emp_id);
+        dbNotifs.forEach(n => {
+            let color = n.type === 'warning' ? '#DC2626' : '#3B82F6';
+            let icon = n.type === 'warning' ? 'ph-warning-octagon' : 'ph-info';
+            let bg = n.type === 'warning' ? '#fee2e2' : '#dbeafe';
+            let textc = n.type === 'warning' ? '#dc2626' : '#2563eb';
+            notifs.push({
+                id: n.id, // Keep DB ID for real updates if needed, string works
+                type: n.type,
+                icon: icon,
+                color: color,
+                title: n.type === 'warning' ? 'Action Required' : 'Task Update',
+                desc: n.message,
+                source: 'Team Lead',
+                time: n.timestamp.split('T')[0],
+                tags: [{label: n.type.toUpperCase(), bg: bg, text: textc}],
+                unread: !n.is_read
+            });
+        });
+
         return notifs.reverse();
     };
 

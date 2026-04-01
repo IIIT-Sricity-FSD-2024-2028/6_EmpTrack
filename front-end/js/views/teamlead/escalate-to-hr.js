@@ -113,10 +113,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Navbar highlight hook for 'Escalations' when visiting this page
+    setTimeout(() => {
+        document.querySelectorAll('.menu-item').forEach(item => {
+            if(item.textContent.trim().includes('Escalations')) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }, 100);
+
     // Submission logic
     const submitBtn = document.getElementById('submit-escalation-btn');
     if(submitBtn) {
-        submitBtn.addEventListener('click', () => {
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+
             const titleInput = document.querySelector('input[placeholder="Short and descriptive title..."]');
             const descInput = document.querySelector('textarea');
             const relInput = document.querySelector('input[placeholder="Start typing the name..."]');
@@ -124,8 +137,44 @@ document.addEventListener('DOMContentLoaded', () => {
             const catSelected = document.querySelector('.cat-btn.selected');
             const prioSelected = document.querySelector('.priority-chip.active');
             
-            if(!titleInput.value || !descInput.value || !catSelected || !prioSelected) {
-                alert('Please fill out all required fields.');
+            const errTitle = document.getElementById('err-title');
+            const errDesc = document.getElementById('err-desc');
+            const errEmp = document.getElementById('err-emp');
+            const errCat = document.getElementById('err-cat');
+            const errPrio = document.getElementById('err-prio');
+
+            // Reset errors
+            [errTitle, errDesc, errEmp, errCat, errPrio].forEach(err => err && (err.style.display = 'none'));
+
+            let isValid = true;
+
+            const isPersonal = toggleInput && toggleInput.checked;
+            if (!isPersonal && !relInput.value.trim()) {
+                if (errEmp) errEmp.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!titleInput.value.trim()) {
+                if (errTitle) errTitle.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!descInput.value.trim()) {
+                if (errDesc) errDesc.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!catSelected) {
+                if (errCat) errCat.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!prioSelected) {
+                if (errPrio) errPrio.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) {
                 return;
             }
 

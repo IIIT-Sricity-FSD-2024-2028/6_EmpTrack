@@ -202,7 +202,7 @@ import { db } from '../../store.js';document.addEventListener('DOMContentLoaded'
     const alertBtn = document.getElementById('alert-escalated-btn');
     if (alertBtn) {
         alertBtn.addEventListener('click', () => {
-            window.location.href = 'escalate-to-hr.html';
+            window.location.href = 'escalations.html';
         });
     }
 

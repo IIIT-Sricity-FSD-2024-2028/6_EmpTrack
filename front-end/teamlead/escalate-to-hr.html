@@ -65,13 +65,15 @@
         
                                 <!-- Related Employee -->
                                 <div id="related-employee-wrapper" style="display:flex; flex-direction:column; gap: 8px;">
-                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Related Employee Name (Optional)</label>
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Related Employee Name <span style="color:var(--danger-color);" id="emp-star">*</span></label>
                                     <input type="text" placeholder="Start typing the name..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
+                                    <span class="error-msg" id="err-emp" style="color:var(--danger-color); font-size:12px; display:none; margin-top:-4px;">This field is required</span>
                                 </div>
         
                                 <!-- Issue Category Grid -->
                                 <div style="display:flex; flex-direction:column; gap: 8px;">
                                     <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Issue Category <span style="color:var(--danger-color);" >*</span></label>
+                                    <span class="error-msg" id="err-cat" style="color:var(--danger-color); font-size:12px; display:none; margin-top:-4px;">This field is required</span>
                                     <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;" id="category-grid">
                                         <button class="cat-btn" data-value="Team Conflict" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Team Conflict</button>
                                         <button class="cat-btn" data-value="Performance Issue" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Performance Issue</button>
@@ -88,6 +90,7 @@
                                 <!-- Priority Selection Chips -->
                                 <div style="display:flex; flex-direction:column; gap: 8px;">
                                     <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Priority Selection <span style="color:var(--danger-color);">*</span></label>
+                                    <span class="error-msg" id="err-prio" style="color:var(--danger-color); font-size:12px; display:none; margin-top:-4px;">This field is required</span>
                                     <div style="display:flex; gap: 12px; flex-wrap:wrap;" id="priority-chips">
                                         <button class="priority-chip" data-color="var(--secondary-color)" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 20px; font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Low</button>
                                         <button class="priority-chip active" data-color="var(--warning-color)" style="padding: 8px 16px; border: 1px solid var(--warning-color); border-radius: 20px; font-family: var(--font-family); background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Medium</button>
@@ -99,11 +102,13 @@
                                 <div style="display:flex; flex-direction:column; gap: 8px;">
                                     <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Issue Title <span style="color:var(--danger-color);">*</span></label>
                                     <input type="text" placeholder="Short and descriptive title..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);" required>
+                                    <span class="error-msg" id="err-title" style="color:var(--danger-color); font-size:12px; display:none; margin-top:-4px;">This field is required</span>
                                 </div>
         
                                 <div style="display:flex; flex-direction:column; gap: 8px;">
-                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);" required>Detailed Description <span style="color:var(--danger-color);">*</span></label>
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Detailed Description <span style="color:var(--danger-color);">*</span></label>
                                     <textarea placeholder="Please describe the core situation objectively, including dates or evidence if any..." rows="5" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; resize:vertical; transition: border-color var(--transition-fast);"></textarea>
+                                    <span class="error-msg" id="err-desc" style="color:var(--danger-color); font-size:12px; display:none; margin-top:-4px;">This field is required</span>
                                 </div>
         
                                 <!-- Confidentiality Box -->
