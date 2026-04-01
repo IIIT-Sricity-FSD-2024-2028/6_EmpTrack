@@ -34,7 +34,7 @@ class Auth {
     logout() {
         this.currentUser = null;
         localStorage.removeItem('empTrackSessionV2');
-        window.location.hash = '#login';
+        window.location.href = '/front-end/index.html';
     }
 
     getCurrentUser() {
