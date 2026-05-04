@@ -70,7 +70,7 @@ export function initLayout() {
                         </div>
                         <div class="user-info" style="display:flex; flex-direction:column;">
                             <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: #FFFFFF;">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.emp_name}</span>
-                            <span class="user-role" style="font-size: var(--text-xs); color: rgba(255,255,255,0.7);">${user.role === 'HR' ? 'Human resources' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
+                            <span class="user-role" style="font-size: var(--text-xs); color: rgba(255,255,255,0.7);">${user.role === 'HR' ? 'Super User' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
                         </div>
                     </div>
                     </a>

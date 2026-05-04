@@ -153,7 +153,4 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(initCharts, 800);
     }
 
-
-
-
 });

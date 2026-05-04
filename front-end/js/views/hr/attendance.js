@@ -1,52 +1,21 @@
 // /js/views/hr/attendance.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const getAttendanceData = () => {
-        const today = new Date().toISOString().split('T')[0];
-        
-        return db.data.employee.map(emp => {
-            const att = db.data.attendance.find(a => a.emp_id === emp.emp_id && a.attendance_date === today);
-            const deptName = emp.department_id === 'D01' ? 'HR' : emp.department_id === 'D02' ? 'Engineering' : 'Other';
-            
-            let status = 'absent';
-            let checkIn = '-';
-            let hours = 0;
-            
-            if (att) {
-                checkIn = att.check_in_time || '-';
-                hours = parseFloat(att.hours_spent || 0);
-                if (att.status === 'PRESENT') {
-                    // Decide if late based on time, mock logic: > 09:10 is late
-                    if (checkIn > '09:10') status = 'late';
-                    else status = 'present';
-                } else if (att.status === 'WEEKEND' || att.status === 'LEAVE' || att.status === 'ESCALATED') {
-                    status = 'leave';
-                }
-            } else {
-                // If they are on approved leave today
-                const leaves = db.data.leave_details.filter(l => l.emp_id === emp.emp_id && l.status === 'APPROVED');
-                const onLeave = leaves.some(l => today >= l.start_date && today <= l.end_date);
-                if(onLeave) status = 'leave';
-            }
-            
-            return {
-                id: emp.emp_id,
-                name: emp.emp_name.split(' (')[0],
-                dept: deptName.toLowerCase(),
-                checkIn: checkIn,
-                hours: hours,
-                estHours: 8,
-                status: status
-            };
-        });
-    };
-
-    let employees = getAttendanceData();
+    // Dummy JSON Data mapping
+    const employees = [
+        { id: 'EMP-101', name: 'Alice Smith', dept: 'engineering', checkIn: '09:00 AM', hours: 8, estHours: 8, status: 'present' },
+        { id: 'EMP-102', name: 'Bob Johnson', dept: 'marketing', checkIn: '09:15 AM', hours: 4, estHours: 8, status: 'late' },
+        { id: 'EMP-103', name: 'Charlie Brown', dept: 'design', checkIn: '-', hours: 0, estHours: 8, status: 'absent' },
+        { id: 'EMP-104', name: 'Diana Rigg', dept: 'hr', checkIn: '-', hours: 0, estHours: 8, status: 'leave' },
+        { id: 'EMP-105', name: 'Ethan Hunt', dept: 'engineering', checkIn: '08:45 AM', hours: 9, estHours: 8, status: 'present' },
+        { id: 'EMP-106', name: 'Fiona Gallagher', dept: 'marketing', checkIn: '10:00 AM', hours: 3.5, estHours: 8, status: 'late' },
+        { id: 'EMP-107', name: 'George Lucas', dept: 'design', checkIn: '09:05 AM', hours: 7.5, estHours: 8, status: 'present' },
+        { id: 'EMP-108', name: 'Hannah Abbott', dept: 'engineering', checkIn: '09:02 AM', hours: 6, estHours: 8, status: 'present' }
+    ];
 
     const tableBody = document.getElementById('hrTableBody');
     const searchInput = document.getElementById('hrSearchInput');

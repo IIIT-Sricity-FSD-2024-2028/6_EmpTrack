@@ -1,87 +1,37 @@
 // /js/views/hr/dashboard.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guard logic
 
-    const compileDashboardData = () => {
-        const allEmps = db.data.employee;
-        const allLeaves = db.data.leave_details;
-        const allAttendance = db.data.attendance;
-        const today = new Date().toISOString().split('T')[0];
-
-        // Summaries
-        const eCount = allEmps.length;
-        
-        let presentCount = 0;
-        let onLeaveCount = 0;
-        
-        allEmps.forEach(emp => {
-            const att = allAttendance.find(a => a.emp_id === emp.emp_id && a.attendance_date === today);
-            if(att && att.status === 'PRESENT') {
-                presentCount++;
-            } else {
-                const onLeave = allLeaves.some(l => l.emp_id === emp.emp_id && l.status === 'APPROVED' && today >= l.start_date && today <= l.end_date);
-                if(onLeave) onLeaveCount++;
-            }
-        });
-
-        // Departments mapping
-        const depts = {
-            'D01': { name: 'HR', present: 0, absent: 0, total: 0 },
-            'D02': { name: 'Engineering', present: 0, absent: 0, total: 0 },
-            'D03': { name: 'Sales', present: 0, absent: 0, total: 0 },
-            'D04': { name: 'Design', present: 0, absent: 0, total: 0 },
-            'D05': { name: 'Marketing', present: 0, absent: 0, total: 0 }
-        };
-        allEmps.forEach(emp => {
-            const d = depts[emp.department_id] || depts['D02']; // fallback
-            d.total++;
-            const att = allAttendance.find(a => a.emp_id === emp.emp_id && a.attendance_date === today);
-            if(att && att.status === 'PRESENT') d.present++;
-            else d.absent++;
-        });
-
-        const deptArray = Object.values(depts).filter(d => d.total > 0);
-
-        // Recent Employees (sort by join date)
-        const recent = [...allEmps].sort((a,b) => new Date(b.date_of_joining) - new Date(a.date_of_joining)).slice(0, 5).map(e => ({
-            id: e.emp_id,
-            name: e.emp_name.split(' (')[0],
-            role: e.role,
-            dept: depts[e.department_id] ? depts[e.department_id].name : 'Other',
-            joined: e.date_of_joining,
-            status: e.status === 'ACTIVE' ? 'Active' : 'Inactive'
-        }));
-
-        // Pending Leaves
-        const pending = allLeaves.filter(l => l.status === 'PENDING').map(l => {
-            const emp = db.getUserById(l.emp_id);
-            return {
-                id: l.leave_id,
-                name: emp ? emp.emp_name.split(' (')[0] : 'Unknown',
-                type: l.leave_type + ' Leave',
-                range: `${l.start_date} - ${l.end_date}`,
-                duration: `${l.days} days`
-            };
-        });
-
-        return {
-            summary: {
-                employees: { count: eCount, trend: '+1' },
-                projects: { count: db.data.task ? db.data.task.length : 0, trend: '-' },
-                present: { count: presentCount, perc: eCount > 0 ? Math.round((presentCount/eCount)*100)+'%' : '0%' },
-                leaves: { count: onLeaveCount, trend: '-' }
-            },
-            departments: deptArray,
-            recentEmployees: recent,
-            pendingLeaves: pending
-        };
+    // Dummy JSON Data
+    const data = {
+        summary: {
+            employees: { count: 156, trend: '+12' },
+            projects: { count: 24, trend: '+3' },
+            present: { count: 142, perc: '91%' },
+            leaves: { count: 8, trend: '-2' }
+        },
+        departments: [
+            { name: 'Engineering', present: 42, absent: 3, total: 45 },
+            { name: 'Design', present: 17, absent: 1, total: 18 },
+            { name: 'Marketing', present: 20, absent: 2, total: 22 },
+            { name: 'Sales', present: 32, absent: 3, total: 35 },
+            { name: 'Operations', present: 25, absent: 3, total: 28 },
+            { name: 'HR', present: 6, absent: 2, total: 8 }
+        ],
+        recentEmployees: [
+            { id: 1, name: 'Alice Cooper', role: 'Frontend Dev', dept: 'Engineering', joined: '10 Oct, 2023', status: 'Active' },
+            { id: 2, name: 'Bob Wilson', role: 'UI/UX Designer', dept: 'Design', joined: '12 Oct, 2023', status: 'Active' },
+            { id: 3, name: 'Carol Smith', role: 'SEO Specialist', dept: 'Marketing', joined: '15 Oct, 2023', status: 'Active' }
+        ],
+        pendingLeaves: [
+            { id: 101, name: 'John Doe', type: 'Sick Leave', range: '20 Oct - 22 Oct', duration: '3 days' },
+            { id: 102, name: 'Jane Smith', type: 'Casual Leave', range: '24 Oct - 25 Oct', duration: '2 days' },
+            { id: 103, name: 'Mike Johnson', type: 'Paid Leave', range: '01 Nov - 05 Nov', duration: '5 days' }
+        ]
     };
-
-    let data = compileDashboardData();
 
     // Populate Summary
     document.getElementById('emp-trend').textContent = data.summary.employees.trend;
@@ -210,11 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!row) return;
 
         if (action === 'approve') {
-            db.updateLeaveStatus(id, 'APPROVED', user.emp_id);
             const btns = row.querySelector('.action-btns');
             btns.innerHTML = `<span class="badge green">Approved ✅</span>`;
         } else {
-            db.updateLeaveStatus(id, 'REJECTED', user.emp_id);
             row.style.opacity = '0.5';
             setTimeout(() => row.remove(), 300);
         }

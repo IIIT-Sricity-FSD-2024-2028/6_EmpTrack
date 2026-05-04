@@ -1,267 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Escalate to HR</title>
-
+    
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
-
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="../css/views/teamlead/escalate-to-hr.css">
 </head>
-
 <body>
     <div class="app-container">
         <div id="sidebar-container"></div>
-
+        
         <main class="main-wrapper">
             <div id="header-container"></div>
-
+            
             <div class="content-area" id="main-content">
                 <div id="page-title" style="display:none;">Escalate Issue to HR/Admin</div>
-
-                <div
-                    style="display:flex; flex-direction:column; gap:var(--spacing-lg); max-width: 1440px; margin: 0 auto; animation: fade-in 0.3s ease-out;">
-
+                
+                <div style="display:flex; flex-direction:column; gap:var(--spacing-lg); max-width: 1440px; margin: 0 auto; animation: fade-in 0.3s ease-out;">
+            
                     <!-- Header with Back Arrow -->
                     <div style="display:flex; align-items:center; gap: var(--spacing-md);">
-                        <button id="back-btn"
-                            style="background:none; border:none; border-radius: 50%; width: 40px; height: 40px; display:flex; align-items:center; justify-content:center; cursor:pointer; background-color: var(--bg-surface); box-shadow: var(--shadow-sm); transition: transform 0.2s ease;">
+                        <button id="back-btn" style="background:none; border:none; border-radius: 50%; width: 40px; height: 40px; display:flex; align-items:center; justify-content:center; cursor:pointer; background-color: var(--bg-surface); box-shadow: var(--shadow-sm); transition: transform 0.2s ease;">
                             <i class="ph ph-arrow-left" style="font-size: 1.25rem; color: var(--text-main);"></i>
                         </button>
                         <div>
-                            <h2
-                                style="margin:0; font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-main);">
-                                Create New Escalation Form</h2>
-                            <p style="margin: 2px 0 0 0; font-size: var(--text-sm); color: var(--text-muted);">Fill in
-                                the details below to escalate matters immediately to Human Resources.</p>
+                            <h2 style="margin:0; font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-main);">Create New Escalation Form</h2>
+                            <p style="margin: 2px 0 0 0; font-size: var(--text-sm); color: var(--text-muted);">Fill in the details below to escalate matters immediately to Human Resources.</p>
                         </div>
                     </div>
-
+        
                     <!-- Main Content Layout -->
                     <div style="display:flex; flex-wrap:wrap; gap: var(--spacing-xl);">
-
+                        
                         <!-- Left Column: Form Wrapper -->
-                        <div
-                            style="flex: 1 1 65%; min-width: 300px; display:flex; flex-direction:column; gap: var(--spacing-lg);">
-                            <form id="escalation-form">
-
-
-
-
-                                <!-- Form Container -->
-                                <div
-                                    style="background-color: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); padding: var(--spacing-xl); display:flex; flex-direction:column; gap: var(--spacing-lg);">
-
-                                    <!-- Toggle -->
-                                    <div
-                                        style="display:flex; align-items:center; justify-content:space-between; padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--border-light);">
-                                        <div>
-                                            <h4
-                                                style="margin:0; font-size: var(--text-base); font-weight: var(--font-medium); color: var(--text-main);">
-                                                Is this a personal issue?</h4>
-                                            <p
-                                                style="margin: 4px 0 0 0; font-size: var(--text-xs); color: var(--text-muted);">
-                                                Enable if this does not relate to another tracked employee.</p>
-                                        </div>
-                                        <label class="switch">
-                                            <input type="checkbox" id="personal-issue-toggle">
-                                            <span class="slider round"></span>
-                                        </label>
+                        <div style="flex: 1 1 65%; min-width: 300px; display:flex; flex-direction:column; gap: var(--spacing-lg);">
+                            
+                            <!-- Form Container -->
+                            <div style="background-color: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); padding: var(--spacing-xl); display:flex; flex-direction:column; gap: var(--spacing-lg);">
+                                
+                                <!-- Toggle -->
+                                <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom: var(--spacing-md); border-bottom: 1px solid var(--border-light);">
+                                    <div>
+                                        <h4 style="margin:0; font-size: var(--text-base); font-weight: var(--font-medium); color: var(--text-main);">Is this a personal issue?</h4>
+                                        <p style="margin: 4px 0 0 0; font-size: var(--text-xs); color: var(--text-muted);">Enable if this does not relate to another tracked employee.</p>
                                     </div>
-
-                                    <!-- Related Employee -->
-                                    <div id="related-employee-wrapper"
-                                        style="display:flex; flex-direction:column; gap: 8px;">
-                                        <label
-                                            style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Related
-                                            Employee Name (Optional)</label>
-                                        <input type="text" id="related-emp-input" placeholder="Start typing the name..."
-                                            style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
-                                    </div>
-
-                                    <!-- Issue Category Grid -->
-                                    <div style="display:flex; flex-direction:column; gap: 8px;">
-                                        <label
-                                            style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Issue
-                                            Category <span style="color:var(--danger-color);">*</span></label>
-                                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;"
-                                            id="category-grid">
-                                            <button class="cat-btn" data-value="Team Conflict"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Team
-                                                Conflict</button>
-                                            <button class="cat-btn" data-value="Performance Issue"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Performance
-                                                Issue</button>
-                                            <button class="cat-btn" data-value="Policy Violation"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Policy
-                                                Violation</button>
-                                            <button class="cat-btn" data-value="Harassment"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Harassment</button>
-                                            <button class="cat-btn" data-value="Resource Request"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Resource
-                                                Request</button>
-                                            <button class="cat-btn" data-value="Workload Issue"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Workload
-                                                Issue</button>
-                                            <button class="cat-btn" data-value="Leave Issue"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Leave
-                                                Issue</button>
-                                            <button class="cat-btn" data-value="Personal Issue"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Personal
-                                                Issue</button>
-                                            <button class="cat-btn" data-value="Other"
-                                                style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Other</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Priority Selection Chips -->
-                                    <div style="display:flex; flex-direction:column; gap: 8px;">
-                                        <label
-                                            style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Priority
-                                            Selection <span style="color:var(--danger-color);">*</span></label>
-                                        <div style="display:flex; gap: 12px; flex-wrap:wrap;" id="priority-chips">
-                                            <button class="priority-chip" data-color="var(--secondary-color)"
-                                                style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 20px; font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Low</button>
-                                            <button class="priority-chip active" data-color="var(--warning-color)"
-                                                style="padding: 8px 16px; border: 1px solid var(--warning-color); border-radius: 20px; font-family: var(--font-family); background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Medium</button>
-                                            <button class="priority-chip" data-color="var(--danger-color)"
-                                                style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 20px; font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">High</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Text Inputs -->
-                                    <div style="display:flex; flex-direction:column; gap: 8px;">
-                                        <label
-                                            style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Issue
-                                            Title <span style="color:var(--danger-color);">*</span></label>
-                                        <input type="text" placeholder="Short and descriptive title..."
-                                            style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
-                                    </div>
-
-                                    <div style="display:flex; flex-direction:column; gap: 8px;">
-                                        <label
-                                            style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Detailed
-                                            Description <span style="color:var(--danger-color);">*</span></label>
-                                        <textarea
-                                            placeholder="Please describe the core situation objectively, including dates or evidence if any..."
-                                            rows="5"
-                                            style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; resize:vertical; transition: border-color var(--transition-fast);"></textarea>
-                                    </div>
-
-                                    <!-- Confidentiality Box -->
-                                    <div
-                                        style="background-color: rgba(239, 68, 68, 0.05); border: 1px solid var(--danger-color); border-radius: var(--radius-md); padding: var(--spacing-md); display:flex; align-items:flex-start; gap: var(--spacing-md);">
-                                        <i class="ph-fill ph-lock-key"
-                                            style="color: var(--danger-color); font-size: 1.5rem; margin-top: 2px;"></i>
-                                        <div>
-                                            <h4
-                                                style="margin:0; font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--danger-color);">
-                                                Confidentiality Warning</h4>
-                                            <p
-                                                style="margin: 4px 0 0 0; font-size: var(--text-sm); color: var(--text-main);">
-                                                Escalations mapped above medium priority are tracked directly by the
-                                                Head of HR. Please ensure all shared data complies with corporate
-                                                confidentiality policies. False escalations may result in warnings.</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Action Buttons -->
-                                    <div
-                                        style="display:flex; align-items:center; justify-content:space-between; margin-top: var(--spacing-sm);">
-                                        <div id="form-error-msg"
-                                            style="color: var(--danger-color); font-size: var(--text-sm); font-weight: var(--font-medium); display: none;">
-                                        </div>
-                                        <div style="display:flex; gap: var(--spacing-md);">
-                                            <button
-                                                style="padding: 10px 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); background-color: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;">
-                                                Save as Draft
-                                            </button>
-                                            <button id="submit-escalation-btn"
-                                                style="background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; border: none; padding: 10px 24px; border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); display:flex; align-items:center; gap: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;">
-                                                Submit Escalation
-                                            </button>
-                                        </div>
-                                    </div>
-
+                                    <label class="switch">
+                                        <input type="checkbox" id="personal-issue-toggle">
+                                        <span class="slider round"></span>
+                                    </label>
                                 </div>
+        
+                                <!-- Related Employee -->
+                                <div id="related-employee-wrapper" style="display:flex; flex-direction:column; gap: 8px;">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Related Employee Name (Optional)</label>
+                                    <input type="text" id="related-emp-input" placeholder="Start typing the name..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
+                                </div>
+        
+                                <!-- Issue Category Grid -->
+                                <div style="display:flex; flex-direction:column; gap: 8px;">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Issue Category <span style="color:var(--danger-color);">*</span></label>
+                                    <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px;" id="category-grid">
+                                        <button class="cat-btn" data-value="Team Conflict" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Team Conflict</button>
+                                        <button class="cat-btn" data-value="Performance Issue" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Performance Issue</button>
+                                        <button class="cat-btn" data-value="Policy Violation" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Policy Violation</button>
+                                        <button class="cat-btn" data-value="Harassment" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Harassment</button>
+                                        <button class="cat-btn" data-value="Resource Request" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Resource Request</button>
+                                        <button class="cat-btn" data-value="Workload Issue" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Workload Issue</button>
+                                        <button class="cat-btn" data-value="Leave Issue" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Leave Issue</button>
+                                        <button class="cat-btn" data-value="Personal Issue" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Personal Issue</button>
+                                        <button class="cat-btn" data-value="Other" style="padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Other</button>
+                                    </div>
+                                </div>
+        
+                                <!-- Priority Selection Chips -->
+                                <div style="display:flex; flex-direction:column; gap: 8px;">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Priority Selection <span style="color:var(--danger-color);">*</span></label>
+                                    <div style="display:flex; gap: 12px; flex-wrap:wrap;" id="priority-chips">
+                                        <button class="priority-chip" data-color="var(--secondary-color)" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 20px; font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Low</button>
+                                        <button class="priority-chip active" data-color="var(--warning-color)" style="padding: 8px 16px; border: 1px solid var(--warning-color); border-radius: 20px; font-family: var(--font-family); background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">Medium</button>
+                                        <button class="priority-chip" data-color="var(--danger-color)" style="padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 20px; font-family: var(--font-family); background-color: transparent; color: var(--text-main); font-weight:var(--font-semibold); font-size: var(--text-sm); cursor: pointer; transition: all 0.2s;">High</button>
+                                    </div>
+                                </div>
+        
+                                <!-- Text Inputs -->
+                                <div style="display:flex; flex-direction:column; gap: 8px;">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Issue Title <span style="color:var(--danger-color);">*</span></label>
+                                    <input type="text" id="issue-title-input" placeholder="Short and descriptive title..." style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; transition: border-color var(--transition-fast);">
+                                </div>
+        
+                                <div style="display:flex; flex-direction:column; gap: 8px;">
+                                    <label style="font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--text-main);">Detailed Description <span style="color:var(--danger-color);">*</span></label>
+                                    <textarea id="issue-desc-textarea" placeholder="Please describe the core situation objectively, including dates or evidence if any..." rows="5" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: var(--text-sm); outline:none; resize:vertical; transition: border-color var(--transition-fast);"></textarea>
+                                </div>
+        
+                                <!-- Confidentiality Box -->
+                                <div style="background-color: rgba(239, 68, 68, 0.05); border: 1px solid var(--danger-color); border-radius: var(--radius-md); padding: var(--spacing-md); display:flex; align-items:flex-start; gap: var(--spacing-md);">
+                                    <i class="ph-fill ph-lock-key" style="color: var(--danger-color); font-size: 1.5rem; margin-top: 2px;"></i>
+                                    <div>
+                                        <h4 style="margin:0; font-size: var(--text-sm); font-weight: var(--font-bold); color: var(--danger-color);">Confidentiality Warning</h4>
+                                        <p style="margin: 4px 0 0 0; font-size: var(--text-sm); color: var(--text-main);">Escalations mapped above medium priority are tracked directly by the Head of HR. Please ensure all shared data complies with corporate confidentiality policies. False escalations may result in warnings.</p>
+                                    </div>
+                                </div>
+        
+                                <!-- Action Buttons -->
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-top: var(--spacing-sm);">
+                                    <div id="form-error-msg" style="color: var(--danger-color); font-size: var(--text-sm); font-weight: var(--font-medium); display: none;"></div>
+                                    <div style="display:flex; gap: var(--spacing-md);">
+                                        <button style="padding: 10px 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); background-color: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;">
+                                            Save as Draft
+                                        </button>
+                                        <button id="submit-escalation-btn" style="background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; border: none; padding: 10px 24px; border-radius: var(--radius-md); font-family: var(--font-family); font-weight: var(--font-semibold); display:flex; align-items:center; gap: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease, box-shadow 0.2s ease;">
+                                            Submit Escalation
+                                        </button>
+                                    </div>
+                                </div>
+        
+                            </div>
                         </div>
-                        </form>
+        
                         <!-- Right Column: Sidebar -->
-                        <div
-                            style="flex: 1 1 30%; min-width: 250px; display:flex; flex-direction:column; gap: var(--spacing-lg);">
-
+                        <div style="flex: 1 1 30%; min-width: 250px; display:flex; flex-direction:column; gap: var(--spacing-lg);">
+                            
                             <!-- Guidelines Card -->
-                            <div
-                                style="background-color: #2E1065; color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); position:relative; overflow:hidden;">
+                            <div style="background-color: #2E1065; color: white; border-radius: var(--radius-xl); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); position:relative; overflow:hidden;">
                                 <!-- Decor element -->
-                                <div
-                                    style="position:absolute; top:-20px; right:-20px; width: 100px; height: 100px; border-radius:50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); opacity:0.3; filter: blur(20px);">
-                                </div>
-
-                                <h3
-                                    style="margin:0 0 var(--spacing-md) 0; font-size: var(--text-lg); font-weight: var(--font-bold); position:relative; z-index:1; display:flex; align-items:center; gap:8px;">
+                                <div style="position:absolute; top:-20px; right:-20px; width: 100px; height: 100px; border-radius:50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); opacity:0.3; filter: blur(20px);"></div>
+                                
+                                <h3 style="margin:0 0 var(--spacing-md) 0; font-size: var(--text-lg); font-weight: var(--font-bold); position:relative; z-index:1; display:flex; align-items:center; gap:8px;">
                                     <i class="ph-fill ph-book-open"></i> HR Guidelines
                                 </h3>
-                                <p
-                                    style="margin:0 0 var(--spacing-md) 0; font-size: var(--text-sm); opacity:0.9; position:relative; z-index:1;">
-                                    Ensure that your escalation meets one of the following baseline criteria before
-                                    submission.</p>
-
-                                <ul
-                                    style="margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap: 10px; position:relative; z-index:1;">
-                                    <li
-                                        style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;">
-                                        <i class="ph ph-check-circle"
-                                            style="color: #10B981; flex-shrink:0; margin-top:2px;"></i> Team conflicts
-                                        causing production blocks</li>
-                                    <li
-                                        style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;">
-                                        <i class="ph ph-check-circle"
-                                            style="color: #10B981; flex-shrink:0; margin-top:2px;"></i> Repetitive
-                                        Performance track failures</li>
-                                    <li
-                                        style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;">
-                                        <i class="ph ph-warning-circle"
-                                            style="color: #F59E0B; flex-shrink:0; margin-top:2px;"></i> Serious Policy
-                                        violations</li>
-                                    <li
-                                        style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;">
-                                        <i class="ph ph-warning-circle"
-                                            style="color: #F59E0B; flex-shrink:0; margin-top:2px;"></i> Workplace
-                                        Harassment</li>
-                                    <li
-                                        style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;">
-                                        <i class="ph ph-info"
-                                            style="color: #3B82F6; flex-shrink:0; margin-top:2px;"></i> Critical
-                                        Resource blockings</li>
-                                    <li
-                                        style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;">
-                                        <i class="ph ph-info"
-                                            style="color: #3B82F6; flex-shrink:0; margin-top:2px;"></i> Deep
-                                        Personal/Health problems issues</li>
+                                <p style="margin:0 0 var(--spacing-md) 0; font-size: var(--text-sm); opacity:0.9; position:relative; z-index:1;">Ensure that your escalation meets one of the following baseline criteria before submission.</p>
+                                
+                                <ul style="margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap: 10px; position:relative; z-index:1;">
+                                    <li style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;"><i class="ph ph-check-circle" style="color: #10B981; flex-shrink:0; margin-top:2px;"></i> Team conflicts causing production blocks</li>
+                                    <li style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;"><i class="ph ph-check-circle" style="color: #10B981; flex-shrink:0; margin-top:2px;"></i> Repetitive Performance track failures</li>
+                                    <li style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;"><i class="ph ph-warning-circle" style="color: #F59E0B; flex-shrink:0; margin-top:2px;"></i> Serious Policy violations</li>
+                                    <li style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;"><i class="ph ph-warning-circle" style="color: #F59E0B; flex-shrink:0; margin-top:2px;"></i> Workplace Harassment</li>
+                                    <li style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;"><i class="ph ph-info" style="color: #3B82F6; flex-shrink:0; margin-top:2px;"></i> Critical Resource blockings</li>
+                                    <li style="display:flex; align-items:flex-start; gap:8px; font-size: var(--text-sm); opacity:0.9;"><i class="ph ph-info" style="color: #3B82F6; flex-shrink:0; margin-top:2px;"></i> Deep Personal/Health problems issues</li>
                                 </ul>
                             </div>
-
+        
                             <!-- Recent Escalations -->
                             <div>
-                                <h3
-                                    style="margin:0 0 var(--spacing-md) 0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main);">
-                                    Recent Escalations</h3>
-                                <div id="recent-escalations-body"
-                                    style="display:flex; flex-direction:column; gap: var(--spacing-sm);">
+                                <h3 style="margin:0 0 var(--spacing-md) 0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main);">Recent Escalations</h3>
+                                <div id="recent-escalations-body" style="display:flex; flex-direction:column; gap: var(--spacing-sm);">
                                 </div>
                             </div>
-
+        
                         </div>
-
+        
                     </div>
 
                 </div>
@@ -269,9 +166,8 @@
             </div>
         </main>
     </div>
-
+    
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/views/teamlead/escalate-to-hr.js"></script>
 </body>
-
 </html>

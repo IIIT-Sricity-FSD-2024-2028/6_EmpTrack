@@ -1,62 +1,33 @@
 // /js/views/teamlead/employee-raised-issues.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const renderIssues = () => {
-        const issues = db.getIssuesForManager(user.emp_id);
-        
-        let highPriority = 0;
-        let pending = 0;
-        let inProgress = 0;
-        
-        const issuesData = issues.map(i => {
-            const emp = db.getUserById(i.emp_id);
-            const empName = emp ? emp.emp_name.split(' (')[0] : 'Employee';
-            
-            if(i.priority === 'High') highPriority++;
-            if(i.status === 'Open' || i.status === 'Pending') pending++;
-            else if(i.status === 'In Progress') inProgress++;
+    const mockStats = {
+        total: 18,
+        highPriority: 5,
+        pending: 7,
+        inProgress: 11
+    };
 
-            let priorityColor = 'var(--secondary-color)';
-            if (i.priority === 'High') priorityColor = 'var(--danger-color)';
-            else if (i.priority === 'Medium') priorityColor = 'var(--warning-color)';
-            
-            let statusColor = '#3b82f6';
-            if (i.status === 'Open' || i.status === 'Pending') statusColor = 'var(--warning-color)';
-            else if (i.status === 'Resolved' || i.status === 'Closed') statusColor = 'var(--secondary-color)';
+    const mockIssues = [
+        { emp: 'James Brown', id: 'ISS-102', title: 'Need access to AWS Console', type: 'Access Request', priority: 'High', status: 'Pending', date: '2026-03-30', priorityColor: 'var(--danger-color)', statusColor: 'var(--warning-color)' },
+        { emp: 'Lisa Anderson', id: 'ISS-105', title: 'Laptop overheating', type: 'Hardware', priority: 'Medium', status: 'In Progress', date: '2026-03-29', priorityColor: 'var(--warning-color)', statusColor: '#3b82f6' },
+        { emp: 'Sarah Johnson', id: 'ISS-108', title: 'Clarification on new leave policy', type: 'HR Query', priority: 'Low', status: 'Resolved', date: '2026-03-25', priorityColor: 'var(--secondary-color)', statusColor: 'var(--secondary-color)' },
+        { emp: 'Mike Davis', id: 'ISS-111', title: 'Conflict with teammate regarding API', type: 'Interpersonal', priority: 'High', status: 'Pending', date: '2026-03-31', priorityColor: 'var(--danger-color)', statusColor: 'var(--warning-color)' },
+        { emp: 'Emma Wilson', id: 'ISS-114', title: 'Extend deadline for UI task', type: 'Task Update', priority: 'Low', status: 'In Progress', date: '2026-03-28', priorityColor: 'var(--secondary-color)', statusColor: '#3b82f6' }
+    ];
 
-            return {
-                id: i.issue_id,
-                emp: empName,
-                title: i.title,
-                type: i.type,
-                priority: i.priority,
-                status: i.status,
-                date: i.raised_date,
-                priorityColor,
-                statusColor
-            };
-        }).reverse();
+    document.getElementById('stat-total').textContent = mockStats.total;
+    document.getElementById('stat-high').textContent = mockStats.highPriority;
+    document.getElementById('stat-pending').textContent = mockStats.pending;
+    document.getElementById('stat-progress').textContent = mockStats.inProgress;
 
-        const statTotal = document.getElementById('stat-total');
-        if (statTotal) statTotal.textContent = issuesData.length;
-        
-        const statHigh = document.getElementById('stat-high');
-        if (statHigh) statHigh.textContent = highPriority;
-        
-        const statPending = document.getElementById('stat-pending');
-        if (statPending) statPending.textContent = pending;
-        
-        const statProgress = document.getElementById('stat-progress');
-        if (statProgress) statProgress.textContent = inProgress;
-
-        const tbody = document.getElementById('raised-issues-body');
-        if (tbody) {
-            tbody.innerHTML = issuesData.map(issue => `
+    const tbody = document.getElementById('raised-issues-body');
+    if (tbody) {
+        tbody.innerHTML = mockIssues.map(issue => `
             <tr style="border-bottom: 1px solid var(--border-color); transition: background-color var(--transition-fast);">
                 <td style="padding: var(--spacing-md); display:flex; align-items:center; gap:var(--spacing-sm);">
                     <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px;">
@@ -78,13 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="padding: var(--spacing-md); color: var(--text-muted); font-size: var(--text-sm);">${issue.date}</td>
                 <td style="padding: var(--spacing-md);">
                     <div style="display:flex; gap: var(--spacing-sm);">
-                        <button class="action-btn resolve-btn" data-id="${issue.id}" title="Resolve Issue" style="padding: 6px 12px; border: none; background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                        <button class="action-btn resolve-btn" title="Resolve Issue" style="padding: 6px 12px; border: none; background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
                             <i class="ph ph-check-circle"></i>
                         </button>
                         <button class="action-btn details-btn" title="View Details" style="padding: 6px 12px; border: none; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
                             <i class="ph ph-eye"></i>
                         </button>
-                        <button class="action-btn escalate-hr-btn" data-id="${issue.id}" title="Escalate to HR" style="padding: 6px 12px; border: none; background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease; display:flex; align-items:center; justify-content:center;">
+                        <button class="action-btn escalate-hr-btn" title="Escalate to HR" style="padding: 6px 12px; border: none; background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease; display:flex; align-items:center; justify-content:center;">
                             <i class="ph ph-siren"></i>
                         </button>
                     </div>
@@ -92,35 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
         `).join('');
 
-            // Bind resolve buttons
-            const resolveBtns = document.querySelectorAll('.resolve-btn');
-            resolveBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const btnEl = e.target.closest('.resolve-btn');
-                    if (btnEl) {
-                        const id = btnEl.getAttribute('data-id');
-                        db.updateIssue(id, { status: 'Resolved' });
-                        renderIssues();
-                    }
-                });
+        // Re-bind dynamically injected buttons
+        const escalateBtns = document.querySelectorAll('.escalate-hr-btn');
+        escalateBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                window.location.href = 'escalate-to-hr.html';
             });
-
-            // Re-bind dynamically injected buttons
-            const escalateBtns = document.querySelectorAll('.escalate-hr-btn');
-            escalateBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const btnEl = e.target.closest('.escalate-hr-btn');
-                    if (btnEl) {
-                        const id = btnEl.getAttribute('data-id');
-                        localStorage.setItem('escalate_draft_id', id);
-                    }
-                    window.location.href = 'escalate-to-hr.html';
-                });
-            });
-        }
-    };
-    
-    renderIssues();
+        });
+    }
 
     // Navigation Events
     const backBtn = document.getElementById('back-btn');
