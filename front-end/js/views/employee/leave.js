@@ -3,12 +3,12 @@ import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 import { validate } from '../../utils/validate.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded by app.js
 
-    function renderHistory() {
-        const leaves = db.getLeavesForUser(user.emp_id).sort((a,b) => new Date(b.applied_date) - new Date(a.applied_date));
+    async function renderHistory() {
+        const leaves = (await db.getLeavesForUser(user.emp_id)).sort((a,b) => new Date(b.applied_date) - new Date(a.applied_date));
         const tbody = document.getElementById('leave-history-body');
         if (tbody) {
             tbody.innerHTML = leaves.map(l => `
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('leave-form');
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            db.createLeave({
+            await db.createLeave({
                 emp_id: user.emp_id,
                 start_date: start,
                 end_date: end,
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             form.reset();
             renderHistory();
-            db.saveData();
+            await db.saveData();
         });
     }
 });

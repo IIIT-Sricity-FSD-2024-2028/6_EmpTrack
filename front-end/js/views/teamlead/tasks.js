@@ -1,7 +1,7 @@
 // /js/views/teamlead/tasks.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 

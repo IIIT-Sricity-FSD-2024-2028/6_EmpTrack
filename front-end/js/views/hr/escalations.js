@@ -1,7 +1,7 @@
 // /js/views/hr/escalations.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -19,13 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewAction = document.getElementById('view-action');
     const tbody = document.getElementById('escTbody');
 
-    function hideAll() {
+    async function hideAll() {
         viewDashboard.classList.remove('active');
         viewDetails.classList.remove('active');
         viewAction.classList.remove('active');
     }
 
-    function renderTable() {
+    async function renderTable() {
         if (!tbody) return;
         tbody.innerHTML = dummyEscalations.map(e => {
             let pColor = e.priority === 'High' ? 'var(--color-high)' : e.priority === 'Medium' ? 'var(--color-med)' : 'var(--color-low)';
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Attach listeners to generic rows and buttons
         document.querySelectorAll('.row-esc-click, .btn-route-rev, .btn-disc-action').forEach(el => {
-            el.addEventListener('click', (e) => {
+            el.addEventListener('click', async (e) => {
                 const id = e.currentTarget.dataset.id;
                 if (!id) return;
                 e.stopPropagation();
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-route-act').forEach(el => {
-            el.addEventListener('click', (e) => {
+            el.addEventListener('click', async (e) => {
                 const id = e.currentTarget.dataset.id;
                 e.stopPropagation();
                 navAction(id);
@@ -73,21 +73,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-close').forEach(el => {
-            el.addEventListener('click', (e) => {
+            el.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 alert('Closed');
             });
         });
     }
 
-    function navDashboard() {
+    async function navDashboard() {
         hideAll();
         breadCrumbs.innerHTML = '';
         viewDashboard.classList.add('active');
         renderTable();
     }
 
-    function navDetails(id) {
+    async function navDetails(id) {
         const esc = dummyEscalations.find(e => e.id === id);
         if(!esc) return;
 
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewDetails.classList.add('active');
     }
 
-    function navAction(id) {
+    async function navAction(id) {
         const esc = dummyEscalations.find(e => e.id === id);
         if(!esc) return;
 
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        document.getElementById('btn-resolve-act').addEventListener('click', () => {
+        document.getElementById('btn-resolve-act').addEventListener('click', async () => {
             alert('Proceeding with disciplinary action workflows...'); 
             navDashboard();
         });
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filter Buttons logic
     let emptyRow = null;
 
-    function filterTable(e, filterStr) {
+    async function filterTable(e, filterStr) {
         if(!tbody) return;
         
         if (e) {

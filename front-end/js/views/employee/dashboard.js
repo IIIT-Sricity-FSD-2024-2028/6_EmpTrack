@@ -2,7 +2,7 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded by app.js anyway
 
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (welcomeEl) welcomeEl.textContent = `Welcome back, ${user.emp_name.split(' ')[0]}!`;
     
     // Data Extraction
-    const allTasks = db.getTasksForUser(user.emp_id);
+    const allTasks = await db.getTasksForUser(user.emp_id);
     const tasks = allTasks.slice(0, 4); 
     
     // Task Stats
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('stat-completed').textContent = completedTasks;
 
     // Monthly Attendance calculations
-    const allAttendance = db.getAttendanceForUser(user.emp_id);
+    const allAttendance = await db.getAttendanceForUser(user.emp_id);
     const today = new Date().toISOString().split('T')[0];
     const currentMonth = today.substring(0, 7);
     const monthRecords = allAttendance.filter(a => a.attendance_date.startsWith(currentMonth));
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('att-month-days').textContent = presentDays;
 
     // Leave Requests Render
-    const recentLeaves = db.getLeavesForUser(user.emp_id).slice(0, 3);
+    const recentLeaves = (await db.getLeavesForUser(user.emp_id)).slice(0, 3);
     const leavesList = document.getElementById('leaves-list');
     if (leavesList) {
         leavesList.innerHTML = recentLeaves.map(l => `

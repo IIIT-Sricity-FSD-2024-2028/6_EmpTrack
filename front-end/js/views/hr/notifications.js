@@ -1,7 +1,7 @@
 // /js/views/hr/notifications.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const listContainer = document.getElementById('hr-notif-list');
     
-    function renderNotifications() {
+    async function renderNotifications() {
         if (!listContainer) return;
 
         listContainer.innerHTML = dummyNotifs.map(n => `
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeFilter = 'all';
 
-    function filterNotifs() {
+    async function filterNotifs() {
         const term = document.getElementById('notif-search').value.toLowerCase();
         const items = document.querySelectorAll('.notif-item');
         
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterBtns = document.querySelectorAll('.tab-btn');
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             filterBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             activeFilter = e.target.dataset.filter;
@@ -92,15 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function updateUnreadCount() {
+    async function updateUnreadCount() {
         const c = document.querySelectorAll('.notif-item.unread').length;
         document.getElementById('met-unread').innerText = c;
         document.getElementById('sc-unread').innerText = c;
     }
 
-    function attachActionListeners() {
+    async function attachActionListeners() {
         document.querySelectorAll('.btn-done').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-del').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.style.animation = 'slideOutRight 0.3s ease forwards';
                 setTimeout(() => {
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const markAllBtn = document.getElementById('btn-mark-all');
     if (markAllBtn) {
-        markAllBtn.addEventListener('click', () => {
+        markAllBtn.addEventListener('click', async () => {
             document.querySelectorAll('.notif-item.unread').forEach(item => {
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';

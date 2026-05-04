@@ -1,7 +1,7 @@
 // /js/views/hr/employee-management.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guard
 
@@ -36,11 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearBtn = document.getElementById('empClearSort');
 
     // Make ID clicks global
-    window.handleEmpClick = (id) => {
+    window.handleEmpClick = async (id) => {
         alert('Clicked Employee ID: ' + id + '\n\n(In a full app, this would open the employee profile model or route.)');
     };
 
-    function renderRows(data) {
+    async function renderRows(data) {
         if (!tableBody) return;
         tableBody.innerHTML = '';
         if (data.length === 0) {
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function applyFilters() {
+    async function applyFilters() {
         const query = searchInput.value.toLowerCase();
         const dept = deptFilter.value;
         const status = statusFilter.value;
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(statusFilter) statusFilter.addEventListener('change', applyFilters);
     
     if(clearBtn) {
-        clearBtn.addEventListener('click', () => {
+        clearBtn.addEventListener('click', async () => {
             searchInput.value = '';
             deptFilter.value = 'all';
             statusFilter.value = 'all';
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addEmpForm = document.getElementById('addEmpForm');
     const addEmpSuccess = document.getElementById('addEmpSuccess');
     if(addEmpForm) {
-        addEmpForm.addEventListener('submit', (e) => {
+        addEmpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             if(!addEmpForm.checkValidity()) {

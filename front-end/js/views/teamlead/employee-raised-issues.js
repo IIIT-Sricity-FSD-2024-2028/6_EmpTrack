@@ -1,7 +1,7 @@
 // /js/views/teamlead/employee-raised-issues.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Re-bind dynamically injected buttons
         const escalateBtns = document.querySelectorAll('.escalate-hr-btn');
         escalateBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 window.location.href = 'escalate-to-hr.html';
             });
         });
@@ -75,21 +75,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navigation Events
     const backBtn = document.getElementById('back-btn');
     if (backBtn) {
-        backBtn.addEventListener('click', () => {
+        backBtn.addEventListener('click', async () => {
             window.location.href = 'escalations.html';
         });
     }
 
     const navLowProd = document.getElementById('nav-low-productivity');
     if (navLowProd) {
-        navLowProd.addEventListener('click', () => {
+        navLowProd.addEventListener('click', async () => {
             window.location.href = 'escalations.html';
         });
     }
 
     const globalEscalateBtn = document.getElementById('global-escalate-btn');
     if (globalEscalateBtn) {
-        globalEscalateBtn.addEventListener('click', () => {
+        globalEscalateBtn.addEventListener('click', async () => {
             window.location.href = 'escalate-to-hr.html';
         });
     }

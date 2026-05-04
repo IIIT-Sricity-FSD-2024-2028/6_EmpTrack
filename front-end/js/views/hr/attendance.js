@@ -1,7 +1,7 @@
 // /js/views/hr/attendance.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const deptFilter = document.getElementById('hrDeptFilter');
     const statusFilter = document.getElementById('hrStatusFilter');
 
-    function renderTable(data) {
+    async function renderTable(data) {
         if (!tableBody) return;
         tableBody.innerHTML = '';
         if (data.length === 0) {
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 50);
     }
 
-    function applyFilters() {
+    async function applyFilters() {
         const term = searchInput.value.toLowerCase();
         const dept = deptFilter.value;
         const status = statusFilter.value;
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStats(filtered);
     }
 
-    function updateStats(data) {
+    async function updateStats(data) {
         let pres = 0, abs = 0, lev = 0;
         data.forEach(e => {
             if(e.status === 'present' || e.status === 'late') pres++;

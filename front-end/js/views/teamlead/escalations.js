@@ -2,11 +2,11 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    let tasks = db.getAllTasksForManager(user.emp_id);
+    let tasks = await db.getAllTasksForManager(user.emp_id);
 
     const updateStats = () => {
         let total = tasks.length;
@@ -49,11 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderTable = () => {
         if (!tbody) return;
         
-        tasks = db.getAllTasksForManager(user.emp_id); // Refresh
+        tasks = await db.getAllTasksForManager(user.emp_id); // Refresh
         updateStats();
 
         tbody.innerHTML = tasks.map(task => {
-            const empUser = db.getUserById(task.assigned_to);
+            const empUser = await db.getUserById(task.assigned_to);
             const empName = empUser ? empUser.emp_name : 'Unknown';
             return `
             <tr style="border-bottom: 1px solid var(--border-color); transition: background-color var(--transition-fast);" id="row-${task.task_id}">
@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const id = btn.dataset.id;
             const task = tasks.find(t => t.task_id === id);
-            const employeeUser = task ? db.getUserById(task.assigned_to) : null;
+            const employeeUser = task ? await db.getUserById(task.assigned_to) : null;
 
             if (btn.classList.contains('details-btn')) {
                 const modal = document.getElementById('task-details-modal');
@@ -134,9 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btn.classList.contains('warning-btn')) {
                 if (confirm(`Are you sure you want to send a warning for task ${id}?`)) {
                     // Update Task
-                    db.updateTaskDetails(id, { warning_sent: true });
+                    await db.updateTaskDetails(id, { warning_sent: true });
                     // Send notification to employee
-                    db.createNotification(task.assigned_to, `Your task "${task.task_title}" has been escalated. Take immediate action.`, 'warning');
+                    await db.createNotification(task.assigned_to, `Your task "${task.task_title}" has been escalated. Take immediate action.`, 'warning');
                     showToast('Warning sent successfully!', 'warning');
                     renderTable();
                     highlightRow(id);
@@ -147,8 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const d = prompt(`Enter new deadline (YYYY-MM-DD)\nCurrent: ${task.deadline}`);
                 if (d) {
                     if (new Date(d) > new Date(task.deadline)) {
-                        db.updateTaskDetails(id, { deadline: d });
-                        db.createNotification(task.assigned_to, `Your task "${task.task_title}" deadline has been extended to ${d}.`, 'info');
+                        await db.updateTaskDetails(id, { deadline: d });
+                        await db.createNotification(task.assigned_to, `Your task "${task.task_title}" deadline has been extended to ${d}.`, 'info');
                         showToast('Deadline extended successfully!');
                         renderTable();
                         highlightRow(id);
@@ -160,14 +160,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (btn.classList.contains('reassign-btn')) {
                 // Show prompt of employees under this manager
-                const team = db.getUsersByManager(user.emp_id);
+                const team = await db.getUsersByManager(user.emp_id);
                 let teamStr = team.map(m => `${m.emp_id}: ${m.emp_name}`).join('\n');
                 const newEmpId = prompt(`Enter Employee ID to reassign:\n\n${teamStr}`);
                 if(newEmpId) {
                     const validEmp = team.find(m => m.emp_id === newEmpId);
                     if(validEmp) {
-                        db.updateTaskDetails(id, { assigned_to: newEmpId });
-                        db.createNotification(newEmpId, `You have been assigned a new escalated task: "${task.task_title}".`, 'info');
+                        await db.updateTaskDetails(id, { assigned_to: newEmpId });
+                        await db.createNotification(newEmpId, `You have been assigned a new escalated task: "${task.task_title}".`, 'info');
                         showToast(`Task reassigned to ${validEmp.emp_name}.`);
                         renderTable();
                         highlightRow(id);
@@ -193,10 +193,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('close-details-btn');
     const detailsModal = document.getElementById('task-details-modal');
     if (closeBtn && detailsModal) {
-        closeBtn.addEventListener('click', () => {
+        closeBtn.addEventListener('click', async () => {
             detailsModal.style.display = 'none';
         });
-        detailsModal.addEventListener('click', (e) => {
+        detailsModal.addEventListener('click', async (e) => {
             if (e.target === detailsModal) detailsModal.style.display = 'none';
         });
     }
@@ -204,14 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navigation Events
     const navEmployeeIssues = document.getElementById('nav-employee-issues');
     if (navEmployeeIssues) {
-        navEmployeeIssues.addEventListener('click', () => {
+        navEmployeeIssues.addEventListener('click', async () => {
             window.location.href = 'employee-raised-issues.html';
         });
     }
 
     const globalEscalateBtn = document.getElementById('global-escalate-btn');
     if (globalEscalateBtn) {
-        globalEscalateBtn.addEventListener('click', () => {
+        globalEscalateBtn.addEventListener('click', async () => {
             window.location.href = 'escalate-to-hr.html';
         });
     }

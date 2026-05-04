@@ -1,7 +1,7 @@
 // /js/views/teamlead/reports.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const genBtn = document.getElementById('generate-btn');
     if (genBtn) {
-        genBtn.addEventListener('click', () => {
+        genBtn.addEventListener('click', async () => {
             const btnText = genBtn.querySelector('.btn-text');
             const spinner = genBtn.querySelector('.spinner-icon');
             const type = document.getElementById('report-type').value;
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const downloadBtns = document.querySelectorAll('.download-btn');
     downloadBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const row = e.target.closest('tr');
             const title = row.querySelector('td:nth-child(2)').innerText.trim();
             const format = 'PDF';
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function showToast(title, message, type = 'info') {
+    async function showToast(title, message, type = 'info') {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) return;
 

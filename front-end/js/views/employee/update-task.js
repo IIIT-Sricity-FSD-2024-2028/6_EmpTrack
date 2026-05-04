@@ -2,14 +2,14 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded by app.js
 
     const params = new URLSearchParams(window.location.search);
     const taskId = params.get('id');
 
-    const task = db.getTasksForUser(user.emp_id).find(t => t.task_id === taskId);
+    const task = (await db.getTasksForUser(user.emp_id)).find(t => t.task_id === taskId);
     
     if (!task) {
         document.getElementById('task-error-container').style.display = 'block';
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial status dropdown
     statusEl.value = task.status;
 
-    slider.addEventListener('input', (e) => {
+    slider.addEventListener('input', async (e) => {
         const val = e.target.value;
         fill.style.width = val + '%';
         display.textContent = val + '%';
@@ -48,13 +48,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Form logic
-    document.getElementById('update-progress-form').addEventListener('submit', (e) => {
+    document.getElementById('update-progress-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const newProgress = parseInt(slider.value, 10);
         const newStatus = statusEl.value;
         
-        db.updateTaskStatus(taskId, newStatus, newProgress);
+        await db.updateTaskStatus(taskId, newStatus, newProgress);
         window.location.href = 'tasks.html';
     });
 });

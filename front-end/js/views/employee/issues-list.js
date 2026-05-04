@@ -2,10 +2,10 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
-    const issues = db.getIssuesForUser(user.emp_id);
+    const issues = await db.getIssuesForUser(user.emp_id);
     
     // Metrics
     const total = issues.length;

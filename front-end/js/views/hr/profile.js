@@ -1,7 +1,7 @@
 // /js/views/hr/profile.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Password Eye Toggles
     const eyeIcons = document.querySelectorAll('.eye-icon');
     eyeIcons.forEach(icon => {
-        icon.addEventListener('click', () => {
+        icon.addEventListener('click', async () => {
             const input = icon.previousElementSibling;
             if(input.type === 'password') {
                 input.type = 'text';
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pwdErr = document.getElementById('pwdErr');
     const btnUpdatePwd = document.getElementById('btnUpdatePwd');
 
-    function checkMatch() {
+    async function checkMatch() {
         if (!newPwd || !confPwd) return;
         const p1 = newPwd.value;
         const p2 = confPwd.value;
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Submission Form
     const pwdForm = document.getElementById('password-form');
     if (pwdForm) {
-        pwdForm.addEventListener('submit', (e) => {
+        pwdForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if(!pwdForm.checkValidity()) { 
                 pwdForm.reportValidity(); 

@@ -1,7 +1,7 @@
 // /js/views/hr/dashboard.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guard logic
 
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Add event listeners for leave actions
         leavesContainer.querySelectorAll('.action-btns button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const target = e.currentTarget;
                 const id = target.getAttribute('data-id');
                 const action = target.getAttribute('data-action');
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Local handler
-    function handleHRLeaveAction(id, action) {
+    async function handleHRLeaveAction(id, action) {
         const row = document.getElementById(`leave-row-${id}`);
         if(!row) return;
 

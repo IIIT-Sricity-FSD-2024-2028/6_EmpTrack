@@ -2,7 +2,7 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('work-logs-body');
 
     // 1. Fetch available tasks for dropdown
-    const tasks = db.getTasksForUser(user.emp_id).filter(t => t.status !== 'COMPLETED');
+    const tasks = (await db.getTasksForUser(user.emp_id)).filter(t => t.status !== 'COMPLETED');
     
     // 2. Populate Dropdown dynamically
     if (taskDrop) {
@@ -29,14 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const hoursSpent = document.getElementById('hours-spent-wl');
     const startTime = document.getElementById('wl_start');
     const endTime = document.getElementById('wl_end');
-    startTime.addEventListener('change', () => {
+    startTime.addEventListener('change', async () => {
         const start = new Date(startTime.value);
         const end = new Date(endTime.value);
         const diff = end - start;
         const hours = Math.floor(diff / 1000 / 60 / 60);
         hoursSpent.value = hours;
     });
-    endTime.addEventListener('change', () => {
+    endTime.addEventListener('change', async () => {
         const start = new Date(startTime.value);
         const end = new Date(endTime.value);
         const diff = end - start;
@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 3. Render Table
-    function renderTable() {
-        const logs = db.getWorkLogsForUser(user.emp_id);
+    async function renderTable() {
+        const logs = await db.getWorkLogsForUser(user.emp_id);
         
         let totalLogsMonth = logs.length;
         let totalWeekHours = logs.reduce((sum, l) => sum + parseInt(l.hours_spent || 0), 0);
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Handle Form Submit with validation
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             // Feature: form validity API checks "required", "min", "max" fields
@@ -107,11 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Save via the database
-            db.createWorkLog({
+            await db.createWorkLog({
                 emp_id: user.emp_id,
                 task_id: taskDrop.value,
                 task_title: selectedOption.getAttribute('data-title'),
-                hours_spent: document.getElementById('hours-spent-wl').value,
+                hours_spent: Number(document.getElementById('hours-spent-wl').value),
                 start_time: startTime,
                 end_time: endTime,
                 description: document.getElementById('wl_desc').value

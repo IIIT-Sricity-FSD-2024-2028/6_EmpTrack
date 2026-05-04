@@ -1,7 +1,7 @@
 // /js/views/teamlead/leave.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const bindActionButtons = () => {
         document.querySelectorAll('.approve-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
                 const req = leaveRequests.find(lr => lr.id === id);
                 if (req) {
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.reject-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
                 const req = leaveRequests.find(lr => lr.id === id);
                 if (req) {
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Filter Buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
             e.target.classList.add('active-filter');
             currentFilter = e.target.getAttribute('data-filter');
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Escalated Route Integration
     const alertBtn = document.getElementById('alert-escalated-btn');
     if (alertBtn) {
-        alertBtn.addEventListener('click', () => {
+        alertBtn.addEventListener('click', async () => {
             window.location.href = 'escalations.html';
         });
     }

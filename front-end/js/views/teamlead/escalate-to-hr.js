@@ -2,7 +2,7 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Back arrow navigation
     const backBtn = document.getElementById('back-btn');
     if (backBtn) {
-        backBtn.addEventListener('click', () => {
+        backBtn.addEventListener('click', async () => {
             window.location.href = 'escalations.html';
         });
     }
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleInput = document.getElementById('personal-issue-toggle');
     const relatedEmpWrapper = document.getElementById('related-employee-wrapper');
     if (toggleInput && relatedEmpWrapper) {
-        toggleInput.addEventListener('change', (e) => {
+        toggleInput.addEventListener('change', async (e) => {
             if (e.target.checked) {
                 relatedEmpWrapper.style.opacity = '0.5';
                 relatedEmpWrapper.style.pointerEvents = 'none';
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (categoryGrid) {
         const catBtns = categoryGrid.querySelectorAll('.cat-btn');
         catBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', async () => {
                 catBtns.forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
             });
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (priorityChips) {
         const pChips = priorityChips.querySelectorAll('.priority-chip');
         pChips.forEach(chip => {
-            chip.addEventListener('click', () => {
+            chip.addEventListener('click', async () => {
                 // Reset all
                 pChips.forEach(c => {
                     c.classList.remove('active');
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMsg = document.getElementById('form-error-msg');
     
     if(submitBtn) {
-        submitBtn.addEventListener('click', () => {
+        submitBtn.addEventListener('click', async () => {
             // Reset error
             if(errorMsg) { 
                 errorMsg.style.display = 'none'; 
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Save to DB
-            db.createEscalationRecord({
+            await db.createEscalationRecord({
                 title: titleInput,
                 description: descInput,
                 category: category,

@@ -1,7 +1,7 @@
 // /js/views/auth/login.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Feature disabled: Let users see the login page to switch accounts or verify navigation
     // if (auth.isAuthenticated()) {
     //     const role = auth.getRole();
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('login-form');
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const emailInput = document.getElementById('email');
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (isValid) {
-                const result = auth.login(email, pwd);
+                const result = await auth.login(email, pwd);
                 if (result.success) {
                     const role = auth.getRole();
                     window.location.href = `/front-end/${role.toLowerCase()}/dashboard.html`;

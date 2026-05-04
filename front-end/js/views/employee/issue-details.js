@@ -2,14 +2,14 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
     const params = new URLSearchParams(window.location.search);
     const issueId = params.get('id');
 
-    const issue = db.getIssuesForUser(user.emp_id).find(i => i.issue_id === issueId);
+    const issue = (await db.getIssuesForUser(user.emp_id)).find(i => i.issue_id === issueId);
     
     if(!issue) {
         document.getElementById('issue-error').style.display = 'block';
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'badge-open'; 
     };
 
-    document.getElementById('update-comment-btn').addEventListener('click', () => {
+    document.getElementById('update-comment-btn').addEventListener('click', async () => {
         const comment = document.getElementById('comment').value;
         if(!comment) {
             alert("Please enter a comment");
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Comment is Updated")
         }
     });
-    document.getElementById('close-issue-btn').addEventListener('click', () => {
+    document.getElementById('close-issue-btn').addEventListener('click', async () => {
         alert("Issue is closed")
         window.location.href = 'issues-list.html';
     });

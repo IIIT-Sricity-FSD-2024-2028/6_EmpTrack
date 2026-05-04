@@ -2,14 +2,14 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded by app.js
 
     // Helper re-rendering function
-    function render() {
+    async function render() {
         // Fetch dependencies + Data
-        const attendanceRecords = db.getAttendanceForUser(user.emp_id);
+        const attendanceRecords = await db.getAttendanceForUser(user.emp_id);
         const todayStr = new Date().toISOString().split('T')[0];
         const todaysRecord = attendanceRecords.find(a => a.attendance_date === todayStr);
 
@@ -112,8 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners (Attach ONCE)
     let activeLocation = 'Office'; // local mutable state for button clicks before DB commit
 
-    document.getElementById('loc-office')?.addEventListener('click', () => {
-        const attendanceRecords = db.getAttendanceForUser(user.emp_id);
+    document.getElementById('loc-office')?.addEventListener('click', async () => {
+        const attendanceRecords = await db.getAttendanceForUser(user.emp_id);
         const todayStr = new Date().toISOString().split('T')[0];
         const todaysRecord = attendanceRecords.find(a => a.attendance_date === todayStr);
         if (todaysRecord && (todaysRecord.check_in_time || todaysRecord.check_out_time)) return;
@@ -123,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loc-home').classList.remove('active');
     });
 
-    document.getElementById('loc-home')?.addEventListener('click', () => {
-        const attendanceRecords = db.getAttendanceForUser(user.emp_id);
+    document.getElementById('loc-home')?.addEventListener('click', async () => {
+        const attendanceRecords = await db.getAttendanceForUser(user.emp_id);
         const todayStr = new Date().toISOString().split('T')[0];
         const todaysRecord = attendanceRecords.find(a => a.attendance_date === todayStr);
         if (todaysRecord && (todaysRecord.check_in_time || todaysRecord.check_out_time)) return;
@@ -134,8 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loc-office').classList.remove('active');
     });
 
-    document.getElementById('btn-checkin')?.addEventListener('click', () => {
-        const attendanceRecords = db.getAttendanceForUser(user.emp_id);
+    document.getElementById('btn-checkin')?.addEventListener('click', async () => {
+        const attendanceRecords = await db.getAttendanceForUser(user.emp_id);
         const todayStr = new Date().toISOString().split('T')[0];
         const todaysRecord = attendanceRecords.find(a => a.attendance_date === todayStr);
         if (todaysRecord && todaysRecord.check_in_time) return;
@@ -146,19 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const overrideLocElement = document.getElementById('loc-home');
         if (overrideLocElement && overrideLocElement.classList.contains('active')) activeLocation = 'Home';
 
-        const res = db.markAttendance(user.emp_id, timeStr, activeLocation === "Home" ? "REMOTE" : "OFFICE");
+        const res = await db.markAttendance(user.emp_id, timeStr, activeLocation === "Home" ? "REMOTE" : "OFFICE");
         if (res && !res.error) {
-            res.remarks = "Checked In";
-            db.saveData();
             render();
         }
     });
 
-    document.getElementById('btn-checkout')?.addEventListener('click', () => {
-        const res = db.markCheckOut(user.emp_id);
+    document.getElementById('btn-checkout')?.addEventListener('click', async () => {
+        const res = await db.markCheckOut(user.emp_id);
         if (res && !res.error) {
-            res.remarks = "Completed";
-            db.saveData();
             render();
         }
     });

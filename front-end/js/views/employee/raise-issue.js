@@ -2,11 +2,11 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const activeTasks = db.getTasksForUser(user.emp_id).filter(t => t.status !== 'COMPLETED');
+    const activeTasks = (await db.getTasksForUser(user.emp_id)).filter(t => t.status !== 'COMPLETED');
     const taskDrop = document.getElementById('related_task');
     if (taskDrop) {
         taskDrop.innerHTML = '<option value="">Select a task (if applicable)</option>' + 
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cards = grid.querySelectorAll('.radio-card');
         
         cards.forEach(card => {
-            card.addEventListener('click', () => {
+            card.addEventListener('click', async () => {
                 cards.forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 input.value = card.getAttribute('data-val');
@@ -33,9 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('raise-issue-form');
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            db.createIssue({
+            await db.createIssue({
                 emp_id: user.emp_id,
                 type: document.getElementById('selected_type').value,
                 priority: document.getElementById('selected_priority').value,

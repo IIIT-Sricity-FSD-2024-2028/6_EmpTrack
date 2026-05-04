@@ -1,7 +1,7 @@
 // /js/views/hr/reports.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Chart.js Setup
-    function initCharts() {
+    async function initCharts() {
         const rootStyles = getComputedStyle(document.body);
         const textColor = rootStyles.getPropertyValue('--text-muted').trim() || '#6B7280';
         const gridColor = rootStyles.getPropertyValue('--border-color').trim() || '#E5E7EB';

@@ -1,0 +1,9 @@
+{
+  "task_id": "TK001",
+  "allocation_id": "W001",
+  "assigned_to": "EM001",
+  "status": "IN_PROGRESS",
+  "progress_percentage": 60,
+  "updated_date": "2026-05-04",
+  "warning_sent": false
+}

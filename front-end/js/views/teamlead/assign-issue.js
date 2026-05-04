@@ -2,7 +2,7 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const empRef = db.getUserById(issueData.emp_id);
+    const empRef = await db.getUserById(issueData.emp_id);
     const empNameNode = empRef ? empRef.emp_name : "Unknown Employee";
 
     let badgePri = 'badge-low';
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
-    document.getElementById('assign-issue-form').addEventListener('submit', (e) => {
+    document.getElementById('assign-issue-form').addEventListener('submit', async (e) => {
         e.preventDefault();
 
         issueData.assigned_to = document.getElementById('assign_target').value;
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             message: `Assigned to ${issueData.assigned_to}: ${document.getElementById('assign_notes').value}`
         });
 
-        db.saveData();
+        await db.saveData();
         window.location.href = 'issue-management.html';
     });
 });

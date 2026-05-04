@@ -2,18 +2,18 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const session = auth.getCurrentUser();
     if (!session) return; // Guarded
-    const user = db.getUserById(session.emp_id);
-  function isStrongPassword(password) {
+    const user = await db.getUserById(session.emp_id);
+  async function isStrongPassword(password) {
         return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/.test(password);
     }
     // Skills payload
     const skills = ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'MongoDB', 'GraphQL'];
 
     // HR Data
-    const manager = db.getUserById(user.manager_id);
+    const manager = await db.getUserById(user.manager_id);
     const joinedStr = new Date(user.date_of_joining).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     // Populate DOM
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Internal Form Binding
     const pwForm = document.getElementById('password-form');
     if (pwForm) {
-        pwForm.addEventListener('submit', (e) => {
+        pwForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const currentField = document.getElementById('current_pw');
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             //  5. Update password in store
-            const res = db.updateUserPassword(user.emp_id, newField.value);
+            const res = await db.updateUserPassword(user.emp_id, newField.value);
 
             if (res.error) {
                 errNode.textContent = res.error;

@@ -1,7 +1,7 @@
 // /js/views/teamlead/profile.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -57,20 +57,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const editNameInput = document.getElementById('edit-name-input');
 
     if (editBtn && editModal) {
-        editBtn.addEventListener('click', () => {
+        editBtn.addEventListener('click', async () => {
             editNameInput.value = userData.name;
             editModal.style.display = 'flex';
         });
 
-        closeEditBtn.addEventListener('click', () => {
+        closeEditBtn.addEventListener('click', async () => {
             editModal.style.display = 'none';
         });
 
-        editModal.addEventListener('click', (e) => {
+        editModal.addEventListener('click', async (e) => {
             if (e.target === editModal) editModal.style.display = 'none';
         });
 
-        editForm.addEventListener('submit', (e) => {
+        editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newName = editNameInput.value.trim();
             if (newName) {
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMsg = document.getElementById('pwd-error-msg');
 
     if (pwdForm) {
-        pwdForm.addEventListener('submit', (e) => {
+        pwdForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.style.display = 'none';
             newPwdObj.style.borderColor = 'var(--border-color)';
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showProfileToast(title, message, type = 'success') {
+    async function showProfileToast(title, message, type = 'success') {
         const toastContainer = document.getElementById('profile-toast-container');
         if (!toastContainer) return;
 
