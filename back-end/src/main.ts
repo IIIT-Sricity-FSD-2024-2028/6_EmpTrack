@@ -25,10 +25,20 @@ async function bootstrap() {
     .setDescription('The EmpTrack API documentation for backend mock structure')
     .setVersion('1.0')
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, documentFactory);
+
+
+const document = SwaggerModule.createDocument(app, config);
+SwaggerModule.setup('api/docs', app, document);
+
+
+
+
+
   
   await app.listen(process.env.PORT ?? 3000);
+console.log(`Server running on http://localhost:${process.env.PORT ?? 3000}`);
+console.log(`Swagger available at http://localhost:${process.env.PORT ?? 3000}/api/docs`);
+
 }
 bootstrap();
 
