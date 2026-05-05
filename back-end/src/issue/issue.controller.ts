@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { IssueService } from './issue.service';
 import { CreateIssueDto } from './dto/issue.dto';
@@ -17,9 +17,21 @@ export class IssueController {
     return this.issueService.getIssuesForUser(empId);
   }
 
+  @ApiOperation({ summary: 'Get all issues' })
+  @Get()
+  getAllIssues() {
+    return this.issueService.getAllIssues();
+  }
+
   @Post()
   createIssue(@Body() createDto: CreateIssueDto) {
     return this.issueService.createIssue(createDto);
+  }
+
+  @ApiOperation({ summary: 'Update issue' })
+  @Patch(':id')
+  updateIssue(@Param('id') id: string, @Body() updateData: any) {
+    return this.issueService.updateIssue(id, updateData);
   }
 }
 

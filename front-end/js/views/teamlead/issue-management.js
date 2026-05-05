@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!user) return; // Guarded
 
     // Fetch globally mapped issues
-    const allIssues = db.data.issue || [];
-    
+    const allIssues = await db.getAllIssues().catch(() => []);
+
     const totalIssues = allIssues.length;
     const openIssues = allIssues.filter(i => i.status === 'Open').length;
     const inProgressIssues = allIssues.filter(i => i.status === 'In Progress').length;
@@ -19,21 +19,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('stat-progress').textContent = inProgressIssues;
     document.getElementById('stat-resolved').textContent = resolvedIssues;
 
-    const renderTable = (issuesObj) => {
+    const renderTable = async (issuesObj) => {
         const tbody = document.getElementById('issues-table-body');
         if (!tbody) return;
 
-        tbody.innerHTML = issuesObj.map(i => {
+        const rows = await Promise.all(issuesObj.map(async i => {
             let priBadge = 'badge-low';
-            if(i.priority === 'High') priBadge = 'badge-high';
-            if(i.priority === 'Medium') priBadge = 'badge-medium';
+            if (i.priority === 'High') priBadge = 'badge-high';
+            if (i.priority === 'Medium') priBadge = 'badge-medium';
 
             let statBadge = 'badge-open';
             let statIcon = 'ph-envelope-open';
-            if(i.status === 'In Progress') { statBadge = 'badge-info'; statIcon = 'ph-spinner-gap'; }
-            if(i.status === 'Resolved') { statBadge = 'badge-completed'; statIcon = 'ph-check-circle'; }
+            if (i.status === 'In Progress') { statBadge = 'badge-info'; statIcon = 'ph-spinner-gap'; }
+            if (i.status === 'Resolved') { statBadge = 'badge-completed'; statIcon = 'ph-check-circle'; }
 
-            const refEmp = await db.getUserById(i.emp_id);
+            const refEmp = await db.getUserById(i.emp_id).catch(() => null);
             const empStr = refEmp ? refEmp.emp_name : i.emp_id;
 
             const taskStr = i.related_task ? `<a href="tasks.html" style="color:var(--primary-color); text-decoration:none; font-weight:var(--font-medium);">${i.related_task}</a>` : '<span style="color:var(--text-muted);">-</span>';
@@ -69,7 +69,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </td>
             </tr>
             `;
-        }).join('');
+        }));
+        
+        tbody.innerHTML = rows.join('');
 
         if (issuesObj.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 32px; color: var(--text-muted);">No issues found.</td></tr>';
@@ -88,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (filterStatus) filtered = filtered.filter(i => i.status === filterStatus);
         if (filterPriority) filtered = filtered.filter(i => i.priority === filterPriority);
         if (searchEmp) {
-            filtered = filtered.filter(i => {
+            filtered = filtered.filter(async i => {
                 const refEmp = await db.getUserById(i.emp_id);
                 const empStr = refEmp ? refEmp.emp_name.toLowerCase() : i.emp_id.toLowerCase();
                 return empStr.includes(searchEmp);

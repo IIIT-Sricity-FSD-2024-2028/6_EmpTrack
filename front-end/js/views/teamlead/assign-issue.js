@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const container = document.getElementById('assign-issue-container');
 
-    const issueArray = db.data.issue || [];
+    const issueArray = await db.getAllIssues().catch(() => []);
     const issueData = issueArray.find(i => i.issue_id === issueId);
 
     if (!issueData) {
@@ -176,18 +176,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('assign-issue-form').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        issueData.assigned_to = document.getElementById('assign_target').value;
-        issueData.priority = document.getElementById('assign_prio').value;
-        issueData.status = 'In Progress';
+        const assigned_to = document.getElementById('assign_target').value;
+        const priority = document.getElementById('assign_prio').value;
         
-        if (!issueData.updates) issueData.updates = [];
-        issueData.updates.push({
+        const updates = issueData.updates || [];
+        updates.push({
             sender: user.emp_id,
             time: new Date().toISOString().split('T')[0],
-            message: `Assigned to ${issueData.assigned_to}: ${document.getElementById('assign_notes').value}`
+            message: `Assigned to ${assigned_to}: ${document.getElementById('assign_notes').value}`
         });
 
-        await db.saveData();
+        const btn = e.submitter;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> Saving...';
+        btn.disabled = true;
+
+        try {
+            await db.updateIssue(issueId, {
+                assigned_to: assigned_to,
+                priority: priority,
+                status: 'In Progress',
+                updates: updates
+            });
+        } catch(err) {
+            console.error("Failed to assign issue", err);
+            alert("Failed to assign issue");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
         window.location.href = 'issue-management.html';
     });
 });

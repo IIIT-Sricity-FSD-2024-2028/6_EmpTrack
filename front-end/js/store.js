@@ -129,10 +129,21 @@ class ApiStore {
         return this._fetch(`/issues/user/${empId}`);
     }
 
+    async getAllIssues() {
+        return this._fetch('/issues');
+    }
+
     async createIssue(issueData) {
         return this._fetch('/issues', {
             method: 'POST',
             body: JSON.stringify(issueData)
+        });
+    }
+
+    async updateIssue(issueId, updateData) {
+        return this._fetch(`/issues/${issueId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updateData)
         });
     }
 

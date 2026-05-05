@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const container = document.getElementById('resolve-issue-container');
 
-    const issueArray = db.data.issue || [];
+    const issueArray = await db.getAllIssues().catch(() => []);
     const issueData = issueArray.find(i => i.issue_id === issueId);
 
     if (!issueData) {
@@ -283,8 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.innerHTML = '<i class="ph ph-spinner-gap ph-spin"></i> Saving...';
         btn.disabled = true;
 
-        issueData.status = 'Resolved';
-        issueData.resolution = {
+        const resolution = {
             type: document.getElementById('res_type').value,
             time_spent: document.getElementById('res_time').value,
             summary: document.getElementById('res_summary').value,
@@ -296,14 +295,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             resolved_date: new Date().toISOString()
         };
         
-        if (!issueData.updates) issueData.updates = [];
-        issueData.updates.push({
+        const updates = issueData.updates || [];
+        updates.push({
             sender: user.emp_id,
             time: new Date().toISOString().split('T')[0],
-            message: `Issue resolved: ${issueData.resolution.summary}`
+            message: `Issue resolved: ${resolution.summary}`
         });
 
-        await db.saveData();
+        try {
+            await db.updateIssue(issueId, {
+                status: 'Resolved',
+                resolution: resolution,
+                updates: updates
+            });
+        } catch (e) {
+            console.error("Failed to update issue", e);
+            alert("Failed to update issue");
+            btn.innerHTML = 'Mark as Resolved';
+            btn.disabled = false;
+            return;
+        }
 
         setTimeout(() => {
             window.location.href = 'issue-management.html';
