@@ -202,12 +202,4 @@ const highlightRow = (id) => {
     }
 
     // Navigation Events (Removed employee issues JS redirect as it is now an anchor link)
-
-    const globalEscalateBtn = document.getElementById('global-escalate-btn');
-    if (globalEscalateBtn) {
-        globalEscalateBtn.addEventListener('click', async () => {
-            window.location.href = 'escalate-to-hr.html';
-        });
-    }
 });
-
