@@ -1,62 +1,20 @@
 // /js/views/teamlead/notifications.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const getTeamLeadNotifs = () => {
-        let notifs = [];
-        let idCount = 1;
-
-        // Leaves received
-        const teamIds = db.getUsersByManager(user.emp_id).map(u => u.emp_id);
-        const leaves = db.getAllLeaves().filter(l => teamIds.includes(l.emp_id));
-        leaves.forEach(l => {
-            const emp = db.getUserById(l.emp_id);
-            notifs.push({
-                id: idCount++,
-                type: 'leave',
-                icon: 'ph-calendar-plus',
-                color: '#F97316',
-                title: 'Leave Request',
-                desc: `${emp.emp_name.split(' (')[0]} requested leave (${l.days} days).`,
-                source: emp.emp_name.split(' (')[0],
-                time: l.applied_date,
-                tags: [{label: l.status, bg:'#ffedd5', text:'#f97316'}],
-                unread: l.status === 'PENDING'
-            });
-        });
-
-        // Tasks completed
-        const tasks = db.getAllTasksForManager(user.emp_id).filter(t => t.status === 'COMPLETED');
-        tasks.forEach(t => {
-            const emp = db.getUserById(t.assigned_to);
-            notifs.push({
-                id: idCount++,
-                type: 'alert',
-                icon: 'ph-check-square-offset',
-                color: '#22C55E',
-                title: 'Task Completed',
-                desc: `${emp.emp_name.split(' (')[0]} finished task: ${t.task_title}.`,
-                source: emp.emp_name.split(' (')[0],
-                time: t.updated_date,
-                tags: [{label: 'COMPLETED', bg:'#dcfce7', text:'#16a34a'}],
-                unread: false
-            });
-        });
-
-        notifs.push({ id: idCount++, type: 'alert', icon: 'ph-megaphone', color: '#8B5CF6', title: 'System Setup', desc: 'Welcome to the Team Lead Notification Hub!', source: 'System', time: 'Initial', tags: [{label:'SYSTEM', bg:'#ede9fe', text:'#7c3aed'}], unread: false });
-
-        return notifs.reverse();
-    };
-
-    const dummyNotifs = getTeamLeadNotifs();
+    const dummyNotifs = [
+        { id: 1, type: 'alert', icon: 'ph-warning-octagon', color: '#EF4444', title: 'Task Escalation', desc: 'A critical bug in the authentication module was escalated.', source: 'Jane Doe', time: '10 mins ago', tags: [{label:'ESCALATION', bg:'#fee2e2', text:'#ef4444'}], unread: true },
+        { id: 2, type: 'leave', icon: 'ph-calendar-plus', color: '#F97316', title: 'New Leave Request', desc: 'Alice is requesting leave for next week. Approval needed.', source: 'Alice Walker', time: '1 hour ago', tags: [{label:'ACTION REQUIRED', bg:'#ffedd5', text:'#f97316'}], unread: true },
+        { id: 3, type: 'alert', icon: 'ph-check-square-offset', color: '#22C55E', title: 'Task Completed', desc: 'Bob finished his assigned sprint tasks successfully.', source: 'Bob Smith', time: '3 hours ago', tags: [{label:'COMPLETED', bg:'#dcfce7', text:'#16a34a'}], unread: false },
+        { id: 4, type: 'leave', icon: 'ph-calendar-check', color: '#3B82F6', title: 'Leave Feedback', desc: 'Charlie has returned from sick leave.', source: 'Charlie Day', time: 'Yesterday', tags: [{label:'REMINDER', bg:'#dbeafe', text:'#2563eb'}], unread: false }
+    ];
 
     const listContainer = document.getElementById('tl-notif-list');
     
-    function renderNotifications() {
+    async function renderNotifications() {
         if (!listContainer) return;
 
         listContainer.innerHTML = dummyNotifs.map(n => `
@@ -90,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeFilter = 'all';
 
-    function filterNotifs() {
+    async function filterNotifs() {
         const items = document.querySelectorAll('.notif-item');
         
         items.forEach(item => {
@@ -108,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterBtns = document.querySelectorAll('.tab-btn');
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             filterBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             activeFilter = e.target.dataset.filter;
@@ -116,15 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function updateUnreadCount() {
+    async function updateUnreadCount() {
         const c = document.querySelectorAll('.notif-item.unread').length;
         const unreadMetric = document.getElementById('met-unread');
         if (unreadMetric) unreadMetric.innerText = c;
     }
 
-    function attachActionListeners() {
+    async function attachActionListeners() {
         document.querySelectorAll('.btn-done').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';
@@ -134,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-del').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.style.animation = 'slideOutRight 0.3s ease forwards';
                 setTimeout(() => {
@@ -147,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const markAllBtn = document.getElementById('btn-mark-all');
     if (markAllBtn) {
-        markAllBtn.addEventListener('click', () => {
+        markAllBtn.addEventListener('click', async () => {
             document.querySelectorAll('.notif-item.unread').forEach(item => {
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';

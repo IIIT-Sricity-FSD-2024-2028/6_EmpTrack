@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Admin All Employees</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/hr/employee-management.css">
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Employee Management</span>
+                            <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Admin Portal</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hr-emp-manage">
+                    
+                    <!-- Add Employee Card -->
+                    <div class="card add-emp-card">
+                        <div style="font-weight:600; font-size:16px; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+                            <i class="ph-fill ph-user-plus" style="color:var(--emp-primary);"></i> Add New Employee
+                        </div>
+                        <form id="addEmpForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="addEmpName" required placeholder="e.g. Jane Doe">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email Address</label>
+                                    <input type="email" id="addEmpEmail" required placeholder="jane@company.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>Department</label>
+                                    <select id="addEmpDept" required>
+                                        <option value="" disabled selected>Select Dept</option>
+                                        <option value="Engineering">Engineering</option>
+                                        <option value="Design">Design</option>
+                                        <option value="Marketing">Marketing</option>
+                                        <option value="Sales">Sales</option>
+                                        <option value="HR">HR</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>System Role</label>
+                                    <select id="addEmpRole" required>
+                                        <option value="" disabled selected>Select Role</option>
+                                        <option value="EMP">Employee</option>
+                                        <option value="TL">Team Lead</option>
+                                        <option value="HR">HR Manager</option>
+                                        <option value="ADMIN">Super Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-top: 16px;">
+                                <button type="submit" class="btn-submit" id="addEmpSubmitBtn">Add Employee</button>
+                            </div>
+                            <div id="addEmpSuccess" style="display:none; color:var(--emp-success); font-size:13px; font-weight:500; margin-top:12px;">
+                                <i class="ph-fill ph-check-circle"></i> Employee successfully added!
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card filter-bar">
+                        <div class="search-wrap">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" id="empSearch" class="search-input" placeholder="Search employees by name, email, or ID...">
+                        </div>
+                        <div class="filters-wrap">
+                            <select id="empDeptFilter" class="filter-select">
+                                <option value="all">All Departments</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Design">Design</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                            </select>
+                            <select id="empStatusFilter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="On Leave">On Leave</option>
+                            </select>
+                            <button class="btn-clear" id="empClearSort"><i class="ph ph-x"></i> Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="card table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Role</th>
+                                    <th>Join Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="empTableBody">
+                                <tr class="loader-row" id="loaderRow">
+                                    <td colspan="6">
+                                        <div class="spinner"></div>
+                                        <div>Loading directory...</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary Cards Bottom -->
+                    <div class="summary-grid">
+                        <div class="card summary-card sc-total">
+                            <div class="sc-val count-anim" id="total-val" data-val="0">0</div>
+                            <div class="sc-label">Total Employees</div>
+                        </div>
+                        <div class="card summary-card sc-active">
+                            <div class="sc-val count-anim" id="active-val" data-val="0">0</div>
+                            <div class="sc-label">Active</div>
+                        </div>
+                        <div class="card summary-card sc-leave">
+                            <div class="sc-val count-anim" id="leave-val" data-val="0">0</div>
+                            <div class="sc-label">On Leave</div>
+                        </div>
+                        <div class="card summary-card sc-new">
+                            <div class="sc-val count-anim" id="new-val" data-val="0">0</div>
+                            <div class="sc-label">New This Month</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/admin/employee-management.js"></script>
+</body>
+</html>

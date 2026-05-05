@@ -45,6 +45,11 @@ export function initLayout() {
             <a href="/front-end/hr/reports.html" class="nav-item ${isActive('reports')}"><i class="ph ph-file-text"></i> Reports</a>
             <a href="/front-end/hr/settings.html" class="nav-item ${isActive('settings')}"><i class="ph ph-gear"></i> Settings</a>
         `;
+    } else if (user.role === 'ADMIN') {
+        navItems = `
+            <a href="/front-end/admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Admin Dashboard</a>
+            <a href="/front-end/admin/employee-management.html" class="nav-item ${isActive('employee-management')}"><i class="ph ph-users"></i> All Employees</a>
+        `;
     }
 
     if (sidebarContainer) {
@@ -70,7 +75,7 @@ export function initLayout() {
                         </div>
                         <div class="user-info" style="display:flex; flex-direction:column;">
                             <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: #FFFFFF;">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.emp_name}</span>
-                            <span class="user-role" style="font-size: var(--text-xs); color: rgba(255,255,255,0.7);">${user.role === 'HR' ? 'Human resources' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
+                            <span class="user-role" style="font-size: var(--text-xs); color: rgba(255,255,255,0.7);">${user.role === 'HR' ? 'HR Manager' : user.role === 'ADMIN' ? 'Super Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
                         </div>
                     </div>
                     </a>
@@ -85,7 +90,7 @@ export function initLayout() {
         const titleEl = document.getElementById('page-title');
         if (titleEl) pageTitle = titleEl.textContent;
 
-        const rolePortal = user.role === 'EMPLOYEE' ? 'Employee Portal' : (user.role === 'TEAMLEAD' ? 'Team Lead Portal' : 'HR Portal');
+        const rolePortal = user.role === 'EMPLOYEE' ? 'Employee Portal' : (user.role === 'TEAMLEAD' ? 'Team Lead Portal' : (user.role === 'ADMIN' ? 'Admin Portal' : 'HR Portal'));
 
         headerContainer.innerHTML = `
             <header class="top-header">

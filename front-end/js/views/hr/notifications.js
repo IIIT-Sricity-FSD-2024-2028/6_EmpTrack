@@ -1,62 +1,26 @@
 // /js/views/hr/notifications.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const getHRNotifs = () => {
-        let notifs = [];
-        let idCount = 1;
-
-        // Escalations
-        const escalations = db.getAllEscalations();
-        escalations.forEach(e => {
-            const emp = db.getUserById(e.escalated_from) || db.getUserById(e.escalated_by);
-            let name = emp ? emp.emp_name.split(' (')[0] : 'Unknown';
-            notifs.push({
-                id: idCount++,
-                type: 'escalation',
-                icon: 'ph-siren',
-                color: '#EF4444',
-                title: 'Escalation Alert',
-                desc: `${e.escalation_reason || e.issue_title || 'Issue escalated to HR.'}`,
-                source: name,
-                time: e.escalation_date || e.escalated_on || new Date().toISOString().split('T')[0],
-                tags: [{label: 'ESCALATION', bg:'#fee2e2', text:'#ef4444'}],
-                unread: (e.status === 'OPEN' || e.status === 'Open')
-            });
-        });
-
-        // New Employees
-        const today = new Date().toISOString().split('T')[0];
-        const newEmps = db.data.employee.filter(e => e.date_of_joining >= '2025-01-01');
-        newEmps.forEach(e => {
-            notifs.push({
-                id: idCount++,
-                type: 'info',
-                icon: 'ph-user-plus',
-                color: '#EAB308',
-                title: 'Employee Onboarding',
-                desc: `New hire ${e.emp_name.split(' (')[0]} joined on ${e.date_of_joining}.`,
-                source: 'Onboarding Portal',
-                time: e.date_of_joining,
-                tags: [{label:'INFO', bg:'#fef9c3', text:'#ca8a04'}],
-                unread: false
-            });
-        });
-
-        notifs.push({ id: idCount++, type: 'info', icon: 'ph-megaphone', color: '#8B5CF6', title: 'System Ready', desc: 'Welcome to the HR Notification Engine!', source: 'System', time: 'Initial', tags: [{label:'SYSTEM', bg:'#ede9fe', text:'#7c3aed'}], unread: false });
-
-        return notifs.reverse();
-    };
-
-    const dummyNotifs = getHRNotifs();
+    const dummyNotifs = [
+        { id: 1, type: 'critical', icon: 'ph-siren', color: '#EF4444', title: 'Critical Escalation', desc: 'Employee John Smith has exceeded 3 days of unauthorized absence.', source: 'System Auto-Alert', time: '2 mins ago', tags: [{label:'CRITICAL', bg:'#fee2e2', text:'#ef4444'}, {label:'ACTION REQUIRED', bg:'#fee2e2', text:'#ef4444'}], unread: true },
+        { id: 2, type: 'high', icon: 'ph-warning-octagon', color: '#F97316', title: 'Unauthorized Leave', desc: 'Manager reported unauthorized leave for Michael Davis.', source: 'David Clark (Lead)', time: '1 hour ago', tags: [{label:'HIGH', bg:'#ffedd5', text:'#f97316'}, {label:'ATTENDANCE', bg:'#e0e7ff', text:'#4f46e5'}], unread: true },
+        { id: 3, type: 'high', icon: 'ph-clock', color: '#F97316', title: 'Attendance Alert', desc: '3 employees missed the late check-in buffer today.', source: 'Time Tracking System', time: '3 hours ago', tags: [{label:'ATTENDANCE', bg:'#e0e7ff', text:'#4f46e5'}], unread: false },
+        { id: 4, type: 'escalation', icon: 'ph-arrow-fat-lines-up', color: '#800040', title: 'HR Escalation', desc: 'Conflict resolution requested by Engineering team lead.', source: 'Emma Wilson', time: '4 hours ago', tags: [{label:'ESCALATION', bg:'#f3e8ff', text:'#9333ea'}], unread: true },
+        { id: 5, type: 'info', icon: 'ph-user-plus', color: '#EAB308', title: 'Employee Onboarding', desc: 'New hire documents completed for Robert Chen.', source: 'Onboarding Portal', time: 'Yesterday', tags: [{label:'INFO', bg:'#fef9c3', text:'#ca8a04'}], unread: false },
+        { id: 6, type: 'escalation', icon: 'ph-file-text', color: '#EF4444', title: 'Compliance Report', desc: 'Monthly compliance audit requires HR sign-off.', source: 'Compliance System', time: 'Yesterday', tags: [{label:'ACTION REQUIRED', bg:'#fee2e2', text:'#ef4444'}], unread: false },
+        { id: 7, type: 'info', icon: 'ph-arrows-clockwise', color: '#3B82F6', title: 'System Update', desc: 'EmpTrack successfully updated to v2.4.', source: 'IT Admin', time: '2 days ago', tags: [{label:'SYSTEM', bg:'#dbeafe', text:'#2563eb'}], unread: false },
+        { id: 8, type: 'info', icon: 'ph-user-minus', color: '#F97316', title: 'Employee Departure', desc: 'Exit interview scheduled for Alice Cooper.', source: 'HR Calendar', time: '2 days ago', tags: [{label:'INFO', bg:'#fef9c3', text:'#ca8a04'}], unread: false },
+        { id: 9, type: 'info', icon: 'ph-chart-bar', color: '#22C55E', title: 'Attendance Summary', desc: 'Weekly attendance report generation complete.', source: 'Reporting Engine', time: 'Last week', tags: [{label:'REPORT', bg:'#dcfce7', text:'#16a34a'}], unread: false },
+        { id: 10, type: 'action', icon: 'ph-shield-check', color: '#F97316', title: 'Policy Update', desc: 'Please review and publish the revised remote work policy.', source: 'Legal Dept', time: 'Last week', tags: [{label:'ACTION REQUIRED', bg:'#ffedd5', text:'#f97316'}], unread: false }
+    ];
 
     const listContainer = document.getElementById('hr-notif-list');
     
-    function renderNotifications() {
+    async function renderNotifications() {
         if (!listContainer) return;
 
         listContainer.innerHTML = dummyNotifs.map(n => `
@@ -89,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeFilter = 'all';
 
-    function filterNotifs() {
+    async function filterNotifs() {
         const term = document.getElementById('notif-search').value.toLowerCase();
         const items = document.querySelectorAll('.notif-item');
         
@@ -120,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterBtns = document.querySelectorAll('.tab-btn');
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             filterBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             activeFilter = e.target.dataset.filter;
@@ -128,15 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function updateUnreadCount() {
+    async function updateUnreadCount() {
         const c = document.querySelectorAll('.notif-item.unread').length;
         document.getElementById('met-unread').innerText = c;
         document.getElementById('sc-unread').innerText = c;
     }
 
-    function attachActionListeners() {
+    async function attachActionListeners() {
         document.querySelectorAll('.btn-done').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';
@@ -146,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-del').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.style.animation = 'slideOutRight 0.3s ease forwards';
                 setTimeout(() => {
@@ -159,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const markAllBtn = document.getElementById('btn-mark-all');
     if (markAllBtn) {
-        markAllBtn.addEventListener('click', () => {
+        markAllBtn.addEventListener('click', async () => {
             document.querySelectorAll('.notif-item.unread').forEach(item => {
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';

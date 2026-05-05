@@ -1,87 +1,21 @@
 // /js/views/employee/notifications.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const getEmployeeNotifs = () => {
-        let notifs = [];
-        let idCount = 1;
-        
-        // Tasks
-        const tasks = db.getTasksForUser(user.emp_id);
-        tasks.forEach(t => {
-            notifs.push({
-                id: idCount++,
-                type: 'task',
-                icon: 'ph-check-square-offset',
-                color: '#3B82F6',
-                title: 'Task Assigned: ' + t.task_title,
-                desc: t.task_description,
-                source: 'Project Manager',
-                time: t.updated_date,
-                tags: [{label: t.status.replace('_', ' '), bg:'#dbeafe', text:'#2563eb'}],
-                unread: t.status === 'NOT_STARTED'
-            });
-        });
-
-        // Leaves
-        const leaves = db.getLeavesForUser(user.emp_id);
-        leaves.forEach(l => {
-            let color = '#F97316';
-            let bg = '#ffedd5';
-            let text = '#f97316';
-            if (l.status === 'APPROVED') { color = '#22C55E'; bg = '#dcfce7'; text = '#16a34a'; }
-            if (l.status === 'REJECTED') { color = '#EF4444'; bg = '#fee2e2'; text = '#ef4444'; }
-            
-            notifs.push({
-                id: idCount++,
-                type: 'leave',
-                icon: 'ph-calendar-check',
-                color: color,
-                title: 'Leave Update',
-                desc: `Your leave request for ${l.start_date} is ${l.status}.`,
-                source: 'System',
-                time: l.applied_date,
-                tags: [{label: l.status, bg: bg, text: text}],
-                unread: false
-            });
-        });
-
-        // Some basic static system notifications to pad it
-        notifs.push({ id: idCount++, type: 'info', icon: 'ph-megaphone', color: '#8B5CF6', title: 'System Welcome', desc: 'Welcome to the new unified EmpTrack system!', source: 'Internal Comms', time: 'Initial', tags: [{label:'SYSTEM', bg:'#ede9fe', text:'#7c3aed'}], unread: false });
-
-        // Database Notifications (Warnings, Deadline Extensions, etc)
-        const dbNotifs = db.getNotificationsForUser(user.emp_id);
-        dbNotifs.forEach(n => {
-            let color = n.type === 'warning' ? '#DC2626' : '#3B82F6';
-            let icon = n.type === 'warning' ? 'ph-warning-octagon' : 'ph-info';
-            let bg = n.type === 'warning' ? '#fee2e2' : '#dbeafe';
-            let textc = n.type === 'warning' ? '#dc2626' : '#2563eb';
-            notifs.push({
-                id: n.id, // Keep DB ID for real updates if needed, string works
-                type: n.type,
-                icon: icon,
-                color: color,
-                title: n.type === 'warning' ? 'Action Required' : 'Task Update',
-                desc: n.message,
-                source: 'Team Lead',
-                time: n.timestamp.split('T')[0],
-                tags: [{label: n.type.toUpperCase(), bg: bg, text: textc}],
-                unread: !n.is_read
-            });
-        });
-
-        return notifs.reverse();
-    };
-
-    const dummyNotifs = getEmployeeNotifs();
+    const dummyNotifs = [
+        { id: 1, type: 'task', icon: 'ph-check-square-offset', color: '#3B82F6', title: 'New Task Assigned', desc: 'You have been assigned to develop the login API.', source: 'Rinku Singh (Lead)', time: '2 mins ago', tags: [{label:'NEW TASK', bg:'#dbeafe', text:'#2563eb'}], unread: true },
+        { id: 2, type: 'leave', icon: 'ph-calendar-check', color: '#22C55E', title: 'Leave Approved', desc: 'Your leave request for next Friday was approved.', source: 'HR System', time: '1 hour ago', tags: [{label:'APPROVED', bg:'#dcfce7', text:'#16a34a'}, {label:'LEAVE', bg:'#e0e7ff', text:'#4f46e5'}], unread: true },
+        { id: 3, type: 'info', icon: 'ph-megaphone', color: '#F97316', title: 'Company Townhall', desc: 'Reminder: Q3 Company Townhall is tomorrow at 10 AM.', source: 'Internal Comms', time: '3 hours ago', tags: [{label:'ANNOUNCEMENT', bg:'#ffedd5', text:'#f97316'}], unread: false },
+        { id: 4, type: 'task', icon: 'ph-warning-circle', color: '#EF4444', title: 'Task Deadline Approaching', desc: 'The "User Profile UI" task is due tomorrow.', source: 'Project Manager', time: 'Yesterday', tags: [{label:'URGENT', bg:'#fee2e2', text:'#ef4444'}], unread: false },
+        { id: 5, type: 'info', icon: 'ph-money', color: '#8B5CF6', title: 'Payslip Available', desc: 'Your payslip for this month is now available for download.', source: 'Finance', time: '2 days ago', tags: [{label:'FINANCE', bg:'#ede9fe', text:'#7c3aed'}], unread: false }
+    ];
 
     const listContainer = document.getElementById('emp-notif-list');
     
-    function renderNotifications() {
+    async function renderNotifications() {
         if (!listContainer) return;
 
         listContainer.innerHTML = dummyNotifs.map(n => `
@@ -115,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeFilter = 'all';
 
-    function filterNotifs() {
+    async function filterNotifs() {
         const items = document.querySelectorAll('.notif-item');
         
         items.forEach(item => {
@@ -133,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterBtns = document.querySelectorAll('.tab-btn');
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             filterBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             activeFilter = e.target.dataset.filter;
@@ -141,15 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function updateUnreadCount() {
+    async function updateUnreadCount() {
         const c = document.querySelectorAll('.notif-item.unread').length;
         const unreadMetric = document.getElementById('met-unread');
         if (unreadMetric) unreadMetric.innerText = c;
     }
 
-    function attachActionListeners() {
+    async function attachActionListeners() {
         document.querySelectorAll('.btn-done').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';
@@ -159,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-del').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const item = e.currentTarget.closest('.notif-item');
                 item.style.animation = 'slideOutRight 0.3s ease forwards';
                 setTimeout(() => {
@@ -172,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const markAllBtn = document.getElementById('btn-mark-all');
     if (markAllBtn) {
-        markAllBtn.addEventListener('click', () => {
+        markAllBtn.addEventListener('click', async () => {
             document.querySelectorAll('.notif-item.unread').forEach(item => {
                 item.classList.remove('unread');
                 item.dataset.unread = 'false';

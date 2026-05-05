@@ -1,8 +1,7 @@
 // /js/views/auth/login.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Feature disabled: Let users see the login page to switch accounts or verify navigation
     // if (auth.isAuthenticated()) {
     //     const role = auth.getRole();
@@ -12,14 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('login-form');
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // Compulsory HTML5 Validation Check
-            if(!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
             
             const emailInput = document.getElementById('email');
             const passInput = document.getElementById('password');
@@ -47,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (isValid) {
-                const result = auth.login(email, pwd);
+                const result = await auth.login(email, pwd);
                 if (result.success) {
                     const role = auth.getRole();
                     window.location.href = `/front-end/${role.toLowerCase()}/dashboard.html`;
@@ -58,6 +51,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-
 });

@@ -2,7 +2,7 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return;
 
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
-    const empRef = db.getUserById(issueData.emp_id);
+    const empRef = await db.getUserById(issueData.emp_id);
     const empNameNode = empRef ? empRef.emp_name : "Unknown Employee";
 
     let badgePri = 'badge-low';
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
-    document.getElementById('resolve-issue-form').addEventListener('submit', (e) => {
+    document.getElementById('resolve-issue-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const btn = e.submitter;
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
             message: `Issue resolved: ${issueData.resolution.summary}`
         });
 
-        db.saveData();
+        await db.saveData();
 
         setTimeout(() => {
             window.location.href = 'issue-management.html';

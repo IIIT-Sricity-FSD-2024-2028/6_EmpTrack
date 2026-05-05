@@ -1,13 +1,13 @@
 // /js/views/hr/settings.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
     const forms = document.querySelectorAll('.settings-form');
     forms.forEach(form => {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if(!form.checkValidity()) {
                 form.reportValidity();

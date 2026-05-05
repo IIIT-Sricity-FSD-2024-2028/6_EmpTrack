@@ -1,38 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Attendance</title>
-
+    
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
     <link rel="stylesheet" href="../css/views/employee/attendance.css">
-
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-
 <body>
     <div class="app-container">
         <div id="sidebar-container"></div>
-
+        
         <main class="main-wrapper">
             <div id="header-container"></div>
-
+            
             <div class="content-area" id="main-content">
                 <div class="attendance-page-layout">
-
+                    
                     <!-- SECTION 1: MARK ATTENDANCE -->
                     <div class="card attendance-mark-card">
                         <h3 class="attendance-card-title">Mark your Attendance</h3>
-                        <div class="attendance-card-subtitle">Select your work location and mark check-in/check-out
-                        </div>
-
+                        <div class="attendance-card-subtitle">Select your work location and mark check-in/check-out</div>
+                        
                         <div class="attendance-location-container">
                             <div class="location-label">Work Location</div>
                             <div class="location-toggle-group">
@@ -104,22 +101,16 @@
                     <div class="attendance-metrics-grid">
                         <div class="card metric-card">
                             <svg viewBox="0 0 36 36" class="circular-chart">
-                                <path class="circle-bg"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path id="rate-circle" class="circle" stroke-dasharray="0, 100"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="rate-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                 <text id="rate-text" x="18" y="20.35" class="percentage">0%</text>
                             </svg>
                             <div class="metric-chart-label">Attendance Rate</div>
                         </div>
-                        <div class="card"
-                            style="padding: 24px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
-                            <div id="metric-avg"
-                                style="font-size: 36px; font-weight: var(--font-bold); color: var(--text-main); margin-bottom:4px;">
-                                0%</div>
-                            <div style="font-size: 14px; font-weight:var(--font-bold); margin-bottom:4px;">Average Daily
-                                Progress</div>
-                            <div style="font-size: 11px; color: var(--text-muted);">Based on last 30 days</div>
+                        <div class="card metric-card-flex">
+                            <div id="metric-avg" class="metric-hero-value color-main">0%</div>
+                            <div class="metric-title">Average Daily Progress</div>
+                            <div class="metric-subtitle">Based on last 30 days</div>
                         </div>
                         <div class="card metric-card-flex">
                             <div id="metric-escalations" class="metric-hero-value color-orange">0</div>
@@ -137,5 +128,4 @@
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/views/employee/attendance.js"></script>
 </body>
-
 </html>

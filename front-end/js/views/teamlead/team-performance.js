@@ -1,49 +1,25 @@
 // /js/views/teamlead/team-performance.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const getTeamPerformance = () => {
-        const team = db.getUsersByManager(user.emp_id);
-        const tasks = db.getAllTasksForManager(user.emp_id);
-        const allAtt = db.data.attendance || [];
-
-        return team.map(emp => {
-            const empTasks = tasks.filter(t => t.assigned_to === emp.emp_id);
-            const totalTasks = empTasks.length;
-            const completed = empTasks.filter(t => t.status === 'COMPLETED').length;
-            const productivity = totalTasks > 0 ? Math.round((completed / totalTasks) * 100) : 100;
-
-            const myAtt = allAtt.filter(a => a.emp_id === emp.emp_id);
-            const present = myAtt.filter(a => a.status === 'PRESENT' || a.status === 'LATE').length;
-            const attendance = myAtt.length > 0 ? Math.round((present / myAtt.length) * 100) : 100;
-            
-            let status = 'Excellent';
-            if(productivity < 50 || attendance < 85) status = 'Needs Improvement';
-            else if (productivity < 80) status = 'Good';
-
-            return {
-                name: emp.emp_name.split(' (')[0],
-                tasks: totalTasks,
-                rating: (Math.random() * (5.0 - 3.5) + 3.5).toFixed(1), // Visual aesthetic proxy
-                productivity: productivity,
-                attendance: attendance,
-                status: status
-            };
-        });
-    };
-
-    const teamMembers = getTeamPerformance();
-
     const mockStats = {
-        teamSize: teamMembers.length,
-        avgProductivity: teamMembers.length > 0 ? Math.round(teamMembers.reduce((acc, t) => acc + t.productivity, 0) / teamMembers.length) + '%' : '100%',
-        avgRating: teamMembers.length > 0 ? (teamMembers.reduce((acc, t) => acc + parseFloat(t.rating), 0) / teamMembers.length).toFixed(1) + '/5' : '5/5',
-        teamGrowth: '+12%' // aesthetic diff
+        teamSize: 6,
+        avgProductivity: '86%',
+        avgRating: '4.5/5',
+        teamGrowth: '+12%'
     };
+
+    const teamMembers = [
+        { name: 'John Smith', tasks: 42, rating: 4.8, productivity: 92, attendance: 98, status: 'Excellent' },
+        { name: 'Sarah Johnson', tasks: 38, rating: 4.6, productivity: 88, attendance: 100, status: 'Excellent' },
+        { name: 'Mike Davis', tasks: 31, rating: 4.0, productivity: 76, attendance: 95, status: 'Good' },
+        { name: 'Emma Wilson', tasks: 45, rating: 4.9, productivity: 95, attendance: 99, status: 'Excellent' },
+        { name: 'James Brown', tasks: 18, rating: 3.2, productivity: 45, attendance: 85, status: 'Needs Improvement' },
+        { name: 'Lisa Anderson', tasks: 39, rating: 4.7, productivity: 90, attendance: 100, status: 'Excellent' }
+    ];
 
     document.getElementById('stat-team-size').textContent = mockStats.teamSize;
     document.getElementById('stat-avg-prod').textContent = mockStats.avgProductivity;

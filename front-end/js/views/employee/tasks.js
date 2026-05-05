@@ -2,11 +2,11 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded by app.js
 
-    const tasks = db.getTasksForUser(user.emp_id);
+    const tasks = await db.getTasksForUser(user.emp_id);
     
     const getBadgeClass = (status) => {
         if(status === 'IN_PROGRESS') return 'badge-in-progress';

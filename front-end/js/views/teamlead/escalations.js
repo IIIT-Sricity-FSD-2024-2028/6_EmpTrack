@@ -2,12 +2,11 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-<<<<<<< HEAD
-    let tasks = db.getAllTasksForManager(user.emp_id);
+    let tasks = await db.getAllTasksForManager(user.emp_id);
 
     const updateStats = () => {
         let total = tasks.length;
@@ -49,64 +48,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderTable = () => {
         if (!tbody) return;
-
-        tasks = db.getAllTasksForManager(user.emp_id); // Refresh
+        
+        tasks = await db.getAllTasksForManager(user.emp_id); // Refresh
         updateStats();
 
         tbody.innerHTML = tasks.map(task => {
-            const empUser = db.getUserById(task.assigned_to);
+            const empUser = await db.getUserById(task.assigned_to);
             const empName = empUser ? empUser.emp_name : 'Unknown';
             return `
             <tr style="border-bottom: 1px solid var(--border-color); transition: background-color var(--transition-fast);" id="row-${task.task_id}">
-=======
-    const renderEscalations = () => {
-        const teamTasks = db.getAllTasksForManager(user.emp_id);
-        const lateOrActiveTasks = teamTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'NOT_STARTED');
-        
-        const mockTasks = lateOrActiveTasks.map(t => {
-            const emp = db.getUserById(t.assigned_to);
-            const empName = emp ? emp.emp_name.split(' (')[0] : 'Employee';
-            const est = parseInt(t.est_hours || 40);
-            const spent = parseInt(t.hours_spent || (est * Math.random()));
-            const progress = t.progress_percentage || Math.floor(Math.random() * 80);
-            
-            return {
-                emp: empName,
-                emp_id: t.assigned_to,
-                warning_sent: t.warning_sent,
-                deadline: t.deadline,
-                desc: t.task_description,
-                status: t.status,
-                id: t.task_id,
-                title: t.task_title,
-                progress: progress,
-                est: est + 'h',
-                spent: spent + 'h',
-                reason: progress < 50 && spent > est / 2 ? 'Falling behind estimation' : 'Pending completion'
-            };
-        });
-
-        const mockStats = {
-            total: teamTasks.length,
-            avgDelay: 'N/A',
-            employees: Object.keys(teamTasks.reduce((acc, t) => { acc[t.assigned_to] = true; return acc; }, {})).length,
-            avgProgress: (mockTasks.reduce((acc, t) => acc + t.progress, 0) / (mockTasks.length || 1)).toFixed(0) + '%'
-        };
-
-        const elStatTotal = document.getElementById('stat-total');
-        if (elStatTotal) elStatTotal.textContent = mockStats.total;
-        const elStatDelay = document.getElementById('stat-delay');
-        if (elStatDelay) elStatDelay.textContent = mockStats.avgDelay;
-        const elStatEmp = document.getElementById('stat-emp');
-        if (elStatEmp) elStatEmp.textContent = mockStats.employees;
-        const elStatProgress = document.getElementById('stat-progress');
-        if (elStatProgress) elStatProgress.textContent = mockStats.avgProgress;
-
-        const tbody = document.getElementById('escalations-table-body');
-        if (tbody) {
-            tbody.innerHTML = mockTasks.map(task => `
-                < tr style = "border-bottom: 1px solid var(--border-color); transition: background-color var(--transition-fast);" >
->>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
                 <td style="padding: var(--spacing-md); display:flex; align-items:center; gap:var(--spacing-sm);">
                     <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px;">
                         ${empName.charAt(0)}
@@ -146,9 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </button>
                     </div>
                 </td>
-            </tr >
-<<<<<<< HEAD
-        `;
+            </tr>
+            `;
         }).join('');
     };
 
@@ -162,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const id = btn.dataset.id;
             const task = tasks.find(t => t.task_id === id);
-            const employeeUser = task ? db.getUserById(task.assigned_to) : null;
+            const employeeUser = task ? await db.getUserById(task.assigned_to) : null;
 
             if (btn.classList.contains('details-btn')) {
                 const modal = document.getElementById('task-details-modal');
@@ -185,9 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btn.classList.contains('warning-btn')) {
                 if (confirm(`Are you sure you want to send a warning for task ${ id } ? `)) {
                     // Update Task
-                    db.updateTaskDetails(id, { warning_sent: true });
+                    await db.updateTaskDetails(id, { warning_sent: true });
                     // Send notification to employee
-                    db.createNotification(task.assigned_to, `Your task "${task.task_title}" has been escalated.Take immediate action.`, 'warning');
+                    await db.createNotification(task.assigned_to, `Your task "${task.task_title}" has been escalated. Take immediate action.`, 'warning');
                     showToast('Warning sent successfully!', 'warning');
                     renderTable();
                     highlightRow(id);
@@ -198,8 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const d = prompt(`Enter new deadline(YYYY - MM - DD) \nCurrent: ${ task.deadline } `);
                 if (d) {
                     if (new Date(d) > new Date(task.deadline)) {
-                        db.updateTaskDetails(id, { deadline: d });
-                        db.createNotification(task.assigned_to, `Your task "${task.task_title}" deadline has been extended to ${ d }.`, 'info');
+                        await db.updateTaskDetails(id, { deadline: d });
+                        await db.createNotification(task.assigned_to, `Your task "${task.task_title}" deadline has been extended to ${d}.`, 'info');
                         showToast('Deadline extended successfully!');
                         renderTable();
                         highlightRow(id);
@@ -211,15 +160,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (btn.classList.contains('reassign-btn')) {
                 // Show prompt of employees under this manager
-                const team = db.getUsersByManager(user.emp_id);
-                let teamStr = team.map(m => `${ m.emp_id }: ${ m.emp_name } `).join('\n');
-                const newEmpId = prompt(`Enter Employee ID to reassign: \n\n${ teamStr } `);
+                const team = await db.getUsersByManager(user.emp_id);
+                let teamStr = team.map(m => `${m.emp_id}: ${m.emp_name}`).join('\n');
+                const newEmpId = prompt(`Enter Employee ID to reassign:\n\n${teamStr}`);
                 if(newEmpId) {
                     const validEmp = team.find(m => m.emp_id === newEmpId);
                     if(validEmp) {
-                        db.updateTaskDetails(id, { assigned_to: newEmpId });
-                        db.createNotification(newEmpId, `You have been assigned a new escalated task: "${task.task_title}".`, 'info');
-                        showToast(`Task reassigned to ${ validEmp.emp_name }.`);
+                        await db.updateTaskDetails(id, { assigned_to: newEmpId });
+                        await db.createNotification(newEmpId, `You have been assigned a new escalated task: "${task.task_title}".`, 'info');
+                        showToast(`Task reassigned to ${validEmp.emp_name}.`);
                         renderTable();
                         highlightRow(id);
                     } else {
@@ -229,121 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-=======
-        `).join('');
-if (mockTasks.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px;">No lagging tasks currently active.</td></tr>';
-}
-        }
-attachTableListeners();
-    };
-
-function attachTableListeners() {
-    const modal = document.getElementById('action-modal');
-    const mTitle = document.getElementById('modal-title');
-    const mBody = document.getElementById('modal-body');
-    const mCancel = document.getElementById('modal-cancel-btn');
-    const mConfirm = document.getElementById('modal-confirm-btn');
-
-    if (!modal) return;
-
-    const closeModal = () => { modal.style.display = 'none'; };
-    mCancel.onclick = closeModal;
-    document.getElementById('modal-close-btn').onclick = closeModal;
-
-    // Details
-    document.querySelectorAll('.details-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tId = e.currentTarget.dataset.id;
-            const task = db.data.task.find(t => t.task_id === tId);
-            if (!task) return;
-
-            const emp = db.getUserById(task.assigned_to);
-
-            mTitle.textContent = "Task Details";
-            mBody.innerHTML = `
-                    <p style="margin:0;"><strong>Task:</strong> ${task.task_title}</p>
-                    <p style="margin:0;"><strong>Description:</strong> ${task.task_description}</p>
-                    <p style="margin:0;"><strong>Assigned To:</strong> ${emp ? emp.emp_name : 'Unknown'}</p>
-                    <p style="margin:0;"><strong>Deadline:</strong> ${task.deadline}</p>
-                    <p style="margin:0;"><strong>Status:</strong> ${task.status.replace('_', ' ')}</p>
-                    <p style="margin:0;"><strong>Warning Sent:</strong> ${task.warning_sent ? '<span style="color:var(--danger-color)">Yes</span>' : 'No'}</p>
-                `;
-            mConfirm.style.display = 'none';
-            mCancel.textContent = "Close";
-            modal.style.display = 'flex';
-        });
-    });
-
-    // Warning
-    document.querySelectorAll('.warning-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tId = e.currentTarget.dataset.id;
-            const eId = e.currentTarget.dataset.empid;
-            const tName = e.currentTarget.dataset.emp;
-
-            mTitle.textContent = "Send Warning";
-            mBody.innerHTML = `<p>Are you sure you want to send a warning to <strong>${tName}</strong> for task <strong>${tId}</strong>?</p>`;
-            mConfirm.style.display = 'block';
-            mConfirm.textContent = 'Send Warning';
-            mConfirm.style.background = 'var(--danger-color)';
-            mCancel.textContent = "Cancel";
-
-            mConfirm.onclick = () => {
-                db.createNotification(eId, `Your task ${tId} has been escalated. Take immediate action.`, 'warning');
-                db.updateTask(tId, { warning_sent: true });
-                alert('Warning sent successfully to ' + tName);
-                closeModal();
-                renderEscalations();
-            };
-
-            modal.style.display = 'flex';
-        });
-    });
-
-    // Extend
-    document.querySelectorAll('.extend-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tId = e.currentTarget.dataset.id;
-            const eId = e.currentTarget.dataset.empid;
-            const task = db.data.task.find(t => t.task_id === tId);
-
-            mTitle.textContent = "Extend Deadline";
-            mBody.innerHTML = `
-                    <p>Select a new deadline for task <strong>${tId}</strong>.</p>
-                    <input type="date" id="new-deadline-input" style="padding:8px; border:1px solid var(--border-color); border-radius:4px; width:100%; box-sizing:border-box; outline:none; font-family:var(--font-family);" value="${task ? task.deadline : ''}">
-                `;
-            mConfirm.style.display = 'block';
-            mConfirm.textContent = 'Extend Deadline';
-            mConfirm.style.background = '#3b82f6';
-            mCancel.textContent = "Cancel";
-
-            mConfirm.onclick = () => {
-                const input = document.getElementById('new-deadline-input');
-                const newDeadline = input.value;
-                if (!newDeadline) {
-                    alert("Please select a valid date.");
-                    return;
-                }
-                if (task && new Date(newDeadline) <= new Date(task.deadline)) {
-                    alert("New deadline must be after the current deadline (" + task.deadline + ").");
-                    return;
-                }
-
-                db.updateTask(tId, { deadline: newDeadline });
-                db.createNotification(eId, `Your task deadline for ${tId} has been extended to ${newDeadline}.`, 'info');
-                alert('Deadline extended successfully.');
-                closeModal();
-                renderEscalations();
-            };
-
-            modal.style.display = 'flex';
-        });
-    });
-}
-
-renderEscalations();
->>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
 
 const highlightRow = (id) => {
     const row = document.getElementById(`row-${id}`);
@@ -355,30 +189,30 @@ const highlightRow = (id) => {
     }
 }
 
-// Modal Close
-const closeBtn = document.getElementById('close-details-btn');
-const detailsModal = document.getElementById('task-details-modal');
-if (closeBtn && detailsModal) {
-    closeBtn.addEventListener('click', () => {
-        detailsModal.style.display = 'none';
-    });
-    detailsModal.addEventListener('click', (e) => {
-        if (e.target === detailsModal) detailsModal.style.display = 'none';
-    });
-}
+    // Modal Close
+    const closeBtn = document.getElementById('close-details-btn');
+    const detailsModal = document.getElementById('task-details-modal');
+    if (closeBtn && detailsModal) {
+        closeBtn.addEventListener('click', async () => {
+            detailsModal.style.display = 'none';
+        });
+        detailsModal.addEventListener('click', async (e) => {
+            if (e.target === detailsModal) detailsModal.style.display = 'none';
+        });
+    }
 
-// Navigation Events
-const navEmployeeIssues = document.getElementById('nav-employee-issues');
-if (navEmployeeIssues) {
-    navEmployeeIssues.addEventListener('click', () => {
-        window.location.href = 'employee-raised-issues.html';
-    });
-}
+    // Navigation Events
+    const navEmployeeIssues = document.getElementById('nav-employee-issues');
+    if (navEmployeeIssues) {
+        navEmployeeIssues.addEventListener('click', async () => {
+            window.location.href = 'employee-raised-issues.html';
+        });
+    }
 
-const globalEscalateBtn = document.getElementById('global-escalate-btn');
-if (globalEscalateBtn) {
-    globalEscalateBtn.addEventListener('click', () => {
-        window.location.href = 'escalate-to-hr.html';
-    });
-}
+    const globalEscalateBtn = document.getElementById('global-escalate-btn');
+    if (globalEscalateBtn) {
+        globalEscalateBtn.addEventListener('click', async () => {
+            window.location.href = 'escalate-to-hr.html';
+        });
+    }
 });

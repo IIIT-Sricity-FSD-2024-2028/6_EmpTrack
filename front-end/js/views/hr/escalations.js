@@ -1,39 +1,17 @@
 // /js/views/hr/escalations.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const getEscalationsFromDB = () => {
-        return db.getAllEscalations().map(e => {
-            const reporter = db.getUserById(e.escalated_from);
-            const reporterName = reporter ? reporter.emp_name.split(' (')[0] : 'Unknown';
-            let empName = reporterName;
-            let empId = e.escalated_from;
-            
-            if(e.related_employee) {
-                empName = e.related_employee;
-                empId = '-';
-            }
-
-            return {
-                id: e.escalation_id,
-                lead: reporterName,
-                title: e.title || e.escalation_reason || 'Escalation Notice',
-                type: e.category || 'General',
-                priority: e.priority || 'Medium',
-                empName: empName,
-                empId: empId,
-                status: e.status === 'OPEN' ? 'Pending' : e.status,
-                date: e.escalation_date,
-                comments: []
-            };
-        }).reverse();
-    };
-
-    let dummyEscalations = getEscalationsFromDB();
+    // Dummy Data
+    const dummyEscalations = [
+        { id: 'HR-ESC-001', lead: 'David Clark', title: 'Unauthorized Absence > 3 days', type: 'Attendance', priority: 'High', empName: 'Sarah Johnson', empId: 'EMP-045', status: 'Pending', date: 'Oct 24, 2023', comments: [{name: 'David Clark', text: 'Sarah has not shown up for 3 days without notice.', time: '10:30 AM, Oct 24'}] },
+        { id: 'HR-ESC-002', lead: 'Emily Davis', title: 'Policy Violation - Conduct', type: 'Conduct', priority: 'High', empName: 'Mike Ross', empId: 'EMP-012', status: 'Under Review', date: 'Oct 23, 2023', comments: [] },
+        { id: 'HR-ESC-003', lead: 'John Smith', title: 'Repeated Late Check-ins', type: 'Attendance', priority: 'Medium', empName: 'Alice Cooper', empId: 'EMP-088', status: 'Pending', date: 'Oct 25, 2023', comments: [] },
+        { id: 'HR-ESC-004', lead: 'David Clark', title: 'Delayed Project Delivery', type: 'Performance', priority: 'Low', empName: 'Bob Wilson', empId: 'EMP-022', status: 'Resolved', date: 'Oct 20, 2023', comments: [] }
+    ];
 
     const breadCrumbs = document.getElementById('escBreadcrumbs');
     const viewDashboard = document.getElementById('view-dashboard');
@@ -41,13 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewAction = document.getElementById('view-action');
     const tbody = document.getElementById('escTbody');
 
-    function hideAll() {
+    async function hideAll() {
         viewDashboard.classList.remove('active');
         viewDetails.classList.remove('active');
         viewAction.classList.remove('active');
     }
 
-    function renderTable() {
+    async function renderTable() {
         if (!tbody) return;
         tbody.innerHTML = dummyEscalations.map(e => {
             let pColor = e.priority === 'High' ? 'var(--color-high)' : e.priority === 'Medium' ? 'var(--color-med)' : 'var(--color-low)';
@@ -78,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Attach listeners to generic rows and buttons
         document.querySelectorAll('.row-esc-click, .btn-route-rev, .btn-disc-action').forEach(el => {
-            el.addEventListener('click', (e) => {
+            el.addEventListener('click', async (e) => {
                 const id = e.currentTarget.dataset.id;
                 if (!id) return;
                 e.stopPropagation();
@@ -87,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-route-act').forEach(el => {
-            el.addEventListener('click', (e) => {
+            el.addEventListener('click', async (e) => {
                 const id = e.currentTarget.dataset.id;
                 e.stopPropagation();
                 navAction(id);
@@ -95,21 +73,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-close').forEach(el => {
-            el.addEventListener('click', (e) => {
+            el.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 alert('Closed');
             });
         });
     }
 
-    function navDashboard() {
+    async function navDashboard() {
         hideAll();
         breadCrumbs.innerHTML = '';
         viewDashboard.classList.add('active');
         renderTable();
     }
 
-    function navDetails(id) {
+    async function navDetails(id) {
         const esc = dummyEscalations.find(e => e.id === id);
         if(!esc) return;
 
@@ -194,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewDetails.classList.add('active');
     }
 
-    function navAction(id) {
+    async function navAction(id) {
         const esc = dummyEscalations.find(e => e.id === id);
         if(!esc) return;
 
@@ -275,9 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        document.getElementById('btn-resolve-act').addEventListener('click', () => {
-            db.updateEscalation(id, {status: 'Resolved'});
-            dummyEscalations = getEscalationsFromDB();
+        document.getElementById('btn-resolve-act').addEventListener('click', async () => {
             alert('Proceeding with disciplinary action workflows...'); 
             navDashboard();
         });
@@ -288,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filter Buttons logic
     let emptyRow = null;
 
-    function filterTable(e, filterStr) {
+    async function filterTable(e, filterStr) {
         if(!tbody) return;
         
         if (e) {

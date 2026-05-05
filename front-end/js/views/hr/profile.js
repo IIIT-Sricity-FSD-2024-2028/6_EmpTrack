@@ -1,7 +1,7 @@
 // /js/views/hr/profile.js
 import { auth } from '../../auth.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -17,9 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailContainer = document.getElementById('info-email');
     if (emailContainer) emailContainer.textContent = user.email || 'user@company.com';
 
-    document.getElementById('profile-role').textContent = 'HR - ' + (user.department_id === 'D01' ? 'Human Resources' : user.department_id);
-    document.getElementById('profile-exp').textContent = user.phone ? 'Verified Contact' : 'New Employee';
-    document.getElementById('profile-joined').textContent = 'Joined ' + (user.date_of_joining || 'Recently');
+    // Mock specific HR data
+    document.getElementById('profile-role').textContent = 'HR Manager - Human Resources';
+    document.getElementById('profile-exp').textContent = '8 Years Experience';
+    document.getElementById('profile-joined').textContent = 'Joined 2017-06-01';
 
     // Handle Picture Upload Click
     const uploadBtn = document.getElementById('upload-avatar-btn');
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Password Eye Toggles
     const eyeIcons = document.querySelectorAll('.eye-icon');
     eyeIcons.forEach(icon => {
-        icon.addEventListener('click', () => {
+        icon.addEventListener('click', async () => {
             const input = icon.previousElementSibling;
             if(input.type === 'password') {
                 input.type = 'text';
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pwdErr = document.getElementById('pwdErr');
     const btnUpdatePwd = document.getElementById('btnUpdatePwd');
 
-    function checkMatch() {
+    async function checkMatch() {
         if (!newPwd || !confPwd) return;
         const p1 = newPwd.value;
         const p2 = confPwd.value;
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Submission Form
     const pwdForm = document.getElementById('password-form');
     if (pwdForm) {
-        pwdForm.addEventListener('submit', (e) => {
+        pwdForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if(!pwdForm.checkValidity()) { 
                 pwdForm.reportValidity(); 

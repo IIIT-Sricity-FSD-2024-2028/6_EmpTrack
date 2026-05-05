@@ -1,34 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Assign Tasks</title>
-
+    
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
-
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="../css/views/teamlead/tasks.css">
 </head>
-
 <body>
     <div class="app-container">
         <div id="sidebar-container"></div>
-
+        
         <main class="main-wrapper">
             <div id="header-container"></div>
-
+            
             <div class="content-area" id="main-content">
                 <div id="page-title" style="display:none;">Assign Tasks</div>
-
+                
                 <div class="ts-assign-wrapper">
-
+                    
                     <!-- ASSIGN TASK FORM -->
                     <div class="ts-card">
                         <h3><i class="ph-fill ph-plus-circle"></i> Create & Assign Task</h3>
@@ -37,35 +35,33 @@
                                 <label>Assign To</label>
                                 <select id="form-emp" class="form-control" required>
                                     <option value="">Select Employee</option>
-                                    <option>John Doe</option>
+                                    <option>John Dev</option>
                                     <option>Sarah Johnson</option>
                                     <option>Mike Davis</option>
                                     <option>Emma Wilson</option>
                                 </select>
                             </div>
-
+                            
                             <div class="form-group">
                                 <label>Task Title</label>
                                 <input id="form-title" class="form-control" placeholder="e.g. Implement OAuth" required>
                             </div>
-
+                            
                             <div class="form-group full-width">
                                 <label>Description</label>
-                                <textarea id="form-desc" class="form-control"
-                                    placeholder="Detailed task requirements..."></textarea>
+                                <textarea id="form-desc" class="form-control" placeholder="Detailed task requirements..."></textarea>
                             </div>
-
+                            
                             <div class="form-group">
                                 <label>Estimated Hours</label>
-                                <input type="number" id="form-hours" class="form-control" placeholder="e.g. 16" required
-                                    min="1">
+                                <input type="number" id="form-hours" class="form-control" placeholder="e.g. 16" required min="1">
                             </div>
-
+                            
                             <div class="form-group">
                                 <label>Deadline</label>
                                 <input type="date" id="form-deadline" class="form-control" required>
                             </div>
-
+                            
                             <div class="form-actions">
                                 <button type="submit" class="btn-submit">
                                     <i class="ph ph-paper-plane-right"></i> Send Assignment
@@ -73,7 +69,7 @@
                             </div>
                         </form>
                     </div>
-
+        
                     <!-- TASK TABLE -->
                     <div class="ts-card">
                         <h3><i class="ph-fill ph-list-dashes"></i> Assigned Tasks</h3>
@@ -105,9 +101,8 @@
             </div>
         </main>
     </div>
-
+    
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/views/teamlead/tasks.js"></script>
 </body>
-
 </html>

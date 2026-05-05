@@ -2,12 +2,12 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    function renderLeaves() {
-        const leaves = db.getLeavesForUser(user.emp_id);
+    async function renderLeaves() {
+        const leaves = await db.getLeavesForUser(user.emp_id);
         const tbody = document.getElementById('leave-req-body');
         if (tbody) {
             tbody.innerHTML = leaves.reverse().map(l => {
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const endObj = document.getElementById('lv_end');
     const daysObj = document.getElementById('lv_days');
 
-    function calculateDays() {
+    async function calculateDays() {
         if(startObj && endObj && daysObj && startObj.value && endObj.value) {
             const d1 = new Date(startObj.value);
             const d2 = new Date(endObj.value);
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const form = document.getElementById('leave-form');
     if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const sD = new Date(startObj.value);
@@ -79,8 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            db.createLeave({
-                emp_id: user.emp_id,
+            await db.createLeave({
+                empId: user.emp_id,
                 leave_type: document.getElementById('lv_type').value,
                 days: daysObj.value,
                 start_date: startObj.value,

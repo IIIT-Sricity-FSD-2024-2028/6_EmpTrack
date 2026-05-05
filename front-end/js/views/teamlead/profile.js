@@ -1,24 +1,21 @@
 // /js/views/teamlead/profile.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const teamMembersCount = db.getUsersByManager(user.emp_id).length;
-
     const userData = {
-        name: user.emp_name,
-        role: 'Team Lead – ' + (user.department_id === 'D02' ? 'Engineering' : user.department_id),
-        exp: 'Active Member',
-        managing: `Managing ${teamMembersCount} members`,
-        joined: `Joined: ${user.date_of_joining}`,
-        empId: user.emp_id,
-        email: user.email,
-        phone: user.phone || 'N/A',
-        address: 'Remote / Office',
-        dept: user.department_id === 'D02' ? 'Engineering' : user.department_id,
+        name: 'Rinku Singh',
+        role: 'Team Lead – Engineering',
+        exp: '6 years experience',
+        managing: 'Managing 8 members',
+        joined: 'Joined: 2023-03-10',
+        empId: 'TL-001',
+        email: 'rinku.singh@company.com',
+        phone: '+1 (555) 234-5678',
+        address: '456 Leadership Ave, San Francisco',
+        dept: 'Engineering',
         reportsTo: 'HR Manager'
     };
 
@@ -60,25 +57,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const editNameInput = document.getElementById('edit-name-input');
 
     if (editBtn && editModal) {
-        editBtn.addEventListener('click', () => {
+        editBtn.addEventListener('click', async () => {
             editNameInput.value = userData.name;
             editModal.style.display = 'flex';
         });
 
-        closeEditBtn.addEventListener('click', () => {
+        closeEditBtn.addEventListener('click', async () => {
             editModal.style.display = 'none';
         });
 
-        editModal.addEventListener('click', (e) => {
+        editModal.addEventListener('click', async (e) => {
             if (e.target === editModal) editModal.style.display = 'none';
         });
 
-        editForm.addEventListener('submit', (e) => {
+        editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const newName = editNameInput.value.trim();
             if (newName) {
-                user.emp_name = newName;
-                db.saveData(); // simple writeback
                 userData.name = newName;
                 document.getElementById('profile-name').textContent = userData.name;
                 const newInitials = userData.name.split(' ').map(n => n[0] ? n[0].toUpperCase() : '').join('');
@@ -95,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMsg = document.getElementById('pwd-error-msg');
 
     if (pwdForm) {
-        pwdForm.addEventListener('submit', (e) => {
+        pwdForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.style.display = 'none';
             newPwdObj.style.borderColor = 'var(--border-color)';
@@ -123,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showProfileToast(title, message, type = 'success') {
+    async function showProfileToast(title, message, type = 'success') {
         const toastContainer = document.getElementById('profile-toast-container');
         if (!toastContainer) return;
 

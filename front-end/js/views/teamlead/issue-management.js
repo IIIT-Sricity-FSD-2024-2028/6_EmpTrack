@@ -2,7 +2,7 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(i.status === 'In Progress') { statBadge = 'badge-info'; statIcon = 'ph-spinner-gap'; }
             if(i.status === 'Resolved') { statBadge = 'badge-completed'; statIcon = 'ph-check-circle'; }
 
-            const refEmp = db.getUserById(i.emp_id);
+            const refEmp = await db.getUserById(i.emp_id);
             const empStr = refEmp ? refEmp.emp_name : i.emp_id;
 
             const taskStr = i.related_task ? `<a href="tasks.html" style="color:var(--primary-color); text-decoration:none; font-weight:var(--font-medium);">${i.related_task}</a>` : '<span style="color:var(--text-muted);">-</span>';
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filterPriority) filtered = filtered.filter(i => i.priority === filterPriority);
         if (searchEmp) {
             filtered = filtered.filter(i => {
-                const refEmp = db.getUserById(i.emp_id);
+                const refEmp = await db.getUserById(i.emp_id);
                 const empStr = refEmp ? refEmp.emp_name.toLowerCase() : i.emp_id.toLowerCase();
                 return empStr.includes(searchEmp);
             });

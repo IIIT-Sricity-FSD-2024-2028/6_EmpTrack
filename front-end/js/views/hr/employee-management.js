@@ -1,45 +1,33 @@
 // /js/views/hr/employee-management.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guard
-    
-    // Helper to map department ID to readable names
-    const deptMap = { 'D01': 'HR', 'D02': 'Engineering', 'D03': 'Sales', 'D04': 'Design', 'D05': 'Marketing' };
 
-    const getEmployeesFromDB = () => {
-        return db.data.employee.map(e => ({
-            id: e.emp_id,
-            name: e.emp_name.split(' (')[0],
-            email: e.email,
-            dept: deptMap[e.department_id] || e.department_id || 'Engineering',
-            role: e.role === 'TEAMLEAD' ? 'Team Lead' : e.role === 'HR' ? 'HR Admin' : 'Employee',
-            joinDate: e.date_of_joining,
-            status: e.status === 'ACTIVE' ? 'Active' : e.status === 'ON_LEAVE' ? 'On Leave' : 'Inactive'
-        })).reverse();
-    };
-
-    let employees = getEmployeesFromDB();
+    // Dummy Data
+    const employees = [
+        { id: 'EMP-001', name: 'John Smith', email: 'john.smith@company.com', dept: 'Engineering', role: 'Senior Developer', joinDate: '2024-01-15', status: 'Active' },
+        { id: 'EMP-002', name: 'Sarah Johnson', email: 'sarah.j@company.com', dept: 'Engineering', role: 'Full Stack Developer', joinDate: '2024-02-10', status: 'Active' },
+        { id: 'EMP-003', name: 'Mike Davis', email: 'mike.d@company.com', dept: 'Engineering', role: 'Backend Developer', joinDate: '2024-03-01', status: 'Inactive' },
+        { id: 'EMP-004', name: 'Emma Wilson', email: 'emma.w@company.com', dept: 'Engineering', role: 'QA Engineer', joinDate: '2024-03-20', status: 'On Leave' },
+        { id: 'EMP-005', name: 'James Brown', email: 'james.b@company.com', dept: 'Engineering', role: 'Junior Developer', joinDate: '2024-04-05', status: 'Active' },
+        { id: 'EMP-006', name: 'Alice Cooper', email: 'alice.c@company.com', dept: 'Design', role: 'UI/UX Designer', joinDate: '2023-10-12', status: 'Active' },
+        { id: 'EMP-007', name: 'Bob Wilson', email: 'bob.w@company.com', dept: 'Marketing', role: 'Marketing Lead', joinDate: '2023-11-20', status: 'Active' },
+        { id: 'EMP-008', name: 'Carol Smith', email: 'carol.s@company.com', dept: 'Sales', role: 'Sales Executive', joinDate: '2024-01-05', status: 'On Leave' }
+    ];
 
     // Stats
-    const countStats = () => {
-        const total = employees.length;
-        const active = employees.filter(e => e.status === 'Active').length;
-        const onLeave = employees.filter(e => e.status === 'On Leave').length;
-        const newThisMonth = 0; // simplistic map
-        return { total, active, onLeave, newThisMonth };
-    };
-
-    const stats = countStats();
+    const total = 156;
+    const active = 148;
+    const onLeave = 6;
+    const newThisMonth = 5;
 
     // Output stats to DOM
-    // Output stats to DOM
-    document.getElementById('total-val').setAttribute('data-val', stats.total);
-    document.getElementById('active-val').setAttribute('data-val', stats.active);
-    document.getElementById('leave-val').setAttribute('data-val', stats.onLeave);
-    document.getElementById('new-val').setAttribute('data-val', stats.newThisMonth);
+    document.getElementById('total-val').setAttribute('data-val', total);
+    document.getElementById('active-val').setAttribute('data-val', active);
+    document.getElementById('leave-val').setAttribute('data-val', onLeave);
+    document.getElementById('new-val').setAttribute('data-val', newThisMonth);
 
     const tableBody = document.getElementById('empTableBody');
     const searchInput = document.getElementById('empSearch');
@@ -48,11 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearBtn = document.getElementById('empClearSort');
 
     // Make ID clicks global
-    window.handleEmpClick = (id) => {
+    window.handleEmpClick = async (id) => {
         alert('Clicked Employee ID: ' + id + '\n\n(In a full app, this would open the employee profile model or route.)');
     };
 
-    function renderRows(data) {
+    async function renderRows(data) {
         if (!tableBody) return;
         tableBody.innerHTML = '';
         if (data.length === 0) {
@@ -82,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function applyFilters() {
+    async function applyFilters() {
         const query = searchInput.value.toLowerCase();
         const dept = deptFilter.value;
         const status = statusFilter.value;
@@ -103,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(statusFilter) statusFilter.addEventListener('change', applyFilters);
     
     if(clearBtn) {
-        clearBtn.addEventListener('click', () => {
+        clearBtn.addEventListener('click', async () => {
             searchInput.value = '';
             deptFilter.value = 'all';
             statusFilter.value = 'all';
@@ -115,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addEmpForm = document.getElementById('addEmpForm');
     const addEmpSuccess = document.getElementById('addEmpSuccess');
     if(addEmpForm) {
-        addEmpForm.addEventListener('submit', (e) => {
+        addEmpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             if(!addEmpForm.checkValidity()) {
@@ -131,28 +119,18 @@ document.addEventListener('DOMContentLoaded', () => {
             let displayRole = role === 'TL' ? 'Team Lead' : role === 'HR' ? 'HR Admin' : 'Employee';
             if (dept === 'Engineering' && displayRole === 'Employee') displayRole = 'Developer';
 
-            const newId = 'EMP-' + Math.floor(100 + Math.random() * 900);
+            const newId = 'EMP-' + String(employees.length + 1).padStart(3, '0');
             const today = new Date().toISOString().split('T')[0];
-            
-            let internalRole = 'EMPLOYEE';
-            if (role === 'TL') internalRole = 'TEAMLEAD';
-            else if (role === 'HR') internalRole = 'HR';
 
-            db.data.employee.push({
-                emp_id: newId,
-                emp_name: name,
+            employees.unshift({
+                id: newId,
+                name: name,
                 email: email,
-                phone: '0000000000',
-                password: 'Password@123',
-                role: internalRole,
-                status: 'ACTIVE',
-                date_of_joining: today,
-                department_id: dept === 'Engineering' ? 'D02' : 'D01',
-                manager_id: 'TL001' // Defaulting to the test TL
+                dept: dept,
+                role: displayRole,
+                joinDate: today,
+                status: 'Active'
             });
-            db.saveData();
-
-            employees = getEmployeesFromDB();
 
             applyFilters();
             

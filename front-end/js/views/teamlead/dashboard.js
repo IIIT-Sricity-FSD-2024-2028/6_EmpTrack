@@ -2,7 +2,7 @@
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded by app.js
     
@@ -28,14 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const pendingContainer = document.getElementById('pending-approvals-container');
 
-    function renderPendingLeaves() {
+    async function renderPendingLeaves() {
         if (!pendingContainer) return;
 
         // Get members reporting to this Team Lead
-        const teamMembers = db.getUsersByManager(user.emp_id);
+        const teamMembers = await db.getUsersByManager(user.emp_id);
         const memberIds = teamMembers.map(m => m.emp_id);
 
-        const allLeaves = db.getAllLeaves();
+        const allLeaves = await db.getAllLeaves();
         const pendingLeaves = allLeaves.filter(l => l.status === 'PENDING' && memberIds.includes(l.emp_id));
 
         if (pendingLeaves.length === 0) {
@@ -66,12 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
         attachApprovalListeners();
     }
 
-    function attachApprovalListeners() {
+    async function attachApprovalListeners() {
         document.querySelectorAll('.btn-approve').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const leaveId = e.target.getAttribute('data-id');
                 if (leaveId) {
-                    db.updateLeaveStatus(leaveId, 'APPROVED', user.emp_id);
+                    await db.updateLeaveStatus(leaveId, 'APPROVED', user.emp_id);
                     renderPendingLeaves();
                     showToast("Request Approved", "success");
                 }
@@ -79,10 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.querySelectorAll('.btn-reject').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 const leaveId = e.target.getAttribute('data-id');
                 if (leaveId) {
-                    db.updateLeaveStatus(leaveId, 'REJECTED', user.emp_id);
+                    await db.updateLeaveStatus(leaveId, 'REJECTED', user.emp_id);
                     renderPendingLeaves();
                     showToast("Request Rejected", "danger");
                 }

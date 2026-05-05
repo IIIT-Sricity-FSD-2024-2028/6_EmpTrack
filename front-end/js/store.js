@@ -1,359 +1,171 @@
-// /js/store.js
-// Mock Backend Data Store using In-Memory arrays with LocalStorage Persistence
-// Field names exactly match Dbschema.sql
+const API_BASE = 'http://localhost:3000';
 
-const INITIAL_MOCK_DATA = {
-    employee: [
-        { emp_id: "HR001", emp_name: "Rohini Sai", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01" },
-        { emp_id: "TL001", emp_name: "Rinku Singh", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
-        { emp_id: "HR001", emp_name: "Rohini Sai", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01" },
-        { emp_id: "TL001", emp_name: "Rinku Singh", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
-        { emp_id: "EM001", emp_name: "John Doe", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001" },
-        { emp_id: "EM002", emp_name: "Jane Smith", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001" }
-    ],
-    attendance: [
-        { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: 6, remarks: "On track", status: "PRESENT" },
-        { attendance_id: "A002", emp_id: "EM001", attendance_date: "2026-03-05", attendance_mode: null, check_in_time: null, check_out_time: null, screen_time: 0, hours_spent: 0, remarks: "Absent", status: "ABSENT" },
-        { attendance_id: "A003", emp_id: "EM001", attendance_date: "2026-03-02", attendance_mode: null, check_in_time: null, check_out_time: null, screen_time: 0, hours_spent: 0, remarks: "Off day", status: "WEEKEND" },
-        { attendance_id: "A004", emp_id: "EM001", attendance_date: "2026-02-27", attendance_mode: "REMOTE", check_in_time: "09:00", check_out_time: "13:00", screen_time: 240, hours_spent: 4, remarks: "Below target", status: "ESCALATED" }
-    ],
-    leave_details: [
-        { leave_id: "LR-015", emp_id: "EM001", start_date: "2026-03-20", end_date: "2026-03-25", days: "6", leave_type: "CASUAL", reason: "Family vacation", status: "PENDING", applied_date: "2026-03-07", approved_date: null, approved_by: null, reject_reason: null },
-        { leave_id: "LR-012", emp_id: "EM001", start_date: "2026-03-10", end_date: "2026-03-10", days: "1", leave_type: "SICK", reason: "Fever and cold symptom management.", status: "APPROVED", applied_date: "2026-03-09", approved_date: "2026-03-09", approved_by: "TL001", reject_reason: null },
-        { leave_id: "LR-008", emp_id: "EM001", start_date: "2026-02-15", end_date: "2026-02-16", days: "2", leave_type: "UNPAID", reason: "Personal appointments", status: "REJECTED", applied_date: "2026-02-10", approved_date: "2026-02-11", approved_by: "TL001", reject_reason: "Insufficient notice period during critical delivery milestone." }
-    ],
-    task: [
-        { task_id: "TK001", task_title: "Create Frontend Layout", allocation_id: "W001", assigned_to: "EM001", task_description: "Design the base SPA layout", priority: "HIGH", deadline: "2026-03-30", status: "IN_PROGRESS", progress_percentage: 50, updated_date: "2026-03-28", warning_sent: false },
-        { task_id: "TK002", task_title: "Database Schema Updates", allocation_id: "W002", assigned_to: "EM002", task_description: "Match local DB variables with SQL", priority: "MEDIUM", deadline: "2026-03-25", status: "COMPLETED", progress_percentage: 100, updated_date: "2026-03-25", warning_sent: false }
-        { task_id: "TK001", task_title: "Create Frontend Layout", allocation_id: "W001", assigned_to: "EM001", task_description: "Design the base SPA layout", priority: "HIGH", deadline: "2026-03-30", status: "IN_PROGRESS", progress_percentage: 50, updated_date: "2026-03-28", warning_sent: false },
-        { task_id: "TK002", task_title: "Database Schema Updates", allocation_id: "W002", assigned_to: "EM002", task_description: "Match local DB variables with SQL", priority: "MEDIUM", deadline: "2026-03-25", status: "COMPLETED", progress_percentage: 100, updated_date: "2026-03-25", warning_sent: false }
-    ],
-    notifications: [],
-    escalation: [
-        { escalation_id: "E001", reference_type: "ATTENDANCE", reference_id: "A001", escalated_from: "EM001", escalated_to: "HR001", escalation_reason: "Swipe system error", escalation_date: "2026-03-28", status: "OPEN" }
-    ],
-    issue: [
-        { issue_id: "ISS-001", emp_id: "EM001", title: "VPN Disconnection Issue", type: "Technical Issue / Bug", priority: "High", related_task: "TK001", description: "Constantly dropping connection to DB server.", status: "Open", assigned_to: "Unassigned", raised_date: new Date().toISOString().split('T')[0], updates: [] },
-        { issue_id: "ISS-002", emp_id: "EM001", title: "API Keys Missing", type: "Resource Unavailable", priority: "Medium", related_task: "TK002", description: "Need production API keys to finalize the module.", status: "In Progress", assigned_to: "HR001", raised_date: "2026-03-20", updates: [{ sender: "System", time: "2026-03-22", message: "Assigned to HR001" }, { sender: "HR001", time: "2026-03-24", message: "Fetching keys from external vendors." }] },
-        { issue_id: "ISS-003", emp_id: "EM001", title: "Figma File Lock", type: "Low Productivity / Blocker", priority: "Low", related_task: "", description: "Can't access page 2", status: "Resolved", assigned_to: "TL001", raised_date: "2026-03-10", updates: [{ sender: "TL001", time: "2026-03-11", message: "Unlocked file." }] },
-        { issue_id: "ISS-004", emp_id: "EM001", title: "Overallocated Sprint Tasks", type: "Workload / Capacity Issue", priority: "High", related_task: "", description: "Too many hours allocated for the week to safely complete the UI designs.", status: "Open", assigned_to: "TL001", raised_date: new Date().toISOString().split('T')[0], updates: [] }
-    ],
-    work_logs: [
-        { worklog_id: "WL-001", emp_id: "EM001", task_id: "TK001", task_title: "Build Front-End UI", start_time: "2026-03-28T09:00", end_time: "2026-03-28T13:00", hours_spent: 4, description: "Completed the main dashboard layout and component structure.", log_date: "2026-03-28" },
-        { worklog_id: "WL-002", emp_id: "EM001", task_id: "TK001", task_title: "Build Front-End UI", start_time: "2026-03-28T14:00", end_time: "2026-03-28T16:00", hours_spent: 2, description: "Integrated primary navigation sidebar and fixed hover states.", log_date: "2026-03-28" },
-        { worklog_id: "WL-003", emp_id: "EM001", task_id: "TK002", task_title: "Database Schema Map", start_time: "2026-03-29T09:00", end_time: "2026-03-29T11:00", hours_spent: 2, description: "Started mapping variables from SQL mock format to the class constructs.", log_date: "2026-03-29" }
-    ],
-    notifications: []
-};
-
-class Store {
-    constructor() {
-        this.data = this.loadData();
-    }
-
-    loadData() {
-        const stored = localStorage.getItem('empTrackDataV9');
-        if (stored) {
-            return JSON.parse(stored);
+class ApiStore {
+    getRole() {
+        const userStr = localStorage.getItem('empTrack_currentUser');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                return user.role;
+            } catch (e) {
+                return 'EMPLOYEE';
+            }
         }
-        this.saveData(INITIAL_MOCK_DATA);
-        return INITIAL_MOCK_DATA;
+        return 'EMPLOYEE';
     }
 
-    saveData(data = this.data) {
-        localStorage.setItem('empTrackDataV9', JSON.stringify(data));
-        this.data = data;
+    async _fetch(endpoint, options = {}) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Role': this.getRole(),
+            ...(options.headers || {})
+        };
+        const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || 'API request failed');
+        }
+        return await res.json();
     }
-
-    // ... keeping internal methods but expanding below explicitly
-    // The previous lines weren't matched perfectly because I need to replace V5 first
-
 
     // --- Employee ---
-    getUserByEmail(email) {
-        return this.data.employee.find(u => u.email === email);
+    async getUserByEmail(email) {
+        return this._fetch(`/employees/email/${email}`);
     }
 
-    getUserById(id) {
-        return this.data.employee.find(u => u.emp_id === id);
+    async getUserById(id) {
+        return this._fetch(`/employees/${id}`);
     }
 
-    getUsersByManager(managerId) {
-        return this.data.employee.filter(u => u.manager_id === managerId);
+    async getUsersByManager(managerId) {
+        return this._fetch(`/employees?managerId=${managerId}`);
     }
-    updateUserPassword(empId, newPassword) {
-        const user = this.data.employee.find(u => u.emp_id === empId);
-        if (!user) return { error: "User not found" };
 
-        user.password = newPassword;
-        this.saveData();
-        return { success: true };
+    async updateUserPassword(empId, newPassword) {
+        return this._fetch(`/employees/${empId}/password`, {
+            method: 'PATCH',
+            body: JSON.stringify({ newPassword })
+        });
     }
+
     // --- Attendance ---
-    getAttendanceForUser(empId) {
-        return this.data.attendance.filter(a => a.emp_id === empId);
+    async getAttendanceForUser(empId) {
+        return this._fetch(`/attendance/user/${empId}`);
     }
 
-    markAttendance(empId, checkInTime, mode = "OFFICE") {
-        const today = new Date().toISOString().split('T')[0];
-        const existing = this.data.attendance.find(a => a.emp_id === empId && a.attendance_date === today);
-        if (existing) {
-            return { error: "Attendance already marked for today." };
-        }
-        const newRecord = {
-            attendance_id: 'A' + Date.now(),
-            emp_id: empId,
-            attendance_date: today,
-            attendance_mode: mode,
-            check_in_time: checkInTime,
-            check_out_time: null,
-            screen_time: null,
-            status: "PRESENT" // ER enum
-        };
-        this.data.attendance.push(newRecord);
-        this.saveData();
-        return newRecord;
+    async markAttendance(empId, checkInTime, mode = "OFFICE") {
+        return this._fetch('/attendance/check-in', {
+            method: 'POST',
+            body: JSON.stringify({ empId, checkInTime, mode })
+        });
     }
 
-    markCheckOut(empId) {
-        const today = new Date().toISOString().split('T')[0];
-        const record = this.data.attendance.find(a => a.emp_id === empId && a.attendance_date === today);
-        if (!record || record.check_out_time) return { error: "Cannot check out." };
-
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        record.check_out_time = `${hours}:${minutes}`;
-
-        // Calculate generic diff
-        const [inH, inM] = record.check_in_time.split(':').map(Number);
-        const [outH, outM] = record.check_out_time.split(':').map(Number);
-        let diffHrs = (outH + outM / 60) - (inH + inM / 60);
-        if (diffHrs < 0) diffHrs = 0;
-
-        record.hours_spent = diffHrs.toFixed(1);
-        this.saveData();
-        return record;
+    async markCheckOut(empId) {
+        return this._fetch('/attendance/check-out', {
+            method: 'POST',
+            body: JSON.stringify({ empId })
+        });
     }
 
     // --- Leave Details ---
-    getLeavesForUser(empId) {
-        return this.data.leave_details.filter(l => l.emp_id === empId);
+    async getLeavesForUser(empId) {
+        return this._fetch(`/leaves/user/${empId}`);
     }
 
-    getAllLeaves() {
-        return this.data.leave_details;
+    async getAllLeaves() {
+        return this._fetch('/leaves');
     }
 
-    createLeave(leaveData) {
-        const newLeave = {
-            leave_id: 'L' + Date.now(),
-            ...leaveData,
-            status: 'PENDING',
-            applied_date: new Date().toISOString().split('T')[0],
-            approved_date: null,
-            approved_by: null
-        };
-        this.data.leave_details.push(newLeave);
-        this.saveData();
-        return newLeave;
+    async createLeave(leaveData) {
+        return this._fetch('/leaves', {
+            method: 'POST',
+            body: JSON.stringify(leaveData)
+        });
     }
 
-    updateLeaveStatus(leaveId, newStatus, approved_by_id) {
-        const leave = this.data.leave_details.find(l => l.leave_id === leaveId);
-        if (leave) {
-            leave.status = newStatus;
-            leave.approved_by = approved_by_id;
-            leave.approved_date = new Date().toISOString().split('T')[0];
-            this.saveData();
-            return leave;
-        }
-        return false;
+    async updateLeaveStatus(leaveId, newStatus, approved_by_id, reject_reason = null) {
+        const body = { status: newStatus, approved_by_id };
+        if (reject_reason) body.reject_reason = reject_reason;
+        return this._fetch(`/leaves/${leaveId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify(body)
+        });
     }
 
     // --- Tasks ---
-    getTasksForUser(empId) {
-        return this.data.task.filter(t => t.assigned_to === empId);
+    async getTasksForUser(empId) {
+        return this._fetch(`/tasks/user/${empId}`);
     }
 
-    getAllTasksForManager(managerId) {
-        const teamIds = this.getUsersByManager(managerId).map(m => m.emp_id);
-        return this.data.task.filter(t => teamIds.includes(t.assigned_to));
+    async getAllTasksForManager(managerId) {
+        return this._fetch(`/tasks?managerId=${managerId}`);
     }
 
-    createTask(taskData) {
-        const newTask = {
-            task_id: 'TK' + Date.now(),
-            ...taskData,
-            status: 'NOT_STARTED', // ER enum
-            progress_percentage: 0,
-            updated_date: new Date().toISOString().split('T')[0]
-        };
-        this.data.task.push(newTask);
-        this.saveData();
-        return newTask;
+    async createTask(taskData) {
+        return this._fetch('/tasks', {
+            method: 'POST',
+            body: JSON.stringify(taskData)
+        });
     }
 
-    updateTaskStatus(taskId, status, percentage) {
-        const task = this.data.task.find(t => t.task_id === taskId);
-        if (task) {
-            task.status = status;
-            if (percentage !== undefined) task.progress_percentage = percentage;
-            task.updated_date = new Date().toISOString().split('T')[0];
-            this.saveData();
-            return task;
-        }
-        return false;
+    async updateTaskStatus(taskId, status, percentage) {
+        const body = { status };
+        if (percentage !== undefined) body.progress_percentage = percentage;
+        return this._fetch(`/tasks/${taskId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body)
+        });
     }
 
-<<<<<<< HEAD
-    updateTaskDetails(taskId, updates) {
-        const task = this.data.task.find(t => t.task_id === taskId);
-        if (task) {
-            Object.assign(task, updates);
-            task.updated_date = new Date().toISOString().split('T')[0];
-            this.saveData();
-            return task;
-        }
-        return false;
-=======
-    deleteTask(taskId) {
-        this.data.task = this.data.task.filter(t => t.task_id !== taskId);
-        this.saveData();
+    async updateTaskDetails(taskId, updates) {
+        return this._fetch(`/tasks/${taskId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates)
+        });
     }
 
-    updateTask(taskId, updates) {
-        const task = this.data.task.find(t => t.task_id === taskId);
-        if (task) {
-            Object.assign(task, updates);
-            task.updated_date = new Date().toISOString().split('T')[0];
-            this.saveData();
-            return task;
-        }
-        return null;
+    // --- Issues ---
+    async getIssuesForUser(empId) {
+        return this._fetch(`/issues/user/${empId}`);
     }
 
-    // --- Issues (Custom Module) ---
-    getIssuesForUser(empId) {
-        return this.data.issue ? this.data.issue.filter(i => i.emp_id === empId) : [];
-    }
-
-    createIssue(issueData) {
-        if (!this.data.issue) this.data.issue = [];
-        const newIssue = {
-            issue_id: 'ISS-' + Math.floor(1000 + Math.random() * 9000),
-            ...issueData,
-            status: 'Open',
-            assigned_to: 'Unassigned',
-            raised_date: new Date().toISOString().split('T')[0],
-            updates: []
-        };
-        this.data.issue.push(newIssue);
-        this.saveData();
-        return newIssue;
-    }
-
-    getAllIssues() {
-        return this.data.issue || [];
-    }
-
-    deleteIssue(issueId) {
-        if (this.data.issue) {
-            this.data.issue = this.data.issue.filter(i => i.issue_id !== issueId);
-            this.saveData();
-        }
-    }
-
-    getIssuesForManager(managerId) {
-        const teamIds = this.getUsersByManager(managerId).map(m => m.emp_id);
-        return (this.data.issue || []).filter(i => teamIds.includes(i.emp_id));
-    }
-
-    updateIssue(issueId, updates) {
-        const issue = (this.data.issue || []).find(i => i.issue_id === issueId);
-        if (issue) {
-            Object.assign(issue, updates);
-            this.saveData();
-            return issue;
-        }
-        return null;
+    async createIssue(issueData) {
+        return this._fetch('/issues', {
+            method: 'POST',
+            body: JSON.stringify(issueData)
+        });
     }
 
     // --- Work Logs ---
-    getWorkLogsForUser(empId) {
-        return this.data.work_logs ? this.data.work_logs.filter(wl => wl.emp_id === empId) : [];
+    async getWorkLogsForUser(empId) {
+        return this._fetch(`/worklogs/user/${empId}`);
     }
 
-    createWorkLog(logData) {
-        if (!this.data.work_logs) this.data.work_logs = [];
-        const newLog = {
-            worklog_id: 'WL-' + Math.floor(1000 + Math.random() * 9000),
-            ...logData,
-            log_date: new Date().toISOString().split('T')[0]
-        };
-        this.data.work_logs.push(newLog);
-        this.saveData();
-        return newLog;
+    async createWorkLog(logData) {
+        return this._fetch('/worklogs', {
+            method: 'POST',
+            body: JSON.stringify(logData)
+        });
     }
 
-<<<<<<< HEAD
     // --- Notifications ---
-    getNotificationsForUser(empId) {
-        return this.data.notifications ? this.data.notifications.filter(n => n.employee_id === empId).reverse() : [];
+    async getNotificationsForUser(empId) {
+        return this._fetch(`/notifications/user/${empId}`);
     }
 
-    createNotification(empId, message, type = "info") {
-        if (!this.data.notifications) this.data.notifications = [];
-        const newNotif = {
-            id: 'NOTIF-' + Math.floor(1000 + Math.random() * 9000),
-            employee_id: empId,
-            message: message,
-            type: type, // 'warning', 'info', etc.
-            timestamp: new Date().toISOString()
-        };
-        this.data.notifications.push(newNotif);
-        this.saveData();
-        return newNotif;
+    async createNotification(empId, message, type = "info") {
+        return this._fetch('/notifications', {
+            method: 'POST',
+            body: JSON.stringify({ employee_id: empId, message, type })
+        });
     }
 
-    // --- Escalations (HR Form) ---
-    createEscalationRecord(data) {
-        if (!this.data.escalation) this.data.escalation = [];
-        const newEsc = {
-            escalation_id: 'ESC-' + Math.floor(1000 + Math.random() * 9000),
-            ...data,
-            escalation_date: new Date().toISOString().split('T')[0],
-            status: "OPEN"
-=======
-    // --- Escalation ---
-    getAllEscalations() {
-        return this.data.escalation || [];
-    }
-
-    createEscalation(escData) {
-        if (!this.data.escalation) this.data.escalation = [];
-        const newEsc = {
-            escalation_id: 'E' + Math.floor(1000 + Math.random() * 9000),
-            escalation_date: new Date().toISOString().split('T')[0],
-            status: 'OPEN',
-            ...escData
->>>>>>> f6cb44aae91333eb5fe31f0a0678255269e72ec3
-    };
-        this.data.escalation.push(newEsc);
-this.saveData();
-return newEsc;
-    }
-<<<<<<< HEAD
-=======
-
-    updateEscalation(id, updates) {
-        const esc = (this.data.escalation || []).find(e => e.escalation_id === id);
-        if (esc) {
-            Object.assign(esc, updates);
-            this.saveData();
-            return esc;
-        }
-        return null;
+    // --- Escalations ---
+    async createEscalationRecord(data) {
+        return this._fetch('/escalations', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     }
 
     // --- Notifications ---
@@ -377,5 +189,4 @@ return newEsc;
     }
 }
 
-// Export singleton
-export const db = new Store();
+export const db = new ApiStore();

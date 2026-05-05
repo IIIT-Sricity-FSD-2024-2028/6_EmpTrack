@@ -11,9 +11,9 @@ class Auth {
         return session ? JSON.parse(session) : null;
     }
 
-    login(email, password) {
+    async login(email, password) {
         // Simple mock authentication using the store users array
-        const user = db.getUserByEmail(email);
+        const user = await db.getUserByEmail(email);
         
         if (!user) {
             return { success: false, message: "User not found." };

@@ -1,27 +1,20 @@
 // /js/views/teamlead/work-monitoring.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const getWorkData = () => {
-        return db.getAllTasksForManager(user.emp_id).map(t => {
-            const emp = db.getUserById(t.assigned_to);
-            const empName = emp ? emp.emp_name.split(' (')[0] : 'Unknown';
-            return {
-                name: empName,
-                id: t.task_id,
-                title: t.task_title,
-                est: (t.est_hours || 40) + 'h',
-                worked: (t.hours_spent || Math.round((t.est_hours || 40) * (t.progress_percentage || 0) / 100)) + 'h',
-                progress: t.progress_percentage || 0
-            };
-        });
-    };
-
-    const mockData = getWorkData();
+    const mockData = [
+        { name: 'John Smith', id: 'T-001', title: 'Update User Dashboard UI', est: '40h', worked: '30h', progress: 75 },
+        { name: 'Sarah Johnson', id: 'T-012', title: 'API Integration', est: '32h', worked: '28h', progress: 88 },
+        { name: 'Mike Davis', id: 'T-019', title: 'Database Schema Design', est: '24h', worked: '14h', progress: 58 },
+        { name: 'Emma Wilson', id: 'T-007', title: 'Testing and QA', est: '48h', worked: '48h', progress: 100 },
+        { name: 'James Brown', id: 'T-023', title: 'Feature Implementation', est: '56h', worked: '22h', progress: 39 },
+        { name: 'Lisa Anderson', id: 'T-015', title: 'Security Audit', est: '40h', worked: '32h', progress: 80 },
+        { name: 'John Smith', id: 'T-034', title: 'Code Refactoring', est: '24h', worked: '10h', progress: 42 },
+        { name: 'Sarah Johnson', id: 'T-028', title: 'Documentation Update', est: '16h', worked: '16h', progress: 100 },
+    ];
 
     const generateTableRows = () => {
         return mockData.map(row => {

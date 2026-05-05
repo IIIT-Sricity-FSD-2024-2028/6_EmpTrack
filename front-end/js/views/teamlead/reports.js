@@ -1,28 +1,15 @@
 // /js/views/teamlead/reports.js
 import { auth } from '../../auth.js';
-import { db } from '../../store.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const tasks = db.getAllTasksForManager(user.emp_id);
-    const totalTasks = tasks.length;
-    const tasksCompleted = tasks.filter(t => t.status === 'COMPLETED').length;
-    const productivity = totalTasks > 0 ? Math.round((tasksCompleted / totalTasks) * 100) : 100;
-    
-    // Average time proxy based on hours_spent vs est_hours
-    let avgTime = 'N/A';
-    if(tasksCompleted > 0) {
-        const totalHours = tasks.filter(t => t.status === 'COMPLETED').reduce((acc, t) => acc + parseFloat(t.hours_spent || 0), 0);
-        avgTime = Math.round(totalHours / tasksCompleted) + 'h';
-    }
-
     const mockStats = {
-        totalTasks,
-        tasksCompleted,
-        productivity: productivity + '%',
-        avgTime
+        totalTasks: 248,
+        tasksCompleted: 187,
+        productivity: '86%',
+        avgTime: '18h'
     };
 
     const recentReports = [
@@ -76,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const genBtn = document.getElementById('generate-btn');
     if (genBtn) {
-        genBtn.addEventListener('click', () => {
+        genBtn.addEventListener('click', async () => {
             const btnText = genBtn.querySelector('.btn-text');
             const spinner = genBtn.querySelector('.spinner-icon');
             const type = document.getElementById('report-type').value;
@@ -104,18 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const downloadBtns = document.querySelectorAll('.download-btn');
     downloadBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const row = e.target.closest('tr');
             const title = row.querySelector('td:nth-child(2)').innerText.trim();
             const format = 'PDF';
 
             try {
-                const blob = new Blob(["System generated dynamic summary report for: " + title + "\nTotal Tasks: " + totalTasks + "\nCompleted: " + tasksCompleted], { type: 'text/plain' });
+                const blob = new Blob(["This is a dummy file representing: " + title], { type: 'text/plain' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                a.download = `${title.replace(/\s+/g, '_')}_data_export.${format.toLowerCase()}`;
+                a.download = `${title.replace(/\s+/g, '_')}_mock.${format.toLowerCase()}`;
                 
                 document.body.appendChild(a);
                 a.click();
@@ -130,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function showToast(title, message, type = 'info') {
+    async function showToast(title, message, type = 'info') {
         const toastContainer = document.getElementById('toast-container');
         if (!toastContainer) return;
 

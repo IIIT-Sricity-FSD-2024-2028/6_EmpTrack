@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Dashboard</title>
-
+    
     <!-- CSS Foundation -->
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
@@ -13,20 +12,19 @@
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
     <link rel="stylesheet" href="../css/views/employee/dashboard.css">
-
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-
 <body>
     <div class="app-container">
         <!-- Sidebar Layout injected via JS -->
         <div id="sidebar-container"></div>
-
+        
         <main class="main-wrapper">
             <!-- Header Layout injected via JS -->
             <div id="header-container"></div>
-
+            
             <div class="content-area" id="main-content">
                 <!-- Welcome Banner -->
                 <div class="card dashboard-welcome-banner">
@@ -93,7 +91,7 @@
                 </div>
 
                 <!-- Assigned Tasks Summary -->
-                <div class="card" style="margin-bottom: var(--spacing-xl);">
+                <div class="card dashboard-tasks-section">
                     <div class="card-header">
                         <h3 class="section-title">Assigned Tasks Summary</h3>
                         <a href="tasks.html" class="btn btn-outline btn-sm-link">View All</a>
@@ -102,17 +100,9 @@
                         <!-- Tasks dynamically injected here -->
                     </div>
                 </div>
-
-
-
-
-
-
-
-
-
+                
                 <!-- Bottom Halves -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+                <div class="dashboard-bottom-grid">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="section-title">Attendance Status</h3>
@@ -139,27 +129,22 @@
                             </div>
                         </div>
                     </div>
-                    </a>
-
-                    <a href="leave-request.html">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="section-title">Recent Leave Requests</h3>
-                            </div>
-                            <ul id="leaves-list" class="recent-leaves-list">
-                                <!-- Leaves injected here -->
-                            </ul>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="section-title">Recent Leave Requests</h3>
                         </div>
+                        <ul id="leaves-list" class="recent-leaves-list">
+                            <!-- Leaves injected here -->
+                        </ul>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
-    </a>
-
     <!-- App Initialization -->
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/views/employee/dashboard.js"></script>
 </body>
-
 </html>
