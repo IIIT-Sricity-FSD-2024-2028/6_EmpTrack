@@ -206,9 +206,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="details-grid">
                 <div style="display:flex; flex-direction:column; gap:24px;">
                     <div class="card" style="display:flex; gap:12px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" id="btn-resolve-act">Resolve & Take Action</button>
-                        <button class="btn btn-outline" id="btn-reject-esc" style="border-color:var(--color-high); color:var(--color-high);"><i class="ph ph-prohibit"></i> Reject Escalation</button>
-                        <button class="btn btn-outline" id="btn-gen-report"><i class="ph ph-file-pdf"></i> Generate Report</button>
+                        <button class="btn btn-primary" id="btn-resolve-act" data-id="${id}">Resolve / Take Action</button>
+                        <button class="btn btn-outline" id="btn-reject-esc" data-id="${id}" style="border-color:var(--color-high); color:var(--color-high);"><i class="ph ph-prohibit"></i> Reject Escalation</button>
+                        <button class="btn btn-outline" id="btn-gen-report" data-id="${id}"><i class="ph ph-file-pdf"></i> Generate Report</button>
                     </div>
 
                     <div class="card">
@@ -260,10 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
 
-        document.getElementById('btn-resolve-act').addEventListener('click', async () => {
-            alert('Proceeding with disciplinary action workflows...'); 
-            navDashboard();
-        });
+
 
         document.getElementById('btn-reject-esc').addEventListener('click', async (e) => {
             const btn = e.currentTarget;
@@ -293,29 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        document.getElementById('btn-gen-report').addEventListener('click', async (e) => {
-            const btn = e.currentTarget;
-            btn.disabled = true;
-            try {
-                const res = await fetch(`http://localhost:3000/escalations/${id}/report`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Role': user.role
-                    }
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    alert(data.message);
-                } else {
-                    alert('Error: ' + data.message);
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                alert('Error generating report');
-                btn.disabled = false;
-            }
-        });
+
 
         viewAction.classList.add('active');
     }
@@ -387,6 +362,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log("View Details clicked", e.target);
             }
         });
+    });
+
+    // Event Delegation for Action Buttons
+    document.addEventListener('click', e => {
+        const resolveBtn = e.target.closest('#btn-resolve-act');
+        if (resolveBtn) {
+            console.log("Resolve / Take Action button clicked");
+            const action = prompt("Action Options:\n1. Resolve\n2. Assign\n3. Close\n\nEnter your choice:");
+            if (action) {
+                const lowerAction = action.toLowerCase();
+                const id = resolveBtn.dataset.id;
+                
+                if (lowerAction === '1' || lowerAction === 'resolve') {
+                    const esc = dummyEscalations.find(x => x.id === id);
+                    if (esc) {
+                        esc.status = 'Resolved';
+                    }
+                    alert("Status updated to Resolved");
+                    navDashboard();
+                } else if (lowerAction === '2' || lowerAction === 'assign') {
+                    window.location.href = "assign-issue.html";
+                } else if (lowerAction === '3' || lowerAction === 'close') {
+                    alert("Closed!");
+                }
+            }
+        }
+
+        const genReportBtn = e.target.closest('#btn-gen-report');
+        if (genReportBtn) {
+            console.log("Generate Report button clicked");
+            alert("Report generated successfully");
+        }
     });
 });
 

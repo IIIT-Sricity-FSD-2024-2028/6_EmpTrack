@@ -1,24 +1,55 @@
 // /js/views/teamlead/employee-raised-issues.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    const mockStats = {
-        total: 18,
-        highPriority: 5,
-        pending: 7,
-        inProgress: 11
-    };
-
-    const mockIssues = [
+    let mockIssues = [
         { emp: 'James Brown', id: 'ISS-102', title: 'Need access to AWS Console', type: 'Access Request', priority: 'High', status: 'Pending', date: '2026-03-30', priorityColor: 'var(--danger-color)', statusColor: 'var(--warning-color)' },
         { emp: 'Lisa Anderson', id: 'ISS-105', title: 'Laptop overheating', type: 'Hardware', priority: 'Medium', status: 'In Progress', date: '2026-03-29', priorityColor: 'var(--warning-color)', statusColor: '#3b82f6' },
         { emp: 'Sarah Johnson', id: 'ISS-108', title: 'Clarification on new leave policy', type: 'HR Query', priority: 'Low', status: 'Resolved', date: '2026-03-25', priorityColor: 'var(--secondary-color)', statusColor: 'var(--secondary-color)' },
         { emp: 'Mike Davis', id: 'ISS-111', title: 'Conflict with teammate regarding API', type: 'Interpersonal', priority: 'High', status: 'Pending', date: '2026-03-31', priorityColor: 'var(--danger-color)', statusColor: 'var(--warning-color)' },
         { emp: 'Emma Wilson', id: 'ISS-114', title: 'Extend deadline for UI task', type: 'Task Update', priority: 'Low', status: 'In Progress', date: '2026-03-28', priorityColor: 'var(--secondary-color)', statusColor: '#3b82f6' }
     ];
+
+    const allIssues = await db.getAllIssues().catch(() => []);
+    const localIssues = allIssues.filter(i => i.emp_id && i.issue_id && !mockIssues.find(m => m.id === i.issue_id));
+
+    const mappedLocal = await Promise.all(localIssues.map(async iss => {
+        const empRef = await db.getUserById(iss.emp_id).catch(() => null);
+        const empName = empRef ? empRef.emp_name : iss.emp_id;
+        
+        let priorityColor = 'var(--secondary-color)';
+        if(iss.priority === 'High' || iss.priority === 'Critical') priorityColor = 'var(--danger-color)';
+        if(iss.priority === 'Medium') priorityColor = 'var(--warning-color)';
+        
+        let statusColor = 'var(--warning-color)';
+        if(iss.status === 'Resolved') statusColor = 'var(--secondary-color)';
+        if(iss.status === 'In Progress') statusColor = '#3b82f6';
+        
+        return {
+            emp: empName,
+            id: iss.issue_id,
+            title: iss.title,
+            type: iss.type || 'General',
+            priority: iss.priority || 'Medium',
+            status: iss.status || 'Pending',
+            date: iss.raised_date || new Date().toISOString().split('T')[0],
+            priorityColor,
+            statusColor
+        };
+    }));
+
+    mockIssues = [...mappedLocal, ...mockIssues];
+
+    const mockStats = {
+        total: mockIssues.length,
+        highPriority: mockIssues.filter(i => i.priority === 'High' || i.priority === 'Critical').length,
+        pending: mockIssues.filter(i => i.status === 'Pending').length,
+        inProgress: mockIssues.filter(i => i.status === 'In Progress').length
+    };
 
     document.getElementById('stat-total').textContent = mockStats.total;
     document.getElementById('stat-high').textContent = mockStats.highPriority;

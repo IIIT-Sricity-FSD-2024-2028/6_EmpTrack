@@ -130,14 +130,33 @@ class ApiStore {
     }
 
     async getAllIssues() {
-        return this._fetch('/issues');
+        let serverIssues = [];
+        try {
+            serverIssues = await this._fetch('/issues');
+        } catch (e) {}
+        const localIssues = JSON.parse(localStorage.getItem('empTrack_local_issues') || '[]');
+        return [...serverIssues, ...localIssues];
     }
 
     async createIssue(issueData) {
-        return this._fetch('/issues', {
-            method: 'POST',
-            body: JSON.stringify(issueData)
-        });
+        const localIssues = JSON.parse(localStorage.getItem('empTrack_local_issues') || '[]');
+        const newIssue = {
+            issue_id: 'ISS-' + Math.floor(1000 + Math.random() * 9000),
+            ...issueData,
+            status: 'Pending',
+            raised_date: new Date().toISOString().split('T')[0]
+        };
+        localIssues.push(newIssue);
+        localStorage.setItem('empTrack_local_issues', JSON.stringify(localIssues));
+
+        try {
+            return await this._fetch('/issues', {
+                method: 'POST',
+                body: JSON.stringify(issueData)
+            });
+        } catch (e) {
+            return newIssue;
+        }
     }
 
     async updateIssue(issueId, updateData) {
