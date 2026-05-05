@@ -112,7 +112,7 @@
                     </div>
             
                     <!-- Bottom Grid -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-xl);">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: var(--spacing-xl);">
                         
                         <!-- Card 3: Timeline -->
                         <div class="card" style="padding: 24px;">
@@ -122,26 +122,10 @@
                             </div>
                         </div>
             
-                        <!-- Card 4: Updates Thread -->
-                        <div class="card" style="padding: 24px; display:flex; flex-direction:column; justify-content:space-between;">
-                            <div>
-                                <h3 style="margin:0 0 16px 0; font-size:var(--text-lg);">Issue Updates</h3>
-                                
-                                <div id="updates-list" style="display:flex; flex-direction:column; gap: 16px; margin-bottom: 24px; max-height: 200px; overflow-y:auto; padding-right:10px;">
-                                    <!-- JS Injected -->
-                                </div>
-                            </div>
-                            
-                            <div style="display:flex; gap: 8px;">
-                                <input type="text" class="form-control" id="comment" placeholder="Write update or comment..." style="border-radius:var(--radius-md); flex:1;">
-                            </div>
-                        </div>
-            
                     </div>
             
                     <!-- Horizontal Action Bottom Buttons -->
                     <div style="display:flex; gap: var(--spacing-md); margin-top: var(--spacing-xl);">
-                        <button class="btn btn-purple" id="update-comment-btn" style="flex:1; padding: 16px; font-size: var(--text-md); font-weight:bold;">Update Comment</button>
                         <button class="btn btn-purple" id="close-issue-btn" style="flex:1; padding: 16px; font-size: var(--text-md); font-weight:bold; background-color: var(--text-main);">Close Issue</button>
                     </div>
                 </div>

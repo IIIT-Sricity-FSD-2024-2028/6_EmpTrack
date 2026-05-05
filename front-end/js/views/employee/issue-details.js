@@ -30,15 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return 'badge-open'; 
     };
 
-    document.getElementById('update-comment-btn').addEventListener('click', async () => {
-        const comment = document.getElementById('comment').value;
-        if(!comment) {
-            alert("Please enter a comment");
-            return;
-        }else{
-            alert("Comment is Updated")
-        }
-    });
     document.getElementById('close-issue-btn').addEventListener('click', async () => {
         alert("Issue is closed")
         window.location.href = 'issues-list.html';
@@ -59,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     document.getElementById('id-raised').textContent = issue.raised_date;
     document.getElementById('id-assigned').textContent = issue.assigned_to;
-    document.getElementById('id-last-updated').textContent = issue.updates.length > 0 ? issue.updates[issue.updates.length-1].time : issue.raised_date;
+    document.getElementById('id-last-updated').textContent = issue.updates && issue.updates.length > 0 ? issue.updates[issue.updates.length-1].time : issue.raised_date;
 
     // Badges
     const statBadge = document.getElementById('id-status-badge');
@@ -86,22 +77,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         </div>
     `).join('');
-
-    // Updates list
-    const updatesList = document.getElementById('updates-list');
-    if(issue.updates.length === 0) {
-        updatesList.innerHTML = '<div style="color:var(--text-muted); text-align:center;">No updates yet.</div>';
-    } else {
-        updatesList.innerHTML = issue.updates.map(u => `
-            <div style="display:flex; flex-direction:column; gap: 4px;">
-                <div style="display:flex; justify-content:space-between; font-size: 11px;">
-                    <span style="font-weight:bold;">${u.sender}</span>
-                    <span style="color:var(--text-muted);">${u.time}</span>
-                </div>
-                <div style="background-color: var(--primary-light); color: var(--text-main); padding: 10px; border-radius: 8px; border-top-left-radius: 0; font-size: var(--text-sm);">
-                    ${u.message}
-                </div>
-            </div>
-        `).join('');
-    }
 });
