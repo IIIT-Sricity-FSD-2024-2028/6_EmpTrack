@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Query, UseGuards, Delete } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -38,6 +38,20 @@ export class EmployeeController {
     @Body() updatePasswordDto: UpdatePasswordDto
   ) {
     return this.employeeService.updatePassword(id, updatePasswordDto);
+  }
+
+  @ApiOperation({ summary: 'Delete an employee' })
+  @Delete(':id')
+  @Roles('ADMIN')
+  deleteEmployee(@Param('id') id: string) {
+    return this.employeeService.deleteEmployee(id);
+  }
+
+  @ApiOperation({ summary: 'Update an employee' })
+  @Patch(':id')
+  @Roles('ADMIN')
+  updateEmployee(@Param('id') id: string, @Body() updateData: any) {
+    return this.employeeService.updateEmployee(id, updateData);
   }
 }
 

@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Login</title>
-    
+
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/views.css">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
-<body style="display:flex; align-items:center; justify-content:center; min-height:100vh; background-color: var(--bg-main);">
+
+<body
+    style="display:flex; align-items:center; justify-content:center; min-height:100vh; background-color: var(--bg-main);">
     <div id="app" class="app-container" style="display:flex; align-items:center; justify-content:center; width:100%;">
         <div class="auth-wrapper">
             <div class="auth-container">
@@ -21,25 +24,30 @@
                     <i class="ph-fill ph-check-circle" style="font-size:36px;"></i> EmpTrack
                 </div>
                 <h2 class="auth-title">Sign In to Your Portal</h2>
-                
+
                 <form id="login-form">
                     <div class="form-group" id="group-email">
                         <label class="form-label" for="email">Work Email</label>
-                        <input type="email" id="email" class="form-control" placeholder="e.g. emp@emp.com" autocomplete="email" required pattern=".*\.com$" title="Email must end with .com">
+                        <input type="email" id="email" class="form-control" placeholder="e.g. emp@emp.com"
+                            autocomplete="email" required pattern=".*\.com$" title="Email must end with .com">
                         <div class="form-error"></div>
                     </div>
-                    
+
                     <div class="form-group" id="group-password">
                         <label class="form-label" for="password">Password</label>
-                        <input type="password" id="password" class="form-control" placeholder="••••••••" autocomplete="current-password" required pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}" title="Must contain at least one number, one uppercase and lowercase letter, one special character, and at least 8 or more characters">
+                        <input type="password" id="password" class="form-control" placeholder="••••••••"
+                            autocomplete="current-password" required
+                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}"
+                            title="Must contain at least one number, one uppercase and lowercase letter, one special character, and at least 8 or more characters">
                         <div class="form-error"></div>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
                         Login <i class="ph ph-arrow-right"></i>
                     </button>
-                    
-                    <div id="login-alert" class="form-error" style="text-align:center; margin-top:16px; display:none;"></div>
+
+                    <div id="login-alert" class="form-error" style="text-align:center; margin-top:16px; display:none;">
+                    </div>
                 </form>
             </div>
         </div>
@@ -48,5 +56,5 @@
     <!-- Logic -->
     <script type="module" src="js/views/auth/login.js"></script>
 </body>
-</html>
 
+</html>

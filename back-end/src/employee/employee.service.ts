@@ -31,5 +31,17 @@ export class EmployeeService {
     emp.password = updatePasswordDto.newPassword;
     return emp;
   }
+
+  deleteEmployee(id: string) {
+    const deleted = this.dataStore.deleteEmployee(id);
+    if (!deleted) throw new NotFoundException('Employee not found');
+    return { success: true, message: 'Employee deleted' };
+  }
+
+  updateEmployee(id: string, updateData: any) {
+    const updated = this.dataStore.updateEmployee(id, updateData);
+    if (!updated) throw new NotFoundException('Employee not found');
+    return updated;
+  }
 }
 

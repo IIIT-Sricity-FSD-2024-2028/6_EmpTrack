@@ -63,5 +63,32 @@ export class MockDataService {
     public getIssues() { return this.data.issue; }
     public getWorkLogs() { return this.data.work_logs; }
     public getNotifications() { return this.data.notifications; }
-}
 
+    public deleteEmployee(id: string) {
+        const initialLength = this.data.employee.length;
+        this.data.employee = this.data.employee.filter(e => e.emp_id !== id);
+        
+        // Cascade deletes
+        this.data.attendance = this.data.attendance.filter(a => a.emp_id !== id);
+        this.data.leave_details = this.data.leave_details.filter(l => l.emp_id !== id);
+        this.data.work_logs = this.data.work_logs.filter(w => w.emp_id !== id);
+        this.data.task = this.data.task.filter(t => t.assigned_to !== id);
+        this.data.issue = this.data.issue.filter(i => i.emp_id !== id && i.assigned_to !== id);
+        this.data.escalation = this.data.escalation.filter(e => e.escalated_from !== id && e.escalated_to !== id);
+        
+        if (this.data.notifications) {
+            this.data.notifications = this.data.notifications.filter(n => n.employee_id !== id);
+        }
+
+        return this.data.employee.length < initialLength;
+    }
+
+    public updateEmployee(id: string, updateData: any) {
+        const index = this.data.employee.findIndex(e => e.emp_id === id);
+        if (index !== -1) {
+            this.data.employee[index] = { ...this.data.employee[index], ...updateData };
+            return this.data.employee[index];
+        }
+        return null;
+    }
+}
