@@ -1,4 +1,11 @@
 // /js/views/hr/escalations.js
+console.log("Escalations JS loaded");
+
+document.addEventListener("click", function(e) {
+  if (e.target.textContent.trim() === "View Details") {
+    alert("View Details working");
+  }
+});
 import { auth } from '../../auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
