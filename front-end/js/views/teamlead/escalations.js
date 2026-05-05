@@ -201,13 +201,7 @@ const highlightRow = (id) => {
         });
     }
 
-    // Navigation Events
-    const navEmployeeIssues = document.getElementById('nav-employee-issues');
-    if (navEmployeeIssues) {
-        navEmployeeIssues.addEventListener('click', async () => {
-            window.location.href = 'employee-raised-issues.html';
-        });
-    }
+    // Navigation Events (Removed employee issues JS redirect as it is now an anchor link)
 
     const globalEscalateBtn = document.getElementById('global-escalate-btn');
     if (globalEscalateBtn) {
