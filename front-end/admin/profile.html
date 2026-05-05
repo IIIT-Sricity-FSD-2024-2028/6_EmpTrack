@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Admin Profile</title>
+    
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        .profile-container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+        .profile-header { display: flex; align-items: center; gap: 24px; padding: 24px; background: var(--bg-main); border-radius: var(--radius-lg); border: 1px solid var(--border-color); }
+        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .info-item { display: flex; flex-direction: column; gap: 4px; }
+        .info-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .info-val { font-size: 15px; font-weight: 600; color: var(--text-main); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+        
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+            
+            <div class="content-area" id="main-content">
+                <div id="page-title" style="display:none;">Admin Profile</div>
+                
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <div class="profile-avatar">BW</div>
+                        <div>
+                            <h2 style="margin:0 0 8px 0;">Bruce Wayne</h2>
+                            <div style="color:var(--hr-primary); font-weight:600; font-size:14px; margin-bottom:8px;">Super Admin</div>
+                            <div style="font-size:13px; color:var(--text-muted);">EmpTrack System Administrator</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">Contact Information</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Email</span>
+                                <span class="info-val">bruce.wayne@emptrack.com</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Phone</span>
+                                <span class="info-val">+1 (555) 019-8273</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Department</span>
+                                <span class="info-val">Administration</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Location</span>
+                                <span class="info-val">Gotham HQ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">Security Settings</h3>
+                        <div style="display:flex; flex-direction:column; gap:16px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight:600; font-size:14px;">Password</div>
+                                    <div style="font-size:13px; color:var(--text-muted);">Last changed 30 days ago</div>
+                                </div>
+                                <button class="btn btn-outline" onclick="alert('Change password modal opening...')">Change Password</button>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <div style="font-weight:600; font-size:14px;">Two-Factor Authentication</div>
+                                    <div style="font-size:13px; color:var(--text-muted);">Secure your account with 2FA</div>
+                                </div>
+                                <button class="btn btn-primary" onclick="alert('Enable 2FA...')">Enable 2FA</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+    
+    <script type="module" src="../js/app.js"></script>
+</body>
+</html>
