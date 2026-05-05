@@ -13,15 +13,7 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        .profile-container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-        .profile-header { display: flex; align-items: center; gap: 24px; padding: 24px; background: var(--bg-main); border-radius: var(--radius-lg); border: 1px solid var(--border-color); }
-        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .info-item { display: flex; flex-direction: column; gap: 4px; }
-        .info-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-        .info-val { font-size: 15px; font-weight: 600; color: var(--text-main); }
-    </style>
+    <link rel="stylesheet" href="../css/views/hr/profile.css">
 </head>
 <body>
     <div class="app-container">
@@ -33,57 +25,83 @@
             <div class="content-area" id="main-content">
                 <div id="page-title" style="display:none;">Admin Profile</div>
                 
-                <div class="profile-container">
-                    <div class="profile-header">
-                        <div class="profile-avatar">BW</div>
-                        <div>
-                            <h2 style="margin:0 0 8px 0;">Bruce Wayne</h2>
-                            <div style="color:var(--hr-primary); font-weight:600; font-size:14px; margin-bottom:8px;">Super Admin</div>
-                            <div style="font-size:13px; color:var(--text-muted);">EmpTrack System Administrator</div>
+                <div class="hr-prof-root">
+                    
+                    <!-- Banner -->
+                    <div class="card profile-banner">
+                        <div class="avatar-large" id="avatar-circle">
+                            <span id="avatar-initials">BW</span>
                         </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">Contact Information</h3>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="info-label">Email</span>
-                                <span class="info-val">bruce.wayne@emptrack.com</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Phone</span>
-                                <span class="info-val">+1 (555) 019-8273</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Department</span>
-                                <span class="info-val">Administration</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Location</span>
-                                <span class="info-val">Gotham HQ</span>
+                        <div class="banner-info">
+                            <h2 class="banner-name" id="profile-name">Bruce Wayne</h2>
+                            <div class="banner-role" id="profile-role">Super Admin</div>
+                            <div class="banner-meta">
+                                <div class="bm-item"><i class="ph ph-briefcase"></i> <span id="profile-exp">System Administrator</span></div>
+                                <div class="bm-item"><i class="ph ph-map-pin"></i> Gotham HQ</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">Security Settings</h3>
-                        <div style="display:flex; flex-direction:column; gap:16px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <div style="font-weight:600; font-size:14px;">Password</div>
-                                    <div style="font-size:13px; color:var(--text-muted);">Last changed 30 days ago</div>
+                    <!-- Layout Grid -->
+                    <div class="split-grid">
+                        
+                        <!-- Left Column -->
+                        <div style="display:flex; flex-direction:column; gap:24px;">
+                            
+                            <div class="split-grid" style="margin-bottom:0; display:grid; grid-template-columns: 1fr 1fr;">
+                                <!-- Personal Info -->
+                                <div class="card">
+                                    <h3 style="margin:0; font-size:16px; color:var(--prof-text); display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-identification-card" style="color:var(--prof-primary);"></i> Personal Information</h3>
+                                    <div class="info-list">
+                                        <div class="il-item"><span class="il-label">Employee ID</span><span class="il-val" id="info-empId">ADM-001</span></div>
+                                        <div class="il-item"><span class="il-label">Email Address</span><span class="il-val" id="info-email">bruce.wayne@emptrack.com</span></div>
+                                        <div class="il-item"><span class="il-label">Phone Number</span><span class="il-val" id="info-phone">+1 (555) 019-8273</span></div>
+                                        <div class="il-item"><span class="il-label">Home Address</span><span class="il-val" id="info-address">1007 Mountain Drive<br>Gotham City</span></div>
+                                    </div>
                                 </div>
-                                <button class="btn btn-outline" onclick="alert('Change password modal opening...')">Change Password</button>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <div style="font-weight:600; font-size:14px;">Two-Factor Authentication</div>
-                                    <div style="font-size:13px; color:var(--text-muted);">Secure your account with 2FA</div>
+
+                                <!-- Work Info -->
+                                <div class="card">
+                                    <h3 style="margin:0; font-size:16px; color:var(--prof-text); display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-buildings" style="color:var(--prof-secondary);"></i> Work Information</h3>
+                                    <div class="info-list">
+                                        <div class="il-item"><span class="il-label">Department</span><span class="il-val" id="info-dept">Administration</span></div>
+                                        <div class="il-item"><span class="il-label">Role / Position</span><span class="il-val" id="info-role">Super Admin</span></div>
+                                    </div>
                                 </div>
-                                <button class="btn btn-primary" onclick="alert('Enable 2FA...')">Enable 2FA</button>
                             </div>
+                            
+                        </div>
+
+                        <!-- Right Column (Password) -->
+                        <div class="card" style="height: fit-content;">
+                            <h3 style="margin:0 0 20px 0; font-size:16px; color:var(--prof-text); display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-lock-key" style="color:#22C55E;"></i> Security Settings</h3>
+                            <p style="font-size:13px; color:var(--prof-muted); margin-top:0;">Update your password regularly to keep your account secure.</p>
+                            <form id="password-form">
+                                <div class="form-group">
+                                    <label>Current Password</label>
+                                    <div class="input-wrap">
+                                        <input type="password" required placeholder="Enter current password">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>New Password</label>
+                                    <div class="input-wrap">
+                                        <input type="password" id="newPwd" required minlength="8" placeholder="Enter new password">
+                                        <i class="ph ph-eye eye-icon"></i>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirm New Password</label>
+                                    <div class="input-wrap">
+                                        <input type="password" id="confPwd" required placeholder="Re-type new password">
+                                        <i class="ph ph-eye eye-icon"></i>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-save" id="btnUpdatePwd" onclick="alert('Password updated successfully')"><i class="ph ph-check-circle" style="font-size:1.2rem;"></i> Update Password</button>
+                            </form>
                         </div>
                     </div>
+
                 </div>
 
             </div>
