@@ -310,3 +310,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 500);
     });
 });
+

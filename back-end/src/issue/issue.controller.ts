@@ -22,3 +22,4 @@ export class IssueController {
     return this.issueService.createIssue(createDto);
   }
 }
+

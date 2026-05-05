@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { EscalationService } from './escalation.service';
 import { CreateEscalationDto } from './dto/escalation.dto';
@@ -23,4 +23,17 @@ export class EscalationController {
   createEscalation(@Body() createDto: CreateEscalationDto) {
     return this.escalationService.createEscalation(createDto);
   }
+
+  @Patch(':id/reject')
+  @Roles('HR', 'ADMIN')
+  rejectEscalation(@Param('id') id: string) {
+    return this.escalationService.rejectEscalation(id);
+  }
+
+  @Post(':id/report')
+  @Roles('HR', 'ADMIN')
+  generateReport(@Param('id') id: string) {
+    return this.escalationService.generateEscalationReport(id);
+  }
 }
+

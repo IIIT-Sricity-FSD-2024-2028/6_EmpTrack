@@ -200,8 +200,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div style="display:flex; flex-direction:column; gap:24px;">
                     <div class="card" style="display:flex; gap:12px; flex-wrap: wrap;">
                         <button class="btn btn-primary" id="btn-resolve-act">Resolve & Take Action</button>
-                        <button class="btn btn-outline" style="border-color:var(--color-high); color:var(--color-high);"><i class="ph ph-prohibit"></i> Reject Escalation</button>
-                        <button class="btn btn-outline"><i class="ph ph-file-pdf"></i> Generate Report</button>
+                        <button class="btn btn-outline" id="btn-reject-esc" style="border-color:var(--color-high); color:var(--color-high);"><i class="ph ph-prohibit"></i> Reject Escalation</button>
+                        <button class="btn btn-outline" id="btn-gen-report"><i class="ph ph-file-pdf"></i> Generate Report</button>
                     </div>
 
                     <div class="card">
@@ -256,6 +256,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('btn-resolve-act').addEventListener('click', async () => {
             alert('Proceeding with disciplinary action workflows...'); 
             navDashboard();
+        });
+
+        document.getElementById('btn-reject-esc').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            try {
+                const res = await fetch(`http://localhost:3000/escalations/${id}/reject`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Role': user.role
+                    }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message);
+                    esc.status = 'Rejected';
+                    const sBadge = viewAction.querySelector('.stat-badge');
+                    if (sBadge) sBadge.innerText = 'Rejected';
+                    navDashboard();
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Error rejecting escalation');
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('btn-gen-report').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            btn.disabled = true;
+            try {
+                const res = await fetch(`http://localhost:3000/escalations/${id}/report`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Role': user.role
+                    }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + data.message);
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Error generating report');
+                btn.disabled = false;
+            }
         });
 
         viewAction.classList.add('active');
@@ -318,3 +370,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize
     navDashboard();
 });
+

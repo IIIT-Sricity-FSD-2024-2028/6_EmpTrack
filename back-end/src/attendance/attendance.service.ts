@@ -51,3 +51,4 @@ export class AttendanceService {
     return record;
   }
 }
+

@@ -2,7 +2,7 @@ const API_BASE = 'http://localhost:3000';
 
 class ApiStore {
     getRole() {
-        const userStr = localStorage.getItem('empTrack_currentUser');
+        const userStr = localStorage.getItem('empTrackSessionV2');
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
@@ -190,3 +190,4 @@ class ApiStore {
 }
 
 export const db = new ApiStore();
+

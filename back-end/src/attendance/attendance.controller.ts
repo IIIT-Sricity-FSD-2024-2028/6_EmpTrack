@@ -27,3 +27,4 @@ export class AttendanceController {
     return this.attendanceService.markCheckOut(checkOutDto);
   }
 }
+

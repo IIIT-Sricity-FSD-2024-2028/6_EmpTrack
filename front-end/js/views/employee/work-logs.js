@@ -140,3 +140,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize Default States
     renderTable();
 });
+

@@ -1,5 +1,6 @@
 // /js/views/teamlead/leave.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -7,25 +8,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentFilter = 'Pending'; // 'Pending' or 'Approved'
 
-    const summaryStats = {
-        pending: 3,
-        approved: 12,
-        unauthorized: 2,
-        availability: '85%'
-    };
+    let leaveRequests = [];
 
-    const unauthorizedData = [
-        { id: 'UA-001', name: 'Mike Davis', days: 1, date: '2026-03-29', escalated: '2026-03-30', reason: 'No-Call No-Show' },
-        { id: 'UA-002', name: 'James Brown', days: 2, date: '2026-03-27 to 2026-03-28', escalated: '2026-03-29', reason: 'Unreachable during shift' }
-    ];
+    async function loadLeaveData() {
+        const teamMembers = await db.getUsersByManager(user.emp_id);
+        const memberIds = teamMembers.map(m => m.emp_id);
 
-    let leaveRequests = [
-        { id: 'LR-1045', emp: 'Sarah Johnson', type: 'Vacation', start: '2026-04-10', end: '2026-04-14', days: 4, reason: 'Family trip', balance: 12, status: 'Pending' },
-        { id: 'LR-1048', emp: 'Emma Wilson', type: 'Sick Leave', start: '2026-03-31', end: '2026-03-31', days: 1, reason: 'Doctor appointment', balance: 8, status: 'Pending' },
-        { id: 'LR-1050', emp: 'Lisa Anderson', type: 'Personal Leave', start: '2026-04-05', end: '2026-04-05', days: 1, reason: 'Attending wedding', balance: 5, status: 'Pending' },
-        { id: 'LR-1033', emp: 'John Smith', type: 'Emergency', start: '2026-03-25', end: '2026-03-26', days: 2, reason: 'Family emergency', balance: 6, status: 'Approved' },
-        { id: 'LR-1029', emp: 'Mike Davis', type: 'Vacation', start: '2026-03-15', end: '2026-03-18', days: 4, reason: 'Out of town', balance: 10, status: 'Approved' },
-    ];
+        const allLeaves = await db.getAllLeaves();
+        const teamLeaves = allLeaves.filter(l => memberIds.includes(l.emp_id));
+
+        leaveRequests = teamLeaves.map(l => {
+            const emp = teamMembers.find(m => m.emp_id === l.emp_id);
+            return {
+                id: l.leave_id,
+                emp: emp ? emp.emp_name.split(' (')[0] : 'Employee',
+                type: l.leave_type.charAt(0).toUpperCase() + l.leave_type.slice(1).toLowerCase(),
+                start: l.start_date,
+                end: l.end_date,
+                days: l.days,
+                reason: l.reason,
+                balance: 10, // Mock balance
+                status: l.status.charAt(0) + l.status.slice(1).toLowerCase()
+            };
+        });
+
+        summaryStats.pending = leaveRequests.filter(l => l.status === 'Pending').length;
+        summaryStats.approved = leaveRequests.filter(l => l.status === 'Approved').length;
+        
+        updateSummaryCards();
+        renderLeaveRequests();
+    }
 
     const getLeaveTypeBadge = (type) => {
         let bg, color;
@@ -50,6 +62,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         return `<span style="padding: 4px 8px; border-radius: var(--radius-full); font-size: 12px; font-weight: var(--font-bold); background-color: ${bg}; color: ${color};">${status}</span>`;
     };
+
+    const summaryStats = {
+        pending: 0,
+        approved: 0,
+        unauthorized: 2,
+        availability: '85%'
+    };
+
+    const unauthorizedData = [
+        { id: 'UA-001', name: 'Mike Davis', days: 1, date: '2026-03-29', escalated: '2026-03-30', reason: 'No-Call No-Show' },
+        { id: 'UA-002', name: 'James Brown', days: 2, date: '2026-03-27 to 2026-03-28', escalated: '2026-03-29', reason: 'Unreachable during shift' }
+    ];
 
     const updateSummaryCards = () => {
         document.getElementById('stat-pending').textContent = summaryStats.pending;
@@ -135,6 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const id = e.currentTarget.getAttribute('data-id');
                 const req = leaveRequests.find(lr => lr.id === id);
                 if (req) {
+                    await db.updateLeaveStatus(id, 'APPROVED', user.emp_id);
                     req.status = 'Approved';
                     summaryStats.pending--;
                     summaryStats.approved++;
@@ -149,6 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const id = e.currentTarget.getAttribute('data-id');
                 const req = leaveRequests.find(lr => lr.id === id);
                 if (req) {
+                    await db.updateLeaveStatus(id, 'REJECTED', user.emp_id);
                     req.status = 'Rejected';
                     summaryStats.pending--;
                     renderLeaveRequests();
@@ -179,5 +205,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Init
     updateSummaryCards();
     renderUnauthorizedData();
-    renderLeaveRequests();
+    loadLeaveData();
 });
+

@@ -126,3 +126,4 @@ export function initLayout() {
 
     // Notification dropdown removed in favor of direct page link
 }
+

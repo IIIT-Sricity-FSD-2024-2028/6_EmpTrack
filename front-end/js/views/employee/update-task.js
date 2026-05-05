@@ -58,3 +58,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'tasks.html';
     });
 });
+

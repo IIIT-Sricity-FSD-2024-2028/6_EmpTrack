@@ -39,3 +39,4 @@ export class UpdateLeaveStatusDto {
   @IsOptional()
   reject_reason?: string;
 }
+

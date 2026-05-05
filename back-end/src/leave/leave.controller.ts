@@ -39,3 +39,4 @@ export class LeaveController {
     return this.leaveService.updateLeaveStatus(leaveId, updateDto);
   }
 }
+

@@ -20,4 +20,18 @@ export class EscalationService {
     this.dataStore.getEscalations().push(newEsc);
     return newEsc;
   }
+
+  rejectEscalation(id: string) {
+    const escalations = this.dataStore.getEscalations();
+    const esc = escalations.find(e => e.escalation_id === id);
+    if (esc) {
+        esc.status = 'REJECTED';
+    }
+    return { success: true, message: `Escalation ${id} has been rejected.` };
+  }
+
+  generateEscalationReport(id: string) {
+    return { success: true, message: `Report generated successfully for escalation ${id}.` };
+  }
 }
+

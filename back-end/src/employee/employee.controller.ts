@@ -40,3 +40,4 @@ export class EmployeeController {
     return this.employeeService.updatePassword(id, updatePasswordDto);
   }
 }
+

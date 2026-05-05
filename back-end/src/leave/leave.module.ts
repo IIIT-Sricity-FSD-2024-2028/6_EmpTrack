@@ -7,3 +7,4 @@ import { LeaveService } from './leave.service';
   providers: [LeaveService],
 })
 export class LeaveModule {}
+

@@ -13,3 +13,4 @@ export class CreateNotificationDto {
   @IsOptional()
   type?: string;
 }
+

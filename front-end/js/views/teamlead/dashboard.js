@@ -92,3 +92,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderPendingLeaves();
 });
+

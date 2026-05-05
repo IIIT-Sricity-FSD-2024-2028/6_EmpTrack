@@ -78,3 +78,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
     `).join('');
 });
+

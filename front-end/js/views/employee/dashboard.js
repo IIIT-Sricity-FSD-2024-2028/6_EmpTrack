@@ -93,3 +93,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (recentLeaves.length === 0) leavesList.innerHTML = '<li style="color:var(--text-muted); text-align:center; padding: 20px;">No leave requests filed.</li>';
     }
 });
+

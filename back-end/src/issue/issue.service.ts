@@ -23,3 +23,4 @@ export class IssueService {
     return newIssue;
   }
 }
+

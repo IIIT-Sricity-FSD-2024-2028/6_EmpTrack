@@ -179,3 +179,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRows(employees);
     }, 600);
 });
+

@@ -116,3 +116,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTable(employees);
     updateStats(employees);
 });
+
