@@ -190,10 +190,10 @@
                         <h3
                             style="font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main); margin:0 0 var(--spacing-md) 0;">
                             Quick Actions Configuration</h3>
-                        <div
+                        <div id="quick-actions-container"
                             style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg);">
 
-                            <div
+                            <div data-action="warn"
                                 style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
                                 <div
                                     style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color); display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
@@ -206,7 +206,7 @@
                                     draft a warning email to underperforming employees.</p>
                             </div>
 
-                            <div
+                            <div data-action="extend"
                                 style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
                                 <div
                                     style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
@@ -219,7 +219,7 @@
                                     timelines with attached reason codes.</p>
                             </div>
 
-                            <div
+                            <div data-action="reassign"
                                 style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
                                 <div
                                     style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(106, 17, 203, 0.1); color: #6A11CB; display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">

@@ -118,21 +118,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const escalationData = {
-            id: 'HR-ESC-' + Math.floor(Math.random() * 1000),
-            title,
+            id: 'HR-ESC-' + Date.now(),
+            issueTitle: title,
+            taskTitle: title,
             description: desc,
+            reason: desc,
             category: selectedCategory,
             priority: selectedPriority,
-            personal: isPersonal,
-            relatedEmployee: empName,
-            date: new Date().toISOString().split('T')[0],
-            status: isDraft ? 'Draft' : 'Pending'
+            relatedEmployee: empName || 'N/A',
+            employeeName: empName || 'N/A',
+            raisedBy: user.name || user.emp_id || 'Team Lead',
+            date: new Date().toLocaleDateString(),
+            status: isDraft ? 'Draft' : 'Pending',
+            taskId: 'N/A',
+            progress: 0,
+            hours: 0
         };
 
         const storageKey = isDraft ? 'hrEscalationDrafts' : 'hrEscalations';
         const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
         existing.push(escalationData);
         localStorage.setItem(storageKey, JSON.stringify(existing));
+
+        // Also save to "escalations" key for Team Lead page
+        if (!isDraft) {
+            const tlEscalations = JSON.parse(localStorage.getItem('escalations') || '[]');
+            tlEscalations.push({
+                employeeName: empName || 'N/A',
+                taskId: 'N/A',
+                taskTitle: title,
+                progress: '0%',
+                hours: '0/0',
+                reason: desc
+            });
+            localStorage.setItem('escalations', JSON.stringify(tlEscalations));
+        }
+
+        console.log("Saved HR escalation", escalationData);
 
         if (isDraft) {
             alert('Escalation saved as draft successfully!');

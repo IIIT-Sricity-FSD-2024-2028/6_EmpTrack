@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
        FRONTEND STATE
     --------------------------------*/
     let stateTasks = [
-        { id: "T-045", employee: "John Dev", title: "Payment Gateway", description: "Integrate Stripe", hours: 40, deadline: "2026-03-20", status: "Assigned" },
+        { id: "T-045", employee: "John Doe", title: "Payment Gateway", description: "Integrate Stripe", hours: 40, deadline: "2026-03-20", status: "Assigned" },
         { id: "T-046", employee: "Sarah Johnson", title: "Profile Enhancement", description: "Add validation", hours: 24, deadline: "2026-03-15", status: "Assigned" },
         { id: "T-047", employee: "Mike Davis", title: "Performance Optimization", description: "Optimize queries", hours: 32, deadline: "2026-03-18", status: "In Progress" },
         { id: "T-048", employee: "Emma Wilson", title: "Mobile Design", description: "Responsive UI", hours: 48, deadline: "2026-03-25", status: "Assigned" }

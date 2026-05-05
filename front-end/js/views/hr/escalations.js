@@ -20,6 +20,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 'HR-ESC-004', lead: 'David Clark', title: 'Delayed Project Delivery', type: 'Performance', priority: 'Low', empName: 'Bob Wilson', empId: 'EMP-022', status: 'Resolved', date: 'Oct 20, 2023', comments: [] }
     ];
 
+    const localEscalationsStr = localStorage.getItem('hrEscalations');
+    const localEscalations = localEscalationsStr ? JSON.parse(localEscalationsStr) : [];
+    console.log("Loaded HR escalations", localEscalations);
+
+    const mappedLocal = localEscalations.map(esc => ({
+        id: esc.id,
+        lead: esc.raisedBy,
+        title: esc.issueTitle,
+        type: esc.category,
+        priority: esc.priority,
+        empName: esc.relatedEmployee,
+        empId: 'N/A',
+        status: esc.status,
+        date: esc.date,
+        comments: []
+    }));
+
+    // Combine local and dummy, putting local first
+    const allEscalations = [...mappedLocal, ...dummyEscalations];
+
     const breadCrumbs = document.getElementById('escBreadcrumbs');
     const viewDashboard = document.getElementById('view-dashboard');
     const viewDetails = document.getElementById('view-details');
@@ -34,7 +54,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function renderTable() {
         if (!tbody) return;
-        tbody.innerHTML = dummyEscalations.map(e => {
+        
+        if (allEscalations.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;">No escalated issues found</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = allEscalations.map(e => {
             let pColor = e.priority === 'High' ? 'var(--color-high)' : e.priority === 'Medium' ? 'var(--color-med)' : 'var(--color-low)';
             let pBg = e.priority === 'High' ? 'var(--color-high-bg)' : e.priority === 'Medium' ? 'var(--color-med-bg)' : 'var(--color-low-bg)';
             
@@ -95,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function navDetails(id) {
-        const esc = dummyEscalations.find(e => e.id === id);
+        const esc = allEscalations.find(e => e.id === id);
         if(!esc) return;
 
         hideAll();
@@ -180,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function navAction(id) {
-        const esc = dummyEscalations.find(e => e.id === id);
+        const esc = allEscalations.find(e => e.id === id);
         if(!esc) return;
 
         hideAll();
@@ -375,7 +401,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const id = resolveBtn.dataset.id;
                 
                 if (lowerAction === '1' || lowerAction === 'resolve') {
-                    const esc = dummyEscalations.find(x => x.id === id);
+                    const esc = allEscalations.find(x => x.id === id);
                     if (esc) {
                         esc.status = 'Resolved';
                     }
