@@ -1,71 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Admin Notifications</title>
-    
+
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
-    
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
-        .notifications-container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
-        .notification-card { display: flex; align-items: flex-start; gap: 16px; padding: 16px; background: var(--bg-main); border-radius: var(--radius-md); border: 1px solid var(--border-color); border-left: 4px solid var(--hr-primary); transition: background 0.2s ease; }
-        .notification-card.unread { background: rgba(124, 58, 237, 0.05); }
-        .notification-icon { font-size: 24px; color: var(--hr-primary); }
-        .notification-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-        .notification-title { font-weight: 600; font-size: 15px; color: var(--text-main); }
-        .notification-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-        .notification-time { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }
-        .notification-actions { display: flex; gap: 8px; align-items: center; }
+        .notifications-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .notification-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--hr-primary);
+            transition: background 0.2s ease;
+        }
+
+        .notification-card.unread {
+            background: rgba(124, 58, 237, 0.05);
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            color: var(--hr-primary);
+        }
+
+        .notification-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .notification-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <div id="sidebar-container"></div>
-        
+
         <main class="main-wrapper">
             <div id="header-container"></div>
-            
+
             <div class="content-area" id="main-content">
                 <div id="page-title" style="display:none;">Admin Notifications</div>
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; max-width:800px; margin:0 auto 24px auto;">
+
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; max-width:800px; margin:0 auto 24px auto;">
                     <div>
                         <h2 style="margin:0 0 4px 0;">Notifications</h2>
                         <div style="font-size:13px; color:var(--text-muted);">Stay updated with the latest alerts.</div>
                     </div>
-                    <button class="btn btn-outline" onclick="document.querySelectorAll('.notification-card').forEach(c => c.classList.remove('unread')); alert('All marked as read');">Mark All as Read</button>
+                    <button class="btn btn-outline"
+                        onclick="document.querySelectorAll('.notification-card').forEach(c => c.classList.remove('unread')); alert('All marked as read');">Mark
+                        All as Read</button>
                 </div>
 
                 <div class="notifications-container">
-                    
-                    <div class="notification-card unread" style="border-left-color: var(--warning-color);">
-                        <i class="ph-fill ph-calendar-check notification-icon" style="color: var(--warning-color);"></i>
-                        <div class="notification-content">
-                            <div class="notification-title">Leave Approval Required</div>
-                            <div class="notification-desc">New leave request submitted by Sarah Johnson for 3 days starting Nov 10.</div>
-                            <div class="notification-time">2 hours ago</div>
-                        </div>
-                        <div class="notification-actions">
-                            <button class="btn btn-primary" style="padding:6px 12px; font-size:12px;" onclick="window.location.href='employee-management.html'">View</button>
-                        </div>
-                    </div>
+
+
+
 
                     <div class="notification-card unread" style="border-left-color: var(--hr-info);">
                         <i class="ph-fill ph-user-circle-gear notification-icon" style="color: var(--hr-info);"></i>
                         <div class="notification-content">
                             <div class="notification-title">Employee Profile Updated</div>
-                            <div class="notification-desc">Mike Ross has updated his emergency contact information.</div>
+                            <div class="notification-desc">Mike Ross has updated his emergency contact information.
+                            </div>
                             <div class="notification-time">5 hours ago</div>
                         </div>
                         <div class="notification-actions">
-                            <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;" onclick="this.closest('.notification-card').classList.remove('unread')">Mark Read</button>
+                            <button class="btn btn-outline" style="padding:6px 12px; font-size:12px;"
+                                onclick="this.closest('.notification-card').classList.remove('unread')">Mark
+                                Read</button>
                         </div>
                     </div>
 
@@ -73,7 +123,8 @@
                         <i class="ph-fill ph-warning-circle notification-icon" style="color: var(--danger-color);"></i>
                         <div class="notification-content">
                             <div class="notification-title">System Alert: Database Backup</div>
-                            <div class="notification-desc">The scheduled database backup completed successfully, but took longer than expected.</div>
+                            <div class="notification-desc">The scheduled database backup completed successfully, but
+                                took longer than expected.</div>
                             <div class="notification-time">1 day ago</div>
                         </div>
                     </div>
@@ -83,7 +134,8 @@
             </div>
         </main>
     </div>
-    
+
     <script type="module" src="../js/app.js"></script>
 </body>
+
 </html>
