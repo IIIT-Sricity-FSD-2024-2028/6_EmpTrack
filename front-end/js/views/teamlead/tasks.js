@@ -1,5 +1,6 @@
 // /js/views/teamlead/tasks.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -14,6 +15,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: "T-047", employee: "Mike Davis", title: "Performance Optimization", description: "Optimize queries", hours: 32, deadline: "2026-03-18", status: "In Progress" },
         { id: "T-048", employee: "Emma Wilson", title: "Mobile Design", description: "Responsive UI", hours: 48, deadline: "2026-03-25", status: "Assigned" }
     ];
+
+    const loadLocalTasks = async () => {
+        const local = await db.getAllTasksForManager(user.emp_id).catch(() => []);
+        if (local && local.length > 0) {
+            const mapped = local.map(t => ({
+                id: t.task_id,
+                employee: t.employee_name || t.assigned_to,
+                title: t.task_title,
+                description: t.task_description,
+                hours: t.est_hours,
+                deadline: t.deadline,
+                status: (t.status || 'Assigned').replace('_', ' ')
+            })).filter(t => !stateTasks.find(s => s.id === t.id));
+            stateTasks = [...mapped, ...stateTasks];
+            renderTaskTable();
+            renderSummaryCards();
+        }
+    };
+    loadLocalTasks();
 
     let filterSearch = '';
     let filterStatus = 'All';
@@ -193,7 +213,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             const hours = document.getElementById("form-hours").value;
             const deadline = document.getElementById("form-deadline").value;
 
+            console.log("Task assigned clicked");
             const newTask = {
+                id: Date.now(),
+                title: title,
+                description: desc,
+                assignedTo: emp,
+                dueDate: deadline,
+                priority: "Medium",
+                status: "Assigned",
+                hours: parseInt(hours)
+            };
+
+            const existingTasks = JSON.parse(localStorage.getItem("assignedTasks") || "[]");
+            existingTasks.push(newTask);
+            localStorage.setItem("assignedTasks", JSON.stringify(existingTasks));
+
+            // Map back to stateTasks format just for local UI rendering
+            const uiTask = {
                 id: "T-" + Math.floor(100 + Math.random() * 900),
                 employee: emp,
                 title: title,
@@ -203,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 status: "Assigned"
             };
 
-            stateTasks.push(newTask);
+            stateTasks.unshift(uiTask);
             renderTaskTable();
             renderSummaryCards();
             e.target.reset();

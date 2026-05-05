@@ -6,11 +6,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded by app.js
 
-    const tasks = await db.getTasksForUser(user.emp_id);
+    const dbTasks = await db.getTasksForUser(user.emp_id).catch(() => []);
+    
+    // Load from local assignedTasks
+    const assignedTasksRaw = JSON.parse(localStorage.getItem('assignedTasks') || '[]');
+    let userAssignedTasks = assignedTasksRaw; // Render ALL assigned tasks for now, do not filter
+
+    const localMapped = userAssignedTasks.map(t => ({
+        task_id: "T-" + t.id.toString().substring(t.id.toString().length - 4),
+        task_title: t.title,
+        task_description: t.description,
+        deadline: t.dueDate,
+        est_hours: t.hours || 0,
+        status: t.status || 'ASSIGNED'
+    }));
+
+    const tasks = [...dbTasks, ...localMapped];
+    console.log("Assigned tasks from storage", tasks);
     
     const getBadgeClass = (status) => {
-        if(status === 'IN_PROGRESS') return 'badge-in-progress';
-        if(status === 'COMPLETED') return 'badge-completed';
+        const s = status.toUpperCase();
+        if(s === 'IN PROGRESS' || s === 'IN_PROGRESS') return 'badge-in-progress';
+        if(s === 'COMPLETED') return 'badge-completed';
         return 'badge-not-started';
     };
 

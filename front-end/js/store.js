@@ -94,18 +94,44 @@ class ApiStore {
 
     // --- Tasks ---
     async getTasksForUser(empId) {
-        return this._fetch(`/tasks/user/${empId}`);
+        let serverTasks = [];
+        try { serverTasks = await this._fetch(`/tasks/user/${empId}`); } catch(e){}
+        const localTasks = JSON.parse(localStorage.getItem('empTrack_local_tasks') || '[]');
+        const userLocal = localTasks.filter(t => t.assigned_to === empId || t.employee_name === empId); // map by ID or name depending on the form
+        return [...serverTasks, ...userLocal];
     }
 
     async getAllTasksForManager(managerId) {
-        return this._fetch(`/tasks?managerId=${managerId}`);
+        let serverTasks = [];
+        try { serverTasks = await this._fetch(`/tasks?managerId=${managerId}`); } catch(e){}
+        const localTasks = JSON.parse(localStorage.getItem('empTrack_local_tasks') || '[]');
+        return [...serverTasks, ...localTasks];
     }
 
     async createTask(taskData) {
-        return this._fetch('/tasks', {
-            method: 'POST',
-            body: JSON.stringify(taskData)
-        });
+        const localTasks = JSON.parse(localStorage.getItem('empTrack_local_tasks') || '[]');
+        const newTask = {
+            task_id: taskData.task_id || 'TSK-' + Math.floor(1000 + Math.random() * 9000),
+            task_title: taskData.task_title || taskData.title,
+            task_description: taskData.task_description || taskData.description,
+            deadline: taskData.deadline,
+            est_hours: taskData.est_hours || taskData.hours,
+            status: taskData.status || 'ASSIGNED',
+            assigned_to: taskData.assigned_to || taskData.employee,
+            employee_name: taskData.employee_name || taskData.employee, // for TL view
+            priority: taskData.priority || 'Medium'
+        };
+        localTasks.push(newTask);
+        localStorage.setItem('empTrack_local_tasks', JSON.stringify(localTasks));
+
+        try {
+            return await this._fetch('/tasks', {
+                method: 'POST',
+                body: JSON.stringify(taskData)
+            });
+        } catch(e) {
+            return newTask;
+        }
     }
 
     async updateTaskStatus(taskId, status, percentage) {
