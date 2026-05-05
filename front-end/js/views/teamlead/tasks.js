@@ -146,6 +146,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     --------------------------------*/
     const attachTableEvents = () => {
         const tbody = document.getElementById("ts-table-body");
+        
+        tbody.querySelectorAll(".btn-edit").forEach(btn => {
+            btn.addEventListener("click", e => {
+                const row = e.target.closest("tr");
+                const id = row.dataset.id;
+                const task = stateTasks.find(t => t.id === id);
+                if (!task) return;
+
+                document.getElementById('edit-task-id').value = task.id;
+                
+                // Set employee dropdown
+                const empSelect = document.getElementById('edit-emp');
+                let empFound = false;
+                Array.from(empSelect.options).forEach(opt => {
+                    if (opt.value === task.employee || opt.text === task.employee || task.employee.includes(opt.text)) {
+                        opt.selected = true;
+                        empFound = true;
+                    }
+                });
+                if (!empFound && task.employee) {
+                    const newOpt = document.createElement('option');
+                    newOpt.text = task.employee;
+                    newOpt.value = task.employee;
+                    newOpt.selected = true;
+                    empSelect.add(newOpt);
+                }
+
+                document.getElementById('edit-title').value = task.title;
+                document.getElementById('edit-desc').value = task.description;
+                document.getElementById('edit-hours').value = task.hours;
+                document.getElementById('edit-deadline').value = task.deadline || '';
+                
+                const statusMap = { 'Assigned': 'Assigned', 'In Progress': 'In Progress', 'Completed': 'Completed' };
+                document.getElementById('edit-status').value = statusMap[task.status] || 'Assigned';
+
+                document.getElementById('edit-task-modal').classList.add('active');
+            });
+        });
+
         tbody.querySelectorAll(".btn-delete").forEach(btn => {
             btn.addEventListener("click", e => {
                 const row = e.target.closest("tr");
@@ -245,6 +284,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderSummaryCards();
             e.target.reset();
             showToast("Task Assigned Successfully");
+        });
+    }
+
+    /* -------------------------------
+       EDIT MODAL LOGIC
+    --------------------------------*/
+    const editModal = document.getElementById('edit-task-modal');
+    const closeBtn = document.getElementById('close-edit-modal');
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    const editForm = document.getElementById('edit-task-form');
+
+    const closeModal = () => {
+        editModal.classList.remove('active');
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+    
+    // Close on overlay click
+    if (editModal) {
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) closeModal();
+        });
+    }
+
+    if (editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-task-id').value;
+            const task = stateTasks.find(t => t.id === id);
+            
+            if (!task) return;
+
+            task.employee = document.getElementById('edit-emp').value;
+            task.title = document.getElementById('edit-title').value;
+            task.description = document.getElementById('edit-desc').value;
+            task.hours = parseInt(document.getElementById('edit-hours').value);
+            task.deadline = document.getElementById('edit-deadline').value;
+            task.status = document.getElementById('edit-status').value;
+
+            // Optional: call API if it exists on backend
+            // db.updateTaskDetails(id, task).catch(console.error);
+
+            renderTaskTable();
+            renderSummaryCards();
+            closeModal();
+            showToast("Task updated successfully");
         });
     }
 });

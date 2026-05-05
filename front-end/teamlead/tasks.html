@@ -102,6 +102,64 @@
         </main>
     </div>
     
+    <!-- Edit Task Modal -->
+    <div id="edit-task-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Task</h3>
+                <button type="button" class="modal-close" id="close-edit-modal">&times;</button>
+            </div>
+            <form id="edit-task-form">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-task-id">
+                    
+                    <div class="form-group">
+                        <label class="form-label">Assign To</label>
+                        <select id="edit-emp" class="form-control" required>
+                            <option value="">Select Employee</option>
+                            <option>John Dev</option>
+                            <option>Sarah Johnson</option>
+                            <option>Mike Davis</option>
+                            <option>Emma Wilson</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Task Title</label>
+                        <input type="text" id="edit-title" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea id="edit-desc" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Estimated Hours</label>
+                        <input type="number" id="edit-hours" class="form-control" required min="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Deadline</label>
+                        <input type="date" id="edit-deadline" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select id="edit-status" class="form-control" required>
+                            <option>Assigned</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancel-edit-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/views/teamlead/tasks.js"></script>
 </body>
