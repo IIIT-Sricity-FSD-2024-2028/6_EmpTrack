@@ -369,5 +369,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize
     navDashboard();
+
+    // Attach event listener for View Details buttons
+    document.querySelectorAll('.view-details-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.id;
+            if (id) {
+                navDetails(id);
+            } else {
+                console.log("View Details clicked", e.target);
+            }
+        });
+    });
 });
 
