@@ -51,19 +51,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             locHome.className = 'location-toggle';
             locOffice.disabled = false;
             locHome.disabled = false;
-            btnCheckin.className = 'btn btn-purple';
-            btnCheckout.className = 'btn btn-outline';
+            btnCheckin.className = 'btn btn-attendance';
+            btnCheckout.className = 'btn btn-attendance';
 
             if (activeLocation === 'Office') locOffice.classList.add('active');
             else locHome.classList.add('active');
 
-            if (isCheckedIn || isCheckedOut) {
+            if (isCheckedIn && !isCheckedOut) {
+                // Currently checked in, Check-out is the active action
+                btnCheckout.classList.add('btn-purple');
+                btnCheckin.classList.add('btn-outline', 'action-btn-disabled');
+                btnCheckin.disabled = true;
+                btnCheckout.disabled = false;
                 locOffice.disabled = true;
                 locHome.disabled = true;
-                btnCheckin.classList.add('action-btn-disabled');
-            }
-            if (!isCheckedIn || isCheckedOut) {
-                btnCheckout.classList.add('action-btn-disabled');
+            } else if (!isCheckedIn && !isCheckedOut) {
+                // Not checked in, Check-in is the active action
+                btnCheckin.classList.add('btn-purple');
+                btnCheckout.classList.add('btn-outline', 'action-btn-disabled');
+                btnCheckin.disabled = false;
+                btnCheckout.disabled = true;
+            } else {
+                // Checked out
+                btnCheckin.classList.add('btn-outline', 'action-btn-disabled');
+                btnCheckout.classList.add('btn-outline', 'action-btn-disabled');
+                btnCheckin.disabled = true;
+                btnCheckout.disabled = true;
+                locOffice.disabled = true;
+                locHome.disabled = true;
             }
         }
 
