@@ -41,6 +41,19 @@ class ApiStore {
         return this._fetch(`/employees?managerId=${managerId}`);
     }
 
+    async deleteEmployee(empId) {
+        return this._fetch(`/employees/${empId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async updateEmployee(empId, updateData) {
+        return this._fetch(`/employees/${empId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updateData)
+        });
+    }
+
     async updateUserPassword(empId, newPassword) {
         return this._fetch(`/employees/${empId}/password`, {
             method: 'PATCH',
