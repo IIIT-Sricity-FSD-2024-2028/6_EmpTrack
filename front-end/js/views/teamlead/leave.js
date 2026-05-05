@@ -22,13 +22,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             return {
                 id: l.leave_id,
                 emp: emp ? emp.emp_name.split(' (')[0] : 'Employee',
-                type: l.leave_type.charAt(0).toUpperCase() + l.leave_type.slice(1).toLowerCase(),
+                type: (l.leave_type || 'Leave').charAt(0).toUpperCase() + (l.leave_type || 'Leave').slice(1).toLowerCase(),
                 start: l.start_date,
                 end: l.end_date,
-                days: l.days,
-                reason: l.reason,
+                days: l.days || 1,
+                reason: l.reason || 'No reason provided',
                 balance: 10, // Mock balance
-                status: l.status.charAt(0) + l.status.slice(1).toLowerCase()
+                status: (l.status || 'PENDING').charAt(0).toUpperCase() + (l.status || 'PENDING').slice(1).toLowerCase()
             };
         });
 
