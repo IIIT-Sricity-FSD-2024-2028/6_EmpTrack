@@ -71,10 +71,10 @@ export function initLayout() {
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none; display: block;">
                     <div class="user-profile" style="display:flex; align-items:center; gap:var(--spacing-md); padding: 0 var(--spacing-lg);">
                         <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255,255,255,0.2); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid rgba(255,255,255,0.3);">
-                            ${user.role === 'TEAMLEAD' ? 'RS' : user.emp_name.charAt(0)}
+                            ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.emp_name.charAt(0)}
                         </div>
                         <div class="user-info" style="display:flex; flex-direction:column;">
-                            <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: #FFFFFF;">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.emp_name}</span>
+                            <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: #FFFFFF;">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.role === 'HR' ? 'Roshan' : user.emp_name}</span>
                             <span class="user-role" style="font-size: var(--text-xs); color: rgba(255,255,255,0.7);">${user.role === 'HR' ? 'HR Manager' : user.role === 'ADMIN' ? 'Super Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
                         </div>
                     </div>
@@ -107,7 +107,7 @@ export function initLayout() {
                     </a>
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none;" title="My Profile">
                         <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px; margin-left: var(--spacing-lg); box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease; cursor: pointer;">
-                            ${user.role === 'TEAMLEAD' ? 'RS' : user.emp_name.charAt(0)}
+                            ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.emp_name.charAt(0)}
                         </div>
                     </a>
                 </div>

@@ -8,11 +8,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Populate dynamic user info
     const initalsContainer = document.getElementById('avatar-initials');
     if (initalsContainer) {
-        initalsContainer.textContent = user.emp_name.charAt(0) + 'S'; // Example
+        initalsContainer.textContent = 'R'; // Example
     }
     
     const nameContainer = document.getElementById('profile-name');
-    if (nameContainer) nameContainer.textContent = user.emp_name;
+    if (nameContainer) {
+        nameContainer.textContent = 'Roshan';
+        nameContainer.style.color = '#ffffff';
+    }
 
     const emailContainer = document.getElementById('info-email');
     if (emailContainer) emailContainer.textContent = user.email || 'user@company.com';
