@@ -159,11 +159,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <!-- Drag & Drop File Upload -->
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Supporting Evidence (Optional)</label>
-                            <div style="border: 2px dashed #CBD5E1; border-radius: 8px; padding: 24px; text-align: center; background-color: #F8FAFC; transition: border-color 0.2s; cursor: pointer;" onmouseover="this.style.borderColor='var(--primary-color)'" onmouseout="this.style.borderColor='#CBD5E1'">
+                            <input type="file" id="res_file_upload" multiple style="display:none;">
+                            <div id="drop_zone" style="border: 2px dashed #CBD5E1; border-radius: 8px; padding: 24px; text-align: center; background-color: #F8FAFC; transition: all 0.2s; cursor: pointer;">
                                 <i class="ph ph-upload-simple" style="font-size:32px; color:var(--text-muted); margin-bottom:8px;"></i>
                                 <div style="font-size:14px; font-weight:var(--font-medium); color:#334155;">Click to upload or drag & drop</div>
                                 <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Logs, screenshots, or code diffs (max 5MB)</div>
                             </div>
+                            <div id="file_list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
                         </div>
                         
                         <div class="form-group" style="margin:0;">
@@ -275,6 +277,81 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         </div>
     `;
+
+    // File Upload Logic
+    const dropZone = document.getElementById('drop_zone');
+    const fileInput = document.getElementById('res_file_upload');
+    const fileList = document.getElementById('file_list');
+    let selectedFiles = [];
+
+    const updateFileList = () => {
+        fileList.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const fileItem = document.createElement('div');
+            fileItem.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#F1F5F9; border-radius:6px; font-size:13px; border:1px solid #E2E8F0;';
+            fileItem.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="ph-fill ph-file-text" style="color:var(--primary-color);"></i>
+                    <span style="color:#334155; font-weight:var(--font-medium);">${file.name}</span>
+                    <span style="color:var(--text-muted); font-size:11px;">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                </div>
+                <i class="ph-bold ph-x remove-file-btn" style="cursor:pointer; color:#EF4444;" data-index="${index}"></i>
+            `;
+            fileList.appendChild(fileItem);
+        });
+
+        document.querySelectorAll('.remove-file-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.getAttribute('data-index'), 10);
+                selectedFiles.splice(idx, 1);
+                updateFileList();
+            });
+        });
+    };
+
+    const handleFiles = (files) => {
+        const validFiles = Array.from(files).filter(file => file.size <= 5 * 1024 * 1024);
+        if (validFiles.length < files.length) {
+            alert('Some files were ignored because they exceed the 5MB limit.');
+        }
+        selectedFiles = [...selectedFiles, ...validFiles];
+        updateFileList();
+    };
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = ''; // reset so same file can be selected again if removed
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.style.borderColor = 'var(--primary-color)';
+            dropZone.style.backgroundColor = '#EEF2FF';
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.style.borderColor = '#CBD5E1';
+            dropZone.style.backgroundColor = '#F8FAFC';
+        }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        handleFiles(e.dataTransfer.files);
+    }, false);
+
+    dropZone.addEventListener('mouseover', () => { dropZone.style.borderColor='var(--primary-color)'; });
+    dropZone.addEventListener('mouseout', () => { dropZone.style.borderColor='#CBD5E1'; });
 
     document.getElementById('resolve-issue-form').addEventListener('submit', async (e) => {
         e.preventDefault();

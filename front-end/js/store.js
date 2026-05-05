@@ -150,17 +150,52 @@ class ApiStore {
     async updateTaskStatus(taskId, status, percentage) {
         const body = { status };
         if (percentage !== undefined) body.progress_percentage = percentage;
-        return this._fetch(`/tasks/${taskId}`, {
-            method: 'PATCH',
-            body: JSON.stringify(body)
-        });
+        
+        let serverError = null;
+        try {
+            await this._fetch(`/tasks/${taskId}`, {
+                method: 'PATCH',
+                body: JSON.stringify(body)
+            });
+        } catch (e) {
+            serverError = e;
+        }
+
+        const localTasks = JSON.parse(localStorage.getItem('empTrack_local_tasks') || '[]');
+        const localIndex = localTasks.findIndex(t => t.task_id === taskId);
+        
+        if (localIndex !== -1) {
+            localTasks[localIndex] = { ...localTasks[localIndex], ...body };
+            localStorage.setItem('empTrack_local_tasks', JSON.stringify(localTasks));
+            return localTasks[localIndex];
+        }
+
+        if (serverError) throw serverError;
+        return true;
     }
 
     async updateTaskDetails(taskId, updates) {
-        return this._fetch(`/tasks/${taskId}`, {
-            method: 'PATCH',
-            body: JSON.stringify(updates)
-        });
+        let serverError = null;
+        try {
+            await this._fetch(`/tasks/${taskId}`, {
+                method: 'PATCH',
+                body: JSON.stringify(updates)
+            });
+        } catch (e) {
+            serverError = e;
+        }
+
+        const localTasks = JSON.parse(localStorage.getItem('empTrack_local_tasks') || '[]');
+        const localIndex = localTasks.findIndex(t => t.task_id === taskId);
+        
+        if (localIndex !== -1) {
+            localTasks[localIndex] = { ...localTasks[localIndex], ...updates };
+            localStorage.setItem('empTrack_local_tasks', JSON.stringify(localTasks));
+            return localTasks[localIndex];
+        }
+
+        if (serverError) throw serverError;
+        return true;
     }
 
     // --- Issues ---
@@ -199,10 +234,27 @@ class ApiStore {
     }
 
     async updateIssue(issueId, updateData) {
-        return this._fetch(`/issues/${issueId}`, {
-            method: 'PATCH',
-            body: JSON.stringify(updateData)
-        });
+        let serverError = null;
+        try {
+            await this._fetch(`/issues/${issueId}`, {
+                method: 'PATCH',
+                body: JSON.stringify(updateData)
+            });
+        } catch (e) {
+            serverError = e;
+        }
+
+        const localIssues = JSON.parse(localStorage.getItem('empTrack_local_issues') || '[]');
+        const localIndex = localIssues.findIndex(i => i.issue_id === issueId);
+        
+        if (localIndex !== -1) {
+            localIssues[localIndex] = { ...localIssues[localIndex], ...updateData };
+            localStorage.setItem('empTrack_local_issues', JSON.stringify(localIssues));
+            return localIssues[localIndex];
+        }
+
+        if (serverError) throw serverError;
+        return true;
     }
 
     // --- Work Logs ---

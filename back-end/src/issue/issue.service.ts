@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { CreateIssueDto } from './dto/issue.dto';
 
@@ -29,7 +29,7 @@ export class IssueService {
 
   updateIssue(id: string, updateData: any) {
     const issue = this.dataStore.getIssues().find(i => i.issue_id === id);
-    if (!issue) throw new Error('Issue not found');
+    if (!issue) throw new NotFoundException('Issue not found');
     Object.assign(issue, updateData);
     return issue;
   }
