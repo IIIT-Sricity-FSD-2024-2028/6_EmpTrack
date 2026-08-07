@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EmpTrack - Smart Employee Productivity Platform</title>
+    <title>EmpTrack — Smart Workforce & HR Management Platform</title>
+    <meta name="description"
+        content="EmpTrack unifies employee management, attendance, leave, task allocation, and reporting into one modern workforce management platform.">
+    <meta name="color-scheme" content="dark">
 
     <!-- CSS Foundation -->
     <link rel="stylesheet" href="css/variables.css">
@@ -16,171 +19,695 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
 
-    <!-- Phosphor Icons -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
 </head>
 
-<body>
+<body class="landing-page">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <!-- 1. Header / Navigation Bar -->
-    <header class="landing-header">
-        <a href="#" class="landing-logo">
-            <i class="ph-fill ph-chart-line-up"></i>
-            EmpTrack
-        </a>
-        <nav class="landing-nav">
-            <a href="#">Home</a>
+    <!-- 1. Sticky Navigation -->
+    <header class="lp-header" id="lpHeader">
+        <div class="lp-header-inner">
+            <a href="#top" class="lp-logo">
+                <span class="lp-logo-badge"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>
+                EmpTrack
+            </a>
+            <nav class="lp-nav" aria-label="Primary">
+                <a href="#features">Features</a>
+                <a href="#solutions">Solutions</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+                <a href="#contact">Contact</a>
+            </nav>
+            <div class="lp-header-actions">
+                <a href="login.html" class="lp-link-login">Login</a>
+                <a href="login.html" class="btn btn-primary">Get Started</a>
+                <button type="button" class="lp-menu-toggle" id="lpMenuToggle" aria-expanded="false"
+                    aria-controls="lpMobileMenu" aria-label="Toggle menu">
+                    <i data-lucide="menu" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+        <div class="lp-mobile-menu" id="lpMobileMenu">
             <a href="#features">Features</a>
-            <a href="#modules">Modules</a>
-            <a href="#about">About</a>
+            <a href="#solutions">Solutions</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
             <a href="#contact">Contact</a>
-            <a href="login.html" class="login-btn">Login</a>
-        </nav>
+            <a href="login.html">Login</a>
+            <a href="login.html" class="btn btn-primary btn-block">Get Started</a>
+        </div>
     </header>
 
-    <!-- 2. Hero Section -->
-    <section class="hero-section">
-        <div class="hero-content">
-            <h1 class="hero-title">Smart Employee Productivity and Work Monitoring Platform</h1>
-            <p class="hero-desc">
-                EmpTrack empowers organizations to easily manage employees, flawlessly track daily tasks, monitor
-                progress in real-time, and perfectly automate attendance through work logs.
-            </p>
-            <a href="login.html" class="get-started-btn">Get Started</a>
-        </div>
-    </section>
-
-    <!-- 3. Platform Features Section -->
-    <section id="features" class="features-section">
-        <div class="features-content">
-            <h2 class="section-title">Platform Features</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph ph-briefcase"></i></div>
-                    <h3>Task Allocation</h3>
-                    <p>Efficiently assign and track tasks across teams to boost productivity and accountability.</p>
+    <main id="main-content">
+        <!-- 2. Hero -->
+        <section class="lp-hero" id="top">
+            <span class="lp-hero-glow lp-hero-glow-1" aria-hidden="true"></span>
+            <span class="lp-hero-glow lp-hero-glow-2" aria-hidden="true"></span>
+            <div class="lp-hero-inner">
+                <div class="lp-hero-copy reveal">
+                    <span class="lp-eyebrow"><i data-lucide="sparkles" aria-hidden="true"></i> Workforce & HR
+                        Management Platform</span>
+                    <h1>Smart Workforce Management for Growing Businesses</h1>
+                    <p class="lp-hero-desc">EmpTrack brings employee records, attendance, leave, task allocation, and
+                        reporting into one connected platform — so HR teams and managers spend less time on
+                        admin work and more time on people.</p>
+                    <div class="lp-hero-actions">
+                        <a href="login.html" class="btn btn-primary btn-lg">Get Started <i data-lucide="arrow-right"
+                                aria-hidden="true"></i></a>
+                        <a href="#dashboard-showcase" class="btn btn-secondary btn-lg">View Demo <i
+                                data-lucide="circle-play" aria-hidden="true"></i></a>
+                    </div>
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph ph-chart-bar"></i></div>
-                    <h3>Work Monitoring</h3>
-                    <p>Real-time monitoring of employee work progress with visual dashboards and granular metrics.</p>
+                <div class="lp-hero-visual reveal" style="--delay: 120ms;">
+                    <div class="lp-dashboard-mock" role="img"
+                        aria-label="Preview of the EmpTrack dashboard showing weekly attendance and recent activity">
+                        <div class="lp-mock-titlebar">
+                            <span class="lp-mock-dot" aria-hidden="true"></span>
+                            <span class="lp-mock-dot" aria-hidden="true"></span>
+                            <span class="lp-mock-dot" aria-hidden="true"></span>
+                            <span>EmpTrack Dashboard</span>
+                        </div>
+                        <div class="lp-mock-body">
+                            <div class="lp-mock-row">
+                                <h4>Weekly Attendance</h4>
+                                <span>+4.2%</span>
+                            </div>
+                            <div class="lp-mock-bars" aria-hidden="true">
+                                <span style="height: 55%;"></span>
+                                <span style="height: 72%;"></span>
+                                <span style="height: 40%;"></span>
+                                <span style="height: 88%;"></span>
+                                <span style="height: 64%;"></span>
+                                <span style="height: 95%;"></span>
+                                <span style="height: 78%;"></span>
+                            </div>
+                            <ul class="lp-mock-list">
+                                <li><i data-lucide="circle-check-big" aria-hidden="true"></i> 3 leave requests
+                                    approved today</li>
+                                <li><i data-lucide="briefcase" aria-hidden="true"></i> 12 tasks marked complete
+                                </li>
+                                <li><i data-lucide="users" aria-hidden="true"></i> 46 employees checked in
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="lp-float-card lp-float-1">
+                        <span class="lp-float-icon"><i data-lucide="calendar-check" aria-hidden="true"></i></span>
+                        <div><strong data-counter="92" data-suffix="%">0%</strong><span>Attendance Today</span></div>
+                    </div>
+                    <div class="lp-float-card lp-float-2">
+                        <span class="lp-float-icon"><i data-lucide="users" aria-hidden="true"></i></span>
+                        <div><strong data-counter="46">0</strong><span>Employees Online</span></div>
+                    </div>
+                    <div class="lp-float-card lp-float-3">
+                        <span class="lp-float-icon"><i data-lucide="calendar-x" aria-hidden="true"></i></span>
+                        <div><strong data-counter="5">0</strong><span>Pending Leave Requests</span></div>
+                    </div>
+                    <div class="lp-float-card lp-float-4">
+                        <span class="lp-float-icon"><i data-lucide="trending-up" aria-hidden="true"></i></span>
+                        <div><strong data-counter="87" data-suffix="%">0%</strong><span>Productivity</span></div>
+                    </div>
+                    <div class="lp-float-card lp-float-5">
+                        <span class="lp-float-icon"><i data-lucide="clock" aria-hidden="true"></i></span>
+                        <div><strong data-counter="6.4" data-decimals="1" data-suffix=" hrs">0 hrs</strong><span>Working
+                                Hours</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Trusted For -->
+        <section class="lp-trusted" aria-labelledby="trusted-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">Built For Every Team</span>
+                    <h2 class="lp-section-title" id="trusted-heading">Suited to How Different Teams Work</h2>
+                    <p class="lp-section-sub">EmpTrack adapts to organizations of different sizes and structures —
+                        from a first HR hire to a multi-team enterprise.</p>
+                </div>
+                <div class="lp-trusted-grid">
+                    <div class="lp-trusted-card reveal" style="--delay: 0ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="rocket" aria-hidden="true"></i></span>
+                        <h3>Startups</h3>
+                        <p>Set up employee records and attendance tracking in minutes without a dedicated HR
+                            system.</p>
+                    </div>
+                    <div class="lp-trusted-card reveal" style="--delay: 80ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="store" aria-hidden="true"></i></span>
+                        <h3>Small Businesses</h3>
+                        <p>Replace spreadsheets and manual leave approvals with one simple, connected workflow.</p>
+                    </div>
+                    <div class="lp-trusted-card reveal" style="--delay: 160ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="graduation-cap"
+                                aria-hidden="true"></i></span>
+                        <h3>Educational Institutions</h3>
+                        <p>Track staff attendance, task allocation, and reporting across departments and campuses.
+                        </p>
+                    </div>
+                    <div class="lp-trusted-card reveal" style="--delay: 240ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="building-2"
+                                aria-hidden="true"></i></span>
+                        <h3>Enterprises</h3>
+                        <p>Role-based access for Admins, HR, Team Leads, and Employees keeps large teams organized.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Features -->
+        <section class="lp-features" id="features" aria-labelledby="features-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">Platform Features</span>
+                    <h2 class="lp-section-title" id="features-heading">Everything You Need to Manage Your Workforce
+                    </h2>
+                    <p class="lp-section-sub">From daily attendance to long-term workforce planning, EmpTrack brings
+                        the essential HR tools into a single connected system.</p>
+                </div>
+                <div class="lp-features-grid">
+                    <div class="lp-feature-card reveal" style="--delay: 0ms;">
+                        <span class="icon-badge"><i data-lucide="users" aria-hidden="true"></i></span>
+                        <h3>Employee Management</h3>
+                        <p>Maintain a single, organized record for every employee — profiles, roles, and reporting
+                            lines.</p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 40ms;">
+                        <span class="icon-badge"><i data-lucide="calendar-check" aria-hidden="true"></i></span>
+                        <h3>Attendance</h3>
+                        <p>Automated, work-log-driven attendance tracking that stays accurate without manual
+                            entry.</p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 80ms;">
+                        <span class="icon-badge"><i data-lucide="calendar-x" aria-hidden="true"></i></span>
+                        <h3>Leave Management</h3>
+                        <p>Employees request leave and managers approve it in a few clicks, with full status
+                            visibility.</p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 120ms;">
+                        <span class="icon-badge"><i data-lucide="list-checks" aria-hidden="true"></i></span>
+                        <h3>Work Allocation</h3>
+                        <p>Assign, track, and update tasks across teams with clear ownership and progress status.</p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 160ms;">
+                        <span class="icon-badge"><i data-lucide="chart-bar" aria-hidden="true"></i></span>
+                        <h3>Analytics</h3>
+                        <p>Reports and dashboards that turn attendance, tasks, and issues into decisions.</p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 200ms;">
+                        <span class="lp-badge-soon">Coming Soon</span>
+                        <span class="icon-badge"><i data-lucide="circle-dollar-sign" aria-hidden="true"></i></span>
+                        <h3>Payroll</h3>
+                        <p>Payroll processing built on top of attendance and work-log data, on our roadmap.</p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 240ms;">
+                        <span class="lp-badge-soon">Coming Soon</span>
+                        <span class="icon-badge"><i data-lucide="zap" aria-hidden="true"></i></span>
+                        <h3>AI Insights</h3>
+                        <p>Pattern detection across attendance and productivity data to flag what needs attention.
+                        </p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 280ms;">
+                        <span class="lp-badge-soon">Coming Soon</span>
+                        <span class="icon-badge"><i data-lucide="user-plus" aria-hidden="true"></i></span>
+                        <h3>Recruitment</h3>
+                        <p>Candidate tracking that hands off cleanly into onboarding and employee records.</p>
+                    </div>
+                    <div class="lp-feature-card reveal" style="--delay: 320ms;">
+                        <span class="lp-badge-soon">Coming Soon</span>
+                        <span class="icon-badge"><i data-lucide="plug-2" aria-hidden="true"></i></span>
+                        <h3>API Integrations</h3>
+                        <p>Connect EmpTrack to the other tools your organization already relies on.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Dashboard Showcase -->
+        <section class="lp-showcase" id="dashboard-showcase" aria-labelledby="showcase-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">Dashboard Preview</span>
+                    <h2 class="lp-section-title" id="showcase-heading">One Dashboard for Your Entire Workforce</h2>
+                    <p class="lp-section-sub">A sample of what HR and Team Lead dashboards look like once your data
+                        is in EmpTrack.</p>
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph ph-calendar-check"></i></div>
-                    <h3>Attendance Management</h3>
-                    <p>Automated attendance tracking seamlessly tied to task check-ins and verified work progress.</p>
+                <div class="lp-showcase-top reveal">
+                    <span class="lp-live-dot" aria-hidden="true"></span> Live preview · updated in real time
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph ph-warning-circle"></i></div>
-                    <h3>Issue Tracking</h3>
-                    <p>Streamlined issue reporting and resolution to ensure operational roadblocks are quickly cleared.
-                    </p>
+                <div class="lp-showcase-stats reveal">
+                    <div class="lp-stat-tile">
+                        <strong data-counter="128">0</strong>
+                        <span>Total Employees</span>
+                    </div>
+                    <div class="lp-stat-tile">
+                        <strong data-counter="94" data-suffix="%">0%</strong>
+                        <span>Attendance Rate</span>
+                    </div>
+                    <div class="lp-stat-tile">
+                        <strong data-counter="37">0</strong>
+                        <span>Open Tasks</span>
+                    </div>
+                    <div class="lp-stat-tile">
+                        <strong data-counter="6">0</strong>
+                        <span>Pending Approvals</span>
+                    </div>
                 </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph ph-siren"></i></div>
-                    <h3>Escalation System</h3>
-                    <p>Automated procedural escalation mapping for unresolved high-priority critical issues.</p>
+                <div class="lp-showcase-grid">
+                    <div class="lp-showcase-card reveal" style="--delay: 0ms;">
+                        <h3><i data-lucide="chart-bar" aria-hidden="true"></i> Attendance Chart</h3>
+                        <div class="lp-bars" aria-hidden="true">
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 72%;"></span><label>Mon</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 84%;"></span><label>Tue</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 66%;"></span><label>Wed</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 90%;"></span><label>Thu</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 78%;"></span><label>Fri</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lp-showcase-card reveal" style="--delay: 60ms;">
+                        <h3><i data-lucide="trending-up" aria-hidden="true"></i> Leave Trends</h3>
+                        <svg class="lp-sparkline" viewBox="0 0 300 110" preserveAspectRatio="none" role="img"
+                            aria-label="Leave requests trending downward over the last six weeks">
+                            <defs>
+                                <linearGradient id="lp-spark-gradient" x1="0" y1="0" x2="1" y2="0">
+                                    <stop offset="0%" stop-color="#7C3AED" />
+                                    <stop offset="100%" stop-color="#06B6D4" />
+                                </linearGradient>
+                            </defs>
+                            <path class="lp-spark-fill"
+                                d="M0,80 L50,60 L100,68 L150,40 L200,50 L250,25 L300,35 L300,110 L0,110 Z" />
+                            <path class="lp-spark-line" d="M0,80 L50,60 L100,68 L150,40 L200,50 L250,25 L300,35" />
+                        </svg>
+                    </div>
+
+                    <div class="lp-showcase-card reveal" style="--delay: 120ms;">
+                        <h3><i data-lucide="chart-pie" aria-hidden="true"></i> Employee Distribution</h3>
+                        <div class="lp-donut-wrap">
+                            <div class="lp-donut" role="img"
+                                aria-label="Employee distribution: 45% Engineering, 27% Operations, 18% HR & Admin, 10% Other">
+                            </div>
+                            <ul class="lp-donut-legend">
+                                <li><i style="background:var(--lp-purple);"></i> Engineering — 45%</li>
+                                <li><i style="background:var(--lp-purple-light);"></i> Operations — 27%</li>
+                                <li><i style="background:var(--lp-cyan);"></i> HR & Admin — 18%</li>
+                                <li><i style="background:rgba(255,255,255,0.2);"></i> Other — 10%</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="lp-showcase-card reveal" style="--delay: 0ms;">
+                        <h3><i data-lucide="chart-line" aria-hidden="true"></i> Monthly Productivity</h3>
+                        <div class="lp-bars" aria-hidden="true">
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 60%;"></span><label>Jan</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 68%;"></span><label>Feb</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 74%;"></span><label>Mar</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 82%;"></span><label>Apr</label>
+                            </div>
+                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 87%;"></span><label>May</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lp-showcase-card reveal" style="--delay: 60ms;">
+                        <h3><i data-lucide="activity" aria-hidden="true"></i> Recent Activities</h3>
+                        <ul class="lp-activity-list">
+                            <li>
+                                <span class="lp-avatar avatar-a">AM</span>
+                                <div class="lp-activity-text"><strong>Leave request approved</strong>for Arjun
+                                    Mehta<br><time>2 hours ago</time></div>
+                            </li>
+                            <li>
+                                <span class="lp-avatar avatar-b">PN</span>
+                                <div class="lp-activity-text"><strong>Issue escalated</strong>to HR by Team Lead
+                                    Priya Nair<br><time>5 hours ago</time></div>
+                            </li>
+                            <li>
+                                <span class="lp-avatar avatar-c">NS</span>
+                                <div class="lp-activity-text"><strong>New employee onboarded</strong>in Engineering
+                                    team<br><time>Yesterday</time></div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="lp-showcase-card reveal" style="--delay: 120ms;">
+                        <h3><i data-lucide="list-todo" aria-hidden="true"></i> Recent Tasks</h3>
+                        <div class="lp-table" role="table" aria-label="Recent tasks">
+                            <div class="lp-table-row" role="row">
+                                <div class="lp-table-task" role="cell"><span class="lp-avatar avatar-a">SK</span>
+                                    <span>Sprint status report</span></div>
+                                <span class="lp-task-status done" role="cell">Done</span>
+                            </div>
+                            <div class="lp-table-row" role="row">
+                                <div class="lp-table-task" role="cell"><span class="lp-avatar avatar-b">RV</span>
+                                    <span>Client onboarding checklist</span></div>
+                                <span class="lp-task-status progress" role="cell">In Progress</span>
+                            </div>
+                            <div class="lp-table-row" role="row">
+                                <div class="lp-table-task" role="cell"><span class="lp-avatar avatar-c">DJ</span>
+                                    <span>Q3 attendance audit</span></div>
+                                <span class="lp-task-status pending" role="cell">Pending</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </section>
 
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph ph-file-text"></i></div>
-                    <h3>Performance Reports</h3>
-                    <p>Comprehensive analytics, actionable insights, and automated HR reporting exports.</p>
+        <!-- 6. Why Choose EmpTrack -->
+        <section class="lp-why" id="solutions" aria-labelledby="why-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">Why EmpTrack</span>
+                    <h2 class="lp-section-title" id="why-heading">Built to Remove the Busywork</h2>
+                    <p class="lp-section-sub">A workforce platform designed around the day-to-day reality of HR and
+                        team management.</p>
+                </div>
+                <div class="lp-why-grid">
+                    <div class="lp-why-card reveal" style="--delay: 0ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="wand" aria-hidden="true"></i></span>
+                        <h3>Reduce Manual HR Work</h3>
+                        <p>Attendance, leave, and task updates flow automatically instead of living in spreadsheets.
+                        </p>
+                    </div>
+                    <div class="lp-why-card reveal" style="--delay: 60ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="timer" aria-hidden="true"></i></span>
+                        <h3>Real-Time Attendance</h3>
+                        <p>Check-ins and work logs update dashboards instantly, with no end-of-day reconciliation.
+                        </p>
+                    </div>
+                    <div class="lp-why-card reveal" style="--delay: 120ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="layers" aria-hidden="true"></i></span>
+                        <h3>Scalable Architecture</h3>
+                        <p>Built on a modular NestJS backend so new modules can be added without reworking the
+                            core.</p>
+                    </div>
+                    <div class="lp-why-card reveal" style="--delay: 180ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="shield-check"
+                                aria-hidden="true"></i></span>
+                        <h3>Role-Based Access</h3>
+                        <p>Admins, HR, Team Leads, and Employees each see exactly what's relevant to their role.</p>
+                    </div>
+                    <div class="lp-why-card reveal" style="--delay: 240ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="chart-line"
+                                aria-hidden="true"></i></span>
+                        <h3>Advanced Analytics</h3>
+                        <p>Attendance, productivity, and escalation trends surfaced as clear, actionable reports.</p>
+                    </div>
+                    <div class="lp-why-card reveal" style="--delay: 300ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="lock-keyhole"
+                                aria-hidden="true"></i></span>
+                        <h3>Secure Data</h3>
+                        <p>Authenticated sessions and role guards keep employee data visible only to the right
+                            people.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- 4. Statistics Section -->
-    <section class="stats-section">
-        <div class="stats-grid">
-            <div class="stat-item">
-                <h4>10,000+</h4>
-                <p>Employees Managed</p>
+        <!-- 7. AI Powered Section -->
+        <section class="lp-ai" aria-labelledby="ai-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">On the Roadmap</span>
+                    <h2 class="lp-section-title" id="ai-heading">Built for What's Next</h2>
+                    <p class="lp-section-sub">EmpTrack's data foundation — attendance, tasks, and work logs — is
+                        designed to power a set of AI-assisted capabilities as the platform grows.</p>
+                </div>
+                <div class="lp-ai-grid">
+                    <div class="lp-ai-card reveal" style="--delay: 0ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="calendar-check"
+                                aria-hidden="true"></i></span>
+                        <h3>AI Attendance Insights</h3>
+                        <p>Surface attendance patterns and anomalies automatically.</p>
+                    </div>
+                    <div class="lp-ai-card reveal" style="--delay: 60ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="chart-bar"
+                                aria-hidden="true"></i></span>
+                        <h3>Workforce Analytics</h3>
+                        <p>Deeper cross-team comparisons beyond standard reports.</p>
+                    </div>
+                    <div class="lp-ai-card reveal" style="--delay: 120ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="target" aria-hidden="true"></i></span>
+                        <h3>Predictive Reports</h3>
+                        <p>Forecast attendance and workload trends ahead of time.</p>
+                    </div>
+                    <div class="lp-ai-card reveal" style="--delay: 180ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="bell" aria-hidden="true"></i></span>
+                        <h3>Smart Notifications</h3>
+                        <p>Context-aware alerts instead of blanket notifications.</p>
+                    </div>
+                    <div class="lp-ai-card reveal" style="--delay: 240ms;">
+                        <span class="icon-badge sm outline"><i data-lucide="trending-up"
+                                aria-hidden="true"></i></span>
+                        <h3>Productivity Monitoring</h3>
+                        <p>Track output trends tied directly to logged work.</p>
+                    </div>
+                </div>
+                <p class="lp-ai-note reveal"><i data-lucide="info" aria-hidden="true"></i> These capabilities are
+                    on our roadmap and not part of the current release.</p>
             </div>
-            <div class="stat-item">
-                <h4>50,000+</h4>
-                <p>Tasks Completed</p>
-            </div>
-            <div class="stat-item">
-                <h4>500+</h4>
-                <p>Active Teams</p>
-            </div>
-            <div class="stat-item">
-                <h4>25,000+</h4>
-                <p>Issues Resolved</p>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- 5. How the System Works Section -->
-    <section id="modules" class="how-it-works">
-        <h2 class="section-title">How the System Works</h2>
-        <div class="steps-container">
-            <div class="step-card">
-                <div class="step-circle">1</div>
-                <h3>Assign Tasks</h3>
-                <p>Managers rapidly create and delegate high-priority tasks to specific team members.</p>
+        <!-- 8. Pricing -->
+        <section class="lp-pricing" id="pricing" aria-labelledby="pricing-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">Pricing</span>
+                    <h2 class="lp-section-title" id="pricing-heading">Plans That Grow With Your Team</h2>
+                    <p class="lp-section-sub">Illustrative plans for how EmpTrack could be packaged — no payment is
+                        collected today.</p>
+                </div>
+                <div class="lp-pricing-grid">
+                    <div class="lp-price-card reveal" style="--delay: 0ms;">
+                        <h3>Free</h3>
+                        <p class="lp-price-desc">For small teams getting started with structured HR tracking.</p>
+                        <div class="lp-price-amount">$0</div>
+                        <div class="lp-price-period">forever, up to 10 employees</div>
+                        <ul class="lp-price-features">
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Employee management</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Attendance tracking</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Leave requests</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Basic task allocation</li>
+                        </ul>
+                        <a href="login.html" class="btn btn-secondary btn-block">Get Started</a>
+                    </div>
+                    <div class="lp-price-card featured reveal" style="--delay: 80ms;">
+                        <span class="lp-price-tag">Most Popular</span>
+                        <h3>Professional</h3>
+                        <p class="lp-price-desc">For growing teams that need reporting and escalations.</p>
+                        <div class="lp-price-amount">$0<span>/ during pilot</span></div>
+                        <div class="lp-price-period">unlimited employees</div>
+                        <ul class="lp-price-features">
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Everything in Free</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Work monitoring & work
+                                logs</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Issue & escalation
+                                management</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Analytics & reports</li>
+                        </ul>
+                        <a href="login.html" class="btn btn-primary btn-block">Get Started</a>
+                    </div>
+                    <div class="lp-price-card reveal" style="--delay: 160ms;">
+                        <h3>Enterprise</h3>
+                        <p class="lp-price-desc">For larger organizations needing dedicated support.</p>
+                        <div class="lp-price-amount">Custom</div>
+                        <div class="lp-price-period">talk to our team</div>
+                        <ul class="lp-price-features">
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Everything in
+                                Professional</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Priority support</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Custom onboarding</li>
+                            <li><i data-lucide="circle-check-big" aria-hidden="true"></i> Advanced role controls
+                            </li>
+                        </ul>
+                        <a href="login.html" class="btn btn-secondary btn-block">Get Started</a>
+                    </div>
+                </div>
             </div>
+        </section>
 
-            <div class="step-card">
-                <div class="step-circle">2</div>
-                <h3>Track Work Progress</h3>
-                <p>Managers intuitively monitor real-time completion progress and employee productivity.</p>
+        <!-- 9. How It Works -->
+        <section class="lp-how" aria-labelledby="how-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">How It Works</span>
+                    <h2 class="lp-section-title" id="how-heading">From Setup to Reports in Four Steps</h2>
+                </div>
+                <div class="lp-steps">
+                    <div class="lp-step reveal" style="--delay: 0ms;">
+                        <div class="lp-step-num">1</div>
+                        <h3>Set Up Your Organization</h3>
+                        <p>An admin configures EmpTrack and sets up roles for HR, Team Leads, and Employees.</p>
+                    </div>
+                    <div class="lp-step reveal" style="--delay: 120ms;">
+                        <div class="lp-step-num">2</div>
+                        <h3>Invite Employees</h3>
+                        <p>HR adds employee profiles so everyone has access to their own role-based dashboard.</p>
+                    </div>
+                    <div class="lp-step reveal" style="--delay: 240ms;">
+                        <div class="lp-step-num">3</div>
+                        <h3>Manage Workforce</h3>
+                        <p>Track attendance, assign tasks, approve leave, and handle issues day to day.</p>
+                    </div>
+                    <div class="lp-step reveal" style="--delay: 360ms;">
+                        <div class="lp-step-num">4</div>
+                        <h3>Generate Reports</h3>
+                        <p>Turn accumulated activity into attendance and performance reports automatically.</p>
+                    </div>
+                </div>
             </div>
+        </section>
 
-            <div class="step-card">
-                <div class="step-circle">3</div>
-                <h3>Generate Attendance & Reports</h3>
-                <p>The platform automatically translates those work logs into attendance data and robust end-of-month
-                    reporting.</p>
+        <!-- 10. FAQ -->
+        <section class="lp-faq" id="faq" aria-labelledby="faq-heading">
+            <div class="lp-container">
+                <div class="lp-heading-block center reveal">
+                    <span class="lp-eyebrow center">FAQ</span>
+                    <h2 class="lp-section-title" id="faq-heading">Frequently Asked Questions</h2>
+                </div>
+                <div class="lp-faq-list reveal">
+                    <div class="lp-faq-item">
+                        <h3><button type="button" class="lp-faq-trigger" aria-expanded="false"
+                                aria-controls="faq-panel-1" id="faq-trigger-1">What is EmpTrack?<i
+                                    data-lucide="chevron-down" aria-hidden="true"></i></button></h3>
+                        <div class="lp-faq-panel" id="faq-panel-1" role="region" aria-labelledby="faq-trigger-1"
+                            hidden>
+                            EmpTrack is a workforce and HR management platform that helps organizations manage
+                            employees, track attendance, handle leave requests, assign tasks, and resolve issues and
+                            escalations — all from one place.
+                        </div>
+                    </div>
+                    <div class="lp-faq-item">
+                        <h3><button type="button" class="lp-faq-trigger" aria-expanded="false"
+                                aria-controls="faq-panel-2" id="faq-trigger-2">Who is it for?<i
+                                    data-lucide="chevron-down" aria-hidden="true"></i></button></h3>
+                        <div class="lp-faq-panel" id="faq-panel-2" role="region" aria-labelledby="faq-trigger-2"
+                            hidden>
+                            EmpTrack is built for HR teams, team leads, and employees across startups, small
+                            businesses, educational institutions, and enterprises that want a structured way to
+                            manage daily workforce operations.
+                        </div>
+                    </div>
+                    <div class="lp-faq-item">
+                        <h3><button type="button" class="lp-faq-trigger" aria-expanded="false"
+                                aria-controls="faq-panel-3" id="faq-trigger-3">Can it support multiple
+                                organizations?<i data-lucide="chevron-down" aria-hidden="true"></i></button></h3>
+                        <div class="lp-faq-panel" id="faq-panel-3" role="region" aria-labelledby="faq-trigger-3"
+                            hidden>
+                            EmpTrack is currently built around a single organization with role-based access for
+                            Admins, HR, Team Leads, and Employees. Multi-organization support is on our roadmap.
+                        </div>
+                    </div>
+                    <div class="lp-faq-item">
+                        <h3><button type="button" class="lp-faq-trigger" aria-expanded="false"
+                                aria-controls="faq-panel-4" id="faq-trigger-4">Is payroll supported?<i
+                                    data-lucide="chevron-down" aria-hidden="true"></i></button></h3>
+                        <div class="lp-faq-panel" id="faq-panel-4" role="region" aria-labelledby="faq-trigger-4"
+                            hidden>
+                            Not yet. Payroll is on our roadmap alongside AI-assisted insights and recruitment
+                            tracking, built on top of the attendance and work-log data EmpTrack already captures.
+                        </div>
+                    </div>
+                    <div class="lp-faq-item">
+                        <h3><button type="button" class="lp-faq-trigger" aria-expanded="false"
+                                aria-controls="faq-panel-5" id="faq-trigger-5">Can plans be upgraded?<i
+                                    data-lucide="chevron-down" aria-hidden="true"></i></button></h3>
+                        <div class="lp-faq-panel" id="faq-panel-5" role="region" aria-labelledby="faq-trigger-5"
+                            hidden>
+                            Plan upgrades aren't automated yet — reach out through the contact details below and
+                            we'll help move your organization to the plan that fits.
+                        </div>
+                    </div>
+                    <div class="lp-faq-item">
+                        <h3><button type="button" class="lp-faq-trigger" aria-expanded="false"
+                                aria-controls="faq-panel-6" id="faq-trigger-6">Is my data secure?<i
+                                    data-lucide="chevron-down" aria-hidden="true"></i></button></h3>
+                        <div class="lp-faq-panel" id="faq-panel-6" role="region" aria-labelledby="faq-trigger-6"
+                            hidden>
+                            Yes. Every session requires authentication, and role-based access ensures Employees,
+                            Team Leads, HR, and Admins only see the data relevant to their role.
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- 6. Footer -->
-    <footer id="contact" class="landing-footer">
-        <div class="footer-grid">
-            <div class="footer-left">
-                <a href="#" class="footer-logo">
-                    <i class="ph-fill ph-chart-line-up"></i>
-                    EmpTrack
-                </a>
-                <p>The smartest and most elegant solution for accelerating team productivity, tracking workflows, and
-                    managing remote employees seamlessly.</p>
+        <!-- 11. Final CTA -->
+        <section class="lp-final-cta" aria-labelledby="cta-heading">
+            <div class="lp-container">
+                <h2 id="cta-heading" class="reveal">Transform the Way You Manage Your Workforce</h2>
+                <p class="reveal" style="--delay: 60ms;">Set up EmpTrack for your organization and bring
+                    attendance, tasks, and reporting into one place.</p>
+                <div class="lp-final-cta-actions reveal" style="--delay: 120ms;">
+                    <a href="login.html" class="btn btn-secondary btn-lg">Get Started</a>
+                    <a href="mailto:info@emptrack.com" class="btn btn-ghost btn-lg">Schedule Demo</a>
+                </div>
             </div>
+        </section>
+    </main>
 
-            <div class="footer-column">
-                <h4>Quick Links</h4>
-                <ul>
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#modules">Modules</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                </ul>
+    <!-- 12. Footer -->
+    <footer class="lp-footer" id="contact">
+        <div class="lp-container">
+            <div class="lp-footer-grid">
+                <div class="lp-footer-brand">
+                    <a href="#top" class="lp-logo">
+                        <span class="lp-logo-badge"><i data-lucide="layout-dashboard" aria-hidden="true"></i></span>
+                        EmpTrack
+                    </a>
+                    <p>A workforce and HR management platform built to bring employee management, attendance,
+                        leave, and task tracking into one connected system.</p>
+                </div>
+                <div class="lp-footer-col">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                    </ul>
+                </div>
+                <div class="lp-footer-col">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="https://github.com/IIIT-Sricity-FSD-2024-2028/6_EmpTrack#readme"
+                                target="_blank" rel="noopener noreferrer">Documentation</a></li>
+                        <li><a href="https://github.com/IIIT-Sricity-FSD-2024-2028/6_EmpTrack" target="_blank"
+                                rel="noopener noreferrer">GitHub</a></li>
+                    </ul>
+                </div>
+                <div class="lp-footer-col">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="mailto:info@emptrack.com">Contact</a></li>
+                        <li><a href="#top">Privacy</a></li>
+                        <li><a href="#top">Terms</a></li>
+                    </ul>
+                </div>
             </div>
-
-            <div class="footer-column">
-                <h4>Contact Details</h4>
-                <ul>
-                    <li><i class="ph-fill ph-envelope-simple"></i> <a
-                            href="mailto:info@emptrack.com">info@emptrack.com</a></li>
-                    <li><i class="ph-fill ph-phone"></i> +1 (555) 123-4567</li>
-                    <li><i class="ph-fill ph-map-pin"></i> 123 Business St, Suite 100</li>
-                </ul>
+            <div class="lp-footer-bottom">
+                <span>&copy; <span id="lpYear">2026</span> EmpTrack. All rights reserved.</span>
+                <span>Built as part of a final-year software engineering project.</span>
             </div>
-        </div>
-
-        <div class="footer-bottom">
-            &copy; 2026 EmpTrack. All rights reserved.
         </div>
     </footer>
 
     <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/views/landing.js"></script>
 </body>
 
 </html>
