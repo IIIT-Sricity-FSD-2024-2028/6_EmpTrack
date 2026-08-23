@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Leave Management</title>
     
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
@@ -90,7 +91,7 @@
                             </button>
                         </div>
     
-                        <div style="background-color: white; border-radius: var(--radius-lg); overflow:hidden; border: 1px solid var(--border-color);">
+                        <div style="background-color: var(--bg-surface); border-radius: var(--radius-lg); overflow:hidden; border: 1px solid var(--border-color);">
                             <div style="overflow-x:auto;">
                                 <table style="width:100%; border-collapse:collapse; text-align:left;">
                                     <thead style="background-color: rgba(239, 68, 68, 0.02);">
@@ -150,16 +151,16 @@
     
                         <!-- SECTION 4: Leave Guidelines Card -->
                         <div style="flex: 1 1 30%; min-width: 280px; display:flex; flex-direction:column;">
-                            <div style="background-color: #E0F2FE; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); overflow:hidden; border: 1px solid #BAE6FD; position:relative;">
-                                
+                            <div style="background-color: var(--primary-light); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); overflow:hidden; border: 1px solid var(--primary-color); position:relative;">
+
                                 <!-- Header Area with Icon -->
                                 <div style="padding: var(--spacing-lg) var(--spacing-lg) 0 var(--spacing-lg); display:flex; align-items:flex-start; gap: var(--spacing-md);">
-                                    <div style="width: 48px; height: 48px; border-radius: 50%; background-color: #3B82F6; color: white; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);">
+                                    <div style="width: 48px; height: 48px; border-radius: 50%; background-color: var(--primary-color); color: white; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);">
                                         <i class="ph-fill ph-book-open"></i>
                                     </div>
                                     <div>
-                                        <h3 style="margin:0; font-size: var(--text-lg); font-weight: var(--font-bold); color: #0369A1;">Leave Approval Guidelines</h3>
-                                        <p style="margin: 4px 0 0 0; font-size: var(--text-xs); color: #0284C7; font-weight:var(--font-medium);">Key protocols for Team Leads</p>
+                                        <h3 style="margin:0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--primary-color);">Leave Approval Guidelines</h3>
+                                        <p style="margin: 4px 0 0 0; font-size: var(--text-xs); color: var(--primary-color); font-weight:var(--font-medium);">Key protocols for Team Leads</p>
                                     </div>
                                 </div>
     
@@ -167,45 +168,45 @@
                                 <div style="padding: var(--spacing-lg);">
                                     <ul style="margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap: var(--spacing-md);">
                                         <li style="display:flex; align-items:flex-start; gap: 12px;">
-                                            <i class="ph-fill ph-check-circle" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                            <i class="ph-fill ph-check-circle" style="color: var(--primary-color); flex-shrink:0; margin-top:2px;"></i>
                                             <div>
-                                                <strong style="font-size:var(--text-sm); color:#0F172A;">Advance Notice</strong>
-                                                <p style="margin:0; font-size: 12px; color:#334155;">Minimum 3 days required for planned vacation leave.</p>
+                                                <strong style="font-size:var(--text-sm); color:var(--text-main);">Advance Notice</strong>
+                                                <p style="margin:0; font-size: 12px; color: var(--text-main);">Minimum 3 days required for planned vacation leave.</p>
                                             </div>
                                         </li>
                                         <li style="display:flex; align-items:flex-start; gap: 12px;">
-                                            <i class="ph-fill ph-users-three" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                            <i class="ph-fill ph-users-three" style="color: var(--primary-color); flex-shrink:0; margin-top:2px;"></i>
                                             <div>
-                                                <strong style="font-size:var(--text-sm); color:#0F172A;">Team Coverage</strong>
-                                                <p style="margin:0; font-size: 12px; color:#334155;">Ensure adequate coverage before approving overlaps.</p>
+                                                <strong style="font-size:var(--text-sm); color:var(--text-main);">Team Coverage</strong>
+                                                <p style="margin:0; font-size: 12px; color: var(--text-main);">Ensure adequate coverage before approving overlaps.</p>
                                             </div>
                                         </li>
                                         <li style="display:flex; align-items:flex-start; gap: 12px;">
-                                            <i class="ph-fill ph-wallet" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                            <i class="ph-fill ph-wallet" style="color: var(--primary-color); flex-shrink:0; margin-top:2px;"></i>
                                             <div>
-                                                <strong style="font-size:var(--text-sm); color:#0F172A;">Leave Balance</strong>
-                                                <p style="margin:0; font-size: 12px; color:#334155;">Verify balance > requested days strictly.</p>
+                                                <strong style="font-size:var(--text-sm); color:var(--text-main);">Leave Balance</strong>
+                                                <p style="margin:0; font-size: 12px; color: var(--text-main);">Verify balance > requested days strictly.</p>
                                             </div>
                                         </li>
                                         <li style="display:flex; align-items:flex-start; gap: 12px;">
-                                            <i class="ph-fill ph-warning-circle" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                            <i class="ph-fill ph-warning-circle" style="color: var(--primary-color); flex-shrink:0; margin-top:2px;"></i>
                                             <div>
-                                                <strong style="font-size:var(--text-sm); color:#0F172A;">Unauthorized Absence</strong>
-                                                <p style="margin:0; font-size: 12px; color:#334155;">No action required; auto-escalates to HR globally.</p>
+                                                <strong style="font-size:var(--text-sm); color:var(--text-main);">Unauthorized Absence</strong>
+                                                <p style="margin:0; font-size: 12px; color: var(--text-main);">No action required; auto-escalates to HR globally.</p>
                                             </div>
                                         </li>
                                         <li style="display:flex; align-items:flex-start; gap: 12px;">
-                                            <i class="ph-fill ph-first-aid" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                            <i class="ph-fill ph-first-aid" style="color: var(--primary-color); flex-shrink:0; margin-top:2px;"></i>
                                             <div>
-                                                <strong style="font-size:var(--text-sm); color:#0F172A;">Emergency Leave</strong>
-                                                <p style="margin:0; font-size: 12px; color:#334155;">Can be processed retroactively after 48 hrs.</p>
+                                                <strong style="font-size:var(--text-sm); color:var(--text-main);">Emergency Leave</strong>
+                                                <p style="margin:0; font-size: 12px; color: var(--text-main);">Can be processed retroactively after 48 hrs.</p>
                                             </div>
                                         </li>
                                         <li style="display:flex; align-items:flex-start; gap: 12px;">
-                                            <i class="ph-fill ph-file-text" style="color: #0284C7; flex-shrink:0; margin-top:2px;"></i>
+                                            <i class="ph-fill ph-file-text" style="color: var(--primary-color); flex-shrink:0; margin-top:2px;"></i>
                                             <div>
-                                                <strong style="font-size:var(--text-sm); color:#0F172A;">Documentation</strong>
-                                                <p style="margin:0; font-size: 12px; color:#334155;">Required file upload for sick leave > 2 days.</p>
+                                                <strong style="font-size:var(--text-sm); color:var(--text-main);">Documentation</strong>
+                                                <p style="margin:0; font-size: 12px; color: var(--text-main);">Required file upload for sick leave > 2 days.</p>
                                             </div>
                                         </li>
                                     </ul>

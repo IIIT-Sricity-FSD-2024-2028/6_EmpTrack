@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const getBadgeStyle = (type) => {
         if (type === 'Weekly') return 'background-color: rgba(167, 139, 250, 0.15); color: #8B5CF6;';
         if (type === 'Monthly') return 'background-color: rgba(109, 40, 217, 0.15); color: #6D28D9;';
-        return 'background-color: rgba(107, 114, 128, 0.1); color: #4B5563;';
+        return 'background-color: var(--status-neutral-bg); color: var(--status-neutral-fg);';
     };
 
     const tbody = document.getElementById('reports-table-body');
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btnText.style.display = 'flex';
                 btnText.innerHTML = '<i class="ph ph-check-circle" style="font-size: 1.2rem;"></i> Generated!';
                 spinner.style.display = 'none';
-                genBtn.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                genBtn.style.background = 'linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-hover) 100%)';
                 
                 setTimeout(() => {
                     btnText.innerHTML = '<i class="ph ph-export" style="font-size: 1.2rem;"></i> Generate Report';
@@ -122,14 +122,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!toastContainer) return;
 
         const toast = document.createElement('div');
-        const iconColor = type === 'success' ? '#10B981' : '#3B82F6';
+        const iconColor = type === 'success' ? 'var(--secondary-color)' : 'var(--primary-color)';
         const iconClass = type === 'success' ? 'ph-check-circle' : 'ph-info';
 
         toast.style.cssText = `
-            background: white; 
-            border-left: 4px solid ${iconColor}; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            padding: 16px; 
+            background: var(--bg-surface);
+            border-left: 4px solid ${iconColor};
+            box-shadow: var(--shadow-md);
+            padding: 16px;
             border-radius: 8px; 
             display:flex; 
             align-items:flex-start; 

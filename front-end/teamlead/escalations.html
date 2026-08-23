@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Escalation Management</title>
 
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
@@ -106,7 +107,7 @@
                         <div
                             style="background-color: var(--bg-surface); border-radius: var(--radius-lg); padding: var(--spacing-lg); box-shadow: var(--shadow-sm); display:flex; align-items:center; gap: var(--spacing-md); transition: transform 0.2s ease;">
                             <div
-                                style="width: 48px; height: 48px; border-radius: 50%; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
+                                style="width: 48px; height: 48px; border-radius: 50%; background-color: rgba(59, 130, 246, 0.1); color: var(--primary-color); display:flex; align-items:center; justify-content:center; font-size: 1.5rem;">
                                 <i class="ph-fill ph-users"></i>
                             </div>
                             <div>
@@ -194,7 +195,7 @@
                             style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg);">
 
                             <div data-action="warn"
-                                style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
+                                style="background: var(--bg-surface); border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
                                 <div
                                     style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(245, 158, 11, 0.1); color: var(--warning-color); display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
                                     <i class="ph-fill ph-warning"></i>
@@ -207,9 +208,9 @@
                             </div>
 
                             <div data-action="extend"
-                                style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
+                                style="background: var(--bg-surface); border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
                                 <div
-                                    style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
+                                    style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(59, 130, 246, 0.1); color: var(--primary-color); display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
                                     <i class="ph-fill ph-calendar-plus"></i>
                                 </div>
                                 <h4
@@ -220,7 +221,7 @@
                             </div>
 
                             <div data-action="reassign"
-                                style="background: white; border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
+                                style="background: var(--bg-surface); border-radius: var(--radius-lg); padding: var(--spacing-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; display:flex; flex-direction:column; gap: var(--spacing-sm);">
                                 <div
                                     style="width: 40px; height: 40px; border-radius: 8px; background-color: rgba(106, 17, 203, 0.1); color: #6A11CB; display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
                                     <i class="ph-fill ph-users-three"></i>
@@ -239,7 +240,7 @@
 
                 <!-- Generic Full-Screen Modal Overlay -->
                 <div id="action-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; animation: fade-in 0.2s ease;">
-                    <div style="background:white; border-radius:var(--radius-xl); box-shadow:0 10px 25px rgba(0,0,0,0.2); width:90%; max-width:500px; padding:var(--spacing-xl); display:flex; flex-direction:column; gap:var(--spacing-md);">
+                    <div style="background:var(--bg-surface); border-radius:var(--radius-xl); box-shadow:var(--shadow-lg); width:90%; max-width:500px; padding:var(--spacing-xl); display:flex; flex-direction:column; gap:var(--spacing-md);">
                         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-light); padding-bottom:var(--spacing-sm);">
                             <h3 id="modal-title" style="margin:0; font-size:var(--text-lg); font-weight:var(--font-bold); color:var(--text-main);">Modal Title</h3>
                             <button id="modal-close-btn" style="background:none; border:none; font-size:1.5rem; color:var(--text-muted); cursor:pointer; padding:0; line-height:1;"><i class="ph ph-x"></i></button>

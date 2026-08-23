@@ -1,0 +1,221 @@
+/* Reusable calendar widget (see js/components/calendar.js).
+   Wrap the widget in the caller's own .card/.tl-card for elevation - this
+   file only styles the internals, using the same tokens as the rest of the
+   app so it themes automatically in light/dark.
+
+   Deliberately compact: this is a small dashboard widget, not a full
+   scheduling app, so it caps its own width and keeps cells/controls small
+   regardless of how wide the wrapping card is. */
+
+.cal-widget {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+}
+
+.cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-xs);
+}
+
+.cal-month-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-bold);
+    color: var(--text-main);
+}
+
+.cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cal-nav-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.cal-today-btn {
+    padding: 3px 10px;
+    font-size: 11px;
+    border-radius: var(--radius-full);
+}
+
+.cal-nav-btn:hover,
+.cal-today-btn:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    border-color: transparent;
+}
+
+.cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.cal-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cal-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cal-event-leave { background-color: var(--cal-leave-color); }
+.cal-event-holiday { background-color: var(--cal-holiday-color); }
+.cal-event-task { background-color: var(--cal-task-color); }
+.cal-event-company { background-color: var(--cal-company-color); }
+.cal-event-attendance { background-color: var(--cal-attendance-color); }
+
+.cal-grid-wrap {
+    overflow-x: auto;
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    min-width: 0;
+}
+
+.cal-weekday {
+    text-align: center;
+    font-size: 10px;
+    font-weight: var(--font-semibold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 2px 0 4px;
+}
+
+.cal-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 2px;
+    min-height: 32px;
+    padding: 3px 0 2px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.cal-day:hover {
+    background: var(--bg-main);
+}
+
+.cal-day-num {
+    font-size: 11px;
+    font-weight: var(--font-medium);
+    color: var(--text-main);
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    border-radius: var(--radius-full);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.cal-day.is-other-month .cal-day-num {
+    color: var(--text-light);
+}
+
+/* Today: small filled accent circle - subtle, not the dominant element on the widget. */
+.cal-day.is-today .cal-day-num {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+    font-weight: var(--font-bold);
+}
+
+/* Selected: outlined ring in the same accent color, distinct from today's filled circle. */
+.cal-day.is-selected .cal-day-num {
+    box-shadow: 0 0 0 1.5px var(--primary-color);
+    color: var(--primary-color);
+    font-weight: var(--font-semibold);
+}
+
+.cal-day.is-today.is-selected .cal-day-num {
+    background: var(--primary-color);
+    color: var(--text-inverse);
+    box-shadow: 0 0 0 1.5px var(--primary-color), 0 0 0 3px var(--primary-light);
+}
+
+.cal-day-dots {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 6px;
+}
+
+.cal-day-dots .cal-dot {
+    width: 4px;
+    height: 4px;
+}
+
+.cal-modal-event {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+}
+
+.cal-modal-event:last-child {
+    border-bottom: none;
+}
+
+.cal-modal-event .cal-dot {
+    margin-top: 6px;
+    width: 10px;
+    height: 10px;
+}
+
+.cal-modal-event-title {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--text-main);
+}
+
+.cal-modal-event-type {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+    .cal-widget {
+        max-width: 100%;
+    }
+    .cal-day {
+        min-height: 34px;
+    }
+    .cal-day-num {
+        width: 22px;
+        height: 22px;
+        line-height: 22px;
+    }
+}

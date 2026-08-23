@@ -123,14 +123,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!toastContainer) return;
 
         const toast = document.createElement('div');
-        const iconColor = type === 'success' ? '#10B981' : '#EF4444';
+        const iconColor = type === 'success' ? 'var(--secondary-color)' : 'var(--danger-color)';
         const iconClass = type === 'success' ? 'ph-check-circle' : 'ph-warning-octagon';
 
         toast.style.cssText = `
-            background: white; 
-            border-left: 4px solid ${iconColor}; 
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
-            padding: 16px; 
+            background: var(--bg-surface);
+            border-left: 4px solid ${iconColor};
+            box-shadow: var(--shadow-lg);
+            padding: 16px;
             border-radius: 8px; 
             display:flex; 
             align-items:flex-start; 

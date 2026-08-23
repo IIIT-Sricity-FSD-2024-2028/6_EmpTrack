@@ -1,5 +1,7 @@
 // /js/views/admin/dashboard.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
+import { renderCalendar } from '../../components/calendar.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -166,6 +168,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             row.style.opacity = '0.5';
             setTimeout(() => row.remove(), 300);
         }
+    }
+
+    // Calendar - real data (company-wide leaves/task deadlines/holidays/events,
+    // scoped to this Admin's own company), unlike the dummy data above.
+    const calendarContainer = document.getElementById('admin-calendar-container');
+    if (calendarContainer) {
+        renderCalendar(calendarContainer, {
+            fetchEvents: (year, month) => db.getCompanyCalendar(user.emp_id, year, month)
+        });
     }
 });
 

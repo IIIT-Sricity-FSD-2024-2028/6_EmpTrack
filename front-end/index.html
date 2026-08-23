@@ -7,7 +7,10 @@
     <title>EmpTrack — Smart Workforce & HR Management Platform</title>
     <meta name="description"
         content="EmpTrack unifies employee management, attendance, leave, task allocation, and reporting into one modern workforce management platform.">
-    <meta name="color-scheme" content="dark">
+    <meta name="color-scheme" content="light dark">
+
+    <!-- Theme (must run before CSS paints to avoid flash-of-wrong-theme) -->
+    <script src="js/theme-init.js"></script>
 
     <!-- CSS Foundation -->
     <link rel="stylesheet" href="css/variables.css">
@@ -41,6 +44,10 @@
                 <a href="#contact">Contact</a>
             </nav>
             <div class="lp-header-actions">
+                <button type="button" class="lp-theme-toggle" id="lpThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+                    <i data-lucide="sun" class="theme-icon-sun" aria-hidden="true"></i>
+                    <i data-lucide="moon" class="theme-icon-moon" aria-hidden="true"></i>
+                </button>
                 <a href="login.html" class="lp-link-login">Login</a>
                 <a href="login.html" class="btn btn-primary">Get Started</a>
                 <button type="button" class="lp-menu-toggle" id="lpMenuToggle" aria-expanded="false"
@@ -73,11 +80,9 @@
                     <p class="lp-hero-desc">EmpTrack brings employee records, attendance, leave, task allocation, and
                         reporting into one connected platform — so HR teams and managers spend less time on
                         admin work and more time on people.</p>
-                    <div class="lp-hero-actions">
-                        <a href="login.html" class="btn btn-primary btn-lg">Get Started <i data-lucide="arrow-right"
-                                aria-hidden="true"></i></a>
-                        <a href="#dashboard-showcase" class="btn btn-secondary btn-lg">View Demo <i
-                                data-lucide="circle-play" aria-hidden="true"></i></a>
+                    <div class="lp-hero-actions lp-hero-actions-single">
+                        <a href="login.html" class="btn btn-primary btn-lg btn-hero">Get Started <i
+                                data-lucide="arrow-right" aria-hidden="true"></i></a>
                     </div>
                 </div>
 
@@ -247,149 +252,7 @@
             </div>
         </section>
 
-        <!-- 5. Dashboard Showcase -->
-        <section class="lp-showcase" id="dashboard-showcase" aria-labelledby="showcase-heading">
-            <div class="lp-container">
-                <div class="lp-heading-block center reveal">
-                    <span class="lp-eyebrow center">Dashboard Preview</span>
-                    <h2 class="lp-section-title" id="showcase-heading">One Dashboard for Your Entire Workforce</h2>
-                    <p class="lp-section-sub">A sample of what HR and Team Lead dashboards look like once your data
-                        is in EmpTrack.</p>
-                </div>
-
-                <div class="lp-showcase-top reveal">
-                    <span class="lp-live-dot" aria-hidden="true"></span> Live preview · updated in real time
-                </div>
-
-                <div class="lp-showcase-stats reveal">
-                    <div class="lp-stat-tile">
-                        <strong data-counter="128">0</strong>
-                        <span>Total Employees</span>
-                    </div>
-                    <div class="lp-stat-tile">
-                        <strong data-counter="94" data-suffix="%">0%</strong>
-                        <span>Attendance Rate</span>
-                    </div>
-                    <div class="lp-stat-tile">
-                        <strong data-counter="37">0</strong>
-                        <span>Open Tasks</span>
-                    </div>
-                    <div class="lp-stat-tile">
-                        <strong data-counter="6">0</strong>
-                        <span>Pending Approvals</span>
-                    </div>
-                </div>
-
-                <div class="lp-showcase-grid">
-                    <div class="lp-showcase-card reveal" style="--delay: 0ms;">
-                        <h3><i data-lucide="chart-bar" aria-hidden="true"></i> Attendance Chart</h3>
-                        <div class="lp-bars" aria-hidden="true">
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 72%;"></span><label>Mon</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 84%;"></span><label>Tue</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 66%;"></span><label>Wed</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 90%;"></span><label>Thu</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 78%;"></span><label>Fri</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="lp-showcase-card reveal" style="--delay: 60ms;">
-                        <h3><i data-lucide="trending-up" aria-hidden="true"></i> Leave Trends</h3>
-                        <svg class="lp-sparkline" viewBox="0 0 300 110" preserveAspectRatio="none" role="img"
-                            aria-label="Leave requests trending downward over the last six weeks">
-                            <defs>
-                                <linearGradient id="lp-spark-gradient" x1="0" y1="0" x2="1" y2="0">
-                                    <stop offset="0%" stop-color="#7C3AED" />
-                                    <stop offset="100%" stop-color="#06B6D4" />
-                                </linearGradient>
-                            </defs>
-                            <path class="lp-spark-fill"
-                                d="M0,80 L50,60 L100,68 L150,40 L200,50 L250,25 L300,35 L300,110 L0,110 Z" />
-                            <path class="lp-spark-line" d="M0,80 L50,60 L100,68 L150,40 L200,50 L250,25 L300,35" />
-                        </svg>
-                    </div>
-
-                    <div class="lp-showcase-card reveal" style="--delay: 120ms;">
-                        <h3><i data-lucide="chart-pie" aria-hidden="true"></i> Employee Distribution</h3>
-                        <div class="lp-donut-wrap">
-                            <div class="lp-donut" role="img"
-                                aria-label="Employee distribution: 45% Engineering, 27% Operations, 18% HR & Admin, 10% Other">
-                            </div>
-                            <ul class="lp-donut-legend">
-                                <li><i style="background:var(--lp-purple);"></i> Engineering — 45%</li>
-                                <li><i style="background:var(--lp-purple-light);"></i> Operations — 27%</li>
-                                <li><i style="background:var(--lp-cyan);"></i> HR & Admin — 18%</li>
-                                <li><i style="background:rgba(255,255,255,0.2);"></i> Other — 10%</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="lp-showcase-card reveal" style="--delay: 0ms;">
-                        <h3><i data-lucide="chart-line" aria-hidden="true"></i> Monthly Productivity</h3>
-                        <div class="lp-bars" aria-hidden="true">
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 60%;"></span><label>Jan</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 68%;"></span><label>Feb</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 74%;"></span><label>Mar</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 82%;"></span><label>Apr</label>
-                            </div>
-                            <div class="lp-bar"><span class="lp-bar-fill" style="--bar-value: 87%;"></span><label>May</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="lp-showcase-card reveal" style="--delay: 60ms;">
-                        <h3><i data-lucide="activity" aria-hidden="true"></i> Recent Activities</h3>
-                        <ul class="lp-activity-list">
-                            <li>
-                                <span class="lp-avatar avatar-a">AM</span>
-                                <div class="lp-activity-text"><strong>Leave request approved</strong>for Arjun
-                                    Mehta<br><time>2 hours ago</time></div>
-                            </li>
-                            <li>
-                                <span class="lp-avatar avatar-b">PN</span>
-                                <div class="lp-activity-text"><strong>Issue escalated</strong>to HR by Team Lead
-                                    Priya Nair<br><time>5 hours ago</time></div>
-                            </li>
-                            <li>
-                                <span class="lp-avatar avatar-c">NS</span>
-                                <div class="lp-activity-text"><strong>New employee onboarded</strong>in Engineering
-                                    team<br><time>Yesterday</time></div>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="lp-showcase-card reveal" style="--delay: 120ms;">
-                        <h3><i data-lucide="list-todo" aria-hidden="true"></i> Recent Tasks</h3>
-                        <div class="lp-table" role="table" aria-label="Recent tasks">
-                            <div class="lp-table-row" role="row">
-                                <div class="lp-table-task" role="cell"><span class="lp-avatar avatar-a">SK</span>
-                                    <span>Sprint status report</span></div>
-                                <span class="lp-task-status done" role="cell">Done</span>
-                            </div>
-                            <div class="lp-table-row" role="row">
-                                <div class="lp-table-task" role="cell"><span class="lp-avatar avatar-b">RV</span>
-                                    <span>Client onboarding checklist</span></div>
-                                <span class="lp-task-status progress" role="cell">In Progress</span>
-                            </div>
-                            <div class="lp-table-row" role="row">
-                                <div class="lp-table-task" role="cell"><span class="lp-avatar avatar-c">DJ</span>
-                                    <span>Q3 attendance audit</span></div>
-                                <span class="lp-task-status pending" role="cell">Pending</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 6. Why Choose EmpTrack -->
+        <!-- 5. Why Choose EmpTrack -->
         <section class="lp-why" id="solutions" aria-labelledby="why-heading">
             <div class="lp-container">
                 <div class="lp-heading-block center reveal">
@@ -440,7 +303,7 @@
             </div>
         </section>
 
-        <!-- 7. AI Powered Section -->
+        <!-- 6. AI Powered Section -->
         <section class="lp-ai" aria-labelledby="ai-heading">
             <div class="lp-container">
                 <div class="lp-heading-block center reveal">
@@ -484,7 +347,7 @@
             </div>
         </section>
 
-        <!-- 8. Pricing -->
+        <!-- 7. Pricing -->
         <section class="lp-pricing" id="pricing" aria-labelledby="pricing-heading">
             <div class="lp-container">
                 <div class="lp-heading-block center reveal">
@@ -542,7 +405,7 @@
             </div>
         </section>
 
-        <!-- 9. How It Works -->
+        <!-- 8. How It Works -->
         <section class="lp-how" aria-labelledby="how-heading">
             <div class="lp-container">
                 <div class="lp-heading-block center reveal">
@@ -574,7 +437,7 @@
             </div>
         </section>
 
-        <!-- 10. FAQ -->
+        <!-- 9. FAQ -->
         <section class="lp-faq" id="faq" aria-labelledby="faq-heading">
             <div class="lp-container">
                 <div class="lp-heading-block center reveal">
@@ -648,7 +511,7 @@
             </div>
         </section>
 
-        <!-- 11. Final CTA -->
+        <!-- 10. Final CTA -->
         <section class="lp-final-cta" aria-labelledby="cta-heading">
             <div class="lp-container">
                 <h2 id="cta-heading" class="reveal">Transform the Way You Manage Your Workforce</h2>
@@ -662,7 +525,7 @@
         </section>
     </main>
 
-    <!-- 12. Footer -->
+    <!-- 11. Footer -->
     <footer class="lp-footer" id="contact">
         <div class="lp-container">
             <div class="lp-footer-grid">

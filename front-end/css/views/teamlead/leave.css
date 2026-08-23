@@ -6,6 +6,6 @@
         .hover-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
         .table-row:hover { background-color: rgba(106, 17, 203, 0.02) !important; }
         
-        .active-filter { background-color: var(--bg-surface) !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #6A11CB !important; }
+        .active-filter { background-color: var(--bg-surface) !important; box-shadow: var(--shadow-sm); color: #6A11CB !important; }
         .filter-btn { background-color: transparent; color: var(--text-muted); }
         .filter-btn:hover:not(.active-filter) { background-color: rgba(0,0,0,0.03); }

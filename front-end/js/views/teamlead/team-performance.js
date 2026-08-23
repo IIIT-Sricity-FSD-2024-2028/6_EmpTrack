@@ -27,10 +27,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('stat-growth').textContent = mockStats.teamGrowth;
 
     const getStatusColor = (status) => {
-        if (status === 'Excellent') return { bg: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }; // Green
-        if (status === 'Good') return { bg: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }; // Blue
-        if (status === 'Needs Improvement') return { bg: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }; // Red
-        return { bg: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }; // Orange default
+        if (status === 'Excellent') return { bg: 'rgba(16, 185, 129, 0.1)', color: 'var(--secondary-color)' }; // Green
+        if (status === 'Good') return { bg: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary-color)' }; // Blue
+        if (status === 'Needs Improvement') return { bg: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger-color)' }; // Red
+        return { bg: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning-color)' }; // Orange default
     };
 
     const getProdBarColor = (prod) => {
@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tbody) {
         tbody.innerHTML = teamMembers.map(emp => {
             const statC = getStatusColor(emp.status);
+            // attColor stays a raw hex literal (not var()) because it is concatenated with an
+            // alpha suffix below (`${attColor}15`) to build the attendance badge background;
+            // CSS custom properties can't be suffixed that way.
             const attColor = emp.attendance >= 95 ? '#10B981' : (emp.attendance >= 90 ? '#F59E0B' : '#EF4444');
             const pColor = getProdBarColor(emp.productivity);
 

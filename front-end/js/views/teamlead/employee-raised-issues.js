@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
+    // Note: these color fields are concatenated with an alpha suffix below
+    // (`${issue.priorityColor}20` / `${issue.statusColor}20`) to build translucent
+    // badge backgrounds, so they must stay raw hex literals rather than var() —
+    // CSS custom properties can't be suffixed that way.
     let mockIssues = [
         { emp: 'James Brown', id: 'ISS-102', title: 'Need access to AWS Console', type: 'Access Request', priority: 'High', status: 'Pending', date: '2026-03-30', priorityColor: 'var(--danger-color)', statusColor: 'var(--warning-color)' },
         { emp: 'Lisa Anderson', id: 'ISS-105', title: 'Laptop overheating', type: 'Hardware', priority: 'Medium', status: 'In Progress', date: '2026-03-29', priorityColor: 'var(--warning-color)', statusColor: '#3b82f6' },
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <button class="action-btn resolve-btn" title="Resolve Issue" style="padding: 6px 12px; border: none; background-color: rgba(16, 185, 129, 0.1); color: var(--secondary-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
                             <i class="ph ph-check-circle"></i>
                         </button>
-                        <button class="action-btn details-btn" title="View Details" style="padding: 6px 12px; border: none; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
+                        <button class="action-btn details-btn" title="View Details" style="padding: 6px 12px; border: none; background-color: rgba(59, 130, 246, 0.1); color: var(--primary-color); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease;">
                             <i class="ph ph-eye"></i>
                         </button>
                         <button class="action-btn escalate-hr-btn" title="Escalate to HR" style="padding: 6px 12px; border: none; background-color: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease; display:flex; align-items:center; justify-content:center;">

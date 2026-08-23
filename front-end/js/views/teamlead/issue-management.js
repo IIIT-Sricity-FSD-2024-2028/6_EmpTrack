@@ -40,13 +40,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isResolved = i.status === 'Resolved';
 
             return `
-            <tr style="transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#F9FAFB'" onmouseout="this.style.backgroundColor=''">
+            <tr style="transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='var(--bg-main)'" onmouseout="this.style.backgroundColor=''">
                 <td style="padding: 16px; min-width: 250px;">
                     <span style="color:var(--primary-color); font-weight:var(--font-bold); text-decoration:none; font-size:13px;">${i.issue_id}</span>
-                    <div style="font-weight:var(--font-semibold); margin: 4px 0; color:#334155;">${i.title}</div>
+                    <div style="font-weight:var(--font-semibold); margin: 4px 0; color:var(--text-main);">${i.title}</div>
                     <div style="font-size:12px; color:var(--text-muted); line-height:1.4;">${i.type}</div>
                 </td>
-                <td style="padding: 16px; font-weight:var(--font-medium); color:#475569;">${empStr}</td>
+                <td style="padding: 16px; font-weight:var(--font-medium); color:var(--text-muted);">${empStr}</td>
                 <td style="padding: 16px;">${taskStr}</td>
                 <td style="padding: 16px;">
                     <span class="badge ${priBadge}">${i.priority}</span>
@@ -56,14 +56,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <i class="ph ${statIcon}"></i> ${i.status}
                     </span>
                 </td>
-                <td style="padding: 16px; font-size:13px; color:#475569;">${i.assigned_to}</td>
+                <td style="padding: 16px; font-size:13px; color:var(--text-muted);">${i.assigned_to}</td>
                 <td style="padding: 16px;">
                     ${isResolved ? `
                         <span style="color:var(--text-muted); font-size:13px; font-style:italic;"><i class="ph-fill ph-check-circle"></i> Completed</span>
                     ` : `
                         <div style="display:flex; flex-direction:column; gap: 8px;">
-                            <a href="assign-issue.html?id=${i.issue_id}" class="btn" style="background-color:#DBEAFE; color:#1D4ED8; border-radius:var(--radius-full); padding:6px 16px; text-decoration:none; font-size:12px; font-weight:var(--font-bold); box-shadow:0 1px 2px rgba(0,0,0,0.05); text-align:center;">Assign</a>
-                            <a href="resolve-issue.html?id=${i.issue_id}" class="btn" style="background-color:#D1FAE5; color:#047857; border-radius:var(--radius-full); padding:6px 16px; text-decoration:none; font-size:12px; font-weight:var(--font-bold); box-shadow:0 1px 2px rgba(0,0,0,0.05); text-align:center;">Resolve</a>
+                            <a href="assign-issue.html?id=${i.issue_id}" class="btn" style="background-color:var(--primary-light); color:var(--primary-hover); border-radius:var(--radius-full); padding:6px 16px; text-decoration:none; font-size:12px; font-weight:var(--font-bold); box-shadow:var(--shadow-sm); text-align:center;">Assign</a>
+                            <a href="resolve-issue.html?id=${i.issue_id}" class="btn" style="background-color:var(--status-success-bg); color:var(--status-success-fg); border-radius:var(--radius-full); padding:6px 16px; text-decoration:none; font-size:12px; font-weight:var(--font-bold); box-shadow:var(--shadow-sm); text-align:center;">Resolve</a>
                         </div>
                     `}
                 </td>

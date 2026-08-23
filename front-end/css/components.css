@@ -102,8 +102,8 @@
 }
 
 .stat-icon.primary { background-color: var(--primary-light); color: var(--primary-color); }
-.stat-icon.success { background-color: #D1FAE5; color: var(--secondary-color); }
-.stat-icon.warning { background-color: #FEF3C7; color: var(--warning-color); }
+.stat-icon.success { background-color: var(--status-success-bg); color: var(--secondary-color); }
+.stat-icon.warning { background-color: var(--status-warning-bg); color: var(--warning-color); }
 
 .stat-content {
     display: flex;
@@ -210,9 +210,9 @@ tbody tr:hover {
     border-radius: var(--radius-full);
 }
 
-.badge-success { background-color: #D1FAE5; color: #065F46; }
-.badge-warning { background-color: #FEF3C7; color: #92400E; }
-.badge-danger { background-color: #FEE2E2; color: #991B1B; }
+.badge-success { background-color: var(--status-success-bg); color: var(--status-success-fg); }
+.badge-warning { background-color: var(--status-warning-bg); color: var(--status-warning-fg); }
+.badge-danger { background-color: var(--status-danger-bg); color: var(--status-danger-fg); }
 .badge-info { background-color: var(--primary-light); color: var(--primary-hover); }
 
 /* Custom Redesign Specs CSS */
@@ -238,15 +238,15 @@ tbody tr:hover {
     background-color: var(--accent-orange-hover);
 }
 
-.badge-in-progress { background-color: #FFF7ED; color: #EA580C; } /* Light orange */
-.badge-completed { background-color: #F0FDF4; color: #16A34A; } /* Light green */
-.badge-not-started { background-color: #F3F4F6; color: #4B5563; } /* Light gray */
+.badge-in-progress { background-color: var(--status-warning-bg); color: var(--status-warning-fg); }
+.badge-completed { background-color: var(--status-success-bg); color: var(--status-success-fg); }
+.badge-not-started { background-color: var(--status-neutral-bg); color: var(--status-neutral-fg); }
 
 /* Phase 4 Issue Badges */
-.badge-high { background-color: #FEE2E2; color: #EF4444; } /* Light red */
-.badge-medium { background-color: #FEF3C7; color: #F59E0B; } /* Light orange */
+.badge-high { background-color: var(--status-danger-bg); color: var(--status-danger-fg); }
+.badge-medium { background-color: var(--status-warning-bg); color: var(--status-warning-fg); }
 .badge-low { background-color: var(--primary-light); color: var(--primary-color); } /* Light purple */
-.badge-open { background-color: #FEF08A; color: #854D0E; } /* Light yellow/orange */
+.badge-open { background-color: var(--status-warning-bg); color: var(--status-warning-fg); }
 
 /* Interactive Radio Cards */
 .radio-card {
@@ -263,7 +263,7 @@ tbody tr:hover {
 
 .radio-card:hover {
     border-color: var(--primary-light);
-    background: #FAFAFA;
+    background: var(--bg-main);
 }
 
 .radio-card.selected {
@@ -301,9 +301,9 @@ tbody tr:hover {
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    background-color: #F3F4F6;
-    color: #9CA3AF;
-    border: 2px solid white;
+    background-color: var(--status-neutral-bg);
+    color: var(--text-light);
+    border: 2px solid var(--bg-surface);
 }
 .timeline-icon.completed {
     background-color: var(--primary-color);
@@ -380,10 +380,10 @@ tbody tr:hover {
 }
 
 /* Phase 6 Attendance Specifics */
-.badge-weekend { background-color: #F3F4F6; color: #4B5563; } /* Gray badge */
-.badge-escalated { background-color: #FEE2E2; color: #B91C1C; font-weight: bold; } /* Stronger red */
-.badge-absent { background-color: #FFEDD5; color: #C2410C; } /* Red/Orange style */
-.badge-present { background-color: #D1FAE5; color: #047857; } /* Solid Green matching success */
+.badge-weekend { background-color: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+.badge-escalated { background-color: var(--status-danger-bg); color: var(--status-danger-fg); font-weight: bold; }
+.badge-absent { background-color: var(--status-warning-bg); color: var(--status-warning-fg); }
+.badge-present { background-color: var(--status-success-bg); color: var(--status-success-fg); }
 
 .location-toggle {
     padding: 10px 24px;
@@ -419,7 +419,7 @@ tbody tr:hover {
 }
 .circle-bg {
     fill: none;
-    stroke: #eee;
+    stroke: var(--border-color);
     stroke-width: 3.8;
 }
 .circle {
@@ -444,7 +444,11 @@ tbody tr:hover {
 .badge-vacation { background-color: #E0E7FF; color: #4338CA; } /* Light purple/indigo */
 .badge-sick-leave { background-color: #DBEAFE; color: #1D4ED8; } /* Light blue */
 .badge-personal { background-color: #EDE9FE; color: #6D28D9; } /* Light violet */
-.badge-rejected { background-color: #FEE2E2; color: #B91C1C; } /* Red badge */
+.badge-rejected { background-color: var(--status-danger-bg); color: var(--status-danger-fg); }
+
+[data-theme="dark"] .badge-vacation { background-color: rgba(99, 102, 241, 0.18); color: #A5B4FC; }
+[data-theme="dark"] .badge-sick-leave { background-color: rgba(59, 130, 246, 0.18); color: #93C5FD; }
+[data-theme="dark"] .badge-personal { background-color: rgba(139, 92, 246, 0.18); color: #C4B5FD; }
 .leave-reject-reason {
     color: var(--danger-color);
     font-size: 12px;
@@ -455,7 +459,7 @@ tbody tr:hover {
 
 /* Phase 8 Profile UI Config */
 .profile-hero {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #312E81 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: #FFFFFF;
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
@@ -494,6 +498,6 @@ tbody tr:hover {
 }
 
 .text-success {
-    color: #10B981 !important; /* Emerald green matching +X% growth bounds */
+    color: var(--secondary-color) !important; /* Emerald green matching +X% growth bounds */
 }
 

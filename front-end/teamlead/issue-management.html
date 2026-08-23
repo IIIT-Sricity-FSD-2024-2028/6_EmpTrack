@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Issue Management</title>
     
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
@@ -39,7 +40,7 @@
                             </div>
                         </div>
                         <div class="card" style="padding: 24px; display:flex; align-items:center; gap: 16px;">
-                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:#FEF3C7; color:#F59E0B; display:flex; align-items:center; justify-content:center;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:var(--status-warning-bg); color:var(--warning-color); display:flex; align-items:center; justify-content:center;">
                                 <i class="ph-fill ph-envelope-open" style="font-size:24px;"></i>
                             </div>
                             <div>
@@ -48,7 +49,7 @@
                             </div>
                         </div>
                         <div class="card" style="padding: 24px; display:flex; align-items:center; gap: 16px;">
-                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:#DBEAFE; color:#2563EB; display:flex; align-items:center; justify-content:center;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:var(--primary-light); color:var(--primary-color); display:flex; align-items:center; justify-content:center;">
                                 <i class="ph-fill ph-spinner-gap" style="font-size:24px;"></i>
                             </div>
                             <div>
@@ -57,7 +58,7 @@
                             </div>
                         </div>
                         <div class="card" style="padding: 24px; display:flex; align-items:center; gap: 16px;">
-                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:#D1FAE5; color:#059669; display:flex; align-items:center; justify-content:center;">
+                            <div style="width: 48px; height: 48px; border-radius: 50%; background-color:var(--status-success-bg); color:var(--secondary-hover); display:flex; align-items:center; justify-content:center;">
                                 <i class="ph-fill ph-check-circle" style="font-size:24px;"></i>
                             </div>
                             <div>
@@ -70,7 +71,7 @@
                     <!-- SECTION 2: FILTER SECTION -->
                     <div class="card" style="padding: 20px; display:flex; gap: 16px; flex-wrap:wrap;">
                         <div style="flex:1; min-width:200px;">
-                            <select id="filter-status" class="form-control" style="background-color:#F8FAFC;">
+                            <select id="filter-status" class="form-control" style="background-color: var(--bg-main);">
                                 <option value="">Filter by Status mapping...</option>
                                 <option value="Open">Open</option>
                                 <option value="In Progress">In Progress</option>
@@ -78,7 +79,7 @@
                             </select>
                         </div>
                         <div style="flex:1; min-width:200px;">
-                            <select id="filter-priority" class="form-control" style="background-color:#F8FAFC;">
+                            <select id="filter-priority" class="form-control" style="background-color: var(--bg-main);">
                                 <option value="">Filter by Priority bounds...</option>
                                 <option value="High">High</option>
                                 <option value="Medium">Medium</option>
@@ -86,10 +87,10 @@
                             </select>
                         </div>
                         <div style="flex:1; min-width:200px;">
-                            <input type="text" id="search-emp" class="form-control" placeholder="Search by Employee..." style="background-color:#F8FAFC;">
+                            <input type="text" id="search-emp" class="form-control" placeholder="Search by Employee..." style="background-color: var(--bg-main);">
                         </div>
                         <div style="flex:1; min-width:200px;">
-                            <input type="text" id="search-assigned" class="form-control" placeholder="Search by Assigned To..." style="background-color:#F8FAFC;">
+                            <input type="text" id="search-assigned" class="form-control" placeholder="Search by Assigned To..." style="background-color: var(--bg-main);">
                         </div>
                     </div>
         

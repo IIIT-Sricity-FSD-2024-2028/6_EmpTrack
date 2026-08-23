@@ -42,10 +42,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div style="display:flex; flex-direction:column; gap: 16px;">
             
             <!-- Main Info Card -->
-            <div class="card" style="padding: 24px; background-color: #FFFFFF;">
+            <div class="card" style="padding: 24px; background-color: var(--bg-surface);">
                 <h3 style="margin:0 0 16px 0; color:var(--primary-color); font-size:var(--text-lg);">${issueData.issue_id}</h3>
-                <h4 style="margin:0 0 8px 0; font-size: 20px; font-weight:var(--font-bold); color:#1E293B;">${issueData.title}</h4>
-                <p style="color:#475569; font-size:14px; line-height:1.6; margin:0 0 24px 0; padding-bottom:16px; border-bottom:1px solid #E2E8F0;">
+                <h4 style="margin:0 0 8px 0; font-size: 20px; font-weight:var(--font-bold); color:var(--text-main);">${issueData.title}</h4>
+                <p style="color:var(--text-muted); font-size:14px; line-height:1.6; margin:0 0 24px 0; padding-bottom:16px; border-bottom:1px solid var(--border-color);">
                     ${issueData.description || 'No detailed description provided by the reporter.'}
                 </p>
                 
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="display:flex; flex-direction:column; gap: 16px;">
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Reported By</div>
-                            <div style="font-weight:var(--font-medium); font-size:14px; color:#334155;">${empNameNode}</div>
+                            <div style="font-weight:var(--font-medium); font-size:14px; color:var(--text-main);">${empNameNode}</div>
                         </div>
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Related Task</div>
@@ -72,11 +72,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="display:flex; flex-direction:column; gap: 16px;">
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Employee ID</div>
-                            <div style="font-weight:var(--font-medium); font-size:14px; color:#334155;">${issueData.emp_id}</div>
+                            <div style="font-weight:var(--font-medium); font-size:14px; color:var(--text-main);">${issueData.emp_id}</div>
                         </div>
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Created Date</div>
-                            <div style="font-weight:var(--font-medium); font-size:14px; color:#334155;">${issueData.raised_date || '-'}</div>
+                            <div style="font-weight:var(--font-medium); font-size:14px; color:var(--text-main);">${issueData.raised_date || '-'}</div>
                         </div>
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Current Status</div>
@@ -86,19 +86,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 </div>
                 
-                <div style="margin-top:24px; padding-top:16px; border-top:1px solid #E2E8F0;">
+                <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border-color);">
                     <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Current Assignment</div>
-                    <div style="font-weight:var(--font-medium); font-size:14px; color:#64748B; font-style:italic;">${issueData.assigned_to === 'Unassigned' ? 'Unassigned' : issueData.assigned_to}</div>
+                    <div style="font-weight:var(--font-medium); font-size:14px; color:var(--text-muted); font-style:italic;">${issueData.assigned_to === 'Unassigned' ? 'Unassigned' : issueData.assigned_to}</div>
                 </div>
             </div>
 
             <!-- Assignment Tips -->
-            <div class="card" style="padding: 20px; background-color: #F8FAFC; border:1px solid #E2E8F0;">
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom: 12px; color:#3B82F6;">
+            <div class="card" style="padding: 20px; background-color: var(--bg-main); border:1px solid var(--border-color);">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom: 12px; color:var(--primary-color);">
                     <i class="ph-fill ph-lightbulb" style="font-size:20px;"></i>
-                    <h4 style="margin:0; font-size:14px; font-weight:var(--font-bold); color:#1E293B;">Assignment Tips</h4>
+                    <h4 style="margin:0; font-size:14px; font-weight:var(--font-bold); color:var(--text-main);">Assignment Tips</h4>
                 </div>
-                <ul style="margin:0; padding-left: 20px; color:#475569; font-size:13px; line-height:1.6;">
+                <ul style="margin:0; padding-left: 20px; color:var(--text-muted); font-size:13px; line-height:1.6;">
                     <li>Choose appropriate team/individual</li>
                     <li>Set realistic deadlines</li>
                     <li>Add clear instructions</li>
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <form id="assign-issue-form">
                     <div class="form-group">
                         <label class="form-label">Assignment Type</label>
-                        <select id="assign_type" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                        <select id="assign_type" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:var(--bg-main);">
                             <option value="" disabled selected>Select execution scope...</option>
                             <option value="Individual">Individual Contributor</option>
                             <option value="Team">Team / Squad Request</option>
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     <div class="form-group">
                         <label class="form-label">Select Team / Assigned Node</label>
-                        <select id="assign_target" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                        <select id="assign_target" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:var(--bg-main);">
                             <option value="" disabled selected>Route issue to...</option>
                             <option value="Tech Support">Tech Support</option>
                             <option value="DevOps Team">DevOps Team</option>
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Priority Override</label>
-                            <select id="assign_prio" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                            <select id="assign_prio" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:var(--bg-main);">
                                 <option value="High" ${issueData.priority === 'High' ? 'selected' : ''}>High</option>
                                 <option value="Medium" ${issueData.priority === 'Medium' ? 'selected' : ''}>Medium</option>
                                 <option value="Low" ${issueData.priority === 'Low' ? 'selected' : ''}>Low</option>
@@ -150,13 +150,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Resolution Deadline</label>
-                            <input type="date" id="assign_date" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;">
+                            <input type="date" id="assign_date" class="form-control" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:var(--bg-main);">
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 32px;">
                         <label class="form-label">Assignment Notes</label>
-                        <textarea id="assign_notes" class="form-control" rows="4" placeholder="Inject explicit directives for the team..." required style="border-radius: var(--radius-md); padding: 16px; background-color:#F8FAFC; resize:vertical;"></textarea>
+                        <textarea id="assign_notes" class="form-control" rows="4" placeholder="Inject explicit directives for the team..." required style="border-radius: var(--radius-md); padding: 16px; background-color:var(--bg-main); resize:vertical;"></textarea>
                     </div>
 
                     <!-- Action Buttons -->
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <button type="submit" class="btn btn-purple" style="flex:2; padding: 14px; font-size:14px; justify-content:center; box-shadow: var(--shadow-sm);">
                             Assign Issue
                         </button>
-                        <a href="issue-management.html" class="btn btn-outline" style="flex:1; padding: 14px; justify-content:center; text-decoration:none; border-radius: var(--radius-full); background-color:#F1F5F9; border:none; color:#475569;">
+                        <a href="issue-management.html" class="btn btn-outline" style="flex:1; padding: 14px; justify-content:center; text-decoration:none; border-radius: var(--radius-full); background-color:var(--border-light); border:none; color:var(--text-muted);">
                             Cancel
                         </a>
                     </div>

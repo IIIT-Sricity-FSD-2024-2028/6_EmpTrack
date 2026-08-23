@@ -61,12 +61,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const toast = document.createElement('div');
         toast.style.cssText = `
-            background:${type === 'success' ? '#16A34A' : '#DC2626'};
+            background:${type === 'success' ? 'var(--secondary-color)' : 'var(--danger-hover)'};
             color:white;
             padding:12px 20px;
             border-radius:8px;
             font-weight:500;
-            box-shadow:0 4px 12px rgba(0,0,0,0.15);
+            box-shadow:var(--shadow-md);
         `;
         toast.innerHTML = message;
         toastContainer.appendChild(toast);

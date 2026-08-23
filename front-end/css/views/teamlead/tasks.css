@@ -4,9 +4,9 @@
             gap: 24px;
             animation: fadeIn 0.4s ease-out forwards;
             --tl-primary: #7C3AED;
-            --tl-success: #22C55E;
-            --tl-warning: #F97316;
-            --tl-danger: #EF4444;
+            --tl-success: var(--secondary-color);
+            --tl-warning: var(--accent-orange);
+            --tl-danger: var(--danger-color);
             --tl-info: #3B82F6;
         }
 

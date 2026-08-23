@@ -2,11 +2,16 @@ import { Injectable } from '@nestjs/common';
 
 const INITIAL_MOCK_DATA = {
     employee: [
-        { emp_id: "AD001", emp_name: "Bruce Wayne (Super Admin)", email: "admin@emp.com", phone: "1231231234", password: "Password@123", role: "ADMIN", status: "ACTIVE", date_of_joining: "2020-01-01", department_id: "D00", team_id: "T00" },
-        { emp_id: "HR001", emp_name: "HR Manager", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01" },
-        { emp_id: "TL001", emp_name: "Rinku Singh (TL)", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02" },
-        { emp_id: "EM001", emp_name: "John Doe (EMP)", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001" },
-        { emp_id: "EM002", emp_name: "Jane Smith (EMP)", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001" }
+        { emp_id: "AD001", emp_name: "Bruce Wayne (Super Admin)", email: "admin@emp.com", phone: "1231231234", password: "Password@123", role: "ADMIN", status: "ACTIVE", date_of_joining: "2020-01-01", department_id: "D00", team_id: "T00", companyId: "C001" },
+        { emp_id: "HR001", emp_name: "HR Manager", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01", companyId: "C001" },
+        { emp_id: "TL001", emp_name: "Rinku Singh (TL)", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02", companyId: "C001" },
+        { emp_id: "EM001", emp_name: "John Doe (EMP)", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001", companyId: "C001" },
+        { emp_id: "EM002", emp_name: "Jane Smith (EMP)", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001", companyId: "C001" },
+
+        // Second company - seeded to prove calendar tenant isolation (see CalendarService)
+        { emp_id: "HR002", emp_name: "Carol Danvers (HR)", email: "hr2@emp.com", phone: "2223334444", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2023-03-01", department_id: "D01", team_id: "T10", companyId: "C002" },
+        { emp_id: "TL002", emp_name: "Tony Stark (TL)", email: "tl2@emp.com", phone: "3334445555", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2023-05-01", department_id: "D02", team_id: "T11", companyId: "C002" },
+        { emp_id: "EM003", emp_name: "Peter Parker (EMP)", email: "emp3@emp.com", phone: "4445556677", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2024-09-01", department_id: "D02", team_id: "T11", manager_id: "TL002", companyId: "C002" }
     ],
     attendance: [
         { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: 6, remarks: "On track", status: "PRESENT" },
@@ -44,7 +49,20 @@ const INITIAL_MOCK_DATA = {
         { worklog_id: "WL-002", emp_id: "EM001", task_id: "TK001", task_title: "Build Front-End UI", start_time: "2026-03-28T14:00", end_time: "2026-03-28T16:00", hours_spent: 2, description: "Integrated primary navigation sidebar and fixed hover states.", log_date: "2026-03-28" },
         { worklog_id: "WL-003", emp_id: "EM001", task_id: "TK002", task_title: "Database Schema Map", start_time: "2026-03-29T09:00", end_time: "2026-03-29T11:00", hours_spent: 2, description: "Started mapping variables from SQL mock format to the class constructs.", log_date: "2026-03-29" }
     ],
-    notifications: []
+    notifications: [],
+    holidays: [
+        { holiday_id: "H001", companyId: "C001", title: "New Year's Day", date: "2026-01-01" },
+        { holiday_id: "H002", companyId: "C001", title: "Independence Day", date: "2026-08-15" },
+        { holiday_id: "H003", companyId: "C001", title: "Diwali", date: "2026-11-08" },
+        { holiday_id: "H004", companyId: "C002", title: "New Year's Day", date: "2026-01-01" },
+        { holiday_id: "H005", companyId: "C002", title: "Founders Day", date: "2026-05-20" },
+        { holiday_id: "H006", companyId: "C002", title: "Thanksgiving", date: "2026-11-26" }
+    ],
+    company_events: [
+        { event_id: "CE001", companyId: "C001", title: "All-Hands Meeting", date: "2026-08-20", visible_to_roles: ["ALL"] },
+        { event_id: "CE002", companyId: "C001", title: "Team Lead Sync", date: "2026-08-25", visible_to_roles: ["TEAMLEAD", "HR", "ADMIN"] },
+        { event_id: "CE003", companyId: "C002", title: "Quarterly Review", date: "2026-08-22", visible_to_roles: ["ALL"] }
+    ]
 };
 
 @Injectable()
@@ -63,6 +81,8 @@ export class MockDataService {
     public getIssues() { return this.data.issue; }
     public getWorkLogs() { return this.data.work_logs; }
     public getNotifications() { return this.data.notifications; }
+    public getHolidays() { return this.data.holidays; }
+    public getCompanyEvents() { return this.data.company_events; }
 
     public deleteEmployee(id: string) {
         const initialLength = this.data.employee.length;

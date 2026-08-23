@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - My Profile</title>
     
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
@@ -65,7 +66,7 @@
         
                     <!-- SECTION 2: Top Stats Row -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-lg);">
-                        <div class="stat-bounce" style="background: white; border-radius: var(--radius-xl); padding: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--spacing-lg); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: default;">
+                        <div class="stat-bounce" style="background: var(--bg-surface); border-radius: var(--radius-xl); padding: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--spacing-lg); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: default;">
                             <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(106, 17, 203, 0.1); color: #6A11CB; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                                 <i class="ph-fill ph-rocket"></i>
                             </div>
@@ -75,7 +76,7 @@
                             </div>
                         </div>
         
-                        <div class="stat-bounce" style="background: white; border-radius: var(--radius-xl); padding: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--spacing-lg); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: default;">
+                        <div class="stat-bounce" style="background: var(--bg-surface); border-radius: var(--radius-xl); padding: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--spacing-lg); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: default;">
                             <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(106, 17, 203, 0.1); color: #6A11CB; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                                 <i class="ph-fill ph-star"></i>
                             </div>
@@ -85,7 +86,7 @@
                             </div>
                         </div>
         
-                        <div class="stat-bounce" style="background: white; border-radius: var(--radius-xl); padding: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--spacing-lg); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: default;">
+                        <div class="stat-bounce" style="background: var(--bg-surface); border-radius: var(--radius-xl); padding: var(--spacing-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); display: flex; align-items: center; gap: var(--spacing-lg); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: default;">
                             <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(106, 17, 203, 0.1); color: #6A11CB; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
                                 <i class="ph-fill ph-shield-warning"></i>
                             </div>
@@ -104,7 +105,7 @@
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--spacing-lg);">
                                 
                                 <!-- Personal Info -->
-                                <div class="info-card" style="background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl); position: relative; overflow: hidden; transition: transform 0.2s ease;">
+                                <div class="info-card" style="background: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl); position: relative; overflow: hidden; transition: transform 0.2s ease;">
                                     <div style="position:absolute; top:0; left:0; width:4px; height:100%; background: #6A11CB;"></div>
                                     <h3 style="margin: 0 0 var(--spacing-lg) 0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main); display:flex; align-items:center; gap:8px;">
                                         <i class="ph-fill ph-user" style="color:#6A11CB;"></i> Personal Information
@@ -130,7 +131,7 @@
                                 </div>
         
                                 <!-- Work Info -->
-                                <div class="info-card" style="background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl); position: relative; overflow: hidden; transition: transform 0.2s ease;">
+                                <div class="info-card" style="background: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl); position: relative; overflow: hidden; transition: transform 0.2s ease;">
                                     <div style="position:absolute; top:0; left:0; width:4px; height:100%; background: #FF4B91;"></div>
                                     <h3 style="margin: 0 0 var(--spacing-lg) 0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main); display:flex; align-items:center; gap:8px;">
                                         <i class="ph-fill ph-buildings" style="color:#FF4B91;"></i> Work Information
@@ -158,14 +159,14 @@
                             </div>
         
                             <!-- SECTION 4: Skills & Expertise -->
-                            <div style="background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl);">
+                            <div style="background: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl);">
                                 <h3 style="margin: 0 0 var(--spacing-lg) 0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main);">Skills & Expertise</h3>
                                 <div id="skills-container" style="display: flex; flex-wrap: wrap; gap: 10px;">
                                 </div>
                             </div>
         
                             <!-- SECTION 5: Leadership Performance Mini-cards -->
-                            <div style="background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl);">
+                            <div style="background: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl);">
                                 <h3 style="margin: 0 0 var(--spacing-lg) 0; font-size: var(--text-lg); font-weight: var(--font-bold); color: var(--text-main);">Leadership Performance Overview</h3>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--spacing-md);">
                                     
@@ -212,7 +213,7 @@
         
                         <!-- Right Sidebar Column (Security / Password Change) -->
                         <div style="flex: 1 1 30%; min-width: 300px; display: flex; flex-direction: column;">
-                            <div style="background: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl); display: flex; flex-direction: column; gap: var(--spacing-lg);">
+                            <div style="background: var(--bg-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); padding: var(--spacing-xl); display: flex; flex-direction: column; gap: var(--spacing-lg);">
                                 
                                 <div style="display:flex; align-items:center; gap:10px;">
                                     <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(106, 17, 203, 0.1); color: #6A11CB; display:flex; align-items:center; justify-content:center; font-size: 1.25rem;">
@@ -253,7 +254,7 @@
         
                 <!-- Edit Profile Modal -->
                 <div id="edit-profile-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
-                    <div style="background:var(--bg-surface); padding:var(--spacing-xl); border-radius:var(--radius-xl); box-shadow:0 15px 30px rgba(0,0,0,0.2); width:100%; max-width:400px; animation:fade-in 0.2s ease-out;">
+                    <div style="background:var(--bg-surface); padding:var(--spacing-xl); border-radius:var(--radius-xl); box-shadow:var(--shadow-lg); width:100%; max-width:400px; animation:fade-in 0.2s ease-out;">
                         <h3 style="margin:0 0 var(--spacing-lg) 0; color:var(--text-main); font-size:var(--text-xl);">Edit Profile</h3>
                         <form id="edit-profile-form" style="display:flex; flex-direction:column; gap:var(--spacing-md);">
                             <div style="display:flex; flex-direction:column; gap:6px;">

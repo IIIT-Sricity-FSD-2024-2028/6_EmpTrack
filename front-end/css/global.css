@@ -57,7 +57,24 @@ button {
     background: none;
 }
 
-input, textarea, select {
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+textarea,
+select {
     font-family: inherit;
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+}
+
+input::placeholder, textarea::placeholder {
+    color: var(--text-light);
+}
+
+/* Smooth (but subtle) theme transitions - avoid `transition: all` for perf. */
+@media (prefers-reduced-motion: no-preference) {
+    body, .card, .sidebar, .top-header, .modal, .modal-overlay, .btn,
+    input, select, textarea, .badge, .cal-widget, .cal-day {
+        transition: background-color 200ms ease, color 200ms ease,
+                    border-color 200ms ease, box-shadow 200ms ease;
+    }
 }
 

@@ -308,6 +308,41 @@ class ApiStore {
         this.saveData();
         return newNotif;
     }
+
+    // --- Calendar ---
+    async getHolidays(requesterEmpId, year, month) {
+        return this._fetch(`/calendar/holidays?${this._calQuery(requesterEmpId, year, month)}`);
+    }
+
+    async getMyCalendar(requesterEmpId, year, month) {
+        return this._fetch(`/calendar/my-calendar?${this._calQuery(requesterEmpId, year, month)}`);
+    }
+
+    async getTeamCalendar(requesterEmpId, year, month) {
+        return this._fetch(`/calendar/team-calendar?${this._calQuery(requesterEmpId, year, month)}`);
+    }
+
+    async getCompanyCalendar(requesterEmpId, year, month) {
+        return this._fetch(`/calendar/company-calendar?${this._calQuery(requesterEmpId, year, month)}`);
+    }
+
+    async getCompanyEvents(requesterEmpId, year, month) {
+        return this._fetch(`/calendar/company-events?${this._calQuery(requesterEmpId, year, month)}`);
+    }
+
+    async createCompanyEvent(requesterEmpId, eventData) {
+        return this._fetch(`/calendar/company-events?requesterEmpId=${requesterEmpId}`, {
+            method: 'POST',
+            body: JSON.stringify(eventData)
+        });
+    }
+
+    _calQuery(requesterEmpId, year, month) {
+        const params = new URLSearchParams({ requesterEmpId: requesterEmpId || '' });
+        if (year) params.set('year', year);
+        if (month) params.set('month', month);
+        return params.toString();
+    }
 }
 
 export const db = new ApiStore();

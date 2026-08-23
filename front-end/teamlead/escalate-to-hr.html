@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Escalate to HR</title>
     
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
@@ -35,11 +36,11 @@
                     </div>
 
                     <!-- Orange Info Banner -->
-                    <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: var(--radius-md); padding: 20px; display:flex; gap: 16px;">
-                        <i class="ph ph-shield-check" style="color: #D97706; font-size: 24px; margin-top:2px;"></i>
+                    <div style="background-color: var(--status-warning-bg); border: 1px solid var(--warning-color); border-radius: var(--radius-md); padding: 20px; display:flex; gap: 16px;">
+                        <i class="ph ph-shield-check" style="color: var(--warning-color); font-size: 24px; margin-top:2px;"></i>
                         <div>
-                            <h4 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 700; color: #92400E;">When to Escalate to HR/Admin?</h4>
-                            <ul style="margin: 0; padding-left: 16px; color: #B45309; font-size: 13px; line-height: 1.6;">
+                            <h4 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 700; color: var(--status-warning-fg);">When to Escalate to HR/Admin?</h4>
+                            <ul style="margin: 0; padding-left: 16px; color: var(--status-warning-fg); font-size: 13px; line-height: 1.6;">
                                 <li><strong>Team Conflicts:</strong> Disputes between team members that you cannot resolve</li>
                                 <li><strong>Performance Issues:</strong> Persistent underperformance despite warnings</li>
                                 <li><strong>Policy Violations:</strong> Breach of company policies or code of conduct</li>
@@ -54,85 +55,85 @@
                     <div style="display:flex; flex-direction:column; gap: 24px; margin-top: 10px;">
                         <div style="display:flex; align-items:center; gap: 8px;">
                             <div style="width: 4px; height: 24px; background-color: #6A11CB; border-radius: 4px;"></div>
-                            <h3 style="margin:0; font-size: 20px; font-weight: 600; color: #1E293B;">Issue Details</h3>
+                            <h3 style="margin:0; font-size: 20px; font-weight: 600; color: var(--text-main);">Issue Details</h3>
                         </div>
 
-                        <div style="border: 1px solid #E2E8F0; border-radius: var(--radius-lg); padding: 32px; background: white; display:flex; flex-direction:column; gap: 28px;">
+                        <div style="border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 32px; background: var(--bg-surface); display:flex; flex-direction:column; gap: 28px;">
                             
                             <!-- Personal Issue Card -->
-                            <label style="display:flex; align-items:center; gap: 16px; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
+                            <label style="display:flex; align-items:center; gap: 16px; background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
                                 <div style="flex: 1;">
-                                    <div style="font-size: 14px; font-weight: 600; color: #334155;">This is my personal issue</div>
-                                    <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Check this if you're raising an issue about yourself (not about a team member)</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">This is my personal issue</div>
+                                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Check this if you're raising an issue about yourself (not about a team member)</div>
                                 </div>
                                 <input type="checkbox" id="personal-issue-toggle" style="width: 18px; height: 18px; accent-color: #6A11CB;">
                             </label>
 
                             <!-- Issue Category -->
                             <div>
-                                <label style="display:flex; align-items:center; gap:6px; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 12px;">
-                                    <i class="ph ph-warning-circle"></i> Issue Category <span style="color:#EF4444;">*</span>
+                                <label style="display:flex; align-items:center; gap:6px; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px;">
+                                    <i class="ph ph-warning-circle"></i> Issue Category <span style="color:var(--danger-color);">*</span>
                                 </label>
                                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" id="category-grid">
-                                    <button class="cat-btn" data-value="Team Conflict / Dispute" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-users" style="font-size:16px;"></i> Team Conflict / Dispute</button>
-                                    <button class="cat-btn" data-value="Performance Issue" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-warning" style="font-size:16px;"></i> Performance Issue</button>
-                                    <button class="cat-btn" data-value="Policy Violation" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-shield" style="font-size:16px;"></i> Policy Violation</button>
-                                    <button class="cat-btn" data-value="Harassment / Misconduct" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-warning-octagon" style="font-size:16px;"></i> Harassment / Misconduct</button>
-                                    <button class="cat-btn" data-value="Resource Request" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-file-text" style="font-size:16px;"></i> Resource Request</button>
-                                    <button class="cat-btn" data-value="Team Workload / Capacity" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-chart-line-up" style="font-size:16px;"></i> Team Workload / Capacity</button>
-                                    <button class="cat-btn" data-value="Leave / Absence Issue" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-calendar" style="font-size:16px;"></i> Leave / Absence Issue</button>
-                                    <button class="cat-btn" data-value="My Personal Issue" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-user" style="font-size:16px;"></i> My Personal Issue</button>
-                                    <button class="cat-btn" data-value="Other HR Matter" style="padding: 14px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); background-color: white; color: #475569; font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-dots-three-circle" style="font-size:16px;"></i> Other HR Matter</button>
+                                    <button class="cat-btn" data-value="Team Conflict / Dispute" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-users" style="font-size:16px;"></i> Team Conflict / Dispute</button>
+                                    <button class="cat-btn" data-value="Performance Issue" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-warning" style="font-size:16px;"></i> Performance Issue</button>
+                                    <button class="cat-btn" data-value="Policy Violation" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-shield" style="font-size:16px;"></i> Policy Violation</button>
+                                    <button class="cat-btn" data-value="Harassment / Misconduct" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-warning-octagon" style="font-size:16px;"></i> Harassment / Misconduct</button>
+                                    <button class="cat-btn" data-value="Resource Request" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-file-text" style="font-size:16px;"></i> Resource Request</button>
+                                    <button class="cat-btn" data-value="Team Workload / Capacity" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-chart-line-up" style="font-size:16px;"></i> Team Workload / Capacity</button>
+                                    <button class="cat-btn" data-value="Leave / Absence Issue" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-calendar" style="font-size:16px;"></i> Leave / Absence Issue</button>
+                                    <button class="cat-btn" data-value="My Personal Issue" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-user" style="font-size:16px;"></i> My Personal Issue</button>
+                                    <button class="cat-btn" data-value="Other HR Matter" style="padding: 14px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); background-color: var(--bg-surface); color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.2s; display:flex; align-items:center; gap:10px;"><i class="ph ph-dots-three-circle" style="font-size:16px;"></i> Other HR Matter</button>
                                 </div>
                             </div>
 
                             <!-- Priority Level -->
                             <div>
-                                <label style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 12px; display:block;">Priority Level <span style="color:#EF4444;">*</span></label>
+                                <label style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; display:block;">Priority Level <span style="color:var(--danger-color);">*</span></label>
                                 <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px;" id="priority-cards">
-                                    <div class="priority-card" data-value="Low" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
-                                        <div style="font-weight: 600; font-size: 14px; color: #334155; margin-bottom: 4px;">Low</div>
-                                        <div style="font-size: 11px; color: #64748B;">Non-urgent matter</div>
+                                    <div class="priority-card" data-value="Low" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
+                                        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 4px;">Low</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">Non-urgent matter</div>
                                     </div>
-                                    <div class="priority-card" data-value="Medium" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
-                                        <div style="font-weight: 600; font-size: 14px; color: #334155; margin-bottom: 4px;">Medium</div>
-                                        <div style="font-size: 11px; color: #64748B;">Needs HR attention</div>
+                                    <div class="priority-card" data-value="Medium" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
+                                        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 4px;">Medium</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">Needs HR attention</div>
                                     </div>
-                                    <div class="priority-card" data-value="High" style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
-                                        <div style="font-weight: 600; font-size: 14px; color: #334155; margin-bottom: 4px;">High</div>
-                                        <div style="font-size: 11px; color: #64748B;">Critical/Urgent</div>
+                                    <div class="priority-card" data-value="High" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; cursor: pointer; transition: all 0.2s;">
+                                        <div style="font-weight: 600; font-size: 14px; color: var(--text-main); margin-bottom: 4px;">High</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">Critical/Urgent</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Related Employee -->
                             <div id="related-employee-wrapper" style="display:flex; flex-direction:column; gap: 8px;">
-                                <label style="display:flex; align-items:center; gap:6px; font-size: 13px; font-weight: 600; color: #475569;">
+                                <label style="display:flex; align-items:center; gap:6px; font-size: 13px; font-weight: 600; color: var(--text-muted);">
                                     <i class="ph ph-users"></i> Related Employee (Optional)
                                 </label>
-                                <input type="text" id="related-emp-input" style="padding: 12px 16px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); font-size: 14px; outline:none; transition: border-color 0.2s;">
-                                <span style="font-size:11px; color:#94A3B8;">For team conflicts, you can mention multiple employees in the description</span>
+                                <input type="text" id="related-emp-input" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: 14px; outline:none; transition: border-color 0.2s;">
+                                <span style="font-size:11px; color:var(--text-muted);">For team conflicts, you can mention multiple employees in the description</span>
                             </div>
 
                             <!-- Issue Title -->
                             <div style="display:flex; flex-direction:column; gap: 8px;">
-                                <label style="font-size: 13px; font-weight: 600; color: #475569;">Issue Title <span style="color:#EF4444;">*</span></label>
-                                <input type="text" id="issue-title-input" placeholder="Brief summary of the HR issue" style="padding: 12px 16px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); font-size: 14px; outline:none; transition: border-color 0.2s;">
+                                <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Issue Title <span style="color:var(--danger-color);">*</span></label>
+                                <input type="text" id="issue-title-input" placeholder="Brief summary of the HR issue" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: 14px; outline:none; transition: border-color 0.2s;">
                             </div>
 
                             <!-- Description -->
                             <div style="display:flex; flex-direction:column; gap: 8px;">
-                                <label style="font-size: 13px; font-weight: 600; color: #475569;">Detailed Description <span style="color:#EF4444;">*</span></label>
-                                <textarea id="issue-desc-textarea" placeholder="Provide comprehensive details about the issue, including dates, incidents, actions taken, and why HR intervention is needed..." rows="6" style="padding: 12px 16px; border: 1px solid #E2E8F0; border-radius: var(--radius-md); font-family: var(--font-family); font-size: 14px; outline:none; resize:vertical; transition: border-color 0.2s;"></textarea>
-                                <span style="font-size:11px; color:#94A3B8;">Be thorough. Include timeline, evidence, previous actions, and specific outcomes you're seeking.</span>
+                                <label style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Detailed Description <span style="color:var(--danger-color);">*</span></label>
+                                <textarea id="issue-desc-textarea" placeholder="Provide comprehensive details about the issue, including dates, incidents, actions taken, and why HR intervention is needed..." rows="6" style="padding: 12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); font-family: var(--font-family); font-size: 14px; outline:none; resize:vertical; transition: border-color 0.2s;"></textarea>
+                                <span style="font-size:11px; color:var(--text-muted);">Be thorough. Include timeline, evidence, previous actions, and specific outcomes you're seeking.</span>
                             </div>
 
                             <!-- Confidentiality Warning -->
-                            <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-md); padding: 16px; display:flex; gap: 16px;">
-                                <i class="ph ph-shield" style="color: #EF4444; font-size: 20px; margin-top: 2px;"></i>
+                            <div style="background-color: var(--status-danger-bg); border: 1px solid var(--danger-color); border-radius: var(--radius-md); padding: 16px; display:flex; gap: 16px;">
+                                <i class="ph ph-shield" style="color: var(--danger-color); font-size: 20px; margin-top: 2px;"></i>
                                 <div>
-                                    <h4 style="margin:0 0 6px 0; font-size: 13px; font-weight: 700; color: #B91C1C;">Confidentiality & Sensitivity</h4>
-                                    <p style="margin: 0; font-size: 12px; color: #B91C1C; line-height: 1.5;">This escalation will be handled with strict confidentiality by HR/Admin. Please ensure all information is accurate and professional. False or malicious reports may result in disciplinary action.</p>
+                                    <h4 style="margin:0 0 6px 0; font-size: 13px; font-weight: 700; color: var(--status-danger-fg);">Confidentiality & Sensitivity</h4>
+                                    <p style="margin: 0; font-size: 12px; color: var(--status-danger-fg); line-height: 1.5;">This escalation will be handled with strict confidentiality by HR/Admin. Please ensure all information is accurate and professional. False or malicious reports may result in disciplinary action.</p>
                                 </div>
                             </div>
 
@@ -152,9 +153,9 @@
                             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px;">
                                 <div style="display:flex; align-items:center; gap: 8px;">
                                     <div style="width: 4px; height: 24px; background-color: #6A11CB; border-radius: 4px;"></div>
-                                    <h3 style="margin:0; font-size: 20px; font-weight: 600; color: #1E293B;">My Recent Escalations to HR</h3>
+                                    <h3 style="margin:0; font-size: 20px; font-weight: 600; color: var(--text-main);">My Recent Escalations to HR</h3>
                                 </div>
-                                <span style="background-color: #FEF3C7; color: #D97706; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">2 Pending</span>
+                                <span style="background-color: var(--status-warning-bg); color: var(--status-warning-fg); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">2 Pending</span>
                             </div>
 
                             <div id="recent-escalations-body" style="display:flex; flex-direction:column; gap: 12px;">

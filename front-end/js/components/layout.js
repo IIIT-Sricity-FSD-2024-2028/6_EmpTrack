@@ -1,5 +1,6 @@
 // /js/components/layout.js
 import { auth } from '../auth.js';
+import { theme } from '../theme.js';
 
 export function initLayout() {
     const user = auth.getCurrentUser();
@@ -64,18 +65,18 @@ export function initLayout() {
                     ${navItems}
                 </nav>
                 <div class="sidebar-footer" style="padding-bottom: var(--spacing-md);">
-                    <button id="logout-btn" class="nav-item" style="width: 100%; justify-content:flex-start; outline:none; margin-bottom: var(--spacing-md); background: transparent; border: none; cursor: pointer; color: white; font-size: var(--text-sm);">
+                    <button id="logout-btn" class="nav-item" style="width: 100%; justify-content:flex-start; outline:none; margin-bottom: var(--spacing-md); background: transparent; border: none; cursor: pointer; color: var(--text-muted); font-size: var(--text-sm);">
                         <i class="ph ph-sign-out"></i> Logout
                     </button>
-                    
+
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none; display: block;">
                     <div class="user-profile" style="display:flex; align-items:center; gap:var(--spacing-md); padding: 0 var(--spacing-lg);">
-                        <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255,255,255,0.2); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid rgba(255,255,255,0.3);">
+                        <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--primary-light); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid var(--border-light);">
                             ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.emp_name.charAt(0)}
                         </div>
                         <div class="user-info" style="display:flex; flex-direction:column;">
-                            <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: #FFFFFF;">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.role === 'HR' ? 'Roshan' : user.emp_name}</span>
-                            <span class="user-role" style="font-size: var(--text-xs); color: rgba(255,255,255,0.7);">${user.role === 'HR' ? 'HR Manager' : user.role === 'ADMIN' ? 'Super Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
+                            <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-main);">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.role === 'HR' ? 'Roshan' : user.emp_name}</span>
+                            <span class="user-role" style="font-size: var(--text-xs); color: var(--text-muted);">${user.role === 'HR' ? 'HR Manager' : user.role === 'ADMIN' ? 'Super Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
                         </div>
                     </div>
                     </a>
@@ -99,14 +100,17 @@ export function initLayout() {
                     <span style="font-size:var(--text-xs); color:var(--text-muted); font-weight:var(--font-medium);">${rolePortal}</span>
                 </div>
                 <div class="header-right" style="display:flex; gap:16px; align-items:center;">
+                    <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Toggle light/dark theme" aria-label="Toggle light/dark theme">
+                        <i class="ph ph-moon"></i>
+                    </button>
                     <a href="/front-end/${user.role.toLowerCase()}/notifications.html" style="text-decoration:none; color:inherit;">
-                        <div class="notification-bell ${isActive('notifications') ? 'active-bell' : ''}" style="font-size: var(--text-xl); color: ${isActive('notifications') ? 'var(--nt-primary)' : 'var(--text-muted)'}; cursor: pointer; transition: 0.2s; position:relative;">
+                        <div class="notification-bell ${isActive('notifications') ? 'active-bell' : ''}" style="font-size: var(--text-xl); color: ${isActive('notifications') ? 'var(--primary-color)' : 'var(--text-muted)'}; cursor: pointer; transition: 0.2s; position:relative;">
                             <i class="ph ph-bell"></i>
                             <span style="position:absolute; top:-4px; right:-4px; background:var(--danger-color, #ef4444); width:8px; height:8px; border-radius:50%;"></span>
                         </div>
                     </a>
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none;" title="My Profile">
-                        <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6A11CB 0%, #FF4B91 100%); color: white; display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px; margin-left: var(--spacing-lg); box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3); transition: transform 0.2s ease; cursor: pointer;">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-gradient); color: var(--text-inverse); display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px; margin-left: var(--spacing-lg); box-shadow: 0 4px 10px var(--primary-light); transition: transform 0.2s ease; cursor: pointer;">
                             ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.emp_name.charAt(0)}
                         </div>
                     </a>
@@ -123,6 +127,8 @@ export function initLayout() {
             window.location.href = '/front-end/index.html';
         });
     }
+
+    theme.bindToggleButton(document.getElementById('theme-toggle-btn'));
 
     // Notification dropdown removed in favor of direct page link
 }

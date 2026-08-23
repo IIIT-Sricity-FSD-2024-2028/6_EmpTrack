@@ -8,6 +8,7 @@ import { IssueModule } from './issue/issue.module';
 import { WorkLogModule } from './worklog/worklog.module';
 import { NotificationModule } from './notification/notification.module';
 import { EscalationModule } from './escalation/escalation.module';
+import { CalendarModule } from './calendar/calendar.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -21,7 +22,8 @@ import { AppService } from './app.service';
     IssueModule,
     WorkLogModule,
     NotificationModule,
-    EscalationModule
+    EscalationModule,
+    CalendarModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,35 +1,60 @@
 :root {
-    /* Color Palette */
-    --primary-color: #6B21A8; /* Deep Purple */
-    --primary-hover: #581C87;
-    --primary-dark: #4C1D95;
-    --primary-light: #F3E8FF;
-    --primary-gradient: linear-gradient(180deg, #2E1065 0%, #6B21A8 100%);
-    
-    --secondary-color: #10B981; /* Emerald 500 */
+    color-scheme: light;
+
+    /* Color Palette (LIGHT theme defaults) - mirrors the landing page's
+       light-mode brand tokens (css/views/landing.css html[data-theme="light"] block) */
+    --primary-color: #2563EB; /* Blue 600 - landing --lp-purple (light) */
+    --primary-hover: #1D4ED8;
+    --primary-dark: #1E40AF; /* landing --lp-purple-dark (light) */
+    --primary-light: #DBEAFE;
+    --primary-gradient: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+
+    --brand-secondary: #1E40AF; /* Blue brand accent - distinct from success green below */
+    --accent-color: #38BDF8; /* landing --lp-cyan (light) */
+    --accent-light: #E0F2FE;
+
+    --secondary-color: #10B981; /* Emerald 500 - semantic "success" (approved/completed/present), NOT theme-varied */
     --secondary-hover: #059669;
-    
+
     --accent-orange: #F97316; /* Requested Accent Orange */
     --accent-orange-hover: #EA580C;
-    
+
     --danger-color: #EF4444; /* Red 500 */
     --danger-hover: #DC2626;
-    
+
     --warning-color: #F59E0B; /* Amber 500 */
-    
-    --bg-main: #F3F4F6;
+
+    --bg-main: #F8FAFC;
     --bg-surface: #FFFFFF;
-    
+    --bg-elevated: #FFFFFF;
+
     /* Text Colors */
-    --text-main: #111827;
-    --text-muted: #6B7280;
-    --text-light: #9CA3AF;
+    --text-main: #1F2937;
+    --text-muted: #64748B;
+    --text-light: #94A3B8;
     --text-inverse: #FFFFFF;
-    
+
     /* Border Colors */
-    --border-color: #E5E7EB;
-    --border-light: #F3F4F6;
-    
+    --border-color: #E2E8F0;
+    --border-light: #F1F5F9;
+
+    /* Status tokens (badges etc.) */
+    --status-success-bg: #D1FAE5;
+    --status-success-fg: #065F46;
+    --status-warning-bg: #FEF3C7;
+    --status-warning-fg: #92400E;
+    --status-danger-bg: #FEE2E2;
+    --status-danger-fg: #991B1B;
+    --status-neutral-bg: #F3F4F6;
+    --status-neutral-fg: #4B5563;
+
+    /* Calendar event-type colors */
+    --cal-leave-color: #7C3AED;
+    --cal-holiday-color: #F59E0B;
+    --cal-task-color: #2563EB;
+    --cal-company-color: #10B981;
+    --cal-attendance-color: #64748B;
+
     /* Typography */
     --font-family: 'Inter', sans-serif;
     --text-xs: 0.75rem;     /* 12px */
@@ -73,5 +98,58 @@
     /* Transitions */
     --transition-fast: 150ms ease;
     --transition-normal: 250ms ease;
+}
+
+/* ==========================================================================
+   DARK THEME — activated via [data-theme="dark"] on <html> (see js/theme.js).
+   Brand + surface tokens mirror the landing page's own dark mode (the base
+   :root block in css/views/landing.css, which is dark-first): purple/cyan
+   brand on deep indigo surfaces, NOT a generic slate-navy + blue scheme.
+   accent-orange, danger-color, warning-color, secondary-color (success) stay
+   constant across themes by design - they already match the landing page's
+   own theme-invariant --lp-danger/--lp-warning tokens.
+   ========================================================================== */
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --primary-color: #7C3AED; /* landing --lp-purple (dark) */
+    --primary-hover: #8B5CF6;
+    --primary-dark: #5B21B6; /* landing --lp-purple-dark (dark) */
+    --primary-light: rgba(124, 58, 237, 0.18);
+
+    --brand-secondary: #06B6D4; /* landing --lp-cyan (dark) */
+    --accent-color: #06B6D4;
+    --accent-light: rgba(6, 182, 212, 0.18);
+
+    --bg-main: #0B1020; /* landing --lp-bg (dark) */
+    --bg-surface: #1A2238; /* landing --lp-surface (dark) */
+    --bg-elevated: #212B49; /* landing --lp-surface-2 (dark) */
+
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --text-light: #64748B;
+    --text-inverse: #FFFFFF;
+
+    --border-color: rgba(255, 255, 255, 0.08); /* landing --lp-border (dark) */
+    --border-light: rgba(255, 255, 255, 0.05);
+
+    --status-success-bg: rgba(34, 197, 94, 0.16);
+    --status-success-fg: #6EE7B7;
+    --status-warning-bg: rgba(245, 158, 11, 0.16);
+    --status-warning-fg: #FCD34D;
+    --status-danger-bg: rgba(239, 68, 68, 0.16);
+    --status-danger-fg: #FCA5A5;
+    --status-neutral-bg: rgba(255, 255, 255, 0.08);
+    --status-neutral-fg: #CBD5E1;
+
+    --cal-leave-color: #A78BFA;
+    --cal-holiday-color: #FBBF24;
+    --cal-task-color: #60A5FA;
+    --cal-company-color: #34D399;
+    --cal-attendance-color: #94A3B8;
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.55), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
 }
 

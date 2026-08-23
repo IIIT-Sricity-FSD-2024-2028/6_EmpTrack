@@ -5,11 +5,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
+    // Note: `color` here stays a raw hex literal (not var()) because it is concatenated
+    // with alpha suffixes below (`${n.color}15`, `${n.color}30`) to build the icon
+    // background/border; CSS custom properties can't be suffixed that way. The tag
+    // `bg`/`text` pairs have no such constraint and use theme tokens directly.
     const dummyNotifs = [
-        { id: 1, type: 'alert', icon: 'ph-warning-octagon', color: '#EF4444', title: 'Task Escalation', desc: 'A critical bug in the authentication module was escalated.', source: 'Jane Doe', time: '10 mins ago', tags: [{label:'ESCALATION', bg:'#fee2e2', text:'#ef4444'}], unread: true },
-        { id: 2, type: 'leave', icon: 'ph-calendar-plus', color: '#F97316', title: 'New Leave Request', desc: 'Alice is requesting leave for next week. Approval needed.', source: 'Alice Walker', time: '1 hour ago', tags: [{label:'ACTION REQUIRED', bg:'#ffedd5', text:'#f97316'}], unread: true },
-        { id: 3, type: 'alert', icon: 'ph-check-square-offset', color: '#22C55E', title: 'Task Completed', desc: 'Bob finished his assigned sprint tasks successfully.', source: 'Bob Smith', time: '3 hours ago', tags: [{label:'COMPLETED', bg:'#dcfce7', text:'#16a34a'}], unread: false },
-        { id: 4, type: 'leave', icon: 'ph-calendar-check', color: '#3B82F6', title: 'Leave Feedback', desc: 'Charlie has returned from sick leave.', source: 'Charlie Day', time: 'Yesterday', tags: [{label:'REMINDER', bg:'#dbeafe', text:'#2563eb'}], unread: false }
+        { id: 1, type: 'alert', icon: 'ph-warning-octagon', color: '#EF4444', title: 'Task Escalation', desc: 'A critical bug in the authentication module was escalated.', source: 'Jane Doe', time: '10 mins ago', tags: [{label:'ESCALATION', bg:'var(--status-danger-bg)', text:'var(--danger-color)'}], unread: true },
+        { id: 2, type: 'leave', icon: 'ph-calendar-plus', color: '#F97316', title: 'New Leave Request', desc: 'Alice is requesting leave for next week. Approval needed.', source: 'Alice Walker', time: '1 hour ago', tags: [{label:'ACTION REQUIRED', bg:'rgba(249, 115, 22, 0.15)', text:'var(--accent-orange)'}], unread: true },
+        { id: 3, type: 'alert', icon: 'ph-check-square-offset', color: '#22C55E', title: 'Task Completed', desc: 'Bob finished his assigned sprint tasks successfully.', source: 'Bob Smith', time: '3 hours ago', tags: [{label:'COMPLETED', bg:'var(--status-success-bg)', text:'var(--status-success-fg)'}], unread: false },
+        { id: 4, type: 'leave', icon: 'ph-calendar-check', color: '#3B82F6', title: 'Leave Feedback', desc: 'Charlie has returned from sick leave.', source: 'Charlie Day', time: 'Yesterday', tags: [{label:'REMINDER', bg:'var(--primary-light)', text:'var(--primary-color)'}], unread: false }
     ];
 
     const listContainer = document.getElementById('tl-notif-list');

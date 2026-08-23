@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Leave Request</title>
     
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
@@ -34,13 +35,13 @@
                 <div style="max-width: 1000px; margin: 0 auto; display:flex; flex-direction:column; gap: 32px; padding-bottom: 40px;">
                     
                     <!-- SECTION 1: POLICY INFORMATION -->
-                    <div class="card" style="padding: 24px; background-color: #F8FAFC; border-color: #E2E8F0; display:flex; gap: 16px;">
+                    <div class="card" style="padding: 24px; background-color: var(--bg-main); border-color: var(--border-color); display:flex; gap: 16px;">
                         <div style="color:var(--warning-color); font-size: 24px;">
                             <i class="ph-fill ph-warning-circle"></i>
                         </div>
                         <div>
-                            <h3 style="margin:0 0 12px 0; font-size:var(--text-md); color:#1E293B;">Important: Unauthorized Absence Policy</h3>
-                            <ul style="margin:0; padding-left: 20px; color:#475569; font-size:13px; line-height:1.6;">
+                            <h3 style="margin:0 0 12px 0; font-size:var(--text-md); color: var(--text-main);">Important: Unauthorized Absence Policy</h3>
+                            <ul style="margin:0; padding-left: 20px; color: var(--text-muted); font-size:13px; line-height:1.6;">
                                 <li>Taking leave without Team Lead approval → escalation to HR</li>
                                 <li>All leave requests must be approved in advance</li>
                                 <li>Unauthorized absence will be flagged</li>
@@ -101,7 +102,7 @@
                                 </div>
                                 <div class="form-group" style="margin:0;">
                                     <label class="form-label" style="font-weight:var(--font-medium);">Number of Days</label>
-                                    <input type="number" id="lv_days" class="form-control" placeholder="Enter number of days" min="1" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color:#F8FAFC;" readonly>
+                                    <input type="number" id="lv_days" class="form-control" placeholder="Enter number of days" min="1" required style="border-radius: var(--radius-md); padding: 12px 16px; background-color: var(--bg-main);" readonly>
                                 </div>
                             </div>
         

@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - Login</title>
 
+    <!-- Theme (must run before CSS paints to avoid flash-of-wrong-theme) -->
+    <script src="js/theme-init.js"></script>
+
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/components.css">
@@ -17,6 +20,10 @@
 
 <body
     style="display:flex; align-items:center; justify-content:center; min-height:100vh; background-color: var(--bg-main);">
+    <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Toggle light/dark theme"
+        aria-label="Toggle light/dark theme" style="position:fixed; top:20px; right:20px; z-index:10;">
+        <i class="ph ph-moon"></i>
+    </button>
     <div id="app" class="app-container" style="display:flex; align-items:center; justify-content:center; width:100%;">
         <div class="auth-wrapper">
             <div class="auth-container">

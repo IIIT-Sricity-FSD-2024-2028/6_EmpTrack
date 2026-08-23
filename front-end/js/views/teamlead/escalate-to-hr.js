@@ -14,24 +14,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (escLink) escLink.classList.add('active');
     }, 100);
 
+    // Note: priorityColor stays a raw hex literal (not var()) because it is concatenated
+    // with an alpha suffix below (`${esc.priorityColor}15`) to build the badge background;
+    // CSS custom properties can't be suffixed that way. The hex values match the
+    // theme-constant --danger-color / --warning-color tokens exactly, so this renders
+    // identically in light and dark mode.
     const recentEscalations = [
-        { id: 'HR-ESC-001', priorityBadge: 'High Priority', priorityColor: '#EF4444', statusBadge: 'Under Review', statusBg: '#DBEAFE', statusColor: '#1D4ED8', title: 'Team conflict between two developers', desc: 'Team Conflict • Related to: John Smith, Sarah Johnson • Mar 8, 2026' },
-        { id: 'HR-ESC-002', priorityBadge: 'Medium Priority', priorityColor: '#D97706', statusBadge: 'Pending', statusBg: '#F1F5F9', statusColor: '#475569', title: 'Request for additional team member', desc: 'Resource Request • Related to: N/A • Mar 4, 2026' },
-        { id: 'HR-ESC-003', priorityBadge: 'High Priority', priorityColor: '#EF4444', statusBadge: 'Resolved', statusBg: '#D1FAE5', statusColor: '#047857', title: 'Repeated policy violation by team member', desc: 'Policy Violation • Related to: Mike Davis • Feb 28, 2026' }
+        { id: 'HR-ESC-001', priorityBadge: 'High Priority', priorityColor: '#EF4444', statusBadge: 'Under Review', statusBg: 'var(--primary-light)', statusColor: 'var(--primary-hover)', title: 'Team conflict between two developers', desc: 'Team Conflict • Related to: John Smith, Sarah Johnson • Mar 8, 2026' },
+        { id: 'HR-ESC-002', priorityBadge: 'Medium Priority', priorityColor: '#F59E0B', statusBadge: 'Pending', statusBg: 'var(--status-neutral-bg)', statusColor: 'var(--status-neutral-fg)', title: 'Request for additional team member', desc: 'Resource Request • Related to: N/A • Mar 4, 2026' },
+        { id: 'HR-ESC-003', priorityBadge: 'High Priority', priorityColor: '#EF4444', statusBadge: 'Resolved', statusBg: 'var(--status-success-bg)', statusColor: 'var(--status-success-fg)', title: 'Repeated policy violation by team member', desc: 'Policy Violation • Related to: Mike Davis • Feb 28, 2026' }
     ];
 
     const tbody = document.getElementById('recent-escalations-body');
     if (tbody) {
         tbody.innerHTML = recentEscalations.map(esc => `
-            <div style="border: 1px solid #E2E8F0; border-radius: var(--radius-md); padding: 16px; background: white; display:flex; justify-content:space-between; align-items:center;">
+            <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; background: var(--bg-surface); display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <div style="display:flex; align-items:center; gap: 8px; margin-bottom: 6px;">
                         <span style="font-size: 13px; font-weight: 600; color: #6A11CB;">${esc.id}</span>
                         <span style="font-size: 10px; font-weight: 600; color: ${esc.priorityColor}; background-color: ${esc.priorityColor}15; padding: 2px 8px; border-radius: 12px;">${esc.priorityBadge}</span>
                         <span style="font-size: 10px; font-weight: 600; color: ${esc.statusColor}; background-color: ${esc.statusBg}; padding: 2px 8px; border-radius: 12px;">${esc.statusBadge}</span>
                     </div>
-                    <div style="font-size: 14px; font-weight: 600; color: #1E293B; margin-bottom: 4px;">${esc.title}</div>
-                    <div style="font-size: 11px; color: #64748B;">${esc.desc}</div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">${esc.title}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${esc.desc}</div>
                 </div>
                 <button style="background:none; border:none; color: #6A11CB; font-size: 12px; font-weight: 600; cursor:pointer;">View Details</button>
             </div>
@@ -70,13 +75,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         catBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 catBtns.forEach(b => {
-                    b.style.borderColor = '#E2E8F0';
-                    b.style.backgroundColor = 'white';
-                    b.style.color = '#475569';
+                    b.style.borderColor = 'var(--border-color)';
+                    b.style.backgroundColor = 'var(--bg-surface)';
+                    b.style.color = 'var(--text-muted)';
                     b.classList.remove('selected');
                 });
                 btn.style.borderColor = '#6A11CB';
-                btn.style.backgroundColor = '#F3E8FF';
+                btn.style.backgroundColor = 'rgba(106, 17, 203, 0.1)';
                 btn.style.color = '#6A11CB';
                 btn.classList.add('selected');
                 selectedCategory = btn.getAttribute('data-value');
@@ -92,12 +97,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         pCards.forEach(card => {
             card.addEventListener('click', () => {
                 pCards.forEach(c => {
-                    c.style.borderColor = '#E2E8F0';
+                    c.style.borderColor = 'var(--border-color)';
                     c.style.backgroundColor = 'transparent';
                     c.classList.remove('active');
                 });
                 card.style.borderColor = '#6A11CB';
-                card.style.backgroundColor = '#F3E8FF';
+                card.style.backgroundColor = 'rgba(106, 17, 203, 0.1)';
                 card.classList.add('active');
                 selectedPriority = card.getAttribute('data-value');
             });

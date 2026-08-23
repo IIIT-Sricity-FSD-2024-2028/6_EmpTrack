@@ -1,6 +1,7 @@
 // /js/views/teamlead/dashboard.js
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
+import { renderCalendar } from '../../components/calendar.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -14,12 +15,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const showToast = (message, type = 'success') => {
         const toast = document.createElement('div');
         toast.style.cssText = `
-            background:${type === 'success' ? '#16A34A' : '#DC2626'};
+            background:${type === 'success' ? 'var(--secondary-color)' : 'var(--danger-hover)'};
             color:white;
             padding:12px 20px;
             border-radius:8px;
             font-weight:500;
-            box-shadow:0 4px 12px rgba(0,0,0,0.15);
+            box-shadow:var(--shadow-md);
         `;
         toast.innerHTML = message;
         toastContainer.appendChild(toast);
@@ -56,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         Leave Request &bull; ${l.leave_type.charAt(0).toUpperCase() + l.leave_type.slice(1).toLowerCase()} &bull; ${l.applied_date}
                     </div>
                     <div style="display:flex; gap:8px;">
-                        <button class="btn btn-primary btn-approve" data-id="${l.leave_id}" style="flex:1; background-color:#16A34A; padding:6px; font-size:var(--text-sm);">Approve</button>
+                        <button class="btn btn-primary btn-approve" data-id="${l.leave_id}" style="flex:1; background-color:var(--secondary-color); padding:6px; font-size:var(--text-sm);">Approve</button>
                         <button class="btn btn-danger btn-reject" data-id="${l.leave_id}" style="flex:1; padding:6px; font-size:var(--text-sm);">Reject</button>
                     </div>
                 </div>
@@ -91,5 +92,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     renderPendingLeaves();
+
+    // Calendar - team members' leave/task deadlines + company holidays/events
+    const calendarContainer = document.getElementById('teamlead-calendar-container');
+    if (calendarContainer) {
+        renderCalendar(calendarContainer, {
+            fetchEvents: (year, month) => db.getTeamCalendar(user.emp_id, year, month)
+        });
+    }
 });
 

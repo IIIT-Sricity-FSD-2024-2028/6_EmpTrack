@@ -1,5 +1,6 @@
 // /js/views/auth/login.js
 import { auth } from '../../auth.js';
+import { theme } from '../../theme.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Feature disabled: Let users see the login page to switch accounts or verify navigation
@@ -8,6 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     //     window.location.href = `/front-end/${role.toLowerCase()}/dashboard.html`;
     //     return;
     // }
+
+    theme.bindToggleButton(document.getElementById('theme-toggle-btn'));
 
     const form = document.getElementById('login-form');
     if (form) {

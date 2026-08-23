@@ -6,11 +6,13 @@
     <title>EmpTrack - Dashboard</title>
     
     <!-- CSS Foundation -->
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
+    <link rel="stylesheet" href="../css/calendar.css">
     <link rel="stylesheet" href="../css/views/employee/dashboard.css">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -88,6 +90,14 @@
                             <i class="ph-fill ph-calendar-check"></i>
                         </div>
                     </div>
+                </div>
+
+                <!-- Calendar -->
+                <div class="card" id="employee-calendar-card">
+                    <div class="card-header">
+                        <h3 class="section-title">My Calendar</h3>
+                    </div>
+                    <div id="employee-calendar-container"></div>
                 </div>
 
                 <!-- Assigned Tasks Summary -->

@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmpTrack - HR Dashboard</title>
     
+    <script src="../js/theme-init.js"></script>
     <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/global.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
-    
+    <link rel="stylesheet" href="../css/calendar.css">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="stylesheet" href="../css/views/hr/dashboard.css">
@@ -78,6 +80,12 @@
                                 <div class="sc-label">Pending Leaves</div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Calendar -->
+                    <div class="card" id="hr-calendar-card">
+                        <div style="padding:20px 20px 0 20px; font-weight:600; font-size:16px;">Company Calendar</div>
+                        <div style="padding:20px;" id="hr-calendar-container"></div>
                     </div>
 
                     <!-- Main Grid -->

@@ -2,6 +2,14 @@
 // Interaction layer for the marketing landing page (index.html only).
 // No dependency on auth.js/store.js — safe to run for logged-out visitors.
 
+import { theme } from '../theme.js';
+
+function initThemeToggle() {
+    const btn = document.getElementById('lpThemeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', () => theme.toggleTheme());
+}
+
 function initHeaderScroll() {
     const header = document.getElementById('lpHeader');
     if (!header) return;
@@ -163,6 +171,7 @@ function initHeroParallax() {
 
 document.addEventListener('DOMContentLoaded', () => {
     initIcons();
+    initThemeToggle();
     initHeaderScroll();
     initMobileMenu();
     initFaqAccordion();

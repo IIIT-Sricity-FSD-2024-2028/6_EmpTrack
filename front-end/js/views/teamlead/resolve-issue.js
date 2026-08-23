@@ -60,16 +60,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div style="display:flex; flex-direction:column; gap: 24px;">
                 
                 <!-- Issue Summary -->
-                <div class="card" style="padding: 24px; background-color: #FFFFFF;">
+                <div class="card" style="padding: 24px; background-color: var(--bg-surface);">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
                         <div>
                             <h3 style="margin:0 0 4px 0; color:var(--primary-color); font-size:14px; font-weight:var(--font-bold); text-transform:uppercase;">${issueData.issue_id}</h3>
-                            <h4 style="margin:0; font-size: 20px; font-weight:var(--font-bold); color:#1E293B;">${issueData.title}</h4>
+                            <h4 style="margin:0; font-size: 20px; font-weight:var(--font-bold); color:var(--text-main);">${issueData.title}</h4>
                         </div>
                         <span class="badge ${statBadge}">${issueData.status}</span>
                     </div>
-                    
-                    <p style="color:#475569; font-size:14px; line-height:1.6; margin:0 0 24px 0; padding-bottom:16px; border-bottom:1px solid #E2E8F0;">
+
+                    <p style="color:var(--text-muted); font-size:14px; line-height:1.6; margin:0 0 24px 0; padding-bottom:16px; border-bottom:1px solid var(--border-color);">
                         ${issueData.description || 'No detailed description provided by the reporter.'}
                     </p>
                     
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Reported By</div>
-                            <div style="font-weight:var(--font-medium); font-size:13px; color:#334155;">${empNameNode} (${issueData.emp_id})</div>
+                            <div style="font-weight:var(--font-medium); font-size:13px; color:var(--text-main);">${empNameNode} (${issueData.emp_id})</div>
                         </div>
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Related Task</div>
@@ -89,27 +89,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Assigned To</div>
-                            <div style="font-weight:var(--font-medium); font-size:13px; color:#334155;">${issueData.assigned_to || 'Unassigned'}</div>
+                            <div style="font-weight:var(--font-medium); font-size:13px; color:var(--text-main);">${issueData.assigned_to || 'Unassigned'}</div>
                         </div>
                         <div>
                             <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">Deadline</div>
-                            <div style="font-weight:var(--font-medium); font-size:13px; color:#334155;">${issueData.deadline || 'Not Set'}</div>
+                            <div style="font-weight:var(--font-medium); font-size:13px; color:var(--text-main);">${issueData.deadline || 'Not Set'}</div>
                         </div>
                     </div>
                     
-                    <div style="margin-top:20px; padding-top:16px; border-top:1px dashed #E2E8F0; background-color:#F8FAFC; border-radius:8px; padding:16px;">
+                    <div style="margin-top:20px; padding-top:16px; border-top:1px dashed var(--border-color); background-color:var(--bg-main); border-radius:8px; padding:16px;">
                         <div style="font-size:12px; color:var(--text-muted); margin-bottom:6px; display:flex; align-items:center; gap:6px;">
                             <i class="ph-fill ph-note-pencil"></i> Assignment Notes
                         </div>
-                        <div style="font-weight:var(--font-medium); font-size:13px; color:#64748B; font-style:italic;">
+                        <div style="font-weight:var(--font-medium); font-size:13px; color:var(--text-muted); font-style:italic;">
                             ${issueData.assignment_notes || 'No specific assignment notes provided.'}
                         </div>
                     </div>
                 </div>
 
                 <!-- Resolution Form -->
-                <div class="card" style="padding: 0; overflow:hidden; border:1px solid #E2E8F0;">
-                    <div style="background: linear-gradient(to right, #10B981, #059669); padding: 20px 24px; color: white; display:flex; align-items:center; gap:12px;">
+                <div class="card" style="padding: 0; overflow:hidden; border:1px solid var(--border-color);">
+                    <div style="background: linear-gradient(to right, var(--secondary-color), var(--secondary-hover)); padding: 20px 24px; color: white; display:flex; align-items:center; gap:12px;">
                         <i class="ph-fill ph-check-square-offset" style="font-size:24px;"></i>
                         <div>
                             <h3 style="margin:0 0 4px 0; font-size: 18px; font-weight:var(--font-bold);">Resolution Form</h3>
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                             <div class="form-group" style="margin:0;">
                                 <label class="form-label">Resolution Type</label>
-                                <select id="res_type" class="form-control" required style="background-color:#F8FAFC;">
+                                <select id="res_type" class="form-control" required style="background-color:var(--bg-main);">
                                     <option value="" disabled selected>Select how it was resolved...</option>
                                     <option value="Bug Fix">Bug Fix / Patch applied</option>
                                     <option value="Configuration">Configuration Change</option>
@@ -132,37 +132,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                             <div class="form-group" style="margin:0;">
                                 <label class="form-label">Time Spent (Hours)</label>
-                                <input type="number" step="0.5" id="res_time" class="form-control" required min="0" placeholder="e.g. 2.5" style="background-color:#F8FAFC;">
+                                <input type="number" step="0.5" id="res_time" class="form-control" required min="0" placeholder="e.g. 2.5" style="background-color:var(--bg-main);">
                             </div>
                         </div>
 
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Resolution Summary</label>
-                            <textarea id="res_summary" class="form-control" rows="2" placeholder="Brief 1-sentence summary of the fix..." required style="background-color:#F8FAFC; resize:vertical;"></textarea>
+                            <textarea id="res_summary" class="form-control" rows="2" placeholder="Brief 1-sentence summary of the fix..." required style="background-color:var(--bg-main); resize:vertical;"></textarea>
                         </div>
                         
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Actions Taken</label>
-                            <textarea id="res_actions" class="form-control" rows="3" placeholder="Step-by-step what was done to fix it..." required style="background-color:#F8FAFC; resize:vertical;"></textarea>
+                            <textarea id="res_actions" class="form-control" rows="3" placeholder="Step-by-step what was done to fix it..." required style="background-color:var(--bg-main); resize:vertical;"></textarea>
                         </div>
                         
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Root Cause Analysis</label>
-                            <textarea id="res_root_cause" class="form-control" rows="2" placeholder="Why did this issue occur in the first place?" required style="background-color:#F8FAFC; resize:vertical;"></textarea>
+                            <textarea id="res_root_cause" class="form-control" rows="2" placeholder="Why did this issue occur in the first place?" required style="background-color:var(--bg-main); resize:vertical;"></textarea>
                         </div>
 
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Preventive Measures</label>
-                            <textarea id="res_preventive" class="form-control" rows="2" placeholder="How to prevent this in the future..." style="background-color:#F8FAFC; resize:vertical;"></textarea>
+                            <textarea id="res_preventive" class="form-control" rows="2" placeholder="How to prevent this in the future..." style="background-color:var(--bg-main); resize:vertical;"></textarea>
                         </div>
 
                         <!-- Drag & Drop File Upload -->
                         <div class="form-group" style="margin:0;">
                             <label class="form-label">Supporting Evidence (Optional)</label>
                             <input type="file" id="res_file_upload" multiple style="display:none;">
-                            <div id="drop_zone" style="border: 2px dashed #CBD5E1; border-radius: 8px; padding: 24px; text-align: center; background-color: #F8FAFC; transition: all 0.2s; cursor: pointer;">
+                            <div id="drop_zone" style="border: 2px dashed var(--border-color); border-radius: 8px; padding: 24px; text-align: center; background-color: var(--bg-main); transition: all 0.2s; cursor: pointer;">
                                 <i class="ph ph-upload-simple" style="font-size:32px; color:var(--text-muted); margin-bottom:8px;"></i>
-                                <div style="font-size:14px; font-weight:var(--font-medium); color:#334155;">Click to upload or drag & drop</div>
+                                <div style="font-size:14px; font-weight:var(--font-medium); color:var(--text-main);">Click to upload or drag & drop</div>
                                 <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Logs, screenshots, or code diffs (max 5MB)</div>
                             </div>
                             <div id="file_list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
@@ -170,17 +170,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         <div class="form-group" style="margin:0;">
                             <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="checkbox" id="res_followup" style="width:16px; height:16px; cursor:pointer; accent-color:#10B981;">
-                                <span style="font-size:14px; font-weight:var(--font-medium); color:#334155;">Follow-up Required with Reporter</span>
+                                <input type="checkbox" id="res_followup" style="width:16px; height:16px; cursor:pointer; accent-color:var(--secondary-color);">
+                                <span style="font-size:14px; font-weight:var(--font-medium); color:var(--text-main);">Follow-up Required with Reporter</span>
                             </label>
                         </div>
 
                         <!-- Action Buttons -->
                         <div style="display:flex; gap: 16px; align-items:center; margin-top:16px;">
-                            <button type="submit" class="btn" style="background-color:#10B981; color:white; flex:2; padding: 14px; font-size:14px; font-weight:var(--font-bold); justify-content:center; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                            <button type="submit" class="btn" style="background-color:var(--secondary-color); color:white; flex:2; padding: 14px; font-size:14px; font-weight:var(--font-bold); justify-content:center; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
                                 Mark as Resolved
                             </button>
-                            <a href="issue-management.html" class="btn btn-outline" style="flex:1; padding: 14px; justify-content:center; text-decoration:none; border-radius: var(--radius-full); background-color:#F1F5F9; border:none; color:#475569;">
+                            <a href="issue-management.html" class="btn btn-outline" style="flex:1; padding: 14px; justify-content:center; text-decoration:none; border-radius: var(--radius-full); background-color:var(--border-light); border:none; color:var(--text-muted);">
                                 Cancel
                             </a>
                         </div>
@@ -193,45 +193,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 <!-- Timeline -->
                 <div class="card" style="padding: 24px;">
-                    <h3 style="margin:0 0 20px 0; font-size:16px; font-weight:var(--font-bold); color:#1E293B; display:flex; align-items:center; gap:8px;">
+                    <h3 style="margin:0 0 20px 0; font-size:16px; font-weight:var(--font-bold); color:var(--text-main); display:flex; align-items:center; gap:8px;">
                         <i class="ph-fill ph-clock-counter-clockwise" style="color:var(--primary-color);"></i> Issue Timeline
                     </h3>
                     
                     <div style="display:flex; flex-direction:column; gap:20px; position:relative;">
-                        <div style="position:absolute; left:11px; top:12px; bottom:12px; width:2px; background-color:#E2E8F0; z-index:0;"></div>
-                        
+                        <div style="position:absolute; left:11px; top:12px; bottom:12px; width:2px; background-color:var(--border-color); z-index:0;"></div>
+
                         <div style="display:flex; gap:16px; position:relative; z-index:1;">
-                            <div style="width:24px; height:24px; border-radius:50%; background-color:white; border:2px solid #10B981; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                <div style="width:10px; height:10px; border-radius:50%; background-color:#10B981;"></div>
+                            <div style="width:24px; height:24px; border-radius:50%; background-color:var(--bg-surface); border:2px solid var(--secondary-color); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <div style="width:10px; height:10px; border-radius:50%; background-color:var(--secondary-color);"></div>
                             </div>
                             <div>
-                                <div style="font-size:13px; font-weight:var(--font-bold); color:#334155;">Created</div>
+                                <div style="font-size:13px; font-weight:var(--font-bold); color:var(--text-main);">Created</div>
                                 <div style="font-size:12px; color:var(--text-muted);">${issueData.raised_date || 'Unknown Date'}</div>
                             </div>
                         </div>
-                        
+
                         <div style="display:flex; gap:16px; position:relative; z-index:1;">
-                            <div style="width:24px; height:24px; border-radius:50%; background-color:white; border:2px solid #3B82F6; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                <div style="width:10px; height:10px; border-radius:50%; background-color:#3B82F6;"></div>
+                            <div style="width:24px; height:24px; border-radius:50%; background-color:var(--bg-surface); border:2px solid var(--primary-color); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <div style="width:10px; height:10px; border-radius:50%; background-color:var(--primary-color);"></div>
                             </div>
                             <div>
-                                <div style="font-size:13px; font-weight:var(--font-bold); color:#334155;">Assigned</div>
+                                <div style="font-size:13px; font-weight:var(--font-bold); color:var(--text-main);">Assigned</div>
                                 <div style="font-size:12px; color:var(--text-muted);">${issueData.assigned_to ? 'Completed' : 'Skipped'}</div>
                             </div>
                         </div>
-                        
+
                         <div style="display:flex; gap:16px; position:relative; z-index:1;">
-                            <div style="width:24px; height:24px; border-radius:50%; background-color:white; border:2px solid #F59E0B; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                <div style="width:10px; height:10px; border-radius:50%; background-color:#F59E0B;"></div>
+                            <div style="width:24px; height:24px; border-radius:50%; background-color:var(--bg-surface); border:2px solid var(--warning-color); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <div style="width:10px; height:10px; border-radius:50%; background-color:var(--warning-color);"></div>
                             </div>
                             <div>
-                                <div style="font-size:13px; font-weight:var(--font-bold); color:#334155;">In Progress</div>
+                                <div style="font-size:13px; font-weight:var(--font-bold); color:var(--text-main);">In Progress</div>
                                 <div style="font-size:12px; color:var(--text-muted);">Started working</div>
                             </div>
                         </div>
 
                         <div style="display:flex; gap:16px; position:relative; z-index:1;">
-                            <div style="width:24px; height:24px; border-radius:50%; background-color:white; border:2px solid #E2E8F0; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <div style="width:24px; height:24px; border-radius:50%; background-color:var(--bg-surface); border:2px solid var(--border-color); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                                 <div style="width:10px; height:10px; border-radius:50%; background-color:var(--text-muted);"></div>
                             </div>
                             <div>
@@ -243,11 +243,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
 
                 <!-- Best Practices Card -->
-                <div class="card" style="padding: 24px; background-color: #EEF2FF; border:1px solid #C7D2FE;">
-                    <h3 style="margin:0 0 12px 0; font-size:14px; font-weight:var(--font-bold); color:#3730A3; display:flex; align-items:center; gap:8px;">
+                <div class="card" style="padding: 24px; background-color: var(--primary-light); border:1px solid var(--primary-color);">
+                    <h3 style="margin:0 0 12px 0; font-size:14px; font-weight:var(--font-bold); color:var(--primary-color); display:flex; align-items:center; gap:8px;">
                         <i class="ph-fill ph-info"></i> Best Practices
                     </h3>
-                    <ul style="margin:0; padding-left: 20px; color:#4338CA; font-size:13px; line-height:1.6; display:flex; flex-direction:column; gap:6px;">
+                    <ul style="margin:0; padding-left: 20px; color:var(--primary-color); font-size:13px; line-height:1.6; display:flex; flex-direction:column; gap:6px;">
                         <li><strong>Document thoroughly:</strong> Every step taken ensures traceability.</li>
                         <li><strong>Identify root cause:</strong> Treat the disease, not just the symptoms.</li>
                         <li><strong>Suggest preventive measures:</strong> Help the team avoid repeat issues.</li>
@@ -256,19 +256,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 <!-- Resolution Stats -->
                 <div class="card" style="padding: 24px;">
-                    <h3 style="margin:0 0 16px 0; font-size:14px; font-weight:var(--font-bold); color:#1E293B;">Team Resolution Stats</h3>
+                    <h3 style="margin:0 0 16px 0; font-size:14px; font-weight:var(--font-bold); color:var(--text-main);">Team Resolution Stats</h3>
                     <div style="display:flex; flex-direction:column; gap:16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid #F1F5F9;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--border-light);">
                             <span style="font-size:13px; color:var(--text-muted);">Resolved this month</span>
-                            <span style="font-weight:var(--font-bold); color:#10B981;">24</span>
+                            <span style="font-weight:var(--font-bold); color:var(--secondary-color);">24</span>
                         </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid #F1F5F9;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--border-light);">
                             <span style="font-size:13px; color:var(--text-muted);">Avg resolution time</span>
-                            <span style="font-weight:var(--font-bold); color:#334155;">1.2 days</span>
+                            <span style="font-weight:var(--font-bold); color:var(--text-main);">1.2 days</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:13px; color:var(--text-muted);">Success rate</span>
-                            <span style="font-weight:var(--font-bold); color:#334155;">98.5%</span>
+                            <span style="font-weight:var(--font-bold); color:var(--text-main);">98.5%</span>
                         </div>
                     </div>
                 </div>
@@ -288,14 +288,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         fileList.innerHTML = '';
         selectedFiles.forEach((file, index) => {
             const fileItem = document.createElement('div');
-            fileItem.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#F1F5F9; border-radius:6px; font-size:13px; border:1px solid #E2E8F0;';
+            fileItem.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--border-light); border-radius:6px; font-size:13px; border:1px solid var(--border-color);';
             fileItem.innerHTML = `
                 <div style="display:flex; align-items:center; gap:8px;">
                     <i class="ph-fill ph-file-text" style="color:var(--primary-color);"></i>
-                    <span style="color:#334155; font-weight:var(--font-medium);">${file.name}</span>
+                    <span style="color:var(--text-main); font-weight:var(--font-medium);">${file.name}</span>
                     <span style="color:var(--text-muted); font-size:11px;">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                 </div>
-                <i class="ph-bold ph-x remove-file-btn" style="cursor:pointer; color:#EF4444;" data-index="${index}"></i>
+                <i class="ph-bold ph-x remove-file-btn" style="cursor:pointer; color:var(--danger-color);" data-index="${index}"></i>
             `;
             fileList.appendChild(fileItem);
         });
@@ -335,14 +335,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     ['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, () => {
             dropZone.style.borderColor = 'var(--primary-color)';
-            dropZone.style.backgroundColor = '#EEF2FF';
+            dropZone.style.backgroundColor = 'var(--primary-light)';
         }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
         dropZone.addEventListener(eventName, () => {
-            dropZone.style.borderColor = '#CBD5E1';
-            dropZone.style.backgroundColor = '#F8FAFC';
+            dropZone.style.borderColor = 'var(--border-color)';
+            dropZone.style.backgroundColor = 'var(--bg-main)';
         }, false);
     });
 
@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, false);
 
     dropZone.addEventListener('mouseover', () => { dropZone.style.borderColor='var(--primary-color)'; });
-    dropZone.addEventListener('mouseout', () => { dropZone.style.borderColor='#CBD5E1'; });
+    dropZone.addEventListener('mouseout', () => { dropZone.style.borderColor='var(--border-color)'; });
 
     document.getElementById('resolve-issue-form').addEventListener('submit', async (e) => {
         e.preventDefault();

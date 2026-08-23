@@ -59,7 +59,7 @@
 }
 
 .tl-welcome-banner {
-    background: linear-gradient(135deg, #6B21A8 0%, #4C1D95 100%);
+    background: var(--primary-gradient);
     border-radius: var(--radius-xl);
     padding: var(--spacing-xl);
     color: #FFFFFF;
@@ -113,10 +113,10 @@
     font-size: var(--text-2xl);
 }
 
-.icon-blue { background-color: #DBEAFE; color: #3B82F6; }
-.icon-orange { background-color: #FFEDD5; color: #F97316; }
-.icon-red { background-color: #FEE2E2; color: #DC2626; }
-.icon-green { background-color: #DCFCE7; color: #16A34A; }
+.icon-blue { background-color: var(--primary-light); color: var(--primary-color); }
+.icon-orange { background-color: var(--status-warning-bg); color: var(--warning-color); }
+.icon-red { background-color: var(--status-danger-bg); color: var(--danger-color); }
+.icon-green { background-color: var(--status-success-bg); color: var(--secondary-color); }
 
 .tl-stat-info {
     display: flex;
@@ -269,8 +269,8 @@
 }
 
 .badge-pending {
-    background-color: #FEF3C7;
-    color: #D97706;
+    background-color: var(--status-warning-bg);
+    color: var(--status-warning-fg);
     padding: 2px 8px;
     border-radius: 12px;
     font-size: var(--text-xs);
@@ -302,7 +302,7 @@
 }
 
 .ts-stat-card {
-    background: #FFFFFF;
+    background: var(--bg-surface);
     border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
     display: flex;
@@ -318,7 +318,7 @@
 }
 
 .ts-card {
-    background: #FFFFFF;
+    background: var(--bg-surface);
     border-radius: var(--radius-xl);
     padding: var(--spacing-lg) var(--spacing-xl);
     box-shadow: var(--shadow-sm);
@@ -412,10 +412,10 @@
     display: inline-block;
 }
 
-.badge-blue { background: #DBEAFE; color: #1D4ED8; }
-.badge-orange { background: #FFEDD5; color: #C2410C; }
-.badge-green { background: #DCFCE7; color: #15803D; }
-.badge-gray { background: #F3F4F6; color: #4B5563; }
+.badge-blue { background: var(--primary-light); color: var(--primary-color); }
+.badge-orange { background: var(--status-warning-bg); color: var(--status-warning-fg); }
+.badge-green { background: var(--status-success-bg); color: var(--status-success-fg); }
+.badge-gray { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
 
 .ts-action-btn {
     background: transparent;
