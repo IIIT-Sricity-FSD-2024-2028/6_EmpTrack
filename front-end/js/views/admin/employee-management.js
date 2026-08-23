@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const dept = document.getElementById('addEmpDept').value;
             const role = document.getElementById('addEmpRole').value;
             
-            let displayRole = role === 'TL' ? 'Team Lead' : role === 'HR' ? 'HR Manager' : role === 'ADMIN' ? 'Super Admin' : 'Employee';
+            let displayRole = role === 'TL' ? 'Team Lead' : role === 'HR' ? 'HR Manager' : role === 'ADMIN' ? 'Company Admin' : 'Employee';
             if (dept === 'Engineering' && displayRole === 'Employee') displayRole = 'Developer';
 
             const newId = 'EMP-' + String(employees.length + 1).padStart(3, '0');

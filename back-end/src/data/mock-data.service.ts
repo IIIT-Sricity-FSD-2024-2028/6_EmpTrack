@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 const INITIAL_MOCK_DATA = {
     employee: [
-        { emp_id: "AD001", emp_name: "Bruce Wayne (Super Admin)", email: "admin@emp.com", phone: "1231231234", password: "Password@123", role: "ADMIN", status: "ACTIVE", date_of_joining: "2020-01-01", department_id: "D00", team_id: "T00", companyId: "C001" },
+        { emp_id: "AD001", emp_name: "Kiran", email: "cmpadmin@emp.com", phone: "1231231234", password: "Password@123", role: "ADMIN", status: "ACTIVE", date_of_joining: "2020-01-01", department_id: "D00", team_id: "T00", companyId: "C001" },
         { emp_id: "HR001", emp_name: "HR Manager", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01", companyId: "C001" },
         { emp_id: "TL001", emp_name: "Rinku Singh (TL)", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02", companyId: "C001" },
         { emp_id: "EM001", emp_name: "John Doe (EMP)", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001", companyId: "C001" },
