@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Platform Admin Profile</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/platform_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/platform_admin/profile.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title" style="display:none;">Platform Admin Profile</div>
+
+                <div class="pa-shell">
+                    <div class="card pa-profile-banner">
+                        <div class="pa-avatar-large" id="avatar-circle"><span id="avatar-initials">PA</span></div>
+                        <div class="pa-banner-info">
+                            <h2 class="pa-banner-name" id="profile-name">-</h2>
+                            <div class="pa-banner-role">Platform Admin</div>
+                        </div>
+                    </div>
+
+                    <div class="settings-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                        <div class="card settings-card" style="padding:24px;">
+                            <div class="card-title"><i class="ph-fill ph-identification-card"></i> Personal Information</div>
+                            <div class="detail-grid">
+                                <div class="detail-item"><span class="detail-label">Employee ID</span><span class="detail-value" id="info-empId">-</span></div>
+                                <div class="detail-item"><span class="detail-label">Email Address</span><span class="detail-value" id="info-email">-</span></div>
+                                <div class="detail-item"><span class="detail-label">Phone Number</span><span class="detail-value" id="info-phone">-</span></div>
+                                <div class="detail-item"><span class="detail-label">Role</span><span class="detail-value">Platform Admin</span></div>
+                                <div class="detail-item"><span class="detail-label">Assigned Companies</span><span class="detail-value" id="info-companies">-</span></div>
+                                <div class="detail-item"><span class="detail-label">Technical Team</span><span class="detail-value" id="info-technical">-</span></div>
+                                <div class="detail-item"><span class="detail-label">Support Team</span><span class="detail-value" id="info-support">-</span></div>
+                            </div>
+                        </div>
+
+                        <div class="card settings-card" style="padding:24px;">
+                            <div class="card-title"><i class="ph-fill ph-lock-key"></i> Security Settings</div>
+                            <p style="font-size:13px; color:var(--text-muted); margin-top:0;">Update your password regularly to keep your account secure.</p>
+                            <form id="password-form">
+                                <div class="form-group">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="newPwd" required minlength="8" placeholder="Enter new password">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confPwd" required placeholder="Re-type new password">
+                                </div>
+                                <div id="pwd-error" class="form-error" style="display:none;"></div>
+                                <button type="button" class="btn-save" id="btnUpdatePwd"><i class="ph ph-check-circle"></i> Update Password</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/platform_admin/profile.js"></script>
+</body>
+
+</html>

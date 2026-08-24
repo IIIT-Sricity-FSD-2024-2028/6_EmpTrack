@@ -18,6 +18,9 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { CriticalEscalationModule } from './critical-escalation/critical-escalation.module';
 import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
+import { PlatformTeamModule } from './platform-team/platform-team.module';
+import { PlatformTicketModule } from './platform-ticket/platform-ticket.module';
+import { PlatformDashboardModule } from './platform-dashboard/platform-dashboard.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -41,7 +44,10 @@ import { AppService } from './app.service';
     AnalyticsModule,
     ActivityLogModule,
     CriticalEscalationModule,
-    PlatformSettingsModule
+    PlatformSettingsModule,
+    PlatformTeamModule,
+    PlatformTicketModule,
+    PlatformDashboardModule
   ],
   controllers: [AppController],
   providers: [AppService],

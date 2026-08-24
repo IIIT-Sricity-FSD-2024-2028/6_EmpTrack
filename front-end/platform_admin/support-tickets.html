@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Platform Admin Support Tickets</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/platform_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/platform_admin/support-tickets.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Support Tickets</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Platform Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="pa-shell">
+                    <div class="section-header">
+                        <h2 class="section-title">Support Tickets From My Companies</h2>
+                    </div>
+
+                    <div class="card filter-bar">
+                        <div class="filters-wrap">
+                            <select id="status-filter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="OPEN">Open</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="ESCALATED">Escalated</option>
+                                <option value="RESOLVED">Resolved</option>
+                            </select>
+                            <select id="priority-filter" class="filter-select">
+                                <option value="all">All Priorities</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <button class="btn-clear" id="btn-clear-filters"><i class="ph ph-x"></i> Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="card table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Company</th>
+                                    <th>Title</th>
+                                    <th>Priority</th>
+                                    <th>Assigned To</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sup-tbody">
+                                <tr class="loader-row"><td colspan="8"><div class="spinner"></div><div>Loading support tickets...</div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Ticket Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal" style="max-width:640px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="detail-title">Ticket Details</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="d-id">
+                <div class="detail-grid" id="detail-info" style="margin-bottom:16px;"></div>
+
+                <div class="form-section-title">Assign / Reassign</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Team Member</label>
+                        <select class="form-control" id="d-assignee"></select>
+                    </div>
+                    <div class="form-group" id="d-reason-group" style="display:none;">
+                        <label class="form-label">Reassignment Reason</label>
+                        <input type="text" class="form-control" id="d-reason" placeholder="Why is this being reassigned?">
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+                    <button class="btn btn-outline" id="btn-assign">Assign</button>
+                    <button class="btn btn-outline" id="btn-reassign">Reassign</button>
+                    <button class="btn btn-secondary" id="btn-resolve">Resolve</button>
+                    <button class="btn btn-danger" id="btn-escalate">Escalate to Super Admin</button>
+                </div>
+
+                <div class="form-section-title">Comments</div>
+                <div id="detail-comments" style="max-height:200px; overflow-y:auto; margin-bottom:12px;"></div>
+                <div class="form-group">
+                    <textarea class="form-control" id="d-comment" rows="2" placeholder="Add a comment..."></textarea>
+                </div>
+                <button class="btn btn-outline" id="btn-add-comment"><i class="ph ph-chat-circle-text"></i> Add Comment</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/platform_admin/support-tickets.js"></script>
+</body>
+
+</html>

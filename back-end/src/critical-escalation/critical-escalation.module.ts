@@ -5,5 +5,6 @@ import { CriticalEscalationService } from './critical-escalation.service';
 @Module({
   controllers: [CriticalEscalationController],
   providers: [CriticalEscalationService],
+  exports: [CriticalEscalationService],
 })
 export class CriticalEscalationModule {}

@@ -63,6 +63,16 @@ export function initLayout() {
             <a href="/front-end/super_admin/escalations.html" class="nav-item ${isActive('escalations')}"><i class="ph ph-siren"></i> Escalations</a>
             <a href="/front-end/super_admin/settings.html" class="nav-item ${isActive('settings')}"><i class="ph ph-gear"></i> Settings</a>
         `;
+    } else if (user.role === 'PLATFORM_ADMIN') {
+        navItems = `
+            <a href="/front-end/platform_admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Dashboard</a>
+            <a href="/front-end/platform_admin/my-companies.html" class="nav-item ${isActive('my-companies')}"><i class="ph ph-buildings"></i> My Companies</a>
+            <a href="/front-end/platform_admin/technical-team.html" class="nav-item ${isActive('technical-team')}"><i class="ph ph-hard-drives"></i> Technical Team</a>
+            <a href="/front-end/platform_admin/support-team.html" class="nav-item ${isActive('support-team')}"><i class="ph ph-headset"></i> Support Team</a>
+            <a href="/front-end/platform_admin/technical-issues.html" class="nav-item ${isActive('technical-issues')}"><i class="ph ph-bug"></i> Technical Issues</a>
+            <a href="/front-end/platform_admin/support-tickets.html" class="nav-item ${isActive('support-tickets')}"><i class="ph ph-ticket"></i> Support Tickets</a>
+            <a href="/front-end/platform_admin/workload.html" class="nav-item ${isActive('workload')}"><i class="ph ph-gauge"></i> Workload</a>
+        `;
     }
 
     if (sidebarContainer) {

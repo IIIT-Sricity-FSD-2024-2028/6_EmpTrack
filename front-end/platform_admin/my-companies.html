@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Platform Admin My Companies</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/platform_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/platform_admin/my-companies.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">My Companies</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Platform Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="pa-shell">
+                    <div class="section-header">
+                        <h2 class="section-title">Companies Assigned To Me</h2>
+                    </div>
+
+                    <div class="card filter-bar">
+                        <div class="search-wrap">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" id="search-input" class="search-input" placeholder="Search by company name or email...">
+                        </div>
+                        <div class="filters-wrap">
+                            <select id="status-filter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                                <option value="SUSPENDED">Suspended</option>
+                            </select>
+                            <button class="btn-clear" id="btn-clear-filters"><i class="ph ph-x"></i> Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="card table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company Name</th>
+                                    <th>Contact Email</th>
+                                    <th>Status</th>
+                                    <th>Subscription</th>
+                                    <th>Company Admin</th>
+                                    <th>Employees</th>
+                                    <th>Assigned Since</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="companies-tbody">
+                                <tr class="loader-row"><td colspan="8"><div class="spinner"></div><div>Loading companies...</div></td></tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="companies-pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Company Modal -->
+    <div class="modal-overlay" id="viewCompanyModal">
+        <div class="modal" style="max-width:560px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Company Details</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid" id="view-company-body"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/platform_admin/my-companies.js"></script>
+</body>
+
+</html>

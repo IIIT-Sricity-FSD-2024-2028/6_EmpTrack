@@ -561,6 +561,141 @@ class ApiStore {
     async updatePlatformSettings(data) {
         return this._fetch('/platform-settings', { method: 'PATCH', body: JSON.stringify(data) });
     }
+
+    // --- Platform Admin: Dashboard ---
+    async getPlatformDashboardSummary() {
+        return this._fetch('/platform-dashboard/summary');
+    }
+
+    // --- Platform Admin: My Companies (view-only, reuses the existing Companies endpoint) ---
+    async getMyCompanies() {
+        return this.getCompanies();
+    }
+
+    // --- Platform Admin: Technical Team ---
+    async getTechnicalTeam(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.search) params.set('search', filters.search);
+        const qs = params.toString();
+        return this._fetch(`/technical-team${qs ? '?' + qs : ''}`);
+    }
+
+    async getTechnicalTeamMember(id) {
+        return this._fetch(`/technical-team/${id}`);
+    }
+
+    async createTechnicalTeamMember(data) {
+        return this._fetch('/technical-team', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async updateTechnicalTeamMember(id, data) {
+        return this._fetch(`/technical-team/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    }
+
+    async updateTechnicalTeamMemberStatus(id, status) {
+        return this._fetch(`/technical-team/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
+    // --- Platform Admin: Support Team ---
+    async getSupportTeam(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.search) params.set('search', filters.search);
+        const qs = params.toString();
+        return this._fetch(`/support-team${qs ? '?' + qs : ''}`);
+    }
+
+    async getSupportTeamMember(id) {
+        return this._fetch(`/support-team/${id}`);
+    }
+
+    async createSupportTeamMember(data) {
+        return this._fetch('/support-team', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async updateSupportTeamMember(id, data) {
+        return this._fetch(`/support-team/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    }
+
+    async updateSupportTeamMemberStatus(id, status) {
+        return this._fetch(`/support-team/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
+    // --- Platform Admin: Team Workload ---
+    async getTeamWorkload() {
+        return this._fetch('/platform-team/workload');
+    }
+
+    // --- Platform Admin: Technical Issues ---
+    async getTechnicalIssues(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.priority) params.set('priority', filters.priority);
+        if (filters.companyId) params.set('companyId', filters.companyId);
+        if (filters.assignedTo) params.set('assignedTo', filters.assignedTo);
+        const qs = params.toString();
+        return this._fetch(`/technical-issues${qs ? '?' + qs : ''}`);
+    }
+
+    async getTechnicalIssueById(id) {
+        return this._fetch(`/technical-issues/${id}`);
+    }
+
+    async assignTechnicalIssue(id, assigned_to) {
+        return this._fetch(`/technical-issues/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ assigned_to }) });
+    }
+
+    async reassignTechnicalIssue(id, assigned_to, reason) {
+        return this._fetch(`/technical-issues/${id}/reassign`, { method: 'PATCH', body: JSON.stringify({ assigned_to, reason }) });
+    }
+
+    async resolveTechnicalIssue(id, resolution_notes) {
+        return this._fetch(`/technical-issues/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution_notes }) });
+    }
+
+    async escalateTechnicalIssue(id, note) {
+        return this._fetch(`/technical-issues/${id}/escalate`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    async addTechnicalIssueComment(id, message) {
+        return this._fetch(`/technical-issues/${id}/comments`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
+
+    // --- Platform Admin: Support Tickets ---
+    async getSupportTickets(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.priority) params.set('priority', filters.priority);
+        if (filters.companyId) params.set('companyId', filters.companyId);
+        if (filters.assignedTo) params.set('assignedTo', filters.assignedTo);
+        const qs = params.toString();
+        return this._fetch(`/support-tickets${qs ? '?' + qs : ''}`);
+    }
+
+    async getSupportTicketById(id) {
+        return this._fetch(`/support-tickets/${id}`);
+    }
+
+    async assignSupportTicket(id, assigned_to) {
+        return this._fetch(`/support-tickets/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ assigned_to }) });
+    }
+
+    async reassignSupportTicket(id, assigned_to, reason) {
+        return this._fetch(`/support-tickets/${id}/reassign`, { method: 'PATCH', body: JSON.stringify({ assigned_to, reason }) });
+    }
+
+    async resolveSupportTicket(id, resolution_notes) {
+        return this._fetch(`/support-tickets/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution_notes }) });
+    }
+
+    async escalateSupportTicket(id, note) {
+        return this._fetch(`/support-tickets/${id}/escalate`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    async addSupportTicketComment(id, message) {
+        return this._fetch(`/support-tickets/${id}/comments`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
 }
 
 export const db = new ApiStore();

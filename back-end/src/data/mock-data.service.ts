@@ -18,7 +18,15 @@ const INITIAL_MOCK_DATA = {
         { emp_id: "SA001", emp_name: "Alex Morgan", email: "superadmin@emptrack.com", phone: "9000000001", password: "Password@123", role: "SUPER_ADMIN", status: "ACTIVE", date_of_joining: "2023-01-01", companyId: null },
         { emp_id: "PA001", emp_name: "Ravi Kumar", email: "ravi.platform@emptrack.com", phone: "9000000002", password: "Password@123", role: "PLATFORM_ADMIN", status: "ACTIVE", date_of_joining: "2023-06-01", companyId: null },
         { emp_id: "PA002", emp_name: "Anjali Sharma", email: "anjali.platform@emptrack.com", phone: "9000000003", password: "Password@123", role: "PLATFORM_ADMIN", status: "ACTIVE", date_of_joining: "2024-02-01", companyId: null },
-        { emp_id: "PA003", emp_name: "Karthik R", email: "karthik.platform@emptrack.com", phone: "9000000004", password: "Password@123", role: "PLATFORM_ADMIN", status: "INACTIVE", date_of_joining: "2024-08-01", companyId: null }
+        { emp_id: "PA003", emp_name: "Karthik R", email: "karthik.platform@emptrack.com", phone: "9000000004", password: "Password@123", role: "PLATFORM_ADMIN", status: "INACTIVE", date_of_joining: "2024-08-01", companyId: null },
+
+        // Technical / Support Team members - managed by a Platform Admin, no portal of their own yet
+        { emp_id: "TT001", emp_name: "Wanda Maximoff", email: "wanda.tech@emptrack.com", phone: "9000000010", password: null, role: "TECHNICAL_TEAM", status: "ACTIVE", date_of_joining: "2024-03-01", companyId: null, platform_admin_id: "PA001", specialization: "Infrastructure" },
+        { emp_id: "TT002", emp_name: "Bruce Banner", email: "bruce.tech@emptrack.com", phone: "9000000011", password: null, role: "TECHNICAL_TEAM", status: "ACTIVE", date_of_joining: "2024-05-15", companyId: null, platform_admin_id: "PA001", specialization: "Networking" },
+        { emp_id: "TT003", emp_name: "Shuri Udaku", email: "shuri.tech@emptrack.com", phone: "9000000012", password: null, role: "TECHNICAL_TEAM", status: "ACTIVE", date_of_joining: "2025-01-10", companyId: null, platform_admin_id: "PA002", specialization: "Platform/DevOps" },
+        { emp_id: "ST001", emp_name: "Sam Wilson", email: "sam.support@emptrack.com", phone: "9000000013", password: null, role: "SUPPORT_TEAM", status: "ACTIVE", date_of_joining: "2024-04-01", companyId: null, platform_admin_id: "PA001", specialization: "Billing Support" },
+        { emp_id: "ST002", emp_name: "Carol Ferris", email: "carol.support@emptrack.com", phone: "9000000014", password: null, role: "SUPPORT_TEAM", status: "INACTIVE", date_of_joining: "2024-07-01", companyId: null, platform_admin_id: "PA001", specialization: "General Support" },
+        { emp_id: "ST003", emp_name: "Diana Prince", email: "diana.support@emptrack.com", phone: "9000000015", password: null, role: "SUPPORT_TEAM", status: "ACTIVE", date_of_joining: "2025-02-01", companyId: null, platform_admin_id: "PA002", specialization: "Onboarding Support" }
     ],
     attendance: [
         { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: 6, remarks: "On track", status: "PRESENT" },
@@ -99,6 +107,14 @@ const INITIAL_MOCK_DATA = {
         { transaction_id: "TXN-014", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, billing_cycle: "MONTHLY", payment_date: "2026-07-15", payment_status: "FAILED" }
     ],
     invitations: [],
+    platform_tickets: [
+        { ticket_id: "TIX-001", ticket_type: "TECHNICAL", company_id: "C001", platform_admin_id: "PA001", raised_by_name: "Kiran (Company Admin)", title: "SSO login failures for Acme staff", category: "Authentication", priority: "High", status: "OPEN", assigned_to: null, description: "Multiple Acme employees report SSO redirect loop since this morning.", created_date: "2026-08-18", updated_date: "2026-08-18", resolved_date: null, comments: [], reassign_log: [] },
+        { ticket_id: "TIX-002", ticket_type: "TECHNICAL", company_id: "C002", platform_admin_id: "PA001", raised_by_name: "Natasha Romanoff (Company Admin)", title: "Stark Industries API integration timing out", category: "Integration", priority: "Critical", status: "IN_PROGRESS", assigned_to: "TT002", description: "Payroll export API calls are timing out after 30s for the Stark tenant.", created_date: "2026-08-10", updated_date: "2026-08-16", resolved_date: null, comments: [{ author: "Bruce Banner", message: "Reproduced; investigating DB connection pool exhaustion.", timestamp: "2026-08-16T10:00:00.000Z" }], reassign_log: [] },
+        { ticket_id: "TIX-003", ticket_type: "TECHNICAL", company_id: "C003", platform_admin_id: "PA002", raised_by_name: "Wayne Enterprises IT", title: "Data export job stuck at 0%", category: "Bug", priority: "Medium", status: "RESOLVED", assigned_to: "TT003", description: "Nightly export job hasn't progressed in 3 days.", created_date: "2026-07-28", updated_date: "2026-08-01", resolved_date: "2026-08-01", comments: [{ author: "Shuri Udaku", message: "Fixed a stuck cron lock; job resumed.", timestamp: "2026-08-01T09:00:00.000Z" }], reassign_log: [] },
+        { ticket_id: "TIX-004", ticket_type: "SUPPORT", company_id: "C001", platform_admin_id: "PA001", raised_by_name: "Kiran (Company Admin)", title: "Question about invoice for August", category: "Billing", priority: "Low", status: "OPEN", assigned_to: null, description: "Requesting a breakdown of the August Enterprise plan invoice.", created_date: "2026-08-20", updated_date: "2026-08-20", resolved_date: null, comments: [], reassign_log: [] },
+        { ticket_id: "TIX-005", ticket_type: "SUPPORT", company_id: "C002", platform_admin_id: "PA001", raised_by_name: "Natasha Romanoff (Company Admin)", title: "How to bulk-import employees via CSV", category: "How-to", priority: "Medium", status: "IN_PROGRESS", assigned_to: "ST001", description: "Need guidance on the CSV column format for bulk employee import.", created_date: "2026-08-14", updated_date: "2026-08-15", resolved_date: null, comments: [{ author: "Sam Wilson", message: "Sent the CSV template and a sample file.", timestamp: "2026-08-15T13:00:00.000Z" }], reassign_log: [] },
+        { ticket_id: "TIX-006", ticket_type: "SUPPORT", company_id: "C003", platform_admin_id: "PA002", raised_by_name: "Wayne Enterprises IT", title: "Reactivate suspended account access for finance team", category: "Account", priority: "High", status: "OPEN", assigned_to: null, description: "Finance team locked out since the company suspension; needs read-only access to close out August books.", created_date: "2026-08-21", updated_date: "2026-08-21", resolved_date: null, comments: [], reassign_log: [] }
+    ],
     activity_logs: [
         { activity_id: "ACT-001", user_id: "SA001", user_name: "Alex Morgan", role: "SUPER_ADMIN", action: "Platform Admin created", company_id: null, company_name: null, details: "Created platform admin Ravi Kumar", timestamp: "2026-08-01T09:00:00.000Z", status: "SUCCESS" },
         { activity_id: "ACT-002", user_id: "SA001", user_name: "Alex Morgan", role: "SUPER_ADMIN", action: "Company assigned", company_id: "C001", company_name: "Acme Technologies", details: "Assigned Ravi Kumar to manage Acme Technologies", timestamp: "2026-08-02T10:30:00.000Z", status: "SUCCESS" },
@@ -148,6 +164,7 @@ export class MockDataService {
     public getSubscriptionPlans() { return this.data.subscription_plans; }
     public getRevenueTransactions() { return this.data.revenue_transactions; }
     public getInvitations() { return this.data.invitations; }
+    public getPlatformTickets() { return this.data.platform_tickets; }
     public getActivityLogs() { return this.data.activity_logs; }
     public getCriticalEscalations() { return this.data.critical_escalations; }
     public getPlatformSettings() { return this.data.platform_settings; }
@@ -176,6 +193,7 @@ export class MockDataService {
         this.data.task = this.data.task.filter(t => t.assigned_to !== id);
         this.data.issue = this.data.issue.filter(i => i.emp_id !== id && i.assigned_to !== id);
         this.data.escalation = this.data.escalation.filter(e => e.escalated_from !== id && e.escalated_to !== id);
+        this.data.platform_tickets.forEach(t => { if (t.assigned_to === id) t.assigned_to = null; });
 
         if (this.data.notifications) {
             this.data.notifications = this.data.notifications.filter(n => n.employee_id !== id);

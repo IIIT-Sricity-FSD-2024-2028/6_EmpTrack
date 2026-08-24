@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Platform Admin Workload</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/platform_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/platform_admin/workload.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Team Workload</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Platform Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="pa-shell">
+                    <div class="card table-container">
+                        <div class="section-header" style="padding:16px 20px;">
+                            <h2 class="section-title"><i class="ph ph-hard-drives"></i> Technical Team Workload</h2>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Status</th>
+                                    <th>Open</th>
+                                    <th>In Progress</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="technical-workload-tbody">
+                                <tr class="loader-row"><td colspan="5"><div class="spinner"></div><div>Loading workload...</div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card table-container">
+                        <div class="section-header" style="padding:16px 20px;">
+                            <h2 class="section-title"><i class="ph ph-headset"></i> Support Team Workload</h2>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>Status</th>
+                                    <th>Open</th>
+                                    <th>In Progress</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="support-workload-tbody">
+                                <tr class="loader-row"><td colspan="5"><div class="spinner"></div><div>Loading workload...</div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/platform_admin/workload.js"></script>
+</body>
+
+</html>
