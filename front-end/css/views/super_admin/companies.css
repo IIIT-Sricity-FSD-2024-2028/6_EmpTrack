@@ -1,0 +1,2 @@
+.sa-shell .cell-name a { color: var(--text-main); text-decoration: none; }
+.sa-shell .cell-name a:hover { color: var(--sa-primary); text-decoration: underline; }

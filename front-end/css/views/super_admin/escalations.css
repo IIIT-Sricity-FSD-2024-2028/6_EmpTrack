@@ -1,0 +1,4 @@
+.sa-shell .badge-priority-critical { background: rgba(239,68,68,0.15); color: var(--sa-danger); }
+.sa-shell .badge-priority-high { background: rgba(249,115,22,0.15); color: var(--sa-warning); }
+.sa-shell .badge-priority-medium { background: rgba(59,130,246,0.15); color: var(--sa-info); }
+.sa-shell .badge-priority-low { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }

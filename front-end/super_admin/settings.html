@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Super Admin Settings</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/super_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/super_admin/settings.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Platform Settings</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Super Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="sa-shell">
+                    <div class="settings-grid">
+
+                        <div class="card settings-card">
+                            <div class="card-title"><i class="ph-fill ph-sliders-horizontal"></i> Platform Configuration</div>
+                            <div class="form-group">
+                                <label class="form-label">Platform Name</label>
+                                <input type="text" class="form-control" id="st-name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Support Email</label>
+                                <input type="email" class="form-control" id="st-support-email">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Default Currency</label>
+                                <input type="text" class="form-control" id="st-currency" maxlength="3" style="text-transform:uppercase;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Timezone</label>
+                                <input type="text" class="form-control" id="st-timezone">
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-text">
+                                    <span class="toggle-title">Maintenance Mode</span>
+                                    <span class="toggle-desc">Temporarily restrict access for non-Super-Admin users</span>
+                                </div>
+                                <label class="switch"><input type="checkbox" id="st-maintenance"><span class="slider"></span></label>
+                            </div>
+                            <button class="btn-save" id="btn-save-platform"><i class="ph ph-check-circle"></i> Save Platform Configuration</button>
+                        </div>
+
+                        <div class="card settings-card">
+                            <div class="card-title"><i class="ph-fill ph-shield-check"></i> Security Settings</div>
+                            <div class="form-group">
+                                <label class="form-label">Minimum Password Length</label>
+                                <input type="number" min="6" max="32" class="form-control" id="st-pwd-len">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Session Timeout (minutes)</label>
+                                <input type="number" min="5" class="form-control" id="st-session">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Invitation Expiry (hours)</label>
+                                <input type="number" min="1" class="form-control" id="st-invite-expiry">
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-text">
+                                    <span class="toggle-title">Require Two-Factor Authentication</span>
+                                    <span class="toggle-desc">Applies to Platform Admin and Company Admin accounts</span>
+                                </div>
+                                <label class="switch"><input type="checkbox" id="st-2fa"><span class="slider"></span></label>
+                            </div>
+                            <button class="btn-save" id="btn-save-security"><i class="ph ph-check-circle"></i> Save Security Settings</button>
+                        </div>
+
+                        <div class="card settings-card">
+                            <div class="card-title"><i class="ph-fill ph-bell"></i> Notification Settings</div>
+                            <div class="toggle-row">
+                                <div class="toggle-text"><span class="toggle-title">Email Notifications</span><span class="toggle-desc">Platform-wide email notifications</span></div>
+                                <label class="switch"><input type="checkbox" id="st-notif-email"><span class="slider"></span></label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-text"><span class="toggle-title">Critical Escalation Alerts</span><span class="toggle-desc">Notify Super Admin of new critical escalations</span></div>
+                                <label class="switch"><input type="checkbox" id="st-notif-escalation"><span class="slider"></span></label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-text"><span class="toggle-title">Weekly Digest</span><span class="toggle-desc">Weekly summary of platform activity</span></div>
+                                <label class="switch"><input type="checkbox" id="st-notif-digest"><span class="slider"></span></label>
+                            </div>
+                            <div class="toggle-row">
+                                <div class="toggle-text"><span class="toggle-title">New Company Alerts</span><span class="toggle-desc">Notify when a company is onboarded</span></div>
+                                <label class="switch"><input type="checkbox" id="st-notif-company"><span class="slider"></span></label>
+                            </div>
+                            <button class="btn-save" id="btn-save-notifications"><i class="ph ph-check-circle"></i> Save Notification Settings</button>
+                        </div>
+
+                        <div class="card settings-card">
+                            <div class="card-title"><i class="ph-fill ph-users-three"></i> Roles &amp; Permissions</div>
+                            <div id="role-permissions-list"></div>
+                            <div class="form-hint" style="margin-top:8px;"><i class="ph ph-info"></i> Role capabilities are enforced by the backend and shown here for reference.</div>
+                        </div>
+
+                        <div class="card settings-card">
+                            <div class="card-title"><i class="ph-fill ph-credit-card"></i> Subscription Configuration</div>
+                            <p style="font-size:13px; color:var(--set-muted); margin-top:0;">Subscription plans, pricing, and billing cycles are managed from the dedicated Subscriptions section.</p>
+                            <a href="subscriptions.html" class="btn btn-outline" style="align-self:flex-start;">Go to Subscriptions</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/super_admin/settings.js"></script>
+</body>
+
+</html>

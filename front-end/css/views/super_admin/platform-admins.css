@@ -1,0 +1,8 @@
+.sa-shell .pa-companies-chip {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 20px;
+    padding: 4px 10px; font-size: 12px; font-weight: 600; color: var(--text-main); transition: 0.15s;
+}
+.sa-shell .pa-companies-chip:hover { border-color: var(--sa-primary); color: var(--sa-primary); }
+.sa-shell .company-list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.sa-shell .company-list-item:last-child { border-bottom: none; }

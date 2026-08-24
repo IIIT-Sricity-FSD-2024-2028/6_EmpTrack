@@ -3,10 +3,10 @@ import { auth } from './auth.js';
 import { initLayout } from './components/layout.js';
 
 // Pages that never require authentication, regardless of where the app is deployed.
-const PUBLIC_PAGES = ['index.html', 'login.html', 'register.html', 'forgot-password.html', 'reset-password.html'];
+const PUBLIC_PAGES = ['index.html', 'login.html', 'register.html', 'forgot-password.html', 'reset-password.html', 'accept-invitation.html'];
 
 // Role-specific portal folders. Any path containing one of these is a protected page.
-const ROLE_FOLDERS = ['hr', 'teamlead', 'employee', 'admin'];
+const ROLE_FOLDERS = ['hr', 'teamlead', 'employee', 'company_admin', 'super_admin'];
 
 // Normalizes the current pathname into { root, page, folder } so redirect
 // targets stay correct no matter where the app is served from ("/",

@@ -1,4 +1,4 @@
-// /js/views/admin/dashboard.js
+// /js/views/company_admin/dashboard.js
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
 import { renderCalendar } from '../../components/calendar.js';

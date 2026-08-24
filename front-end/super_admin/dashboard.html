@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Super Admin Dashboard</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/super_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/super_admin/dashboard.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Dashboard</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Super Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="sa-shell">
+                    <div class="stats-grid" id="sa-stats-grid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="card chart-card">
+                            <h3 class="chart-title"><i class="ph-fill ph-buildings" style="color:var(--sa-primary);"></i> Company Growth</h3>
+                            <div class="chart-wrapper">
+                                <div class="chart-skel" id="skel-company-growth"><div class="spinner"></div></div>
+                                <canvas id="chartCompanyGrowth"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-card">
+                            <h3 class="chart-title"><i class="ph-fill ph-users-three" style="color:var(--sa-success);"></i> Employee Growth</h3>
+                            <div class="chart-wrapper">
+                                <div class="chart-skel" id="skel-employee-growth"><div class="spinner"></div></div>
+                                <canvas id="chartEmployeeGrowth"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-card">
+                            <h3 class="chart-title"><i class="ph-fill ph-chart-pie-slice" style="color:var(--sa-purple);"></i> Subscription Distribution</h3>
+                            <div class="chart-wrapper">
+                                <div class="chart-skel" id="skel-sub-dist"><div class="spinner"></div></div>
+                                <canvas id="chartSubDist"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-card">
+                            <h3 class="chart-title"><i class="ph-fill ph-currency-circle-dollar" style="color:var(--sa-warning);"></i> Revenue by Plan</h3>
+                            <div class="chart-wrapper">
+                                <div class="chart-skel" id="skel-revenue"><div class="spinner"></div></div>
+                                <canvas id="chartRevenue"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-card" style="grid-column: 1 / -1;">
+                            <h3 class="chart-title"><i class="ph-fill ph-activity" style="color:var(--sa-info);"></i> Platform Activity (Last 30 Days)</h3>
+                            <div class="chart-wrapper" style="height:220px;">
+                                <div class="chart-skel" id="skel-activity"><div class="spinner"></div></div>
+                                <canvas id="chartActivity"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/super_admin/dashboard.js"></script>
+</body>
+
+</html>

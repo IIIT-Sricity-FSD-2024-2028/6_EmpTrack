@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Super Admin Platform Admins</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/super_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/super_admin/platform-admins.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Platform Admins</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Super Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="sa-shell">
+                    <div class="section-header">
+                        <h2 class="section-title">All Platform Admins</h2>
+                        <button class="btn btn-primary" id="btn-open-create"><i class="ph ph-plus"></i> Create Platform Admin</button>
+                    </div>
+
+                    <div class="card filter-bar">
+                        <div class="search-wrap">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" id="search-input" class="search-input" placeholder="Search by name or email...">
+                        </div>
+                        <div class="filters-wrap">
+                            <select id="status-filter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                                <option value="PENDING">Pending Invitation</option>
+                            </select>
+                            <button class="btn-clear" id="btn-clear-filters"><i class="ph ph-x"></i> Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="card table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Platform Admin</th>
+                                    <th>Contact</th>
+                                    <th>Status</th>
+                                    <th>Assigned Companies</th>
+                                    <th>Joined</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pa-tbody">
+                                <tr class="loader-row"><td colspan="6"><div class="spinner"></div><div>Loading platform admins...</div></td></tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="pa-pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Platform Admin Modal -->
+    <div class="modal-overlay" id="createPaModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Platform Admin</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-pa-form">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="cp-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="cp-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="cp-phone" required>
+                    </div>
+                    <div class="form-hint"><i class="ph ph-info"></i> An invitation will be sent to this email. The Platform Admin will create their own password.</div>
+                    <div id="create-pa-error" class="form-error" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-create-pa">Create Platform Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Platform Admin Modal -->
+    <div class="modal-overlay" id="editPaModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Platform Admin</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-pa-form">
+                    <input type="hidden" id="ep-id">
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="ep-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="ep-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="ep-phone" required>
+                    </div>
+                    <div id="edit-pa-error" class="form-error" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-edit-pa">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assigned Companies Modal -->
+    <div class="modal-overlay" id="companiesModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Assigned Companies</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body" id="companies-modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Modal -->
+    <div class="modal-overlay" id="activityModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Platform Admin Activity</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body" id="activity-modal-body"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Confirm Modal -->
+    <div class="modal-overlay" id="statusConfirmModal">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="status-confirm-title">Change Status</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="status-confirm-text" style="color:var(--text-main); margin:0;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-danger" id="btn-confirm-status">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/super_admin/platform-admins.js"></script>
+</body>
+
+</html>

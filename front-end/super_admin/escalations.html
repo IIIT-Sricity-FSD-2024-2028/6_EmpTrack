@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Super Admin Escalations</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/super_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/super_admin/escalations.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Critical Escalations</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Super Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="sa-shell">
+                    <div class="section-header">
+                        <h2 class="section-title">Escalations Requiring Attention</h2>
+                        <button class="btn btn-primary" id="btn-open-create"><i class="ph ph-plus"></i> Raise Escalation</button>
+                    </div>
+
+                    <div class="card filter-bar">
+                        <div class="filters-wrap">
+                            <select id="status-filter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="OPEN">Open</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="ESCALATED">Escalated</option>
+                                <option value="RESOLVED">Resolved</option>
+                            </select>
+                            <select id="priority-filter" class="filter-select">
+                                <option value="all">All Priorities</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <button class="btn-clear" id="btn-clear-filters"><i class="ph ph-x"></i> Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="card table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Issue ID</th>
+                                    <th>Company</th>
+                                    <th>Raised By</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Assigned Team</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="esc-tbody">
+                                <tr class="loader-row"><td colspan="9"><div class="spinner"></div><div>Loading escalations...</div></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Escalation Modal -->
+    <div class="modal-overlay" id="createEscModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Raise Critical Escalation</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="create-esc-form">
+                    <div class="form-group">
+                        <label class="form-label">Company</label>
+                        <select class="form-control" id="ce-company" required></select>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" id="ce-category">
+                                <option value="Technical">Technical</option>
+                                <option value="Billing">Billing</option>
+                                <option value="Support">Support</option>
+                                <option value="Security">Security</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Priority</label>
+                            <select class="form-control" id="ce-priority">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Assigned Team</label>
+                        <select class="form-control" id="ce-team">
+                            <option value="Support Team">Support Team</option>
+                            <option value="Technical Team">Technical Team</option>
+                            <option value="Unassigned" selected>Unassigned</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="ce-description" rows="3"></textarea>
+                    </div>
+                    <div id="create-esc-error" class="form-error" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-create-esc">Raise Escalation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalation Detail Modal -->
+    <div class="modal-overlay" id="detailEscModal">
+        <div class="modal" style="max-width:640px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="detail-esc-title">Escalation Details</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="de-id">
+                <div class="detail-grid" id="detail-esc-info" style="margin-bottom:16px;"></div>
+
+                <div class="form-section-title">Update</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-control" id="de-priority">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Assigned Team</label>
+                        <select class="form-control" id="de-team">
+                            <option value="Support Team">Support Team</option>
+                            <option value="Technical Team">Technical Team</option>
+                            <option value="Unassigned">Unassigned</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+                    <button class="btn btn-outline" id="btn-save-priority">Save Priority</button>
+                    <button class="btn btn-outline" id="btn-save-assign">Save Assignment</button>
+                    <button class="btn btn-secondary" id="btn-resolve">Resolve</button>
+                    <button class="btn btn-danger" id="btn-escalate">Escalate Further</button>
+                </div>
+
+                <div class="form-section-title">Comments</div>
+                <div id="detail-esc-comments" style="max-height:200px; overflow-y:auto; margin-bottom:12px;"></div>
+                <div class="form-group">
+                    <textarea class="form-control" id="de-comment" rows="2" placeholder="Add a comment..."></textarea>
+                </div>
+                <button class="btn btn-outline" id="btn-add-comment"><i class="ph ph-chat-circle-text"></i> Add Comment</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/super_admin/escalations.js"></script>
+</body>
+
+</html>

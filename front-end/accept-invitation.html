@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Accept Invitation</title>
+
+    <!-- Theme (must run before CSS paints to avoid flash-of-wrong-theme) -->
+    <script src="js/theme-init.js"></script>
+
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body
+    style="display:flex; align-items:center; justify-content:center; min-height:100vh; background-color: var(--bg-main);">
+    <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Toggle light/dark theme"
+        aria-label="Toggle light/dark theme" style="position:fixed; top:20px; right:20px; z-index:10;">
+        <i class="ph ph-moon"></i>
+    </button>
+    <div id="app" class="app-container" style="display:flex; align-items:center; justify-content:center; width:100%;">
+        <div class="auth-wrapper">
+
+            <!-- Loading state -->
+            <div class="auth-container" id="state-loading">
+                <div class="auth-logo"><i class="ph-fill ph-check-circle" style="font-size:36px;"></i> EmpTrack</div>
+                <div style="text-align:center; padding: 24px 0;">
+                    <div class="spinner" style="display:inline-block; width:28px; height:28px; border:3px solid var(--border-color); border-top-color: var(--primary-color); border-radius:50%; animation: spin 1s linear infinite;"></div>
+                    <p style="color:var(--text-muted); margin-top:12px;">Validating your invitation...</p>
+                </div>
+            </div>
+
+            <!-- Invalid / expired state -->
+            <div class="auth-container" id="state-invalid" style="display:none;">
+                <div class="auth-logo"><i class="ph-fill ph-check-circle" style="font-size:36px;"></i> EmpTrack</div>
+                <h2 class="auth-title">Invitation Not Valid</h2>
+                <p id="invalid-message" style="text-align:center; color:var(--text-muted);">This invitation link is invalid or has expired.</p>
+                <a href="login.html" class="btn btn-outline" style="width:100%; text-align:center; margin-top:12px; display:block;">Go to Login</a>
+            </div>
+
+            <!-- Accept form state -->
+            <div class="auth-container" id="state-form" style="display:none;">
+                <div class="auth-logo"><i class="ph-fill ph-check-circle" style="font-size:36px;"></i> EmpTrack</div>
+                <h2 class="auth-title">Welcome to EmpTrack</h2>
+                <p id="invite-summary" style="text-align:center; color:var(--text-muted); margin-top:-12px; margin-bottom:20px;"></p>
+
+                <form id="accept-form">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="invite-email" class="form-control" disabled>
+                    </div>
+                    <div class="form-group" id="group-password">
+                        <label class="form-label" for="password">Create Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required minlength="8">
+                        <div class="form-error"></div>
+                    </div>
+                    <div class="form-group" id="group-confirm">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="••••••••" required minlength="8">
+                        <div class="form-error"></div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                        Activate Account <i class="ph ph-arrow-right"></i>
+                    </button>
+
+                    <div id="accept-alert" class="form-error" style="text-align:center; margin-top:16px; display:none;"></div>
+                </form>
+            </div>
+
+            <!-- Success state -->
+            <div class="auth-container" id="state-success" style="display:none;">
+                <div class="auth-logo"><i class="ph-fill ph-check-circle" style="font-size:36px;"></i> EmpTrack</div>
+                <div style="text-align:center; padding: 12px 0;">
+                    <i class="ph-fill ph-check-circle" style="font-size:48px; color:var(--secondary-color);"></i>
+                    <h2 class="auth-title">Account Activated</h2>
+                    <p style="color:var(--text-muted);">Your password has been set. Redirecting you to login...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <script type="module" src="js/views/auth/accept-invitation.js"></script>
+</body>
+
+</html>

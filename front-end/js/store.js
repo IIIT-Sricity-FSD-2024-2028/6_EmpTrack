@@ -14,10 +14,24 @@ class ApiStore {
         return 'EMPLOYEE';
     }
 
+    getActor() {
+        const userStr = localStorage.getItem('empTrackSessionV2');
+        if (!userStr) return { id: '', name: '' };
+        try {
+            const user = JSON.parse(userStr);
+            return { id: user.emp_id || '', name: user.emp_name || '' };
+        } catch (e) {
+            return { id: '', name: '' };
+        }
+    }
+
     async _fetch(endpoint, options = {}) {
+        const actor = this.getActor();
         const headers = {
             'Content-Type': 'application/json',
             'Role': this.getRole(),
+            'x-actor-id': actor.id,
+            'x-actor-name': actor.name,
             ...(options.headers || {})
         };
         const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
@@ -342,6 +356,210 @@ class ApiStore {
         if (year) params.set('year', year);
         if (month) params.set('month', month);
         return params.toString();
+    }
+
+    // --- Super Admin: Companies ---
+    async getCompanies(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.platformAdminId) params.set('platformAdminId', filters.platformAdminId);
+        if (filters.status) params.set('status', filters.status);
+        if (filters.search) params.set('search', filters.search);
+        const qs = params.toString();
+        return this._fetch(`/companies${qs ? '?' + qs : ''}`);
+    }
+
+    async getCompanyById(id) {
+        return this._fetch(`/companies/${id}`);
+    }
+
+    async createCompany(data) {
+        return this._fetch('/companies', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async updateCompany(id, data) {
+        return this._fetch(`/companies/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    }
+
+    async updateCompanyStatus(id, status) {
+        return this._fetch(`/companies/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
+    async reassignCompanyPlatformAdmin(id, platform_admin_id) {
+        return this._fetch(`/companies/${id}/reassign`, { method: 'PATCH', body: JSON.stringify({ platform_admin_id }) });
+    }
+
+    // --- Super Admin: Platform Admins ---
+    async getPlatformAdmins(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.search) params.set('search', filters.search);
+        const qs = params.toString();
+        return this._fetch(`/platform-admins${qs ? '?' + qs : ''}`);
+    }
+
+    async getActivePlatformAdminCount() {
+        return this._fetch('/platform-admins/active-count');
+    }
+
+    async getPlatformAdminById(id) {
+        return this._fetch(`/platform-admins/${id}`);
+    }
+
+    async getPlatformAdminActivity(id) {
+        return this._fetch(`/platform-admins/${id}/activity`);
+    }
+
+    async createPlatformAdmin(data) {
+        return this._fetch('/platform-admins', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async updatePlatformAdmin(id, data) {
+        return this._fetch(`/platform-admins/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    }
+
+    async updatePlatformAdminStatus(id, status) {
+        return this._fetch(`/platform-admins/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
+    // --- Super Admin: Invitations ---
+    async getAllInvitations() {
+        return this._fetch('/invitations');
+    }
+
+    async getInvitationByToken(token) {
+        return this._fetch(`/invitations/${token}`);
+    }
+
+    async acceptInvitation(token, password) {
+        return this._fetch(`/invitations/${token}/accept`, { method: 'POST', body: JSON.stringify({ password }) });
+    }
+
+    // --- Super Admin: Subscriptions ---
+    async getSubscriptionPlans() {
+        return this._fetch('/subscriptions');
+    }
+
+    async getCompaniesForPlan(id) {
+        return this._fetch(`/subscriptions/${id}/companies`);
+    }
+
+    async createSubscriptionPlan(data) {
+        return this._fetch('/subscriptions', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async updateSubscriptionPlan(id, data) {
+        return this._fetch(`/subscriptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    }
+
+    async updateSubscriptionPlanStatus(id, status) {
+        return this._fetch(`/subscriptions/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
+    // --- Super Admin: Revenue ---
+    async getRevenueSummary() {
+        return this._fetch('/revenue/summary');
+    }
+
+    async getRevenueByPlan() {
+        return this._fetch('/revenue/by-plan');
+    }
+
+    async getRevenueByCompany() {
+        return this._fetch('/revenue/by-company');
+    }
+
+    async getRevenueTransactions(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.companyId) params.set('companyId', filters.companyId);
+        if (filters.status) params.set('status', filters.status);
+        const qs = params.toString();
+        return this._fetch(`/revenue/transactions${qs ? '?' + qs : ''}`);
+    }
+
+    // --- Super Admin: Platform Analytics ---
+    async getAnalyticsOverview() {
+        return this._fetch('/analytics/overview');
+    }
+
+    async getCompanyGrowth(range, from, to) {
+        return this._fetch(`/analytics/company-growth?${this._rangeQuery(range, from, to)}`);
+    }
+
+    async getEmployeeGrowth(range, from, to) {
+        return this._fetch(`/analytics/employee-growth?${this._rangeQuery(range, from, to)}`);
+    }
+
+    async getSubscriptionDistribution() {
+        return this._fetch('/analytics/subscription-distribution');
+    }
+
+    async getPlatformActivitySummary(range, from, to) {
+        return this._fetch(`/analytics/platform-activity?${this._rangeQuery(range, from, to)}`);
+    }
+
+    _rangeQuery(range, from, to) {
+        const params = new URLSearchParams();
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        if (!from && range) params.set('range', range);
+        return params.toString();
+    }
+
+    // --- Super Admin: Activity Logs ---
+    async getActivityLogs(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.userId) params.set('userId', filters.userId);
+        if (filters.action) params.set('action', filters.action);
+        if (filters.companyId) params.set('companyId', filters.companyId);
+        const qs = params.toString();
+        return this._fetch(`/activity-logs${qs ? '?' + qs : ''}`);
+    }
+
+    // --- Super Admin: Critical Escalations ---
+    async getCriticalEscalations(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.priority) params.set('priority', filters.priority);
+        if (filters.companyId) params.set('companyId', filters.companyId);
+        const qs = params.toString();
+        return this._fetch(`/critical-escalations${qs ? '?' + qs : ''}`);
+    }
+
+    async getCriticalEscalationById(id) {
+        return this._fetch(`/critical-escalations/${id}`);
+    }
+
+    async createCriticalEscalation(data) {
+        return this._fetch('/critical-escalations', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async assignCriticalEscalation(id, assigned_team) {
+        return this._fetch(`/critical-escalations/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ assigned_team }) });
+    }
+
+    async updateCriticalEscalationPriority(id, priority) {
+        return this._fetch(`/critical-escalations/${id}/priority`, { method: 'PATCH', body: JSON.stringify({ priority }) });
+    }
+
+    async resolveCriticalEscalation(id, resolution_notes) {
+        return this._fetch(`/critical-escalations/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution_notes }) });
+    }
+
+    async escalateCriticalEscalation(id, note) {
+        return this._fetch(`/critical-escalations/${id}/escalate`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    async addCriticalEscalationComment(id, message) {
+        return this._fetch(`/critical-escalations/${id}/comments`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
+
+    // --- Super Admin: Platform Settings ---
+    async getPlatformSettings() {
+        return this._fetch('/platform-settings');
+    }
+
+    async updatePlatformSettings(data) {
+        return this._fetch('/platform-settings', { method: 'PATCH', body: JSON.stringify(data) });
     }
 }
 

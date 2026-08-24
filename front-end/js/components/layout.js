@@ -46,10 +46,22 @@ export function initLayout() {
             <a href="/front-end/hr/reports.html" class="nav-item ${isActive('reports')}"><i class="ph ph-file-text"></i> Reports</a>
             <a href="/front-end/hr/settings.html" class="nav-item ${isActive('settings')}"><i class="ph ph-gear"></i> Settings</a>
         `;
-    } else if (user.role === 'ADMIN') {
+    } else if (user.role === 'COMPANY_ADMIN') {
         navItems = `
-            <a href="/front-end/admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Admin Dashboard</a>
-            <a href="/front-end/admin/employee-management.html" class="nav-item ${isActive('employee-management')}"><i class="ph ph-users"></i> All Employees</a>
+            <a href="/front-end/company_admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Admin Dashboard</a>
+            <a href="/front-end/company_admin/employee-management.html" class="nav-item ${isActive('employee-management')}"><i class="ph ph-users"></i> All Employees</a>
+        `;
+    } else if (user.role === 'SUPER_ADMIN') {
+        navItems = `
+            <a href="/front-end/super_admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Dashboard</a>
+            <a href="/front-end/super_admin/companies.html" class="nav-item ${isActive('companies')}"><i class="ph ph-buildings"></i> Companies</a>
+            <a href="/front-end/super_admin/platform-admins.html" class="nav-item ${isActive('platform-admins')}"><i class="ph ph-shield-star"></i> Platform Admins</a>
+            <a href="/front-end/super_admin/subscriptions.html" class="nav-item ${isActive('subscriptions')}"><i class="ph ph-credit-card"></i> Subscriptions</a>
+            <a href="/front-end/super_admin/revenue.html" class="nav-item ${isActive('revenue')}"><i class="ph ph-currency-circle-dollar"></i> Revenue</a>
+            <a href="/front-end/super_admin/analytics.html" class="nav-item ${isActive('analytics')}"><i class="ph ph-chart-line-up"></i> Analytics</a>
+            <a href="/front-end/super_admin/activity.html" class="nav-item ${isActive('activity')}"><i class="ph ph-list-magnifying-glass"></i> Activity</a>
+            <a href="/front-end/super_admin/escalations.html" class="nav-item ${isActive('escalations')}"><i class="ph ph-siren"></i> Escalations</a>
+            <a href="/front-end/super_admin/settings.html" class="nav-item ${isActive('settings')}"><i class="ph ph-gear"></i> Settings</a>
         `;
     }
 
@@ -72,11 +84,11 @@ export function initLayout() {
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none; display: block;">
                     <div class="user-profile" style="display:flex; align-items:center; gap:var(--spacing-md); padding: 0 var(--spacing-lg);">
                         <div class="user-avatar" style="width: 36px; height: 36px; border-radius: 50%; background-color: var(--primary-light); color: var(--primary-color); display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid var(--border-light);">
-                            ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.role === 'ADMIN' ? 'K' : user.emp_name.charAt(0)}
+                            ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.role === 'COMPANY_ADMIN' ? 'K' : user.emp_name.charAt(0)}
                         </div>
                         <div class="user-info" style="display:flex; flex-direction:column;">
-                            <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-main);">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.role === 'HR' ? 'Roshan' : user.role === 'ADMIN' ? 'Kiran' : user.emp_name}</span>
-                            <span class="user-role" style="font-size: var(--text-xs); color: var(--text-muted);">${user.role === 'HR' ? 'HR Manager' : user.role === 'ADMIN' ? 'Company Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : 'Employee'}</span>
+                            <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-main);">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.role === 'HR' ? 'Roshan' : user.role === 'COMPANY_ADMIN' ? 'Kiran' : user.emp_name}</span>
+                            <span class="user-role" style="font-size: var(--text-xs); color: var(--text-muted);">${user.role === 'HR' ? 'HR Manager' : user.role === 'COMPANY_ADMIN' ? 'Company Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : user.role === 'SUPER_ADMIN' ? 'Super Admin' : user.role === 'PLATFORM_ADMIN' ? 'Platform Admin' : 'Employee'}</span>
                         </div>
                     </div>
                     </a>
@@ -91,7 +103,7 @@ export function initLayout() {
         const titleEl = document.getElementById('page-title');
         if (titleEl) pageTitle = titleEl.textContent;
 
-        const rolePortal = user.role === 'EMPLOYEE' ? 'Employee Portal' : (user.role === 'TEAMLEAD' ? 'Team Lead Portal' : (user.role === 'ADMIN' ? 'Admin Portal' : 'HR Portal'));
+        const rolePortal = user.role === 'EMPLOYEE' ? 'Employee Portal' : user.role === 'TEAMLEAD' ? 'Team Lead Portal' : user.role === 'COMPANY_ADMIN' ? 'Company Admin Portal' : user.role === 'SUPER_ADMIN' ? 'Super Admin Portal' : user.role === 'PLATFORM_ADMIN' ? 'Platform Admin Portal' : 'HR Portal';
 
         headerContainer.innerHTML = `
             <header class="top-header">
@@ -111,7 +123,7 @@ export function initLayout() {
                     </a>
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none;" title="My Profile">
                         <div style="width: 38px; height: 38px; border-radius: 50%; background: var(--primary-gradient); color: var(--text-inverse); display:flex; align-items:center; justify-content:center; font-weight: bold; font-size: 14px; margin-left: var(--spacing-lg); box-shadow: 0 4px 10px var(--primary-light); transition: transform 0.2s ease; cursor: pointer;">
-                            ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.role === 'ADMIN' ? 'K' : user.emp_name.charAt(0)}
+                            ${user.role === 'TEAMLEAD' ? 'RS' : user.role === 'HR' ? 'R' : user.role === 'COMPANY_ADMIN' ? 'K' : user.emp_name.charAt(0)}
                         </div>
                     </a>
                 </div>
