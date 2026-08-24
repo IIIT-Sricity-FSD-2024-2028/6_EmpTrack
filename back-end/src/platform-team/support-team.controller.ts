@@ -20,23 +20,23 @@ export class SupportTeamController {
 
   @Get()
   getAll(@Headers('x-actor-id') actorId: string, @Query('status') status?: string, @Query('search') search?: string) {
-    return this.service.getAll('SUPPORT_TEAM', resolvePlatformAdminScope('PLATFORM_ADMIN', actorId), status, search);
+    return this.service.getAll('SUPPORT_MEMBER', resolvePlatformAdminScope('PLATFORM_ADMIN', actorId), status, search);
   }
 
   @Get(':id')
   getById(@Param('id') id: string, @Headers('x-actor-id') actorId: string) {
-    return this.service.getById('SUPPORT_TEAM', id, resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
+    return this.service.getById('SUPPORT_MEMBER', id, resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
   }
 
   @ApiOperation({ summary: 'Add a Support Team member' })
   @Post()
   create(@Body() dto: CreateTeamMemberDto, @Headers('x-actor-id') actorId: string, @Headers('x-actor-name') actorName: string) {
-    return this.service.create('SUPPORT_TEAM', dto, this.actor(actorId, actorName));
+    return this.service.create('SUPPORT_MEMBER', dto, this.actor(actorId, actorName));
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateTeamMemberDto, @Headers('x-actor-id') actorId: string) {
-    return this.service.update('SUPPORT_TEAM', id, dto, resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
+    return this.service.update('SUPPORT_MEMBER', id, dto, resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
   }
 
   @Patch(':id/status')
@@ -46,6 +46,6 @@ export class SupportTeamController {
     @Headers('x-actor-id') actorId: string,
     @Headers('x-actor-name') actorName: string,
   ) {
-    return this.service.updateStatus('SUPPORT_TEAM', id, dto, this.actor(actorId, actorName), resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
+    return this.service.updateStatus('SUPPORT_MEMBER', id, dto, this.actor(actorId, actorName), resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
   }
 }

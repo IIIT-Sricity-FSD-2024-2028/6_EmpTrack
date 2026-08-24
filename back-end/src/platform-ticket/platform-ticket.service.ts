@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { NotificationService } from '../notification/notification.service';
 import { CriticalEscalationService } from '../critical-escalation/critical-escalation.service';
@@ -8,10 +8,20 @@ import {
   ResolveTicketDto,
   EscalateTicketDto,
   AddTicketCommentDto,
+  ChangeTicketStatusDto,
+  ChangeTicketPriorityDto,
+  ChangeTicketCategoryDto,
+  AddInternalNoteDto,
+  ReopenTicketDto,
+  EscalateToTechnicalDto,
+  EscalateToPlatformAdminDto,
 } from './dto/platform-ticket.dto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 type TicketType = 'TECHNICAL' | 'SUPPORT';
+
+const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'ESCALATED', 'RESOLVED', 'CLOSED'];
+const VALID_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 @Injectable()
 export class PlatformTicketService {
@@ -42,14 +52,41 @@ export class PlatformTicketService {
     return ticket;
   }
 
-  getAll(ticketType: TicketType, scopePlatformAdminId: string | null, status?: string, priority?: string, companyId?: string, assignedTo?: string) {
+  getAll(
+    ticketType: TicketType,
+    scopePlatformAdminId: string | null,
+    status?: string,
+    priority?: string,
+    companyId?: string,
+    assignedTo?: string,
+    category?: string,
+    search?: string,
+    escalatedOnly?: boolean,
+  ) {
     let tickets = this.dataStore.getPlatformTickets().filter((t) => t.ticket_type === ticketType);
     if (scopePlatformAdminId) tickets = tickets.filter((t) => t.platform_admin_id === scopePlatformAdminId);
     if (status && status !== 'all') tickets = tickets.filter((t) => t.status === status);
     if (priority && priority !== 'all') tickets = tickets.filter((t) => t.priority === priority);
-    if (companyId) tickets = tickets.filter((t) => t.company_id === companyId);
-    if (assignedTo) tickets = tickets.filter((t) => t.assigned_to === assignedTo);
-    return tickets.map((t) => this.enrich(t));
+    if (companyId && companyId !== 'all') tickets = tickets.filter((t) => t.company_id === companyId);
+    if (assignedTo === 'unassigned') tickets = tickets.filter((t) => !t.assigned_to);
+    else if (assignedTo) tickets = tickets.filter((t) => t.assigned_to === assignedTo);
+    if (category && category !== 'all') tickets = tickets.filter((t) => t.category === category);
+    if (escalatedOnly) tickets = tickets.filter((t) => t.status === 'ESCALATED');
+
+    let enriched = tickets.map((t) => this.enrich(t));
+
+    if (search) {
+      const q = search.toLowerCase();
+      enriched = enriched.filter((t) =>
+        (t.ticket_id || '').toLowerCase().includes(q) ||
+        (t.company_name || '').toLowerCase().includes(q) ||
+        (t.title || '').toLowerCase().includes(q) ||
+        (t.raised_by_name || '').toLowerCase().includes(q) ||
+        (t.raised_by_email || '').toLowerCase().includes(q),
+      );
+    }
+
+    return enriched.sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime());
   }
 
   getById(ticketType: TicketType, id: string, scopePlatformAdminId: string | null) {
@@ -149,5 +186,255 @@ export class PlatformTicketService {
     this.touch(ticket);
 
     return this.enrich(ticket);
+  }
+
+  changeStatus(ticketType: TicketType, id: string, dto: ChangeTicketStatusDto, actor: Actor, scopePlatformAdminId: string | null) {
+    if (!VALID_STATUSES.includes(dto.status)) throw new BadRequestException(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    const previousStatus = ticket.status;
+    ticket.status = dto.status;
+    if (dto.status === 'RESOLVED') {
+      ticket.resolved_date = new Date().toISOString().split('T')[0];
+    } else if (['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(dto.status) && ['RESOLVED', 'CLOSED'].includes(previousStatus)) {
+      ticket.resolved_date = null;
+    }
+    this.touch(ticket);
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Ticket status changed',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} status changed from ${previousStatus} to ${dto.status}.`,
+    });
+    return this.enrich(ticket);
+  }
+
+  changePriority(ticketType: TicketType, id: string, dto: ChangeTicketPriorityDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const priority = (dto.priority || '').toUpperCase();
+    if (!VALID_PRIORITIES.includes(priority)) throw new BadRequestException(`Invalid priority. Must be one of: ${VALID_PRIORITIES.join(', ')}`);
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    const previousPriority = ticket.priority;
+    ticket.priority = priority.charAt(0) + priority.slice(1).toLowerCase();
+    this.touch(ticket);
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Ticket priority changed',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} priority changed from ${previousPriority} to ${ticket.priority}.`,
+    });
+    return this.enrich(ticket);
+  }
+
+  changeCategory(ticketType: TicketType, id: string, dto: ChangeTicketCategoryDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    const previousCategory = ticket.category;
+    ticket.category = dto.category;
+    this.touch(ticket);
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Ticket category changed',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} category changed from ${previousCategory} to ${dto.category}.`,
+    });
+    return this.enrich(ticket);
+  }
+
+  claim(ticketType: TicketType, id: string, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    if (ticket.assigned_to) throw new BadRequestException('This ticket is already assigned.');
+    ticket.assigned_to = actor.emp_id;
+    if (ticket.status === 'OPEN') ticket.status = 'IN_PROGRESS';
+    this.touch(ticket);
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Ticket claimed',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} claimed by ${actor.emp_name}.`,
+    });
+    return this.enrich(ticket);
+  }
+
+  reopen(ticketType: TicketType, id: string, dto: ReopenTicketDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    if (!['RESOLVED', 'CLOSED'].includes(ticket.status)) throw new BadRequestException('Only resolved or closed tickets can be reopened.');
+    ticket.status = 'IN_PROGRESS';
+    ticket.resolved_date = null;
+    if (dto.reason) ticket.comments.push({ author: actor.emp_name, message: `Reopened: ${dto.reason}`, timestamp: new Date().toISOString() });
+    this.touch(ticket);
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Ticket reopened',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} reopened.${dto.reason ? ' Reason: ' + dto.reason : ''}`,
+    });
+    return this.enrich(ticket);
+  }
+
+  close(ticketType: TicketType, id: string, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    if (ticket.status !== 'RESOLVED') throw new BadRequestException('Only resolved tickets can be closed.');
+    ticket.status = 'CLOSED';
+    this.touch(ticket);
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Ticket closed',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} closed.`,
+    });
+    return this.enrich(ticket);
+  }
+
+  addInternalNote(ticketType: TicketType, id: string, dto: AddInternalNoteDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    if (!ticket.internal_notes) ticket.internal_notes = [];
+    ticket.internal_notes.push({ author: actor.emp_name, message: dto.message, timestamp: new Date().toISOString() });
+    this.touch(ticket);
+    return this.enrich(ticket);
+  }
+
+  getInternalNotes(ticketType: TicketType, id: string, scopePlatformAdminId: string | null) {
+    const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    return ticket.internal_notes || [];
+  }
+
+  escalateToTechnical(id: string, dto: EscalateToTechnicalDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find('SUPPORT', id, scopePlatformAdminId);
+    if (ticket.status === 'ESCALATED') throw new BadRequestException('This ticket has already been escalated.');
+
+    const technicalTicket = {
+      ticket_id: 'TIX-' + Date.now(),
+      ticket_type: 'TECHNICAL',
+      company_id: ticket.company_id,
+      platform_admin_id: ticket.platform_admin_id,
+      raised_by_name: ticket.raised_by_name,
+      raised_by_id: ticket.raised_by_id || null,
+      raised_by_email: ticket.raised_by_email || null,
+      title: `Escalated from ${ticket.ticket_id}: ${ticket.title}`,
+      category: 'Technical Issue',
+      priority: ticket.priority,
+      status: 'OPEN',
+      assigned_to: null,
+      description: `${ticket.description}${dto.note ? '\n\nSupport Member note: ' + dto.note : ''}`,
+      created_date: new Date().toISOString().split('T')[0],
+      updated_date: new Date().toISOString().split('T')[0],
+      resolved_date: null,
+      comments: [],
+      reassign_log: [],
+      internal_notes: [],
+      escalated_team: null,
+      linked_technical_ticket_id: null,
+      linked_from_ticket_id: ticket.ticket_id,
+    };
+    this.dataStore.getPlatformTickets().push(technicalTicket);
+
+    ticket.status = 'ESCALATED';
+    ticket.escalated_team = 'TECHNICAL';
+    ticket.linked_technical_ticket_id = technicalTicket.ticket_id;
+    if (!ticket.internal_notes) ticket.internal_notes = [];
+    ticket.internal_notes.push({ author: actor.emp_name, message: `Escalated to Technical Team as ${technicalTicket.ticket_id}.${dto.note ? ' ' + dto.note : ''}`, timestamp: new Date().toISOString() });
+    this.touch(ticket);
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Support ticket escalated to Technical Team',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} escalated as ${technicalTicket.ticket_id}.`,
+    });
+
+    if (ticket.platform_admin_id) {
+      this.notificationService.createNotification({
+        employee_id: ticket.platform_admin_id,
+        message: `Support ticket ${ticket.ticket_id} was escalated to the Technical Team as ${technicalTicket.ticket_id}.`,
+        type: 'warning',
+      });
+    }
+
+    return this.enrich(ticket);
+  }
+
+  escalateToPlatformAdmin(id: string, dto: EscalateToPlatformAdminDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find('SUPPORT', id, scopePlatformAdminId);
+    if (ticket.status === 'ESCALATED') throw new BadRequestException('This ticket has already been escalated.');
+
+    ticket.status = 'ESCALATED';
+    ticket.escalated_team = 'PLATFORM_ADMIN';
+    const note = dto.note || dto.reason;
+    if (!ticket.internal_notes) ticket.internal_notes = [];
+    ticket.internal_notes.push({ author: actor.emp_name, message: `Escalated to Platform Admin.${note ? ' ' + note : ''}`, timestamp: new Date().toISOString() });
+    this.touch(ticket);
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Support ticket escalated to Platform Admin',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id}: ${ticket.title}.${note ? ' ' + note : ''}`,
+    });
+
+    if (ticket.platform_admin_id) {
+      this.notificationService.createNotification({
+        employee_id: ticket.platform_admin_id,
+        message: `${actor.emp_name} escalated support ticket ${ticket.ticket_id} (${ticket.title}) to you.${note ? ' ' + note : ''}`,
+        type: 'warning',
+      });
+    }
+
+    return this.enrich(ticket);
+  }
+
+  getStats(scopePlatformAdminId: string | null, mineActorId?: string) {
+    const tickets = this.dataStore.getPlatformTickets().filter((t) => t.ticket_type === 'SUPPORT' && (!scopePlatformAdminId || t.platform_admin_id === scopePlatformAdminId));
+    const today = new Date().toISOString().split('T')[0];
+    const openStatuses = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'];
+    const mine = mineActorId ? tickets.filter((t) => t.assigned_to === mineActorId) : [];
+
+    const resolvedTickets = tickets.filter((t) => t.resolved_date);
+    const avgResolutionDays = resolvedTickets.length
+      ? Math.round(
+          (resolvedTickets.reduce((sum, t) => sum + (new Date(t.resolved_date).getTime() - new Date(t.created_date).getTime()), 0) /
+            resolvedTickets.length) /
+            (1000 * 60 * 60 * 24) * 10,
+        ) / 10
+      : 0;
+
+    const byPriority: Record<string, number> = {};
+    const byCategory: Record<string, number> = {};
+    tickets.forEach((t) => {
+      byPriority[t.priority] = (byPriority[t.priority] || 0) + 1;
+      byCategory[t.category] = (byCategory[t.category] || 0) + 1;
+    });
+
+    return {
+      new_tickets: tickets.filter((t) => t.status === 'OPEN').length,
+      my_open_tickets: mine.filter((t) => openStatuses.includes(t.status)).length,
+      high_priority_tickets: tickets.filter((t) => (t.priority === 'High' || t.priority === 'Critical') && openStatuses.includes(t.status)).length,
+      in_progress: tickets.filter((t) => t.status === 'IN_PROGRESS').length,
+      awaiting_customer: tickets.filter((t) => t.status === 'WAITING_FOR_CUSTOMER').length,
+      escalated_tickets: tickets.filter((t) => t.status === 'ESCALATED').length,
+      resolved_today: tickets.filter((t) => t.resolved_date === today).length,
+      total_open_tickets: tickets.filter((t) => openStatuses.includes(t.status)).length,
+      tickets_received: tickets.length,
+      tickets_resolved: tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length,
+      avg_resolution_days: avgResolutionDays,
+      by_priority: byPriority,
+      by_category: byCategory,
+      my_high_priority: mine.filter((t) => (t.priority === 'High' || t.priority === 'Critical') && openStatuses.includes(t.status)).length,
+      my_escalated: mine.filter((t) => t.status === 'ESCALATED').length,
+      my_resolved: mine.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length,
+    };
   }
 }

@@ -8,8 +8,8 @@ export class PlatformDashboardService {
   getSummary(scopePlatformAdminId: string | null) {
     const companies = this.dataStore.getCompanies().filter((c) => !scopePlatformAdminId || c.platform_admin_id === scopePlatformAdminId);
     const employees = this.dataStore.getEmployees();
-    const technicalTeam = employees.filter((e) => e.role === 'TECHNICAL_TEAM' && (!scopePlatformAdminId || e.platform_admin_id === scopePlatformAdminId));
-    const supportTeam = employees.filter((e) => e.role === 'SUPPORT_TEAM' && (!scopePlatformAdminId || e.platform_admin_id === scopePlatformAdminId));
+    const technicalTeam = employees.filter((e) => e.role === 'TECHNICAL_MEMBER' && (!scopePlatformAdminId || e.platform_admin_id === scopePlatformAdminId));
+    const supportTeam = employees.filter((e) => e.role === 'SUPPORT_MEMBER' && (!scopePlatformAdminId || e.platform_admin_id === scopePlatformAdminId));
     const tickets = this.dataStore.getPlatformTickets().filter((t) => !scopePlatformAdminId || t.platform_admin_id === scopePlatformAdminId);
 
     const openStatuses = ['OPEN', 'IN_PROGRESS'];

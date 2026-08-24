@@ -12,23 +12,18 @@ class Auth {
     }
 
     async login(email, password) {
-        // Simple mock authentication using the store users array
-        const user = await db.getUserByEmail(email);
-        
-        if (!user) {
-            return { success: false, message: "User not found." };
+        // Credentials are verified server-side (POST /auth/login), which also resolves
+        // the account's role - platform-level (Super Admin, Platform Admin, Support
+        // Member, Technical Member) or company-level (Company Admin, HR, Team Lead,
+        // Employee). The frontend never decides the role itself.
+        try {
+            const { user } = await db.login(email, password);
+            this.currentUser = user;
+            localStorage.setItem('empTrackSessionV2', JSON.stringify(this.currentUser));
+            return { success: true, user: this.currentUser };
+        } catch (e) {
+            return { success: false, message: e.message || 'Invalid email or password.' };
         }
-        
-        if (user.password !== password) {
-            return { success: false, message: "Invalid password." };
-        }
-        
-        // Remove password from memory session data for security practice
-        const { password: _, ...safeUser } = user;
-        this.currentUser = safeUser;
-        localStorage.setItem('empTrackSessionV2', JSON.stringify(this.currentUser));
-        
-        return { success: true, user: this.currentUser };
     }
 
     logout() {

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DataModule } from './data/data.module';
+import { AuthModule } from './auth/auth.module';
 import { EmployeeModule } from './employee/employee.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { LeaveModule } from './leave/leave.module';
@@ -21,12 +22,14 @@ import { PlatformSettingsModule } from './platform-settings/platform-settings.mo
 import { PlatformTeamModule } from './platform-team/platform-team.module';
 import { PlatformTicketModule } from './platform-ticket/platform-ticket.module';
 import { PlatformDashboardModule } from './platform-dashboard/platform-dashboard.module';
+import { SupportMemberModule } from './support-member/support-member.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
   imports: [
     DataModule,
+    AuthModule,
     EmployeeModule,
     AttendanceModule,
     LeaveModule,
@@ -47,7 +50,8 @@ import { AppService } from './app.service';
     PlatformSettingsModule,
     PlatformTeamModule,
     PlatformTicketModule,
-    PlatformDashboardModule
+    PlatformDashboardModule,
+    SupportMemberModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -9,5 +9,6 @@ import { CriticalEscalationModule } from '../critical-escalation/critical-escala
   imports: [NotificationModule, CriticalEscalationModule],
   controllers: [TechnicalIssueController, SupportTicketController],
   providers: [PlatformTicketService],
+  exports: [PlatformTicketService],
 })
 export class PlatformTicketModule {}

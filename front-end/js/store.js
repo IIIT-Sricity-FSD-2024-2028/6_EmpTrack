@@ -42,11 +42,18 @@ class ApiStore {
         return await res.json();
     }
 
-    // --- Employee ---
-    async getUserByEmail(email) {
-        return this._fetch(`/employees/email/${email}`);
+    // --- Authentication ---
+    // Verifies credentials and resolves the account's role server-side. Works for every
+    // EmpTrack role (platform-level and company-level) since they all live in the same
+    // employee/user table - the backend is the one deciding who this is, not the caller.
+    async login(email, password) {
+        return this._fetch('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
     }
 
+    // --- Employee ---
     async getUserById(id) {
         return this._fetch(`/employees/${id}`);
     }
@@ -695,6 +702,89 @@ class ApiStore {
 
     async addSupportTicketComment(id, message) {
         return this._fetch(`/support-tickets/${id}/comments`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
+
+    // --- Support Member: Dashboard ---
+    async getSupportMemberStats() {
+        return this._fetch('/support-member/stats');
+    }
+
+    async getTicketCategories() {
+        return this._fetch('/support-member/categories');
+    }
+
+    // --- Support Member: Tickets ---
+    async getMyDashboardTickets(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.priority) params.set('priority', filters.priority);
+        if (filters.category) params.set('category', filters.category);
+        if (filters.companyId) params.set('companyId', filters.companyId);
+        if (filters.assignedTo) params.set('assignedTo', filters.assignedTo);
+        if (filters.search) params.set('search', filters.search);
+        if (filters.escalatedOnly) params.set('escalatedOnly', 'true');
+        const qs = params.toString();
+        return this._fetch(`/support-member/tickets${qs ? '?' + qs : ''}`);
+    }
+
+    async getMyDashboardTicketById(id) {
+        return this._fetch(`/support-member/tickets/${id}`);
+    }
+
+    async claimTicket(id) {
+        return this._fetch(`/support-member/tickets/${id}/claim`, { method: 'PATCH' });
+    }
+
+    async changeTicketStatus(id, status) {
+        return this._fetch(`/support-member/tickets/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
+    async changeTicketPriority(id, priority) {
+        return this._fetch(`/support-member/tickets/${id}/priority`, { method: 'PATCH', body: JSON.stringify({ priority }) });
+    }
+
+    async changeTicketCategory(id, category) {
+        return this._fetch(`/support-member/tickets/${id}/category`, { method: 'PATCH', body: JSON.stringify({ category }) });
+    }
+
+    async resolveMyTicket(id, resolution_notes) {
+        return this._fetch(`/support-member/tickets/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution_notes }) });
+    }
+
+    async reopenTicket(id, reason) {
+        return this._fetch(`/support-member/tickets/${id}/reopen`, { method: 'PATCH', body: JSON.stringify({ reason }) });
+    }
+
+    async closeTicket(id) {
+        return this._fetch(`/support-member/tickets/${id}/close`, { method: 'PATCH' });
+    }
+
+    async addTicketMessage(id, message) {
+        return this._fetch(`/support-member/tickets/${id}/comments`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
+
+    async getInternalNotes(id) {
+        return this._fetch(`/support-member/tickets/${id}/internal-notes`);
+    }
+
+    async addInternalNote(id, message) {
+        return this._fetch(`/support-member/tickets/${id}/internal-notes`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
+
+    async escalateToTechnicalTeam(id, note) {
+        return this._fetch(`/support-member/tickets/${id}/escalate-technical`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    async escalateToPlatformAdmin(id, note) {
+        return this._fetch(`/support-member/tickets/${id}/escalate-platform-admin`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    async getLinkedTechnicalTicket(id) {
+        return this._fetch(`/support-member/technical-issues/${id}`);
+    }
+
+    async getSupportCompanySummary(id) {
+        return this._fetch(`/support-member/companies/${id}`);
     }
 }
 

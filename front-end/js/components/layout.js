@@ -73,6 +73,13 @@ export function initLayout() {
             <a href="/front-end/platform_admin/support-tickets.html" class="nav-item ${isActive('support-tickets')}"><i class="ph ph-ticket"></i> Support Tickets</a>
             <a href="/front-end/platform_admin/workload.html" class="nav-item ${isActive('workload')}"><i class="ph ph-gauge"></i> Workload</a>
         `;
+    } else if (user.role === 'SUPPORT_MEMBER') {
+        navItems = `
+            <a href="/front-end/support_member/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Dashboard</a>
+            <a href="/front-end/support_member/tickets.html" class="nav-item ${isActive('tickets')}"><i class="ph ph-ticket"></i> Tickets</a>
+            <a href="/front-end/support_member/my-tickets.html" class="nav-item ${isActive('my-tickets')}"><i class="ph ph-user-focus"></i> My Tickets</a>
+            <a href="/front-end/support_member/escalated.html" class="nav-item ${isActive('escalated')}"><i class="ph ph-arrow-up-right"></i> Escalated</a>
+        `;
     }
 
     if (sidebarContainer) {
@@ -98,7 +105,7 @@ export function initLayout() {
                         </div>
                         <div class="user-info" style="display:flex; flex-direction:column;">
                             <span class="user-name" style="font-size: var(--text-sm); font-weight: var(--font-semibold); color: var(--text-main);">${user.role === 'TEAMLEAD' ? 'Rinku Singh' : user.role === 'HR' ? 'Roshan' : user.role === 'COMPANY_ADMIN' ? 'Kiran' : user.emp_name}</span>
-                            <span class="user-role" style="font-size: var(--text-xs); color: var(--text-muted);">${user.role === 'HR' ? 'HR Manager' : user.role === 'COMPANY_ADMIN' ? 'Company Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : user.role === 'SUPER_ADMIN' ? 'Super Admin' : user.role === 'PLATFORM_ADMIN' ? 'Platform Admin' : 'Employee'}</span>
+                            <span class="user-role" style="font-size: var(--text-xs); color: var(--text-muted);">${user.role === 'HR' ? 'HR Manager' : user.role === 'COMPANY_ADMIN' ? 'Company Admin' : user.role === 'TEAMLEAD' ? 'Team Lead' : user.role === 'SUPER_ADMIN' ? 'Super Admin' : user.role === 'PLATFORM_ADMIN' ? 'Platform Admin' : user.role === 'SUPPORT_MEMBER' ? 'Support Member' : 'Employee'}</span>
                         </div>
                     </div>
                     </a>
@@ -113,7 +120,7 @@ export function initLayout() {
         const titleEl = document.getElementById('page-title');
         if (titleEl) pageTitle = titleEl.textContent;
 
-        const rolePortal = user.role === 'EMPLOYEE' ? 'Employee Portal' : user.role === 'TEAMLEAD' ? 'Team Lead Portal' : user.role === 'COMPANY_ADMIN' ? 'Company Admin Portal' : user.role === 'SUPER_ADMIN' ? 'Super Admin Portal' : user.role === 'PLATFORM_ADMIN' ? 'Platform Admin Portal' : 'HR Portal';
+        const rolePortal = user.role === 'EMPLOYEE' ? 'Employee Portal' : user.role === 'TEAMLEAD' ? 'Team Lead Portal' : user.role === 'COMPANY_ADMIN' ? 'Company Admin Portal' : user.role === 'SUPER_ADMIN' ? 'Super Admin Portal' : user.role === 'PLATFORM_ADMIN' ? 'Platform Admin Portal' : user.role === 'SUPPORT_MEMBER' ? 'Support Dashboard' : 'HR Portal';
 
         headerContainer.innerHTML = `
             <header class="top-header">

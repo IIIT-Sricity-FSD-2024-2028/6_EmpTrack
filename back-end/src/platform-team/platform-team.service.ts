@@ -3,7 +3,7 @@ import { MockDataService } from '../data/mock-data.service';
 import { CreateTeamMemberDto, UpdateTeamMemberDto, UpdateTeamMemberStatusDto } from './dto/platform-team.dto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
-type TeamRole = 'TECHNICAL_TEAM' | 'SUPPORT_TEAM';
+type TeamRole = 'TECHNICAL_MEMBER' | 'SUPPORT_MEMBER';
 
 @Injectable()
 export class PlatformTeamService {
@@ -42,7 +42,7 @@ export class PlatformTeamService {
     const existing = this.dataStore.getEmployees().find((e) => e.email === dto.email);
     if (existing) throw new BadRequestException('An account with this email already exists');
 
-    const prefix = teamRole === 'TECHNICAL_TEAM' ? 'TT-' : 'ST-';
+    const prefix = teamRole === 'TECHNICAL_MEMBER' ? 'TT-' : 'ST-';
     const member = {
       emp_id: prefix + Date.now(),
       emp_name: dto.name,
@@ -62,8 +62,8 @@ export class PlatformTeamService {
       user_id: actor.emp_id,
       user_name: actor.emp_name,
       role: actor.role,
-      action: teamRole === 'TECHNICAL_TEAM' ? 'Technical Team member added' : 'Support Team member added',
-      details: `Added ${dto.name} to the ${teamRole === 'TECHNICAL_TEAM' ? 'Technical' : 'Support'} Team.`,
+      action: teamRole === 'TECHNICAL_MEMBER' ? 'Technical Member added' : 'Support Member added',
+      details: `Added ${dto.name} to the ${teamRole === 'TECHNICAL_MEMBER' ? 'Technical' : 'Support'} team.`,
     });
 
     return this.enrich(member);
@@ -102,8 +102,8 @@ export class PlatformTeamService {
 
   getWorkload(scopePlatformAdminId: string | null) {
     return {
-      technical: this.getAll('TECHNICAL_TEAM', scopePlatformAdminId),
-      support: this.getAll('SUPPORT_TEAM', scopePlatformAdminId),
+      technical: this.getAll('TECHNICAL_MEMBER', scopePlatformAdminId),
+      support: this.getAll('SUPPORT_MEMBER', scopePlatformAdminId),
     };
   }
 }
