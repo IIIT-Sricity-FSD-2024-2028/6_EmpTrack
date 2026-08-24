@@ -1,41 +1,50 @@
 // /js/views/teamlead/notifications.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
+import { escapeHtml, formatDateTime } from '../../utils/sa-common.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guarded
 
-    // Note: `color` here stays a raw hex literal (not var()) because it is concatenated
-    // with alpha suffixes below (`${n.color}15`, `${n.color}30`) to build the icon
-    // background/border; CSS custom properties can't be suffixed that way. The tag
-    // `bg`/`text` pairs have no such constraint and use theme tokens directly.
-    const dummyNotifs = [
-        { id: 1, type: 'alert', icon: 'ph-warning-octagon', color: '#EF4444', title: 'Task Escalation', desc: 'A critical bug in the authentication module was escalated.', source: 'Jane Doe', time: '10 mins ago', tags: [{label:'ESCALATION', bg:'var(--status-danger-bg)', text:'var(--danger-color)'}], unread: true },
-        { id: 2, type: 'leave', icon: 'ph-calendar-plus', color: '#F97316', title: 'New Leave Request', desc: 'Alice is requesting leave for next week. Approval needed.', source: 'Alice Walker', time: '1 hour ago', tags: [{label:'ACTION REQUIRED', bg:'rgba(249, 115, 22, 0.15)', text:'var(--accent-orange)'}], unread: true },
-        { id: 3, type: 'alert', icon: 'ph-check-square-offset', color: '#22C55E', title: 'Task Completed', desc: 'Bob finished his assigned sprint tasks successfully.', source: 'Bob Smith', time: '3 hours ago', tags: [{label:'COMPLETED', bg:'var(--status-success-bg)', text:'var(--status-success-fg)'}], unread: false },
-        { id: 4, type: 'leave', icon: 'ph-calendar-check', color: '#3B82F6', title: 'Leave Feedback', desc: 'Charlie has returned from sick leave.', source: 'Charlie Day', time: 'Yesterday', tags: [{label:'REMINDER', bg:'var(--primary-light)', text:'var(--primary-color)'}], unread: false }
-    ];
-
     const listContainer = document.getElementById('tl-notif-list');
-    
-    async function renderNotifications() {
-        if (!listContainer) return;
+    const dismissed = new Set();
+    let notifications = [];
+    let activeFilter = 'all';
 
-        listContainer.innerHTML = dummyNotifs.map(n => `
-            <div class="notif-item ${n.unread ? 'unread' : ''}" data-type="${n.type}" data-unread="${n.unread}" data-id="${n.id}">
-                <div class="ni-icon" style="background: ${n.color}15; color: ${n.color}; border: 1px solid ${n.color}30;">
-                    <i class="${n.icon}"></i>
+    function typeIcon(type) {
+        if (type === 'error') return 'ph-warning-circle';
+        if (type === 'warning') return 'ph-warning';
+        return 'ph-info';
+    }
+    function typeColor(type) {
+        if (type === 'error') return 'var(--danger-color)';
+        if (type === 'warning') return 'var(--warning-color)';
+        return 'var(--primary-color)';
+    }
+
+    function render() {
+        if (!listContainer) return;
+        const visible = notifications.filter(n => !dismissed.has(n.id) && (activeFilter !== 'unread' || !n.read));
+
+        if (visible.length === 0) {
+            listContainer.innerHTML = `<div class="empty-state" style="padding:48px; text-align:center; color:var(--text-muted);"><i class="ph ph-bell" style="font-size:28px; display:block; margin-bottom:8px;"></i>No notifications yet.</div>`;
+            attachActionListeners();
+            updateUnreadCount();
+            return;
+        }
+
+        listContainer.innerHTML = visible.map(n => `
+            <div class="notif-item ${n.read ? '' : 'unread'}" data-id="${n.id}">
+                <div class="ni-icon" style="background: color-mix(in srgb, ${typeColor(n.type)} 15%, transparent); color: ${typeColor(n.type)}; border: 1px solid color-mix(in srgb, ${typeColor(n.type)} 30%, transparent);">
+                    <i class="ph-fill ${typeIcon(n.type)}"></i>
                 </div>
                 <div class="ni-content">
                     <div class="ni-header">
-                        <h4 class="ni-title search-target">${n.title}</h4>
-                        <span class="ni-time">${n.time}</span>
+                        <h4 class="ni-title search-target">${escapeHtml(n.message)}</h4>
+                        <span class="ni-time">${formatDateTime(n.timestamp)}</span>
                     </div>
-                    <p class="ni-desc search-target">${n.desc}</p>
-                    <div class="ni-meta"><i class="ph-fill ph-user-circle"></i> ${n.source}</div>
-                    <div class="ni-tags">
-                        ${n.tags.map(t => `<span class="ni-tag" style="background:${t.bg}; color:${t.text};">${t.label}</span>`).join('')}
-                    </div>
+                    ${n.link ? `<a href="${n.link}" class="ni-desc" style="color:var(--primary-color); font-weight:600;">View details &rarr;</a>` : ''}
                 </div>
                 <div class="ni-actions">
                     <button class="ni-action-btn btn-done" data-id="${n.id}" title="Mark as Read"><i class="ph ph-check"></i></button>
@@ -48,82 +57,66 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateUnreadCount();
     }
 
-    renderNotifications();
-
-    let activeFilter = 'all';
-
-    async function filterNotifs() {
-        const items = document.querySelectorAll('.notif-item');
-        
-        items.forEach(item => {
-            const isUnread = item.dataset.unread === 'true';
-            const type = item.dataset.type;
-            
-            let passFilter = true;
-            if(activeFilter === 'unread' && !isUnread) passFilter = false;
-            if(activeFilter === 'alert' && type !== 'alert') passFilter = false;
-            if(activeFilter === 'leave' && type !== 'leave') passFilter = false;
-
-            item.style.display = passFilter ? 'flex' : 'none';
-        });
+    async function load() {
+        try {
+            notifications = (await db.getNotificationsForUser(user.emp_id)).map(n => ({ ...n, read: false }));
+        } catch (e) {
+            notifications = [];
+        }
+        render();
     }
 
     const filterBtns = document.querySelectorAll('.tab-btn');
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        // Real notifications carry no "leave"/"alert" category, only info/warning/error -
+        // drop filters that only ever matched the old hardcoded demo data.
+        if (!['all', 'unread'].includes(btn.dataset.filter)) {
+            btn.style.display = 'none';
+            return;
+        }
+        btn.addEventListener('click', () => {
             filterBtns.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            activeFilter = e.target.dataset.filter;
-            filterNotifs();
+            btn.classList.add('active');
+            activeFilter = btn.dataset.filter;
+            render();
         });
     });
 
-    async function updateUnreadCount() {
-        const c = document.querySelectorAll('.notif-item.unread').length;
+    function updateUnreadCount() {
+        const c = notifications.filter(n => !dismissed.has(n.id) && !n.read).length;
         const unreadMetric = document.getElementById('met-unread');
         if (unreadMetric) unreadMetric.innerText = c;
     }
 
-    async function attachActionListeners() {
-        document.querySelectorAll('.btn-done').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const item = e.currentTarget.closest('.notif-item');
-                item.classList.remove('unread');
-                item.dataset.unread = 'false';
-                updateUnreadCount();
-                if(activeFilter === 'unread') filterNotifs();
+    function attachActionListeners() {
+        listContainer.querySelectorAll('.btn-done').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const n = notifications.find(x => String(x.id) === e.currentTarget.dataset.id);
+                if (n) n.read = true;
+                render();
             });
         });
-
-        document.querySelectorAll('.btn-del').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const item = e.currentTarget.closest('.notif-item');
-                item.style.animation = 'slideOutRight 0.3s ease forwards';
-                setTimeout(() => {
-                    item.remove();
-                    updateUnreadCount();
-                }, 300);
+        listContainer.querySelectorAll('.btn-del').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                dismissed.add(e.currentTarget.dataset.id);
+                render();
             });
         });
     }
 
     const markAllBtn = document.getElementById('btn-mark-all');
     if (markAllBtn) {
-        markAllBtn.addEventListener('click', async () => {
-            document.querySelectorAll('.notif-item.unread').forEach(item => {
-                item.classList.remove('unread');
-                item.dataset.unread = 'false';
-            });
-            updateUnreadCount();
-            if(activeFilter === 'unread') filterNotifs();
-            
+        markAllBtn.addEventListener('click', () => {
+            notifications.forEach(n => n.read = true);
+            render();
             const toast = document.getElementById('prof-toast');
-            if(toast) {
+            if (toast) {
                 toast.innerHTML = '<i class="ph-fill ph-check-circle"></i> All notifications marked as read!';
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 3000);
             }
         });
     }
-});
 
+    load();
+});

@@ -12,5 +12,9 @@ export class CreateNotificationDto {
   @IsString()
   @IsOptional()
   type?: string;
+
+  @IsString()
+  @IsOptional()
+  link?: string;
 }
 

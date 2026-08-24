@@ -1,6 +1,18 @@
 // /js/components/layout.js
 import { auth } from '../auth.js';
 import { theme } from '../theme.js';
+import { db } from '../store.js';
+import { renderCalendar } from './calendar.js';
+
+// Roles the backend's calendar controller actually grants access to
+// (see back-end/src/calendar/calendar.controller.ts @Roles decorators).
+const CALENDAR_ROLES = ['EMPLOYEE', 'TEAMLEAD', 'HR', 'COMPANY_ADMIN'];
+
+function fetchEventsFor(user) {
+    if (user.role === 'EMPLOYEE') return (y, m) => db.getMyCalendar(user.emp_id, y, m);
+    if (user.role === 'TEAMLEAD') return (y, m) => db.getTeamCalendar(user.emp_id, y, m);
+    return (y, m) => db.getCompanyCalendar(user.emp_id, y, m); // HR, COMPANY_ADMIN
+}
 
 export function initLayout() {
     const user = auth.getCurrentUser();
@@ -50,6 +62,7 @@ export function initLayout() {
         navItems = `
             <a href="/front-end/company_admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Admin Dashboard</a>
             <a href="/front-end/company_admin/employee-management.html" class="nav-item ${isActive('employee-management')}"><i class="ph ph-users"></i> All Employees</a>
+            <a href="/front-end/company_admin/raise-issue.html" class="nav-item ${isActive('raise-issue')}"><i class="ph ph-flag"></i> Raise Issue</a>
         `;
     } else if (user.role === 'SUPER_ADMIN') {
         navItems = `
@@ -146,10 +159,17 @@ export function initLayout() {
                     <button id="theme-toggle-btn" class="theme-toggle-btn" type="button" title="Toggle light/dark theme" aria-label="Toggle light/dark theme">
                         <i class="ph ph-moon"></i>
                     </button>
+                    ${CALENDAR_ROLES.includes(user.role) ? `
+                    <div style="position:relative;">
+                        <button id="calendar-toggle-btn" class="theme-toggle-btn" type="button" title="Calendar" aria-label="Calendar" aria-haspopup="true" aria-expanded="false">
+                            <i class="ph ph-calendar-blank"></i>
+                        </button>
+                        <div class="header-calendar-popover" id="calendar-popover" hidden></div>
+                    </div>` : ''}
                     <a href="/front-end/${user.role.toLowerCase()}/notifications.html" style="text-decoration:none; color:inherit;">
                         <div class="notification-bell ${isActive('notifications') ? 'active-bell' : ''}" style="font-size: var(--text-xl); color: ${isActive('notifications') ? 'var(--primary-color)' : 'var(--text-muted)'}; cursor: pointer; transition: 0.2s; position:relative;">
                             <i class="ph ph-bell"></i>
-                            <span style="position:absolute; top:-4px; right:-4px; background:var(--danger-color, #ef4444); width:8px; height:8px; border-radius:50%;"></span>
+                            <span id="notif-dot" style="display:none; position:absolute; top:-4px; right:-4px; background:var(--danger-color, #ef4444); width:8px; height:8px; border-radius:50%;"></span>
                         </div>
                     </a>
                     <a href="/front-end/${user.role.toLowerCase()}/profile.html" style="text-decoration: none;" title="My Profile">
@@ -174,5 +194,50 @@ export function initLayout() {
     theme.bindToggleButton(document.getElementById('theme-toggle-btn'));
 
     // Notification dropdown removed in favor of direct page link
+
+    // Real unread indicator - only lit up when the user actually has notifications
+    // (see NotificationService.getNotificationsForUser), never a hardcoded dot.
+    const notifDot = document.getElementById('notif-dot');
+    if (notifDot) {
+        db.getNotificationsForUser(user.emp_id)
+            .then((list) => { if (list && list.length > 0) notifDot.style.display = 'block'; })
+            .catch(() => {});
+    }
+
+    // Calendar popover - lazily mounts the shared calendar widget (see
+    // components/calendar.js) on first open, then just refreshes it.
+    const calToggleBtn = document.getElementById('calendar-toggle-btn');
+    const calPopover = document.getElementById('calendar-popover');
+    if (calToggleBtn && calPopover) {
+        let calInstance = null;
+
+        const openCal = () => {
+            calPopover.hidden = false;
+            calToggleBtn.setAttribute('aria-expanded', 'true');
+            if (!calInstance) {
+                calInstance = renderCalendar(calPopover, {
+                    fetchEvents: fetchEventsFor(user),
+                    onAddEvent: (dto) => db.createEvent(user.emp_id, dto)
+                });
+            } else {
+                calInstance.refresh();
+            }
+        };
+        const closeCal = () => {
+            calPopover.hidden = true;
+            calToggleBtn.setAttribute('aria-expanded', 'false');
+        };
+
+        calToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            calPopover.hidden ? openCal() : closeCal();
+        });
+        document.addEventListener('click', (e) => {
+            if (!calPopover.hidden && !calPopover.contains(e.target)) closeCal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !calPopover.hidden) closeCal();
+        });
+    }
 }
 

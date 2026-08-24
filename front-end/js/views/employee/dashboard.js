@@ -1,7 +1,6 @@
 // /js/views/employee/dashboard.js
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
-import { renderCalendar } from '../../components/calendar.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -94,12 +93,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (recentLeaves.length === 0) leavesList.innerHTML = '<li style="color:var(--text-muted); text-align:center; padding: 20px;">No leave requests filed.</li>';
     }
 
-    // Calendar - own leaves/tasks + company holidays only (no other-employee data)
-    const calendarContainer = document.getElementById('employee-calendar-container');
-    if (calendarContainer) {
-        renderCalendar(calendarContainer, {
-            fetchEvents: (year, month) => db.getMyCalendar(user.emp_id, year, month)
-        });
-    }
 });
 

@@ -23,3 +23,25 @@ export class CreateCompanyEventDto {
   @IsOptional()
   visible_to_roles?: string[];
 }
+
+export class CreateEventDto {
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @IsString()
+  @IsNotEmpty()
+  date: string;
+
+  @IsString()
+  @IsOptional()
+  time?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+}

@@ -1,12 +1,13 @@
 // /js/components/calendar.js
-// Reusable month-view calendar widget, embedded in every dashboard.
-// Deliberately role-agnostic: it never imports auth.js/store.js. Callers
-// (each role's dashboard.js) supply a fetchEvents(year, month) closure that
-// returns already role/tenant-scoped events - see js/store.js's
-// getMyCalendar/getTeamCalendar/getCompanyCalendar for what backs that call.
+// Reusable month-view calendar widget, mounted in the header popover (see
+// js/components/layout.js). Deliberately role-agnostic: it never imports
+// auth.js/store.js. Callers supply a fetchEvents(year, month) closure that
+// returns already role/tenant-scoped events (see js/store.js's
+// getMyCalendar/getTeamCalendar/getCompanyCalendar), and an onAddEvent(dto)
+// closure that persists a new personal event (see store.js's createEvent).
 //
 // Event shape expected from fetchEvents():
-//   { id, type: 'LEAVE'|'HOLIDAY'|'TASK_DEADLINE'|'COMPANY_EVENT'|'ATTENDANCE',
+//   { id, type: 'LEAVE'|'HOLIDAY'|'TASK_DEADLINE'|'COMPANY_EVENT'|'ATTENDANCE'|'PERSONAL',
 //     title, date: 'YYYY-MM-DD', endDate?: 'YYYY-MM-DD', meta?: object }
 
 const TYPE_LABEL = {
@@ -15,7 +16,8 @@ const TYPE_LABEL = {
     TASK_DEADLINE: 'Task Deadline',
     COMPANY_EVENT: 'Company Event',
     MEETING: 'Meeting',
-    ATTENDANCE: 'Attendance'
+    ATTENDANCE: 'Attendance',
+    PERSONAL: 'Personal'
 };
 
 const TYPE_CLASS = {
@@ -24,7 +26,8 @@ const TYPE_CLASS = {
     TASK_DEADLINE: 'cal-event-task',
     COMPANY_EVENT: 'cal-event-company',
     MEETING: 'cal-event-company',
-    ATTENDANCE: 'cal-event-attendance'
+    ATTENDANCE: 'cal-event-attendance',
+    PERSONAL: 'cal-event-personal'
 };
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -39,14 +42,15 @@ function eventFallsOn(event, dateKey) {
     return event.date <= dateKey && dateKey <= event.endDate;
 }
 
-export function renderCalendar(containerEl, { fetchEvents, onEventClick } = {}) {
+export function renderCalendar(containerEl, { fetchEvents, onAddEvent } = {}) {
     if (!containerEl) return { refresh: () => {}, destroy: () => {} };
 
     let current = new Date();
     current.setDate(1);
     let events = [];
     let loading = false;
-    let selectedKey = null;
+    let selectedKey = toDateKey(new Date());
+    let formOpen = false;
 
     containerEl.innerHTML = `
         <div class="cal-widget">
@@ -63,63 +67,99 @@ export function renderCalendar(containerEl, { fetchEvents, onEventClick } = {}) 
                 <span class="cal-legend-item"><i class="cal-dot cal-event-holiday"></i> Holiday</span>
                 <span class="cal-legend-item"><i class="cal-dot cal-event-task"></i> Task Deadline</span>
                 <span class="cal-legend-item"><i class="cal-dot cal-event-company"></i> Company Event</span>
-                <span class="cal-legend-item"><i class="cal-dot cal-event-attendance"></i> Attendance</span>
+                <span class="cal-legend-item"><i class="cal-dot cal-event-personal"></i> Personal</span>
             </div>
             <div class="cal-grid-wrap">
                 <div class="cal-grid" id="cal-grid"></div>
             </div>
-        </div>
-        <div class="modal-overlay" id="cal-event-modal">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3 class="modal-title" id="cal-modal-title">Events</h3>
-                    <button type="button" class="modal-close" id="cal-modal-close">&times;</button>
+            <div class="cal-day-panel">
+                <div class="cal-day-panel-date" id="cal-panel-date"></div>
+                <div class="cal-day-events" id="cal-day-events"></div>
+                <div class="cal-add-form" id="cal-add-form" hidden>
+                    <input type="text" class="form-control" id="cal-ev-title" placeholder="Event title" maxlength="80">
+                    <div class="cal-add-form-row">
+                        <input type="time" class="form-control" id="cal-ev-time">
+                        <select class="form-control" id="cal-ev-type">
+                            <option value="PERSONAL">Personal</option>
+                            <option value="MEETING">Meeting</option>
+                        </select>
+                    </div>
+                    <textarea class="form-control" id="cal-ev-desc" placeholder="Description (optional)" rows="2"></textarea>
+                    <div class="cal-add-form-error" id="cal-add-error" hidden></div>
+                    <div class="cal-add-form-actions">
+                        <button type="button" class="btn btn-outline" id="cal-add-cancel">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="cal-add-save">Add Event</button>
+                    </div>
                 </div>
-                <div class="modal-body" id="cal-modal-body"></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" id="cal-modal-close-btn">Close</button>
-                </div>
+                <button type="button" class="btn btn-outline cal-add-btn" id="cal-add-btn"><i class="ph ph-plus"></i> Add Event</button>
             </div>
         </div>
     `;
 
     const monthLabelEl = containerEl.querySelector('#cal-month-label');
     const gridEl = containerEl.querySelector('#cal-grid');
-    const modalEl = containerEl.querySelector('#cal-event-modal');
-    const modalTitleEl = containerEl.querySelector('#cal-modal-title');
-    const modalBodyEl = containerEl.querySelector('#cal-modal-body');
+    const panelDateEl = containerEl.querySelector('#cal-panel-date');
+    const dayEventsEl = containerEl.querySelector('#cal-day-events');
+    const addFormEl = containerEl.querySelector('#cal-add-form');
+    const addBtnEl = containerEl.querySelector('#cal-add-btn');
+    const addErrorEl = containerEl.querySelector('#cal-add-error');
 
-    function openModal(dateKey, dayEvents) {
-        const d = new Date(dateKey + 'T00:00:00');
-        modalTitleEl.textContent = d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        modalBodyEl.innerHTML = dayEvents.length
+    function renderPanel() {
+        const d = new Date(selectedKey + 'T00:00:00');
+        panelDateEl.textContent = d.toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric' });
+
+        const dayEvents = events.filter(ev => eventFallsOn(ev, selectedKey));
+        dayEventsEl.innerHTML = dayEvents.length
             ? dayEvents.map(ev => `
-                <div class="cal-modal-event" data-event-id="${ev.id}">
+                <div class="cal-modal-event">
                     <span class="cal-dot ${TYPE_CLASS[ev.type] || 'cal-event-company'}"></span>
                     <div>
                         <div class="cal-modal-event-title">${ev.title}</div>
-                        <div class="cal-modal-event-type">${TYPE_LABEL[ev.type] || ev.type}</div>
+                        <div class="cal-modal-event-type">${TYPE_LABEL[ev.type] || ev.type}${ev.meta?.time ? ' · ' + ev.meta.time : ''}</div>
                     </div>
                 </div>`).join('')
-            : '<p style="color:var(--text-muted); margin:0;">No events on this day.</p>';
+            : '<p class="cal-no-events">No events for this date.</p>';
 
-        modalBodyEl.querySelectorAll('.cal-modal-event').forEach(row => {
-            row.addEventListener('click', () => {
-                const ev = dayEvents.find(e => String(e.id) === row.dataset.eventId);
-                if (ev && typeof onEventClick === 'function') onEventClick(ev);
-            });
-        });
-
-        modalEl.classList.add('active');
+        formOpen = false;
+        addFormEl.hidden = true;
+        addErrorEl.hidden = true;
+        dayEventsEl.hidden = false;
+        addBtnEl.hidden = false;
     }
 
-    function closeModal() {
-        modalEl.classList.remove('active');
-    }
+    addBtnEl.addEventListener('click', () => {
+        formOpen = true;
+        dayEventsEl.hidden = true;
+        addBtnEl.hidden = true;
+        addFormEl.hidden = false;
+        containerEl.querySelector('#cal-ev-title').focus();
+    });
 
-    containerEl.querySelector('#cal-modal-close').addEventListener('click', closeModal);
-    containerEl.querySelector('#cal-modal-close-btn').addEventListener('click', closeModal);
-    modalEl.addEventListener('click', (e) => { if (e.target === modalEl) closeModal(); });
+    containerEl.querySelector('#cal-add-cancel').addEventListener('click', renderPanel);
+
+    containerEl.querySelector('#cal-add-save').addEventListener('click', async () => {
+        const title = containerEl.querySelector('#cal-ev-title').value.trim();
+        if (!title) {
+            addErrorEl.textContent = 'Please enter an event title.';
+            addErrorEl.hidden = false;
+            return;
+        }
+        const dto = {
+            title,
+            date: selectedKey,
+            time: containerEl.querySelector('#cal-ev-time').value || undefined,
+            type: containerEl.querySelector('#cal-ev-type').value,
+            description: containerEl.querySelector('#cal-ev-desc').value.trim() || undefined
+        };
+        if (typeof onAddEvent !== 'function') return;
+        try {
+            await onAddEvent(dto);
+            await load();
+        } catch (e) {
+            addErrorEl.textContent = e.message || 'Could not save event.';
+            addErrorEl.hidden = false;
+        }
+    });
 
     function renderGrid() {
         const year = current.getFullYear();
@@ -169,13 +209,14 @@ export function renderCalendar(containerEl, { fetchEvents, onEventClick } = {}) 
 
         gridEl.querySelectorAll('.cal-day').forEach(btn => {
             btn.addEventListener('click', () => {
-                const dateKey = btn.dataset.date;
-                selectedKey = dateKey;
+                selectedKey = btn.dataset.date;
                 gridEl.querySelectorAll('.cal-day.is-selected').forEach(el => el.classList.remove('is-selected'));
                 btn.classList.add('is-selected');
-                openModal(dateKey, events.filter(ev => eventFallsOn(ev, dateKey)));
+                renderPanel();
             });
         });
+
+        renderPanel();
     }
 
     async function load() {
@@ -201,6 +242,7 @@ export function renderCalendar(containerEl, { fetchEvents, onEventClick } = {}) 
     containerEl.querySelector('#cal-today-btn').addEventListener('click', () => {
         current = new Date();
         current.setDate(1);
+        selectedKey = toDateKey(new Date());
         load();
     });
 

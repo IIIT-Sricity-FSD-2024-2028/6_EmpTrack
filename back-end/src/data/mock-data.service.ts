@@ -90,6 +90,9 @@ const INITIAL_MOCK_DATA = {
         { event_id: "CE002", companyId: "C001", title: "Team Lead Sync", date: "2026-08-25", visible_to_roles: ["TEAMLEAD", "HR", "COMPANY_ADMIN"] },
         { event_id: "CE003", companyId: "C002", title: "Quarterly Review", date: "2026-08-22", visible_to_roles: ["ALL"] }
     ],
+    // User-created events from the header calendar popover (see calendar.service.ts
+    // createPersonalEvent) - scoped to the creating employee, shape mirrors company_events.
+    personal_events: [],
 
     // --- Super Admin / multi-company platform data ---
     companies: [
@@ -316,6 +319,7 @@ export class MockDataService {
     public getNotifications() { return this.data.notifications; }
     public getHolidays() { return this.data.holidays; }
     public getCompanyEvents() { return this.data.company_events; }
+    public getPersonalEvents() { return this.data.personal_events; }
 
     public getCompanies() { return this.data.companies; }
     public getSubscriptionPlans() { return this.data.subscription_plans; }

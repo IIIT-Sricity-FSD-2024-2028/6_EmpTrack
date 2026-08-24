@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/views.css">
+    <link rel="stylesheet" href="../css/calendar.css">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -42,37 +43,14 @@
                             <div class="hb-sub">Monitor critical HR activities and escalations</div>
                         </div>
                         <div class="hb-metrics">
-                            <div class="hb-metric"><span class="hb-metric-val" id="met-unread">3</span><span class="hb-metric-lbl">Unread</span></div>
-                            <div class="hb-metric"><span class="hb-metric-val">2</span><span class="hb-metric-lbl">Escalations</span></div>
-                            <div class="hb-metric"><span class="hb-metric-val">3</span><span class="hb-metric-lbl">Actions</span></div>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="card stat-card" style="border-left: 4px solid #EF4444;">
-                            <div class="stat-icon" style="background: rgba(239,68,68,0.1); color: #EF4444;"><i class="ph-fill ph-siren"></i></div>
-                            <div><div style="font-size:24px; font-weight:700;">1</div><div style="font-size:13px; color:var(--nt-muted); font-weight:500;">Critical Alerts</div></div>
-                        </div>
-                        <div class="card stat-card" style="border-left: 4px solid #F97316;">
-                            <div class="stat-icon" style="background: rgba(249,115,22,0.1); color: #F97316;"><i class="ph-fill ph-warning-octagon"></i></div>
-                            <div><div style="font-size:24px; font-weight:700;">2</div><div style="font-size:13px; color:var(--nt-muted); font-weight:500;">High Priority</div></div>
-                        </div>
-                        <div class="card stat-card" style="border-left: 4px solid var(--nt-secondary);">
-                            <div class="stat-icon" style="background: rgba(106,13,173,0.1); color: var(--nt-secondary);"><i class="ph-fill ph-arrow-fat-lines-up"></i></div>
-                            <div><div style="font-size:24px; font-weight:700;">2</div><div style="font-size:13px; color:var(--nt-muted); font-weight:500;">Escalations</div></div>
-                        </div>
-                        <div class="card stat-card" style="border-left: 4px solid #3B82F6;">
-                            <div class="stat-icon" style="background: rgba(59,130,246,0.1); color: #3B82F6;"><i class="ph-fill ph-envelope-simple-open"></i></div>
-                            <div><div style="font-size:24px; font-weight:700;" id="sc-unread">3</div><div style="font-size:13px; color:var(--nt-muted); font-weight:500;">Total Unread</div></div>
+                            <div class="hb-metric"><span class="hb-metric-val" id="met-unread">0</span><span class="hb-metric-lbl">Unread</span></div>
                         </div>
                     </div>
 
                     <div class="filter-bar">
                         <div class="tab-list">
-                            <button class="tab-btn active" data-filter="all">All (10)</button>
-                            <button class="tab-btn" data-filter="escalation">Escalations (2)</button>
-                            <button class="tab-btn" data-filter="unread">Unread (3)</button>
-                            <button class="tab-btn" data-filter="action">Action Required (3)</button>
+                            <button class="tab-btn active" data-filter="all">All</button>
+                            <button class="tab-btn" data-filter="unread">Unread</button>
                         </div>
                         <button class="btn-read-all" id="btn-mark-all"><i class="ph ph-check-double"></i> Mark All as Read</button>
                     </div>

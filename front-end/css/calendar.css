@@ -87,6 +87,7 @@
 .cal-event-task { background-color: var(--cal-task-color); }
 .cal-event-company { background-color: var(--cal-company-color); }
 .cal-event-attendance { background-color: var(--cal-attendance-color); }
+.cal-event-personal { background-color: var(--cal-personal-color); }
 
 .cal-grid-wrap {
     overflow-x: auto;
@@ -181,7 +182,6 @@
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) 0;
     border-bottom: 1px solid var(--border-light);
-    cursor: pointer;
 }
 
 .cal-modal-event:last-child {
@@ -204,6 +204,73 @@
     font-size: var(--text-xs);
     color: var(--text-muted);
     margin-top: 2px;
+}
+
+.cal-day-panel {
+    border-top: 1px solid var(--border-light);
+    padding-top: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cal-day-panel-date {
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.cal-no-events {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin: 4px 0;
+}
+
+.cal-add-btn {
+    width: 100%;
+    justify-content: center;
+    gap: 6px;
+    font-size: var(--text-xs);
+    padding: 6px;
+}
+
+.cal-add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cal-add-form .form-control {
+    font-size: var(--text-xs);
+    padding: 6px 8px;
+}
+
+.cal-add-form-row {
+    display: flex;
+    gap: 8px;
+}
+
+.cal-add-form-row .form-control {
+    flex: 1;
+    min-width: 0;
+}
+
+.cal-add-form-error {
+    font-size: var(--text-xs);
+    color: var(--danger-color);
+}
+
+.cal-add-form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.cal-add-form-actions .btn {
+    font-size: var(--text-xs);
+    padding: 6px 12px;
 }
 
 @media (max-width: 640px) {

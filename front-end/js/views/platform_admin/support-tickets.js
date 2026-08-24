@@ -204,4 +204,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadTeamMembers();
     await loadTickets();
+
+    // Deep link from a notification's "View Issue" link (?open=TIX-...).
+    const openId = new URLSearchParams(location.search).get('open');
+    if (openId && tickets.some((t) => t.ticket_id === openId)) openDetailModal(openId);
 });

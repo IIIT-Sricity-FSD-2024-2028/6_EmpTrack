@@ -15,7 +15,8 @@ export class NotificationService {
         id: 'NOTIF-' + Math.floor(1000 + Math.random() * 9000),
         employee_id: createDto.employee_id,
         message: createDto.message,
-        type: createDto.type || 'info', 
+        type: createDto.type || 'info',
+        link: createDto.link || null,
         timestamp: new Date().toISOString()
     };
     this.dataStore.getNotifications().push(newNotif);

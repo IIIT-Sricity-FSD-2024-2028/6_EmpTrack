@@ -233,6 +233,14 @@ class ApiStore {
         return [...serverIssues, ...localIssues];
     }
 
+    // Company Admin raises an issue - notifies only their company's Platform Admin.
+    async raiseCompanyIssue(issueData) {
+        return this._fetch('/company/tickets', {
+            method: 'POST',
+            body: JSON.stringify(issueData)
+        });
+    }
+
     async createIssue(issueData) {
         const localIssues = JSON.parse(localStorage.getItem('empTrack_local_issues') || '[]');
         const newIssue = {
@@ -333,6 +341,13 @@ class ApiStore {
 
     async createCompanyEvent(requesterEmpId, eventData) {
         return this._fetch(`/calendar/company-events?requesterEmpId=${requesterEmpId}`, {
+            method: 'POST',
+            body: JSON.stringify(eventData)
+        });
+    }
+
+    async createEvent(requesterEmpId, eventData) {
+        return this._fetch(`/calendar/events?requesterEmpId=${requesterEmpId}`, {
             method: 'POST',
             body: JSON.stringify(eventData)
         });

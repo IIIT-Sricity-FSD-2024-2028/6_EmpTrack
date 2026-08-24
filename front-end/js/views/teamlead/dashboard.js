@@ -1,7 +1,6 @@
 // /js/views/teamlead/dashboard.js
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
-import { renderCalendar } from '../../components/calendar.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -93,12 +92,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     renderPendingLeaves();
 
-    // Calendar - team members' leave/task deadlines + company holidays/events
-    const calendarContainer = document.getElementById('teamlead-calendar-container');
-    if (calendarContainer) {
-        renderCalendar(calendarContainer, {
-            fetchEvents: (year, month) => db.getTeamCalendar(user.emp_id, year, month)
-        });
-    }
 });
 

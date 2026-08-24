@@ -58,3 +58,12 @@ export class VerifyResolutionDto {
 export class RejectResolutionDto {
   @IsString() @IsNotEmpty() reason: string;
 }
+
+// Company Admin raising a new issue to their company's Platform Admin.
+export class RaiseTicketDto {
+  @IsString() @IsNotEmpty() title: string;
+  @IsString() @IsNotEmpty() description: string;
+  @IsString() @IsOptional() priority?: string;
+  @IsString() @IsOptional() category?: string;
+  @IsString() @IsOptional() ticket_type?: string;
+}

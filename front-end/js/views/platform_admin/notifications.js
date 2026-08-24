@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="comment-item" style="margin:8px 16px;">
                 <span class="comment-author"><i class="ph ${typeIcon(n.type)}"></i> ${escapeHtml(n.message)}</span>
                 <span class="comment-time">${formatDateTime(n.timestamp)}</span>
+                ${n.link ? `<a href="${n.link}" style="display:inline-block; margin-top:4px; font-size:13px; font-weight:600; color:var(--primary-color);">View Issue &rarr;</a>` : ''}
             </div>
         `).join('');
     } catch (e) {

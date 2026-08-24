@@ -17,6 +17,7 @@ import {
   EscalateToPlatformAdminDto,
   VerifyResolutionDto,
   RejectResolutionDto,
+  RaiseTicketDto,
 } from './dto/platform-ticket.dto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
@@ -468,6 +469,68 @@ export class PlatformTicketService {
         employee_id: ticket.assigned_to,
         message: `${actor.emp_name} returned ${ticket.ticket_id} (${ticket.title}) for rework: ${dto.reason}`,
         type: 'warning',
+      });
+    }
+
+    return this.enrich(ticket);
+  }
+
+  // Company Admin raises a new issue. It belongs to their own company and goes
+  // ONLY to the Platform Admin that company is assigned to (company.platform_admin_id)
+  // - never Super Admin, never other companies' Platform Admins, never broadcast.
+  raiseTicket(dto: RaiseTicketDto, actor: Actor) {
+    const employee = this.dataStore.getEmployees().find((e) => e.emp_id === actor.emp_id);
+    if (!employee) throw new NotFoundException('Requesting employee not found');
+    const company = this.dataStore.getCompanies().find((c) => c.company_id === employee.companyId);
+    if (!company) throw new NotFoundException('No company found for this Company Admin');
+
+    const ticketType = (dto.ticket_type || 'TECHNICAL').toUpperCase() === 'SUPPORT' ? 'SUPPORT' : 'TECHNICAL';
+    const priorityKey = (dto.priority || 'MEDIUM').toUpperCase();
+    if (!VALID_PRIORITIES.includes(priorityKey)) {
+      throw new BadRequestException(`Invalid priority. Must be one of: ${VALID_PRIORITIES.join(', ')}`);
+    }
+    const priority = priorityKey.charAt(0) + priorityKey.slice(1).toLowerCase();
+    const today = new Date().toISOString().split('T')[0];
+
+    const ticket = this.dataStore.normalizeTicket({
+      ticket_id: 'TIX-' + Date.now(),
+      ticket_type: ticketType,
+      company_id: company.company_id,
+      platform_admin_id: company.platform_admin_id,
+      raised_by_name: `${actor.emp_name} (Company Admin)`,
+      raised_by_id: actor.emp_id,
+      raised_by_email: employee.email,
+      title: dto.title,
+      category: dto.category || 'General',
+      priority,
+      status: 'OPEN',
+      assigned_to: null,
+      description: dto.description,
+      created_date: today,
+      updated_date: today,
+      resolved_date: null,
+      escalated_team: null,
+      linked_technical_ticket_id: null,
+      linked_from_ticket_id: null,
+    });
+    this.dataStore.getPlatformTickets().push(ticket);
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Issue raised to Platform Admin',
+      company_id: company.company_id,
+      details: `${ticket.ticket_id}: ${ticket.title}`,
+    });
+
+    if (company.platform_admin_id) {
+      const page = ticketType === 'SUPPORT' ? 'support-tickets' : 'technical-issues';
+      this.notificationService.createNotification({
+        employee_id: company.platform_admin_id,
+        message: `New issue raised by ${actor.emp_name} (${company.company_name}): ${ticket.title} [${priority}]`,
+        type: 'warning',
+        link: `/front-end/platform_admin/${page}.html?open=${ticket.ticket_id}`,
       });
     }
 

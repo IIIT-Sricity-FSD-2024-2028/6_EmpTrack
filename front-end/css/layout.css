@@ -188,10 +188,32 @@
     transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.theme-toggle-btn:hover {
+.theme-toggle-btn:hover,
+.theme-toggle-btn[aria-expanded="true"] {
     background: var(--primary-light);
     color: var(--primary-color);
     border-color: var(--primary-color);
+}
+
+/* Header calendar popover - anchored under the calendar icon button. */
+.header-calendar-popover {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 200;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-md);
+    width: 300px;
+    max-width: calc(100vw - 32px);
+}
+
+@media (max-width: 480px) {
+    .header-calendar-popover {
+        right: -60px;
+    }
 }
 
 /* Sub-page Content */

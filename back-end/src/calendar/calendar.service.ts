@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
-import { CreateHolidayDto, CreateCompanyEventDto } from './dto/calendar.dto';
+import { CreateHolidayDto, CreateCompanyEventDto, CreateEventDto } from './dto/calendar.dto';
 
 @Injectable()
 export class CalendarService {
@@ -75,6 +75,37 @@ export class CalendarService {
       }));
   }
 
+  private personalEventsFor(empIds: string[], year?: string, month?: string) {
+    return this.dataStore.getPersonalEvents()
+      .filter(e => empIds.includes(e.emp_id))
+      .filter(e => this.matchesMonth(e.date, year, month))
+      .map(e => ({
+        id: e.event_id,
+        type: e.type || 'PERSONAL',
+        title: e.title,
+        date: e.date,
+        meta: { emp_id: e.emp_id, time: e.time, description: e.description }
+      }));
+  }
+
+  // Belongs to whichever employee created it (like leave/task events, scoped by
+  // requesterEmpId) - not company-wide like createCompanyEvent above.
+  createPersonalEvent(requesterEmpId: string, roleHeader: string, dto: CreateEventDto) {
+    const requester = this.resolveRequester(requesterEmpId, roleHeader);
+    const newEvent = {
+      event_id: 'PE' + Date.now(),
+      emp_id: requester.emp_id,
+      companyId: requester.companyId,
+      title: dto.title,
+      date: dto.date,
+      time: dto.time,
+      description: dto.description,
+      type: dto.type || 'PERSONAL'
+    };
+    this.dataStore.getPersonalEvents().push(newEvent);
+    return { id: newEvent.event_id, type: newEvent.type, title: newEvent.title, date: newEvent.date, meta: { emp_id: newEvent.emp_id, time: newEvent.time, description: newEvent.description } };
+  }
+
   getHolidays(requesterEmpId: string, roleHeader: string, year?: string, month?: string) {
     const requester = this.resolveRequester(requesterEmpId, roleHeader);
     return this.holidaysFor(requester.companyId, year, month);
@@ -106,7 +137,8 @@ export class CalendarService {
     return [
       ...this.leaveEvents([requester.emp_id], year, month),
       ...this.taskDeadlineEvents([requester.emp_id], year, month),
-      ...this.holidaysFor(requester.companyId, year, month)
+      ...this.holidaysFor(requester.companyId, year, month),
+      ...this.personalEventsFor([requester.emp_id], year, month)
     ];
   }
 
@@ -121,7 +153,8 @@ export class CalendarService {
       ...this.leaveEvents(teamIds, year, month),
       ...this.taskDeadlineEvents(teamIds, year, month),
       ...this.holidaysFor(requester.companyId, year, month),
-      ...this.companyEventsFor(requester.companyId, requester.role, year, month)
+      ...this.companyEventsFor(requester.companyId, requester.role, year, month),
+      ...this.personalEventsFor([...teamIds, requester.emp_id], year, month)
     ];
   }
 
@@ -135,7 +168,8 @@ export class CalendarService {
       ...this.leaveEvents(companyEmpIds, year, month),
       ...this.taskDeadlineEvents(companyEmpIds, year, month),
       ...this.holidaysFor(requester.companyId, year, month),
-      ...this.companyEventsFor(requester.companyId, requester.role, year, month)
+      ...this.companyEventsFor(requester.companyId, requester.role, year, month),
+      ...this.personalEventsFor(companyEmpIds, year, month)
     ];
   }
 }

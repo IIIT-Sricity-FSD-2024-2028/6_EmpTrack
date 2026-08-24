@@ -1,7 +1,6 @@
 // /js/views/hr/dashboard.js
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
-import { renderCalendar } from '../../components/calendar.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -170,13 +169,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Calendar - real data (company-wide leaves/task deadlines/holidays/events,
-    // scoped to this HR user's own company), unlike the dummy data above.
-    const calendarContainer = document.getElementById('hr-calendar-container');
-    if (calendarContainer) {
-        renderCalendar(calendarContainer, {
-            fetchEvents: (year, month) => db.getCompanyCalendar(user.emp_id, year, month)
-        });
-    }
 });
 

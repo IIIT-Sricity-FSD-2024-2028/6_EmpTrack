@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { CalendarService } from './calendar.service';
-import { CreateCompanyEventDto } from './dto/calendar.dto';
+import { CreateCompanyEventDto, CreateEventDto } from './dto/calendar.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
@@ -45,6 +45,17 @@ export class CalendarController {
     @Body() dto: CreateCompanyEventDto,
   ) {
     return this.calendarService.createCompanyEvent(requesterEmpId, role, dto);
+  }
+
+  @ApiOperation({ summary: 'Create a personal event on the header calendar popover (owned by the requester)' })
+  @Post('events')
+  @Roles('EMPLOYEE', 'TEAMLEAD', 'HR', 'COMPANY_ADMIN')
+  createEvent(
+    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('role') role: string,
+    @Body() dto: CreateEventDto,
+  ) {
+    return this.calendarService.createPersonalEvent(requesterEmpId, role, dto);
   }
 
   @ApiOperation({ summary: 'Own leaves/tasks/holidays only - no target-employee param exists' })
