@@ -578,7 +578,7 @@ html[data-theme="light"] .lp-hero-glow-2 { background: rgba(56, 189, 248, 0.16);
 .lp-hero-actions-single .btn-hero { padding: 17px 40px; font-size: 16.5px; }
 
 /* Hero dashboard mockup */
-.lp-hero-visual { position: relative; min-height: 440px; perspective: 1200px; }
+.lp-hero-visual { position: relative; perspective: 1200px; }
 
 .lp-dashboard-mock {
     background: rgba(26, 34, 56, 0.75);
@@ -654,72 +654,12 @@ html[data-theme="light"] .lp-mock-dot { background: rgba(15, 23, 42, 0.14); }
 
 .lp-mock-list .lucide { color: var(--lp-cyan-light); width: 16px; height: 16px; }
 
-/* Floating stat cards */
-.lp-float-card {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(26, 34, 56, 0.8);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--lp-border-strong);
-    border-radius: var(--lp-radius-md);
-    box-shadow: var(--lp-shadow-md);
-    padding: 12px 16px;
-    animation: lp-float 6s ease-in-out infinite;
-    transition: transform 0.3s var(--lp-ease), box-shadow 0.3s var(--lp-ease), translate 0.4s var(--lp-ease);
-}
-
-html[data-theme="light"] .lp-float-card {
-    background: rgba(255, 255, 255, 0.95);
-}
-
-.lp-float-card:hover { box-shadow: var(--lp-shadow-glow); border-color: rgba(124, 58, 237, 0.4); }
-html[data-theme="light"] .lp-float-card:hover { border-color: rgba(37, 99, 235, 0.35); }
-
-.lp-float-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    background: var(--lp-gradient-brand-soft);
-    color: var(--lp-cyan-light);
-    border: 1px solid rgba(6, 182, 212, 0.22);
-}
-
-html[data-theme="light"] .lp-float-icon { border-color: #BFDBFE; }
-
-.lp-float-icon .lucide { width: 18px; height: 18px; }
-
-.lp-float-card strong { display: block; font-size: 17px; font-weight: 800; line-height: 1.2; color: var(--lp-text); }
-.lp-float-card span { display: block; font-size: 12px; color: var(--lp-text-muted); white-space: nowrap; }
-
-.lp-float-1 { top: -6%; left: -10%; animation-delay: 0s; }
-.lp-float-2 { top: 8%; right: -14%; animation-delay: 0.6s; }
-.lp-float-3 { bottom: 22%; left: -16%; animation-delay: 1.2s; }
-.lp-float-4 { bottom: -4%; right: -8%; animation-delay: 1.8s; }
-.lp-float-5 { top: 44%; right: -20%; animation-delay: 2.4s; }
-
-@keyframes lp-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-}
-
 @media (max-width: 1024px) {
     .lp-hero-inner { grid-template-columns: 1fr; text-align: center; }
     .lp-hero-desc { margin-left: auto; margin-right: auto; }
     .lp-hero-actions { justify-content: center; }
     .lp-hero-visual { margin-top: 40px; }
-    .lp-float-1, .lp-float-2, .lp-float-3, .lp-float-4, .lp-float-5 { position: static; margin: 12px auto 0; width: fit-content; }
     .lp-hero-visual { display: flex; flex-direction: column; align-items: center; min-height: auto; }
-}
-
-@media (max-width: 640px) {
-    .lp-float-card { display: none; }
 }
 
 /* ---------- Trusted-for ---------- */
@@ -1207,7 +1147,6 @@ html[data-theme="light"] .lp-footer-col a:hover { color: #2563EB; }
 
 @media (prefers-reduced-motion: reduce) {
     .reveal { opacity: 1; translate: none; transition: none; }
-    .lp-float-card { animation: none; }
     .lp-ai::before { animation: none; }
     .lp-ai-card .lucide-bell { animation: none; }
     .lp-bar-fill, .lp-sparkline path.lp-spark-line, .lp-mock-bars span { transition: none; }
