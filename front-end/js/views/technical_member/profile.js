@@ -28,10 +28,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('info-pending').textContent = '-';
     }
 
-    document.getElementById('btnUpdatePwd').addEventListener('click', async () => {
+    document.getElementById('btnUpdatePwd').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const currentPwd = document.getElementById('currentPwd').value;
         const newPwd = document.getElementById('newPwd').value;
         const confPwd = document.getElementById('confPwd').value;
         const errorEl = document.getElementById('pwd-error');
+        if (!currentPwd) {
+            errorEl.textContent = 'Please enter your current password.';
+            errorEl.style.display = 'block';
+            return;
+        }
         if (!newPwd || newPwd.length < 8) {
             errorEl.textContent = 'Password must be at least 8 characters.';
             errorEl.style.display = 'block';
@@ -43,13 +50,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         errorEl.style.display = 'none';
+        const ogText = btn.innerHTML;
+        btn.innerHTML = 'Updating...';
+        btn.disabled = true;
         try {
-            await db.updateUserPassword(user.emp_id, newPwd);
+            await db.updateUserPassword(user.emp_id, currentPwd, newPwd, confPwd);
             showToast('Password updated successfully.');
             document.getElementById('password-form').reset();
-        } catch (e) {
-            errorEl.textContent = e.message || 'Failed to update password.';
+        } catch (err) {
+            errorEl.textContent = err.message || 'Failed to update password.';
             errorEl.style.display = 'block';
+        } finally {
+            btn.innerHTML = ogText;
+            btn.disabled = false;
         }
     });
 });

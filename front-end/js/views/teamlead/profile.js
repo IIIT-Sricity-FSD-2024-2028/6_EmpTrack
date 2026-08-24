@@ -1,5 +1,6 @@
 // /js/views/teamlead/profile.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -85,36 +86,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const pwdForm = document.getElementById('password-form');
+    const currentPwdObj = document.getElementById('current-pwd');
     const newPwdObj = document.getElementById('new-pwd');
     const confirmPwdObj = document.getElementById('confirm-pwd');
     const errorMsg = document.getElementById('pwd-error-msg');
+    const updateBtn = document.getElementById('update-pwd-btn');
 
     if (pwdForm) {
         pwdForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.style.display = 'none';
+            currentPwdObj.style.borderColor = 'var(--border-color)';
             newPwdObj.style.borderColor = 'var(--border-color)';
             confirmPwdObj.style.borderColor = 'var(--border-color)';
 
             const newVal = newPwdObj.value;
             const confirmVal = confirmPwdObj.value;
 
-            if (newVal !== confirmVal) {
+            function fail(message) {
+                errorMsg.textContent = message;
                 errorMsg.style.display = 'flex';
                 errorMsg.style.alignItems = 'center';
                 errorMsg.style.gap = '4px';
-                newPwdObj.style.borderColor = 'var(--danger-color)';
-                confirmPwdObj.style.borderColor = 'var(--danger-color)';
-                
                 newPwdObj.animate([ { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' } ], { duration: 300 });
                 confirmPwdObj.animate([ { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' } ], { duration: 300 });
-                
-                showProfileToast('Verification Failed', 'The new passwords do not match. Please try again.', 'error');
+                showProfileToast('Update Failed', message, 'error');
+            }
+
+            if (newVal !== confirmVal) {
+                newPwdObj.style.borderColor = 'var(--danger-color)';
+                confirmPwdObj.style.borderColor = 'var(--danger-color)';
+                fail('The new passwords do not match. Please try again.');
                 return;
             }
 
-            showProfileToast('Security Updated', 'Your password has been successfully updated.', 'success');
-            pwdForm.reset();
+            const ogText = updateBtn.innerHTML;
+            updateBtn.innerHTML = 'Updating...';
+            updateBtn.disabled = true;
+
+            try {
+                await db.updateUserPassword(user.emp_id, currentPwdObj.value, newVal, confirmVal);
+                showProfileToast('Security Updated', 'Your password has been successfully updated.', 'success');
+                pwdForm.reset();
+            } catch (err) {
+                currentPwdObj.style.borderColor = 'var(--danger-color)';
+                fail(err.message || 'Failed to update password.');
+            } finally {
+                updateBtn.innerHTML = ogText;
+                updateBtn.disabled = false;
+            }
         });
     }
 

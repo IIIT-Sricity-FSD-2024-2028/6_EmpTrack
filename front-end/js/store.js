@@ -75,10 +75,10 @@ class ApiStore {
         });
     }
 
-    async updateUserPassword(empId, newPassword) {
+    async updateUserPassword(empId, currentPassword, newPassword, confirmPassword) {
         return this._fetch(`/employees/${empId}/password`, {
             method: 'PATCH',
-            body: JSON.stringify({ newPassword })
+            body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
         });
     }
 

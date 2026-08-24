@@ -42,8 +42,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currentField = document.getElementById('current_pw');
             const newField = document.getElementById('new_pw');
             const confirmField = document.getElementById('confirm_pw');
-            console.log("Entered current:", currentField.value);
-            console.log("Actual password:", user.password);
             const errNode = document.getElementById('pw_error');
             const sucNode = document.getElementById('pw_success');
 
@@ -85,25 +83,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            //  5. Update password in store
-            const res = await db.updateUserPassword(user.emp_id, newField.value);
-
-            if (res.error) {
-                errNode.textContent = res.error;
-                errNode.style.display = 'block';
-                return;
+            //  5. Update password via the real backend endpoint
+            const submitBtn = pwForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Updating...';
             }
 
-            // Simulating Backend Accept state
-            currentField.value = '';
-            newField.value = '';
-            countField.value = '';
-            countField.style.borderColor = 'var(--border-color)';
-            
-            sucNode.style.display = 'block';
-            setTimeout(() => {
-                sucNode.style.display = 'none';
-            }, 4000); 
+            try {
+                await db.updateUserPassword(user.emp_id, currentField.value, newField.value, confirmField.value);
+                user.password = newField.value;
+
+                currentField.value = '';
+                newField.value = '';
+                confirmField.value = '';
+                confirmField.style.borderColor = 'var(--border-color)';
+
+                sucNode.style.display = 'block';
+                setTimeout(() => {
+                    sucNode.style.display = 'none';
+                }, 4000);
+            } catch (err) {
+                errNode.textContent = err.message || 'Failed to update password. Please try again.';
+                errNode.style.display = 'block';
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            }
         });
     }
 });

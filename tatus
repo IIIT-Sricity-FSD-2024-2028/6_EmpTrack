@@ -1,0 +1,19 @@
+warning: in the working copy of 'back-end/src/employee/dto/update-password.dto.ts', LF will be replaced by CRLF the next time Git touches it
+ back-end/src/employee/dto/update-password.dto.ts | 10 [32m++++[m[31m--[m
+ back-end/src/employee/employee.controller.ts     |  6 [32m++[m[31m--[m
+ back-end/src/employee/employee.service.ts        | 34 [32m+++++++++++++++[m[31m---[m
+ front-end/company_admin/profile.html             |  9 [32m+++[m[31m--[m
+ front-end/hr/profile.html                        |  2 [32m+[m[31m-[m
+ front-end/js/store.js                            |  4 [32m+[m[31m--[m
+ front-end/js/views/employee/profile.js           | 45 [32m++++++++++++++[m[31m----------[m
+ front-end/js/views/hr/profile.js                 | 16 [32m++++++[m[31m---[m
+ front-end/js/views/platform_admin/profile.js     | 21 [32m++++++++[m[31m---[m
+ front-end/js/views/super_admin/profile.js        | 21 [32m++++++++[m[31m---[m
+ front-end/js/views/support_member/profile.js     | 21 [32m++++++++[m[31m---[m
+ front-end/js/views/teamlead/profile.js           | 36 [32m++++++++++++++[m[31m-----[m
+ front-end/js/views/technical_member/profile.js   | 21 [32m++++++++[m[31m---[m
+ front-end/platform_admin/profile.html            |  4 [32m+++[m
+ front-end/super_admin/profile.html               |  4 [32m+++[m
+ front-end/support_member/profile.html            |  4 [32m+++[m
+ front-end/technical_member/profile.html          |  4 [32m+++[m
+ 17 files changed, 202 insertions(+), 60 deletions(-)

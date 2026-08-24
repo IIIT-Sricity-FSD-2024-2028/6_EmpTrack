@@ -1,5 +1,6 @@
 // /js/views/hr/profile.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Password Match validation
+    const currentPwd = document.getElementById('currentPwd');
     const newPwd = document.getElementById('newPwd');
     const confPwd = document.getElementById('confPwd');
     const pwdErr = document.getElementById('pwdErr');
@@ -84,15 +86,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ogText = btnUpdatePwd.innerHTML;
             btnUpdatePwd.innerHTML = '<i class="ph ph-spinner ph-spin" style="font-size:1.2rem;"></i> Updating...';
             btnUpdatePwd.disabled = true;
+            pwdErr.style.display = 'none';
 
-            setTimeout(() => {
-                btnUpdatePwd.innerHTML = ogText;
-                btnUpdatePwd.disabled = false;
+            try {
+                await db.updateUserPassword(user.emp_id, currentPwd.value, newPwd.value, confPwd.value);
                 pwdForm.reset();
                 const toast = document.getElementById('prof-toast');
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 3000);
-            }, 600);
+            } catch (err) {
+                pwdErr.innerHTML = `<i class="ph-fill ph-warning-circle"></i> ${err.message || 'Failed to update password.'}`;
+                pwdErr.style.display = 'block';
+            } finally {
+                btnUpdatePwd.innerHTML = ogText;
+                btnUpdatePwd.disabled = false;
+            }
         });
     }
 

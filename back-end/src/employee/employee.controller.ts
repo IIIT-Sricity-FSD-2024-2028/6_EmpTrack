@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Body, Query, UseGuards, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Query, Headers, UseGuards, Delete } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -32,12 +32,14 @@ export class EmployeeController {
     return this.employeeService.getEmployeeByEmail(email);
   }
 
+  @ApiOperation({ summary: 'Change your own password - requires current password, rejects any other employee id' })
   @Patch(':id/password')
   updatePassword(
     @Param('id') id: string,
+    @Headers('x-actor-id') actorId: string,
     @Body() updatePasswordDto: UpdatePasswordDto
   ) {
-    return this.employeeService.updatePassword(id, updatePasswordDto);
+    return this.employeeService.updatePassword(id, actorId, updatePasswordDto);
   }
 
   @ApiOperation({ summary: 'Delete an employee' })
