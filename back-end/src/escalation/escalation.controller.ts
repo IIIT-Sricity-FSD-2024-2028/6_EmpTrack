@@ -14,7 +14,7 @@ export class EscalationController {
 
   @ApiOperation({ summary: 'Get all escalations' })
   @Get()
-  @Roles('HR', 'ADMIN')
+  @Roles('HR', 'COMPANY_ADMIN')
   getAllEscalations() {
     return this.escalationService.getAllEscalations();
   }
@@ -25,13 +25,13 @@ export class EscalationController {
   }
 
   @Patch(':id/reject')
-  @Roles('HR', 'ADMIN')
+  @Roles('HR', 'COMPANY_ADMIN')
   rejectEscalation(@Param('id') id: string) {
     return this.escalationService.rejectEscalation(id);
   }
 
   @Post(':id/report')
-  @Roles('HR', 'ADMIN')
+  @Roles('HR', 'COMPANY_ADMIN')
   generateReport(@Param('id') id: string) {
     return this.escalationService.generateEscalationReport(id);
   }

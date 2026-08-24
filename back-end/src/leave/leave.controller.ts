@@ -14,7 +14,7 @@ export class LeaveController {
 
   @ApiOperation({ summary: 'Get all leaves (HR/TeamLead)' })
   @Get()
-  @Roles('HR', 'TEAMLEAD', 'ADMIN')
+  @Roles('HR', 'TEAMLEAD', 'COMPANY_ADMIN')
   getAllLeaves() {
     return this.leaveService.getAllLeaves();
   }
@@ -25,13 +25,13 @@ export class LeaveController {
   }
 
   @Post()
-  @Roles('EMPLOYEE', 'TEAMLEAD', 'ADMIN')
+  @Roles('EMPLOYEE', 'TEAMLEAD', 'COMPANY_ADMIN')
   createLeave(@Body() createDto: CreateLeaveDto) {
     return this.leaveService.createLeave(createDto);
   }
 
   @Patch(':id/status')
-  @Roles('HR', 'TEAMLEAD', 'ADMIN')
+  @Roles('HR', 'TEAMLEAD', 'COMPANY_ADMIN')
   updateLeaveStatus(
     @Param('id') leaveId: string,
     @Body() updateDto: UpdateLeaveStatusDto

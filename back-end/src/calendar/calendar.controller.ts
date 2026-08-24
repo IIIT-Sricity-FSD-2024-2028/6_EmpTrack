@@ -14,7 +14,7 @@ export class CalendarController {
 
   @ApiOperation({ summary: 'Company holidays for the requester\'s company' })
   @Get('holidays')
-  @Roles('ADMIN', 'HR', 'TEAMLEAD', 'EMPLOYEE')
+  @Roles('COMPANY_ADMIN', 'HR', 'TEAMLEAD', 'EMPLOYEE')
   getHolidays(
     @Query('requesterEmpId') requesterEmpId: string,
     @Headers('role') role: string,
@@ -26,7 +26,7 @@ export class CalendarController {
 
   @ApiOperation({ summary: 'Company events visible to the requester\'s role' })
   @Get('company-events')
-  @Roles('ADMIN', 'HR', 'TEAMLEAD')
+  @Roles('COMPANY_ADMIN', 'HR', 'TEAMLEAD')
   getCompanyEvents(
     @Query('requesterEmpId') requesterEmpId: string,
     @Headers('role') role: string,
@@ -38,7 +38,7 @@ export class CalendarController {
 
   @ApiOperation({ summary: 'Create a company event (HR/Admin)' })
   @Post('company-events')
-  @Roles('ADMIN', 'HR')
+  @Roles('COMPANY_ADMIN', 'HR')
   createCompanyEvent(
     @Query('requesterEmpId') requesterEmpId: string,
     @Headers('role') role: string,
@@ -73,7 +73,7 @@ export class CalendarController {
 
   @ApiOperation({ summary: 'Company-wide calendar (HR/Admin), scoped to their own company' })
   @Get('company-calendar')
-  @Roles('HR', 'ADMIN')
+  @Roles('HR', 'COMPANY_ADMIN')
   getCompanyCalendar(
     @Query('requesterEmpId') requesterEmpId: string,
     @Headers('role') role: string,

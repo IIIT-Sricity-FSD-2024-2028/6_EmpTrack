@@ -2,16 +2,23 @@ import { Injectable } from '@nestjs/common';
 
 const INITIAL_MOCK_DATA = {
     employee: [
-        { emp_id: "AD001", emp_name: "Kiran", email: "cmpadmin@emp.com", phone: "1231231234", password: "Password@123", role: "ADMIN", status: "ACTIVE", date_of_joining: "2020-01-01", department_id: "D00", team_id: "T00", companyId: "C001" },
+        { emp_id: "AD001", emp_name: "Kiran", email: "cmpadmin@emp.com", phone: "1231231234", password: "Password@123", role: "COMPANY_ADMIN", status: "ACTIVE", date_of_joining: "2020-01-01", department_id: "D00", team_id: "T00", companyId: "C001" },
         { emp_id: "HR001", emp_name: "HR Manager", email: "hr@emp.com", phone: "1234567890", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2024-01-01", department_id: "D01", team_id: "T01", companyId: "C001" },
         { emp_id: "TL001", emp_name: "Rinku Singh (TL)", email: "tl@emp.com", phone: "0987654321", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2024-06-01", department_id: "D02", team_id: "T02", companyId: "C001" },
         { emp_id: "EM001", emp_name: "John Doe (EMP)", email: "emp@emp.com", phone: "1112223333", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-01-15", department_id: "D02", team_id: "T02", manager_id: "TL001", companyId: "C001" },
         { emp_id: "EM002", emp_name: "Jane Smith (EMP)", email: "jane@emp.com", phone: "4445556666", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2025-02-10", department_id: "D02", team_id: "T02", manager_id: "TL001", companyId: "C001" },
 
         // Second company - seeded to prove calendar tenant isolation (see CalendarService)
+        { emp_id: "AD002", emp_name: "Natasha Romanoff", email: "admin2@emp.com", phone: "5556667777", password: "Password@123", role: "COMPANY_ADMIN", status: "ACTIVE", date_of_joining: "2023-03-01", department_id: "D00", team_id: "T00", companyId: "C002" },
         { emp_id: "HR002", emp_name: "Carol Danvers (HR)", email: "hr2@emp.com", phone: "2223334444", password: "Password@123", role: "HR", status: "ACTIVE", date_of_joining: "2023-03-01", department_id: "D01", team_id: "T10", companyId: "C002" },
         { emp_id: "TL002", emp_name: "Tony Stark (TL)", email: "tl2@emp.com", phone: "3334445555", password: "Password@123", role: "TEAMLEAD", status: "ACTIVE", date_of_joining: "2023-05-01", department_id: "D02", team_id: "T11", companyId: "C002" },
-        { emp_id: "EM003", emp_name: "Peter Parker (EMP)", email: "emp3@emp.com", phone: "4445556677", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2024-09-01", department_id: "D02", team_id: "T11", manager_id: "TL002", companyId: "C002" }
+        { emp_id: "EM003", emp_name: "Peter Parker (EMP)", email: "emp3@emp.com", phone: "4445556677", password: "Password@123", role: "EMPLOYEE", status: "ACTIVE", date_of_joining: "2024-09-01", department_id: "D02", team_id: "T11", manager_id: "TL002", companyId: "C002" },
+
+        // Platform-level accounts - not tied to any single company (companyId: null)
+        { emp_id: "SA001", emp_name: "Alex Morgan", email: "superadmin@emptrack.com", phone: "9000000001", password: "Password@123", role: "SUPER_ADMIN", status: "ACTIVE", date_of_joining: "2023-01-01", companyId: null },
+        { emp_id: "PA001", emp_name: "Ravi Kumar", email: "ravi.platform@emptrack.com", phone: "9000000002", password: "Password@123", role: "PLATFORM_ADMIN", status: "ACTIVE", date_of_joining: "2023-06-01", companyId: null },
+        { emp_id: "PA002", emp_name: "Anjali Sharma", email: "anjali.platform@emptrack.com", phone: "9000000003", password: "Password@123", role: "PLATFORM_ADMIN", status: "ACTIVE", date_of_joining: "2024-02-01", companyId: null },
+        { emp_id: "PA003", emp_name: "Karthik R", email: "karthik.platform@emptrack.com", phone: "9000000004", password: "Password@123", role: "PLATFORM_ADMIN", status: "INACTIVE", date_of_joining: "2024-08-01", companyId: null }
     ],
     attendance: [
         { attendance_id: "A001", emp_id: "EM001", attendance_date: "2026-03-07", attendance_mode: "OFFICE", check_in_time: "09:00", check_out_time: "15:30", screen_time: 390, hours_spent: 6, remarks: "On track", status: "PRESENT" },
@@ -60,9 +67,62 @@ const INITIAL_MOCK_DATA = {
     ],
     company_events: [
         { event_id: "CE001", companyId: "C001", title: "All-Hands Meeting", date: "2026-08-20", visible_to_roles: ["ALL"] },
-        { event_id: "CE002", companyId: "C001", title: "Team Lead Sync", date: "2026-08-25", visible_to_roles: ["TEAMLEAD", "HR", "ADMIN"] },
+        { event_id: "CE002", companyId: "C001", title: "Team Lead Sync", date: "2026-08-25", visible_to_roles: ["TEAMLEAD", "HR", "COMPANY_ADMIN"] },
         { event_id: "CE003", companyId: "C002", title: "Quarterly Review", date: "2026-08-22", visible_to_roles: ["ALL"] }
-    ]
+    ],
+
+    // --- Super Admin / multi-company platform data ---
+    companies: [
+        { company_id: "C001", company_name: "Acme Technologies", company_email: "contact@acmetech.com", phone: "1234567890", industry: "Information Technology", address: "123 Innovation Drive, Springfield", status: "ACTIVE", subscription_plan_id: "PLAN-ENT", platform_admin_id: "PA001", created_date: "2024-01-01" },
+        { company_id: "C002", company_name: "Stark Industries", company_email: "contact@starkindustries.com", phone: "2223334444", industry: "Manufacturing", address: "200 Park Avenue, New York", status: "ACTIVE", subscription_plan_id: "PLAN-PRO", platform_admin_id: "PA001", created_date: "2023-03-01" },
+        { company_id: "C003", company_name: "Wayne Enterprises", company_email: "contact@wayneenterprises.com", phone: "3334445555", industry: "Conglomerate", address: "1007 Mountain Drive, Gotham", status: "SUSPENDED", subscription_plan_id: "PLAN-BASIC", platform_admin_id: "PA002", created_date: "2025-06-15" }
+    ],
+    subscription_plans: [
+        { plan_id: "PLAN-BASIC", name: "Basic", price: 49, billing_cycle: "MONTHLY", max_employees: 50, features: ["Attendance Tracking", "Leave Management", "Basic Reports"], status: "ACTIVE", created_date: "2024-01-01" },
+        { plan_id: "PLAN-PRO", name: "Professional", price: 149, billing_cycle: "MONTHLY", max_employees: 200, features: ["Attendance Tracking", "Leave Management", "Task Management", "Advanced Reports", "Priority Support"], status: "ACTIVE", created_date: "2024-01-01" },
+        { plan_id: "PLAN-ENT", name: "Enterprise", price: 499, billing_cycle: "MONTHLY", max_employees: 1000, features: ["All Professional Features", "Custom Integrations", "Dedicated Support", "SLA Guarantee", "Advanced Security"], status: "ACTIVE", created_date: "2024-01-01" }
+    ],
+    revenue_transactions: [
+        { transaction_id: "TXN-001", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-03-01", payment_status: "PAID" },
+        { transaction_id: "TXN-002", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-04-01", payment_status: "PAID" },
+        { transaction_id: "TXN-003", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-05-01", payment_status: "PAID" },
+        { transaction_id: "TXN-004", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-06-01", payment_status: "PAID" },
+        { transaction_id: "TXN-005", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-07-01", payment_status: "PAID" },
+        { transaction_id: "TXN-006", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-08-01", payment_status: "PAID" },
+        { transaction_id: "TXN-007", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-03-01", payment_status: "PAID" },
+        { transaction_id: "TXN-008", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-04-01", payment_status: "PAID" },
+        { transaction_id: "TXN-009", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-05-01", payment_status: "PAID" },
+        { transaction_id: "TXN-010", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-06-01", payment_status: "PAID" },
+        { transaction_id: "TXN-011", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-07-01", payment_status: "PENDING" },
+        { transaction_id: "TXN-012", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-08-01", payment_status: "PAID" },
+        { transaction_id: "TXN-013", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, billing_cycle: "MONTHLY", payment_date: "2026-06-15", payment_status: "PAID" },
+        { transaction_id: "TXN-014", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, billing_cycle: "MONTHLY", payment_date: "2026-07-15", payment_status: "FAILED" }
+    ],
+    invitations: [],
+    activity_logs: [
+        { activity_id: "ACT-001", user_id: "SA001", user_name: "Alex Morgan", role: "SUPER_ADMIN", action: "Platform Admin created", company_id: null, company_name: null, details: "Created platform admin Ravi Kumar", timestamp: "2026-08-01T09:00:00.000Z", status: "SUCCESS" },
+        { activity_id: "ACT-002", user_id: "SA001", user_name: "Alex Morgan", role: "SUPER_ADMIN", action: "Company assigned", company_id: "C001", company_name: "Acme Technologies", details: "Assigned Ravi Kumar to manage Acme Technologies", timestamp: "2026-08-02T10:30:00.000Z", status: "SUCCESS" },
+        { activity_id: "ACT-003", user_id: "PA002", user_name: "Anjali Sharma", role: "PLATFORM_ADMIN", action: "Company suspended", company_id: "C003", company_name: "Wayne Enterprises", details: "Suspended due to failed payment", timestamp: "2026-08-10T14:15:00.000Z", status: "WARNING" },
+        { activity_id: "ACT-004", user_id: "PA001", user_name: "Ravi Kumar", role: "PLATFORM_ADMIN", action: "Support issue escalated", company_id: "C002", company_name: "Stark Industries", details: "Escalated critical VPN outage to Technical Team", timestamp: "2026-08-15T11:00:00.000Z", status: "SUCCESS" }
+    ],
+    critical_escalations: [
+        { issue_id: "CESC-001", company_id: "C002", raised_by: "PA001", category: "Technical", priority: "Critical", assigned_team: "Technical Team", status: "OPEN", created_date: "2026-08-15", updated_date: "2026-08-15", description: "Persistent VPN outage disrupting the Stark Industries engineering team.", comments: [] },
+        { issue_id: "CESC-002", company_id: "C003", raised_by: "PA002", category: "Billing", priority: "High", assigned_team: "Support Team", status: "IN_PROGRESS", created_date: "2026-08-10", updated_date: "2026-08-11", description: "Subscription payment failure triggered automatic suspension.", comments: [{ author: "PA002", message: "Awaiting payment confirmation from finance.", timestamp: "2026-08-11T09:00:00.000Z" }] }
+    ],
+    platform_settings: {
+        platform_name: "EmpTrack",
+        support_email: "support@emptrack.com",
+        maintenance_mode: false,
+        default_currency: "USD",
+        timezone: "Asia/Kolkata",
+        notification_settings: { emailNotifications: true, criticalEscalationAlerts: true, weeklyDigest: true, newCompanyAlerts: true },
+        security_settings: { passwordMinLength: 8, sessionTimeoutMinutes: 60, twoFactorRequired: false, invitationExpiryHours: 72 },
+        role_permissions: {
+            SUPER_ADMIN: ["Full platform access"],
+            PLATFORM_ADMIN: ["Manage assigned companies", "Escalation handling", "View analytics for assigned companies"],
+            COMPANY_ADMIN: ["Manage company employees", "Approve leave/attendance", "Company-level settings"]
+        }
+    }
 };
 
 @Injectable()
@@ -84,10 +144,31 @@ export class MockDataService {
     public getHolidays() { return this.data.holidays; }
     public getCompanyEvents() { return this.data.company_events; }
 
+    public getCompanies() { return this.data.companies; }
+    public getSubscriptionPlans() { return this.data.subscription_plans; }
+    public getRevenueTransactions() { return this.data.revenue_transactions; }
+    public getInvitations() { return this.data.invitations; }
+    public getActivityLogs() { return this.data.activity_logs; }
+    public getCriticalEscalations() { return this.data.critical_escalations; }
+    public getPlatformSettings() { return this.data.platform_settings; }
+
+    public logActivity(entry: { user_id: string; user_name: string; role: string; action: string; company_id?: string | null; company_name?: string | null; details?: string; status?: string; }) {
+        const record = {
+            activity_id: 'ACT-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+            timestamp: new Date().toISOString(),
+            status: 'SUCCESS',
+            company_id: null,
+            company_name: null,
+            ...entry
+        };
+        this.data.activity_logs.push(record);
+        return record;
+    }
+
     public deleteEmployee(id: string) {
         const initialLength = this.data.employee.length;
         this.data.employee = this.data.employee.filter(e => e.emp_id !== id);
-        
+
         // Cascade deletes
         this.data.attendance = this.data.attendance.filter(a => a.emp_id !== id);
         this.data.leave_details = this.data.leave_details.filter(l => l.emp_id !== id);
@@ -95,7 +176,7 @@ export class MockDataService {
         this.data.task = this.data.task.filter(t => t.assigned_to !== id);
         this.data.issue = this.data.issue.filter(i => i.emp_id !== id && i.assigned_to !== id);
         this.data.escalation = this.data.escalation.filter(e => e.escalated_from !== id && e.escalated_to !== id);
-        
+
         if (this.data.notifications) {
             this.data.notifications = this.data.notifications.filter(n => n.employee_id !== id);
         }

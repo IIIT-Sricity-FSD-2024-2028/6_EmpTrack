@@ -14,7 +14,7 @@ export class TaskController {
 
   @ApiOperation({ summary: 'Get tasks by manager' })
   @Get()
-  @Roles('TEAMLEAD', 'HR', 'ADMIN')
+  @Roles('TEAMLEAD', 'HR', 'COMPANY_ADMIN')
   getAllTasksForManager(@Query('managerId') managerId: string) {
     if (managerId) {
       return this.taskService.getAllTasksForManager(managerId);
@@ -28,7 +28,7 @@ export class TaskController {
   }
 
   @Post()
-  @Roles('TEAMLEAD', 'ADMIN')
+  @Roles('TEAMLEAD', 'COMPANY_ADMIN')
   createTask(@Body() createDto: CreateTaskDto) {
     return this.taskService.createTask(createDto);
   }

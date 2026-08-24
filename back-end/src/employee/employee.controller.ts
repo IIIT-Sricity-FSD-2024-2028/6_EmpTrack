@@ -14,7 +14,7 @@ export class EmployeeController {
 
   @ApiOperation({ summary: 'Get all employees' })
   @Get()
-  @Roles('HR', 'TEAMLEAD', 'ADMIN')
+  @Roles('HR', 'TEAMLEAD', 'COMPANY_ADMIN')
   getAllEmployees(@Query('managerId') managerId: string) {
     if (managerId) {
       return this.employeeService.getUsersByManager(managerId);
@@ -42,14 +42,14 @@ export class EmployeeController {
 
   @ApiOperation({ summary: 'Delete an employee' })
   @Delete(':id')
-  @Roles('ADMIN')
+  @Roles('COMPANY_ADMIN')
   deleteEmployee(@Param('id') id: string) {
     return this.employeeService.deleteEmployee(id);
   }
 
   @ApiOperation({ summary: 'Update an employee' })
   @Patch(':id')
-  @Roles('ADMIN')
+  @Roles('COMPANY_ADMIN')
   updateEmployee(@Param('id') id: string, @Body() updateData: any) {
     return this.employeeService.updateEmployee(id, updateData);
   }

@@ -9,7 +9,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   
-  app.useStaticAssets(join(__dirname, '..', 'front-end'));
+  app.useStaticAssets(join(__dirname, '..', '..', 'front-end'), { prefix: '/front-end' });
   
   app.enableCors();
   
