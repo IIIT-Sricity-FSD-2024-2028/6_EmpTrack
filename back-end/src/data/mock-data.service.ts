@@ -1,5 +1,17 @@
 import { Injectable } from '@nestjs/common';
 
+// Relative-date helpers for the seed data. Ticket timelines are seeded relative to
+// "now" so demo dashboards (Resolved Today, the 7-day work progress chart, recent
+// updates) stay populated whenever the server is started, instead of only on the
+// day the fixtures happened to be written.
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isoDate = (daysAgo = 0) => new Date(Date.now() - daysAgo * DAY_MS).toISOString().split('T')[0];
+const isoTime = (daysAgo = 0, hour = 10) => {
+    const d = new Date(Date.now() - daysAgo * DAY_MS);
+    d.setHours(hour, 0, 0, 0);
+    return d.toISOString();
+};
+
 const INITIAL_MOCK_DATA = {
     employee: [
         { emp_id: "AD001", emp_name: "Kiran", email: "cmpadmin@emp.com", phone: "1231231234", password: "Password@123", role: "COMPANY_ADMIN", status: "ACTIVE", date_of_joining: "2020-01-01", department_id: "D00", team_id: "T00", companyId: "C001" },
@@ -121,7 +133,122 @@ const INITIAL_MOCK_DATA = {
         { ticket_id: "TIX-007", ticket_type: "SUPPORT", company_id: "C001", platform_admin_id: "PA001", raised_by_name: "Kiran (Company Admin)", raised_by_id: "AD001", raised_by_email: "cmpadmin@emp.com", title: "Employees see wrong leave balance after policy update", category: "Leave Management", priority: "High", status: "WAITING_FOR_CUSTOMER", assigned_to: "ST001", description: "Several employees report their carried-over leave balance dropped to zero after the new policy rollout.", created_date: "2026-08-12", updated_date: "2026-08-19", resolved_date: null, comments: [{ author: "Sam Wilson", message: "Could you share 2-3 affected employee IDs so we can check their ledgers?", timestamp: "2026-08-19T11:00:00.000Z" }], reassign_log: [], internal_notes: [{ author: "Sam Wilson", message: "Looks like the carry-over migration script may have skipped CASUAL leave types. Flagging for a closer look before escalating.", timestamp: "2026-08-19T11:05:00.000Z" }], escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null },
         { ticket_id: "TIX-008", ticket_type: "SUPPORT", company_id: "C002", platform_admin_id: "PA001", raised_by_name: "Natasha Romanoff (Company Admin)", raised_by_id: "AD002", raised_by_email: "admin2@emp.com", title: "Attendance check-in unavailable company-wide", category: "Attendance", priority: "Critical", status: "OPEN", assigned_to: null, description: "Attendance system unavailable for entire company since 9 AM; nobody can check in.", created_date: "2026-08-24", updated_date: "2026-08-24", resolved_date: null, comments: [], reassign_log: [], internal_notes: [], escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null },
         { ticket_id: "TIX-009", ticket_type: "SUPPORT", company_id: "C001", platform_admin_id: "PA001", raised_by_name: "Kiran (Company Admin)", raised_by_id: "AD001", raised_by_email: "cmpadmin@emp.com", title: "How do I export the payroll report as CSV", category: "Employee Management", priority: "Low", status: "CLOSED", assigned_to: "ST001", description: "Looking for a way to export the monthly payroll report as a CSV file.", created_date: "2026-07-05", updated_date: "2026-07-07", resolved_date: "2026-07-07", comments: [{ author: "Sam Wilson", message: "You can export it from Reports > Payroll > Export CSV. Closing this out.", timestamp: "2026-07-07T09:00:00.000Z" }], reassign_log: [], internal_notes: [], escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null },
-        { ticket_id: "TIX-010", ticket_type: "SUPPORT", company_id: "C002", platform_admin_id: "PA001", raised_by_name: "Natasha Romanoff (Company Admin)", raised_by_id: "AD002", raised_by_email: "admin2@emp.com", title: "Subscription invoice shows incorrect employee count", category: "Billing", priority: "Medium", status: "RESOLVED", assigned_to: "ST001", description: "August invoice charges for 220 employees but we only have 200 active.", created_date: "2026-08-22", updated_date: "2026-08-24", resolved_date: "2026-08-24", comments: [{ author: "Sam Wilson", message: "Confirmed the discrepancy was due to 20 deactivated accounts; credit has been applied to your next invoice.", timestamp: "2026-08-24T08:30:00.000Z" }], reassign_log: [], internal_notes: [], escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null }
+        { ticket_id: "TIX-010", ticket_type: "SUPPORT", company_id: "C002", platform_admin_id: "PA001", raised_by_name: "Natasha Romanoff (Company Admin)", raised_by_id: "AD002", raised_by_email: "admin2@emp.com", title: "Subscription invoice shows incorrect employee count", category: "Billing", priority: "Medium", status: "RESOLVED", assigned_to: "ST001", description: "August invoice charges for 220 employees but we only have 200 active.", created_date: "2026-08-22", updated_date: "2026-08-24", resolved_date: "2026-08-24", comments: [{ author: "Sam Wilson", message: "Confirmed the discrepancy was due to 20 deactivated accounts; credit has been applied to your next invoice.", timestamp: "2026-08-24T08:30:00.000Z" }], reassign_log: [], internal_notes: [], escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null },
+
+        // --- Technical issues assigned by Platform Admin PA001 to Technical Member TT001 (Wanda Maximoff) ---
+        // Seeded on relative dates so the Technical Member dashboard has a live-looking
+        // workload, a 7-day progress trend, and a populated issue history.
+        {
+            ticket_id: "TIX-011", ticket_type: "TECHNICAL", company_id: "C001", platform_admin_id: "PA001",
+            raised_by_name: "Kiran (Company Admin)", raised_by_id: "AD001", raised_by_email: "cmpadmin@emp.com",
+            title: "Attendance sync job failing for the Acme night shift", category: "Bug", priority: "High", status: "IN_PROGRESS",
+            assigned_to: "TT001", progress_percentage: 60,
+            description: "Check-ins recorded between 22:00 and 06:00 never reach the attendance ledger. Started after the timezone patch rollout.",
+            created_date: isoDate(6), updated_date: isoDate(1), resolved_date: null,
+            comments: [{ author: "Wanda Maximoff", message: "Confirmed the sync worker is dropping records whose shift crosses midnight. Working on a fix for the date-boundary handling.", timestamp: isoTime(2, 11) }],
+            reassign_log: [],
+            internal_notes: [
+                { author: "Wanda Maximoff", message: "Root cause: the ledger writer buckets by local calendar date but the worker passes a UTC timestamp, so post-midnight check-ins land on a date the shift record does not own.", timestamp: isoTime(3, 9) },
+                { author: "Wanda Maximoff", message: "Patch drafted in the shift-boundary resolver. Needs a replay of the last 6 days of dropped records once deployed.", timestamp: isoTime(1, 15) }
+            ],
+            attachments: [
+                { attachment_id: "ATT-011-1", file_name: "sync-worker-error.log", file_type: "text/plain", file_size: 4820, kind: "LOG", description: "Worker stack trace at the date boundary", uploaded_by: "TT001", uploaded_by_name: "Wanda Maximoff", uploaded_at: isoTime(3, 9), data_url: null },
+                { attachment_id: "ATT-011-2", file_name: "ledger-gap.png", file_type: "image/png", file_size: 148230, kind: "SCREENSHOT", description: "Missing rows in the attendance ledger", uploaded_by: "TT001", uploaded_by_name: "Wanda Maximoff", uploaded_at: isoTime(3, 10), data_url: null }
+            ],
+            progress_log: [
+                { author_id: "TT001", author: "Wanda Maximoff", from: 0, to: 25, note: "Reproduced the failure on a staging replay.", timestamp: isoTime(4, 10) },
+                { author_id: "TT001", author: "Wanda Maximoff", from: 25, to: 60, note: "Root cause isolated to the shift-boundary resolver.", timestamp: isoTime(1, 15) }
+            ],
+            verification_status: null, verification_note: null, submitted_for_verification_at: null, verified_by: null, verified_by_name: null, verified_at: null, resolution_notes: null,
+            escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null
+        },
+        {
+            ticket_id: "TIX-012", ticket_type: "TECHNICAL", company_id: "C002", platform_admin_id: "PA001",
+            raised_by_name: "Natasha Romanoff (Company Admin)", raised_by_id: "AD002", raised_by_email: "admin2@emp.com",
+            title: "Stark tenant report exports return HTTP 500", category: "Bug", priority: "Critical", status: "OPEN",
+            assigned_to: "TT001", progress_percentage: 0,
+            description: "Every report export for the Stark tenant fails immediately with a 500. Smaller tenants are unaffected.",
+            created_date: isoDate(1), updated_date: isoDate(1), resolved_date: null,
+            comments: [], reassign_log: [], internal_notes: [], attachments: [], progress_log: [],
+            verification_status: null, verification_note: null, submitted_for_verification_at: null, verified_by: null, verified_by_name: null, verified_at: null, resolution_notes: null,
+            escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null
+        },
+        {
+            ticket_id: "TIX-013", ticket_type: "TECHNICAL", company_id: "C001", platform_admin_id: "PA001",
+            raised_by_name: "HR Manager", raised_by_id: "HR001", raised_by_email: "hr@emp.com",
+            title: "Leave balance recalculation is slow after policy change", category: "Performance", priority: "Medium", status: "IN_PROGRESS",
+            assigned_to: "TT001", progress_percentage: 35,
+            description: "Recalculating balances for the whole company takes over 4 minutes and blocks the HR console while it runs.",
+            created_date: isoDate(4), updated_date: isoDate(2), resolved_date: null,
+            comments: [], reassign_log: [],
+            internal_notes: [{ author: "Wanda Maximoff", message: "Profiler shows the recalculation issues one query per employee per leave type. Batching should bring this under 10s.", timestamp: isoTime(2, 14) }],
+            attachments: [{ attachment_id: "ATT-013-1", file_name: "recalc-profile.log", file_type: "text/plain", file_size: 9120, kind: "LOG", description: "Query profiler output", uploaded_by: "TT001", uploaded_by_name: "Wanda Maximoff", uploaded_at: isoTime(2, 14), data_url: null }],
+            progress_log: [{ author_id: "TT001", author: "Wanda Maximoff", from: 0, to: 35, note: "Profiled the recalculation path and identified the N+1 query.", timestamp: isoTime(2, 14) }],
+            verification_status: null, verification_note: null, submitted_for_verification_at: null, verified_by: null, verified_by_name: null, verified_at: null, resolution_notes: null,
+            escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null
+        },
+        {
+            ticket_id: "TIX-014", ticket_type: "TECHNICAL", company_id: "C002", platform_admin_id: "PA001",
+            raised_by_name: "Tony Stark (TL)", raised_by_id: "TL002", raised_by_email: "tl2@emp.com",
+            title: "Task deadline reminders sent in the wrong timezone", category: "Bug", priority: "High", status: "RESOLVED",
+            assigned_to: "TT001", progress_percentage: 100,
+            description: "Deadline reminder emails arrive 5.5 hours early for the Stark tenant.",
+            created_date: isoDate(5), updated_date: isoDate(0), resolved_date: isoDate(0),
+            comments: [{ author: "Wanda Maximoff", message: "Fixed: the reminder scheduler now resolves the tenant timezone instead of defaulting to the platform timezone. Verified against the Stark tenant.", timestamp: isoTime(0, 9) }],
+            reassign_log: [],
+            internal_notes: [{ author: "Wanda Maximoff", message: "Scheduler was reading platform_settings.timezone rather than the company record. One-line fix plus a regression test.", timestamp: isoTime(0, 9) }],
+            attachments: [{ attachment_id: "ATT-014-1", file_name: "reminder-fix-verified.png", file_type: "image/png", file_size: 96420, kind: "SCREENSHOT", description: "Reminder delivered at the correct local time", uploaded_by: "TT001", uploaded_by_name: "Wanda Maximoff", uploaded_at: isoTime(0, 9), data_url: null }],
+            progress_log: [
+                { author_id: "TT001", author: "Wanda Maximoff", from: 0, to: 50, note: "Traced the reminder scheduler timezone lookup.", timestamp: isoTime(2, 11) },
+                { author_id: "TT001", author: "Wanda Maximoff", from: 50, to: 100, note: "Fix applied and regression test added.", timestamp: isoTime(0, 9) }
+            ],
+            verification_status: "PENDING_VERIFICATION", verification_note: null, submitted_for_verification_at: isoTime(0, 9),
+            verified_by: null, verified_by_name: null, verified_at: null,
+            resolution_notes: "Reminder scheduler now resolves the tenant timezone from the company record. Regression test added.",
+            escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null
+        },
+        {
+            ticket_id: "TIX-015", ticket_type: "TECHNICAL", company_id: "C001", platform_admin_id: "PA001",
+            raised_by_name: "Kiran (Company Admin)", raised_by_id: "AD001", raised_by_email: "cmpadmin@emp.com",
+            title: "Profile photo uploads rejected above 1 MB", category: "Bug", priority: "Low", status: "CLOSED",
+            assigned_to: "TT001", progress_percentage: 100,
+            description: "Employees cannot upload profile photos larger than 1 MB even though the documented limit is 5 MB.",
+            created_date: isoDate(21), updated_date: isoDate(16), resolved_date: isoDate(17),
+            comments: [{ author: "Wanda Maximoff", message: "Upload proxy limit raised to match the documented 5 MB ceiling.", timestamp: isoTime(17, 14) }],
+            reassign_log: [], internal_notes: [], attachments: [], progress_log: [{ author_id: "TT001", author: "Wanda Maximoff", from: 0, to: 100, note: "Proxy body limit corrected.", timestamp: isoTime(17, 14) }],
+            verification_status: "VERIFIED", verification_note: "Confirmed against the Acme tenant.", submitted_for_verification_at: isoTime(17, 14),
+            verified_by: "PA001", verified_by_name: "Ravi Kumar", verified_at: isoTime(16, 10),
+            resolution_notes: "Raised the upload proxy body limit from 1 MB to 5 MB.",
+            escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null
+        },
+        {
+            ticket_id: "TIX-016", ticket_type: "TECHNICAL", company_id: "C002", platform_admin_id: "PA001",
+            raised_by_name: "Natasha Romanoff (Company Admin)", raised_by_id: "AD002", raised_by_email: "admin2@emp.com",
+            title: "Duplicate notifications on leave approval", category: "Bug", priority: "Medium", status: "CLOSED",
+            assigned_to: "TT001", progress_percentage: 100,
+            description: "Approving a leave request sends the employee two identical notifications.",
+            created_date: isoDate(30), updated_date: isoDate(25), resolved_date: isoDate(26),
+            comments: [{ author: "Wanda Maximoff", message: "The approval handler was registered twice after the module refactor. Removed the duplicate registration.", timestamp: isoTime(26, 12) }],
+            reassign_log: [], internal_notes: [], attachments: [], progress_log: [{ author_id: "TT001", author: "Wanda Maximoff", from: 0, to: 100, note: "Duplicate handler registration removed.", timestamp: isoTime(26, 12) }],
+            verification_status: "VERIFIED", verification_note: null, submitted_for_verification_at: isoTime(26, 12),
+            verified_by: "PA001", verified_by_name: "Ravi Kumar", verified_at: isoTime(25, 9),
+            resolution_notes: "Removed the duplicate leave-approval notification handler registration.",
+            escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null
+        },
+        {
+            ticket_id: "TIX-017", ticket_type: "TECHNICAL", company_id: "C001", platform_admin_id: "PA001",
+            raised_by_name: "Rinku Singh (TL)", raised_by_id: "TL001", raised_by_email: "tl@emp.com",
+            // Returned for rework by the Platform Admin, so it sits back in the active queue.
+            title: "Work log chart renders blank on Safari", category: "Bug", priority: "Low", status: "IN_PROGRESS",
+            assigned_to: "TT001", progress_percentage: 100,
+            description: "The work log chart is blank on Safari 17 but renders correctly on Chrome and Firefox.",
+            created_date: isoDate(12), updated_date: isoDate(7), resolved_date: null,
+            comments: [], reassign_log: [], internal_notes: [], attachments: [], progress_log: [{ author_id: "TT001", author: "Wanda Maximoff", from: 0, to: 100, note: "Replaced the unsupported canvas API call.", timestamp: isoTime(8, 16) }],
+            verification_status: "REJECTED", verification_note: "Still blank on Safari 16 - please cover the previous major version too.",
+            submitted_for_verification_at: isoTime(8, 16), verified_by: "PA001", verified_by_name: "Ravi Kumar", verified_at: isoTime(7, 11),
+            resolution_notes: "Replaced an unsupported canvas API call with the widely-supported equivalent.",
+            escalated_team: null, linked_technical_ticket_id: null, linked_from_ticket_id: null
+        }
     ],
     activity_logs: [
         { activity_id: "ACT-001", user_id: "SA001", user_name: "Alex Morgan", role: "SUPER_ADMIN", action: "Platform Admin created", company_id: null, company_name: null, details: "Created platform admin Ravi Kumar", timestamp: "2026-08-01T09:00:00.000Z", status: "SUCCESS" },
@@ -155,6 +282,28 @@ export class MockDataService {
 
     constructor() {
         this.data = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA));
+        this.data.platform_tickets.forEach((t) => this.normalizeTicket(t));
+    }
+
+    // Guarantees every platform ticket carries the technical-workflow fields, so
+    // callers never have to null-check them. Applied to the seed data on boot and to
+    // any ticket created at runtime (e.g. a support ticket escalated to the
+    // Technical Team) - existing values are always preserved.
+    public normalizeTicket(ticket: any) {
+        if (!Array.isArray(ticket.comments)) ticket.comments = [];
+        if (!Array.isArray(ticket.reassign_log)) ticket.reassign_log = [];
+        if (!Array.isArray(ticket.internal_notes)) ticket.internal_notes = [];
+        if (!Array.isArray(ticket.attachments)) ticket.attachments = [];
+        if (!Array.isArray(ticket.progress_log)) ticket.progress_log = [];
+        if (typeof ticket.progress_percentage !== 'number') ticket.progress_percentage = 0;
+        if (ticket.verification_status === undefined) ticket.verification_status = null;
+        if (ticket.verification_note === undefined) ticket.verification_note = null;
+        if (ticket.submitted_for_verification_at === undefined) ticket.submitted_for_verification_at = null;
+        if (ticket.verified_by === undefined) ticket.verified_by = null;
+        if (ticket.verified_by_name === undefined) ticket.verified_by_name = null;
+        if (ticket.verified_at === undefined) ticket.verified_at = null;
+        if (ticket.resolution_notes === undefined) ticket.resolution_notes = null;
+        return ticket;
     }
 
     public getEmployees() { return this.data.employee; }

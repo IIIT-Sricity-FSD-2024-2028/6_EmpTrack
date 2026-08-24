@@ -7,6 +7,8 @@ import {
   ResolveTicketDto,
   EscalateTicketDto,
   AddTicketCommentDto,
+  VerifyResolutionDto,
+  RejectResolutionDto,
 } from './dto/platform-ticket.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -64,5 +66,17 @@ export class TechnicalIssueController {
   @Post(':id/comments')
   addComment(@Param('id') id: string, @Body() dto: AddTicketCommentDto, @Headers('x-actor-id') actorId: string, @Headers('x-actor-name') actorName: string) {
     return this.service.addComment('TECHNICAL', id, dto, this.actor(actorId, actorName), resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
+  }
+
+  @ApiOperation({ summary: 'Sign off on work a Technical Member sent back for verification, closing the issue' })
+  @Patch(':id/verify')
+  verify(@Param('id') id: string, @Body() dto: VerifyResolutionDto, @Headers('x-actor-id') actorId: string, @Headers('x-actor-name') actorName: string) {
+    return this.service.verifyResolution(id, dto, this.actor(actorId, actorName), resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
+  }
+
+  @ApiOperation({ summary: 'Return a verification request to the Technical Member for rework' })
+  @Patch(':id/reject-verification')
+  rejectVerification(@Param('id') id: string, @Body() dto: RejectResolutionDto, @Headers('x-actor-id') actorId: string, @Headers('x-actor-name') actorName: string) {
+    return this.service.rejectResolution(id, dto, this.actor(actorId, actorName), resolvePlatformAdminScope('PLATFORM_ADMIN', actorId));
   }
 }

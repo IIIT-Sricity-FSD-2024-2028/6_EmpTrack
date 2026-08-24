@@ -49,3 +49,12 @@ export class EscalateToPlatformAdminDto {
   @IsString() @IsOptional() note?: string;
   @IsString() @IsOptional() reason?: string;
 }
+
+// Platform Admin sign-off on work a Technical Member sent back for verification.
+export class VerifyResolutionDto {
+  @IsString() @IsOptional() note?: string;
+}
+
+export class RejectResolutionDto {
+  @IsString() @IsNotEmpty() reason: string;
+}

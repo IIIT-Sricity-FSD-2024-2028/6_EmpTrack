@@ -92,6 +92,7 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="d-id">
+                <div id="d-verification-banner" style="display:none; margin-bottom:16px;"></div>
                 <div class="detail-grid" id="detail-info" style="margin-bottom:16px;"></div>
 
                 <div class="form-section-title">Assign / Reassign</div>
@@ -110,6 +111,19 @@
                     <button class="btn btn-outline" id="btn-reassign">Reassign</button>
                     <button class="btn btn-secondary" id="btn-resolve">Resolve</button>
                     <button class="btn btn-danger" id="btn-escalate">Escalate to Super Admin</button>
+                </div>
+
+                <div id="d-verification-section" style="display:none; margin-bottom:16px;">
+                    <div class="form-section-title">Verify Resolution</div>
+                    <div class="form-hint" style="margin-top:0;"><i class="ph ph-info"></i> The Technical Member marked this issue resolved and sent it back for your sign-off.</div>
+                    <div class="form-group">
+                        <label class="form-label">Note (optional for verify, required to send back)</label>
+                        <textarea class="form-control" id="d-verify-note" rows="2" placeholder="Add a note..."></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" id="btn-verify"><i class="ph ph-check-circle"></i> Verify &amp; Close</button>
+                        <button class="btn btn-danger" id="btn-reject-verification"><i class="ph ph-arrow-counter-clockwise"></i> Send Back for Rework</button>
+                    </div>
                 </div>
 
                 <div class="form-section-title">Comments</div>

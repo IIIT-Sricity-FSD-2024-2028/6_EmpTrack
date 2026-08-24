@@ -27,6 +27,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `badge-priority-${(priority || 'low').toLowerCase()}`;
     }
 
+    const VERIFICATION_LABELS = { PENDING_VERIFICATION: 'Awaiting Your Verification', VERIFIED: 'Verified', REJECTED: 'Sent Back for Rework' };
+
+    function renderVerificationBanner(t) {
+        const banner = document.getElementById('d-verification-banner');
+        if (!t.verification_status) { banner.style.display = 'none'; return; }
+        const tone = t.verification_status === 'VERIFIED' ? 'success' : t.verification_status === 'REJECTED' ? 'danger' : 'warning';
+        banner.style.display = 'flex';
+        banner.style.cssText = 'display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:8px;' +
+            (tone === 'success' ? 'background:rgba(34,197,94,0.1); color:#22C55E;' :
+             tone === 'danger' ? 'background:rgba(239,68,68,0.1); color:#EF4444;' :
+             'background:rgba(249,115,22,0.1); color:#F97316;');
+        banner.innerHTML = `
+            <i class="ph ${t.verification_status === 'VERIFIED' ? 'ph-check-circle' : t.verification_status === 'REJECTED' ? 'ph-arrow-counter-clockwise' : 'ph-hourglass-medium'}" style="font-size:20px; flex-shrink:0;"></i>
+            <div>
+                <strong>${escapeHtml(VERIFICATION_LABELS[t.verification_status] || t.verification_status)}</strong>
+                ${t.verification_note ? `<div style="font-size:13px; margin-top:2px; color:var(--text-main);">${escapeHtml(t.verification_note)}</div>` : ''}
+            </div>
+        `;
+    }
+
     async function loadTeamMembers() {
         try {
             teamMembers = await db.getTechnicalTeam({ status: 'ACTIVE' });
@@ -108,6 +128,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderAssigneeOptions(t.assigned_to);
         document.getElementById('d-reason-group').style.display = 'none';
         document.getElementById('d-reason').value = '';
+        renderVerificationBanner(t);
+        document.getElementById('d-verification-section').style.display = t.verification_status === 'PENDING_VERIFICATION' ? 'block' : 'none';
+        document.getElementById('d-verify-note').value = '';
         renderComments(t.comments);
         openModal('detailModal');
     }
@@ -176,6 +199,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             await refreshDetail(id);
         } catch (e) {
             showToast(e.message || 'Failed to escalate.', 'error');
+        }
+    });
+
+    document.getElementById('btn-verify').addEventListener('click', async () => {
+        const id = document.getElementById('d-id').value;
+        if (!confirm('Verify this resolution and close the issue?')) return;
+        try {
+            await db.verifyTechnicalIssue(id, document.getElementById('d-verify-note').value.trim() || undefined);
+            showToast('Issue verified and closed.');
+            await refreshDetail(id);
+        } catch (e) {
+            showToast(e.message || 'Failed to verify.', 'error');
+        }
+    });
+
+    document.getElementById('btn-reject-verification').addEventListener('click', async () => {
+        const id = document.getElementById('d-id').value;
+        const reason = document.getElementById('d-verify-note').value.trim();
+        if (!reason) { showToast('Explain what needs rework first.', 'error'); return; }
+        if (!confirm('Send this issue back to the Technical Member for rework?')) return;
+        try {
+            await db.rejectTechnicalIssueVerification(id, reason);
+            showToast('Sent back for rework.');
+            await refreshDetail(id);
+        } catch (e) {
+            showToast(e.message || 'Failed to send back.', 'error');
         }
     });
 

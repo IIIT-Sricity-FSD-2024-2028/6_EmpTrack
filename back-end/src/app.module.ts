@@ -23,6 +23,7 @@ import { PlatformTeamModule } from './platform-team/platform-team.module';
 import { PlatformTicketModule } from './platform-ticket/platform-ticket.module';
 import { PlatformDashboardModule } from './platform-dashboard/platform-dashboard.module';
 import { SupportMemberModule } from './support-member/support-member.module';
+import { TechnicalMemberModule } from './technical-member/technical-member.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -51,7 +52,8 @@ import { AppService } from './app.service';
     PlatformTeamModule,
     PlatformTicketModule,
     PlatformDashboardModule,
-    SupportMemberModule
+    SupportMemberModule,
+    TechnicalMemberModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -6,7 +6,7 @@ import { initLayout } from './components/layout.js';
 const PUBLIC_PAGES = ['index.html', 'login.html', 'register.html', 'forgot-password.html', 'reset-password.html', 'accept-invitation.html'];
 
 // Role-specific portal folders. Any path containing one of these is a protected page.
-const ROLE_FOLDERS = ['hr', 'teamlead', 'employee', 'company_admin', 'super_admin', 'platform_admin', 'support_member'];
+const ROLE_FOLDERS = ['hr', 'teamlead', 'employee', 'company_admin', 'super_admin', 'platform_admin', 'support_member', 'technical_member'];
 
 // Normalizes the current pathname into { root, page, folder } so redirect
 // targets stay correct no matter where the app is served from ("/",

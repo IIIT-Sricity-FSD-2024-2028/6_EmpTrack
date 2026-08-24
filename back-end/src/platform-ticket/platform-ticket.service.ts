@@ -15,6 +15,8 @@ import {
   ReopenTicketDto,
   EscalateToTechnicalDto,
   EscalateToPlatformAdminDto,
+  VerifyResolutionDto,
+  RejectResolutionDto,
 } from './dto/platform-ticket.dto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
@@ -336,7 +338,7 @@ export class PlatformTicketService {
       linked_technical_ticket_id: null,
       linked_from_ticket_id: ticket.ticket_id,
     };
-    this.dataStore.getPlatformTickets().push(technicalTicket);
+    this.dataStore.getPlatformTickets().push(this.dataStore.normalizeTicket(technicalTicket));
 
     ticket.status = 'ESCALATED';
     ticket.escalated_team = 'TECHNICAL';
@@ -389,6 +391,82 @@ export class PlatformTicketService {
       this.notificationService.createNotification({
         employee_id: ticket.platform_admin_id,
         message: `${actor.emp_name} escalated support ticket ${ticket.ticket_id} (${ticket.title}) to you.${note ? ' ' + note : ''}`,
+        type: 'warning',
+      });
+    }
+
+    return this.enrich(ticket);
+  }
+
+  // --- Verification of Technical Member work --------------------------------
+  // A Technical Member resolves an issue and sends it back; only the Platform
+  // Admin can sign it off (which closes it permanently) or return it for rework.
+
+  verifyResolution(id: string, dto: VerifyResolutionDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find('TECHNICAL', id, scopePlatformAdminId);
+    if (ticket.verification_status !== 'PENDING_VERIFICATION') {
+      throw new BadRequestException('This issue is not awaiting verification.');
+    }
+
+    ticket.verification_status = 'VERIFIED';
+    ticket.verification_note = dto.note || null;
+    ticket.verified_by = actor.emp_id;
+    ticket.verified_by_name = actor.emp_name;
+    ticket.verified_at = new Date().toISOString();
+    ticket.status = 'CLOSED';
+    if (dto.note) ticket.comments.push({ author: actor.emp_name, message: dto.note, timestamp: new Date().toISOString() });
+    this.touch(ticket);
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Technical issue verified',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} verified and closed.`,
+    });
+
+    if (ticket.assigned_to) {
+      this.notificationService.createNotification({
+        employee_id: ticket.assigned_to,
+        message: `${actor.emp_name} verified your resolution of ${ticket.ticket_id} (${ticket.title}). The issue is now closed.`,
+        type: 'info',
+      });
+    }
+
+    return this.enrich(ticket);
+  }
+
+  rejectResolution(id: string, dto: RejectResolutionDto, actor: Actor, scopePlatformAdminId: string | null) {
+    const ticket = this.find('TECHNICAL', id, scopePlatformAdminId);
+    if (ticket.verification_status !== 'PENDING_VERIFICATION') {
+      throw new BadRequestException('This issue is not awaiting verification.');
+    }
+
+    ticket.verification_status = 'REJECTED';
+    ticket.verification_note = dto.reason;
+    ticket.verified_by = actor.emp_id;
+    ticket.verified_by_name = actor.emp_name;
+    ticket.verified_at = new Date().toISOString();
+    // Returned for rework: back into the member's active queue.
+    ticket.status = 'IN_PROGRESS';
+    ticket.resolved_date = null;
+    ticket.comments.push({ author: actor.emp_name, message: `Verification rejected: ${dto.reason}`, timestamp: new Date().toISOString() });
+    this.touch(ticket);
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Technical issue verification rejected',
+      company_id: ticket.company_id,
+      details: `${ticket.ticket_id} returned for rework: ${dto.reason}`,
+    });
+
+    if (ticket.assigned_to) {
+      this.notificationService.createNotification({
+        employee_id: ticket.assigned_to,
+        message: `${actor.emp_name} returned ${ticket.ticket_id} (${ticket.title}) for rework: ${dto.reason}`,
         type: 'warning',
       });
     }

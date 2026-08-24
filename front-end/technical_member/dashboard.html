@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Technical Dashboard</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/technical_member/_shared.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Dashboard</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Technical Dashboard</span>
+                    </div>
+                </div>
+
+                <div class="tm-shell">
+                    <div class="stats-grid" id="tm-stats-grid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="card" style="padding:16px 20px; display:flex; gap:32px; flex-wrap:wrap;">
+                        <div><span class="detail-label">Pending Verification</span><div class="stat-value" style="font-size:20px;" id="tm-pending-verification">-</div></div>
+                        <div><span class="detail-label">Total Resolved</span><div class="stat-value" style="font-size:20px;" id="tm-resolved-total">-</div></div>
+                        <div><span class="detail-label">Avg. Resolution Time</span><div class="stat-value" style="font-size:20px;" id="tm-avg-resolution">-</div></div>
+                        <div><span class="detail-label">Avg. Progress (Active Issues)</span><div class="stat-value" style="font-size:20px;" id="tm-avg-progress">-</div></div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:24px;">
+                        <div class="card" style="padding:20px;">
+                            <div class="section-header" style="margin-bottom:16px;"><h2 class="section-title">Work Progress (Last 7 Days)</h2></div>
+                            <div style="height:240px;"><canvas id="chartWorkProgress"></canvas></div>
+                        </div>
+                        <div class="card" style="padding:20px;">
+                            <div class="section-header" style="margin-bottom:16px;"><h2 class="section-title">Issue Status Distribution</h2></div>
+                            <div style="height:240px;"><canvas id="chartStatus"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:24px; align-items:start;">
+                        <div class="card" style="padding:20px;">
+                            <div class="section-header" style="margin-bottom:16px;">
+                                <h2 class="section-title">Recent Assigned Issues</h2>
+                                <a href="assigned-issues.html" style="font-size:13px; color:var(--tm-primary); text-decoration:none;">View all &rarr;</a>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Issue ID</th><th>Company</th><th>Title</th><th>Priority</th><th>Status</th><th>Progress</th><th>Verification</th><th>Updated</th><th style="text-align:right;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tm-recent-issues">
+                                        <tr class="loader-row"><td colspan="9"><div class="spinner"></div><div>Loading...</div></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding:20px;">
+                            <div class="section-header" style="margin-bottom:16px;"><h2 class="section-title">Recent Updates</h2></div>
+                            <div id="tm-recent-updates" class="timeline" style="max-height:420px; overflow-y:auto;">
+                                <div class="loader-row" style="padding:24px; text-align:center;"><div class="spinner"></div><div>Loading...</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/technical_member/dashboard.js"></script>
+</body>
+
+</html>

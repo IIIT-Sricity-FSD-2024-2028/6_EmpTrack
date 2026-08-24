@@ -18,6 +18,22 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* #detailModal (technical-issues.html / support-tickets.html) is static markup that
+   sits outside .pa-shell in the DOM, so it needs its own copy of these custom
+   properties - and every rule below that it actually uses is dual-selected against
+   both roots. This intentionally excludes .pa-shell's animation/display/layout
+   declarations: reusing those on the modal overlay would fight its own show/hide
+   (opacity+visibility) toggle. */
+#detailModal {
+    --pa-primary: #2563EB;
+    --pa-primary-hover: #1D4ED8;
+    --pa-success: #22C55E;
+    --pa-danger: #EF4444;
+    --pa-warning: #F97316;
+    --pa-info: #3B82F6;
+    --pa-purple: #7C3AED;
+}
+
 .pa-shell .card {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
@@ -109,18 +125,19 @@
 .pa-shell .cell-name { font-weight: 600; color: var(--text-main); }
 .pa-shell .cell-sub { font-size: 12px; color: var(--text-muted); }
 
-/* Status / priority badges */
-.pa-shell .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-.pa-shell .badge-active, .pa-shell .badge-success { background: rgba(34,197,94,0.15); color: var(--pa-success); }
-.pa-shell .badge-inactive, .pa-shell .badge-neutral { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
-.pa-shell .badge-suspended, .pa-shell .badge-danger, .pa-shell .badge-critical { background: rgba(239,68,68,0.15); color: var(--pa-danger); }
-.pa-shell .badge-pending, .pa-shell .badge-warning { background: rgba(249,115,22,0.15); color: var(--pa-warning); }
-.pa-shell .badge-info { background: rgba(59,130,246,0.15); color: var(--pa-info); }
-.pa-shell .badge-purple { background: rgba(124,58,237,0.15); color: var(--pa-purple); }
-.pa-shell .badge-priority-critical { background: rgba(239,68,68,0.15); color: var(--pa-danger); }
-.pa-shell .badge-priority-high { background: rgba(249,115,22,0.15); color: var(--pa-warning); }
-.pa-shell .badge-priority-medium { background: rgba(59,130,246,0.15); color: var(--pa-info); }
-.pa-shell .badge-priority-low { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+/* Status / priority badges - used in both the page tables (inside .pa-shell) and
+   #detailModal's status/priority display (outside .pa-shell, static markup). */
+.pa-shell .badge, #detailModal .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.pa-shell .badge-active, .pa-shell .badge-success, #detailModal .badge-active, #detailModal .badge-success { background: rgba(34,197,94,0.15); color: var(--pa-success); }
+.pa-shell .badge-inactive, .pa-shell .badge-neutral, #detailModal .badge-inactive, #detailModal .badge-neutral { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+.pa-shell .badge-suspended, .pa-shell .badge-danger, .pa-shell .badge-critical, #detailModal .badge-suspended, #detailModal .badge-danger, #detailModal .badge-critical { background: rgba(239,68,68,0.15); color: var(--pa-danger); }
+.pa-shell .badge-pending, .pa-shell .badge-warning, #detailModal .badge-pending, #detailModal .badge-warning { background: rgba(249,115,22,0.15); color: var(--pa-warning); }
+.pa-shell .badge-info, #detailModal .badge-info { background: rgba(59,130,246,0.15); color: var(--pa-info); }
+.pa-shell .badge-purple, #detailModal .badge-purple { background: rgba(124,58,237,0.15); color: var(--pa-purple); }
+.pa-shell .badge-priority-critical, #detailModal .badge-priority-critical { background: rgba(239,68,68,0.15); color: var(--pa-danger); }
+.pa-shell .badge-priority-high, #detailModal .badge-priority-high { background: rgba(249,115,22,0.15); color: var(--pa-warning); }
+.pa-shell .badge-priority-medium, #detailModal .badge-priority-medium { background: rgba(59,130,246,0.15); color: var(--pa-info); }
+.pa-shell .badge-priority-low, #detailModal .badge-priority-low { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
 
 /* Actions */
 .pa-shell .row-actions { display: flex; gap: 8px; align-items: center; }
@@ -138,11 +155,13 @@
     border-top-color: var(--pa-primary); border-radius: 50%; animation: paSpin 0.9s linear infinite; margin-bottom: 8px;
 }
 @keyframes paSpin { to { transform: rotate(360deg); } }
-.pa-shell .empty-state, .pa-shell .error-state {
+.pa-shell .empty-state, .pa-shell .error-state,
+#detailModal .empty-state, #detailModal .error-state {
     display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 20px; color: var(--text-muted); text-align: center;
 }
-.pa-shell .empty-state i, .pa-shell .error-state i { font-size: 32px; opacity: 0.6; }
-.pa-shell .error-state { color: var(--pa-danger); }
+.pa-shell .empty-state i, .pa-shell .error-state i,
+#detailModal .empty-state i, #detailModal .error-state i { font-size: 32px; opacity: 0.6; }
+.pa-shell .error-state, #detailModal .error-state { color: var(--pa-danger); }
 
 /* Pagination */
 .pa-shell .pagination { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; flex-wrap: wrap; gap: 12px; }
@@ -156,14 +175,14 @@
 .pa-shell .page-btn.active { background: var(--pa-primary); border-color: var(--pa-primary); color: #fff; }
 .pa-shell .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Forms (within modals) */
-.pa-shell .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-.pa-shell .form-section-title {
+/* Forms (within #detailModal) */
+.pa-shell .form-grid, #detailModal .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.pa-shell .form-section-title, #detailModal .form-section-title {
     font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
     margin: 4px 0 4px 0; padding-top: 12px; border-top: 1px solid var(--border-light);
 }
-.pa-shell .form-section-title:first-child { border-top: none; padding-top: 0; }
-.pa-shell .form-hint { font-size: 12px; color: var(--text-muted); margin-top: -8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.pa-shell .form-section-title:first-child, #detailModal .form-section-title:first-child { border-top: none; padding-top: 0; }
+.pa-shell .form-hint, #detailModal .form-hint { font-size: 12px; color: var(--text-muted); margin-top: -8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 
 /* Toast (per-page pattern, matching the rest of the app) */
 #toast-container {
@@ -179,14 +198,14 @@
 #toast-container.success { background: var(--pa-success); color: #fff; }
 
 /* Detail / modal helpers */
-.pa-shell .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.pa-shell .detail-item { display: flex; flex-direction: column; gap: 4px; }
-.pa-shell .detail-label { font-size: 12px; color: var(--text-muted); }
-.pa-shell .detail-value { font-size: 14px; font-weight: 500; color: var(--text-main); }
-.pa-shell .comment-item { padding: 12px; background: var(--bg-main); border-radius: 8px; margin-bottom: 8px; }
-.pa-shell .comment-author { font-weight: 600; font-size: 13px; color: var(--text-main); }
-.pa-shell .comment-time { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
-.pa-shell .comment-message { font-size: 13px; color: var(--text-main); margin-top: 4px; }
+.pa-shell .detail-grid, #detailModal .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pa-shell .detail-item, #detailModal .detail-item { display: flex; flex-direction: column; gap: 4px; }
+.pa-shell .detail-label, #detailModal .detail-label { font-size: 12px; color: var(--text-muted); }
+.pa-shell .detail-value, #detailModal .detail-value { font-size: 14px; font-weight: 500; color: var(--text-main); }
+.pa-shell .comment-item, #detailModal .comment-item { padding: 12px; background: var(--bg-main); border-radius: 8px; margin-bottom: 8px; }
+.pa-shell .comment-author, #detailModal .comment-author { font-weight: 600; font-size: 13px; color: var(--text-main); }
+.pa-shell .comment-time, #detailModal .comment-time { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
+.pa-shell .comment-message, #detailModal .comment-message { font-size: 13px; color: var(--text-main); margin-top: 4px; }
 
 /* Profile banner */
 .pa-shell .pa-profile-banner {
@@ -224,5 +243,5 @@
     .pa-shell .search-wrap { max-width: 100%; }
     .pa-shell .filters-wrap { flex-wrap: wrap; }
     .pa-shell .filter-select { flex-grow: 1; }
-    .pa-shell .detail-grid { grid-template-columns: 1fr; }
+    .pa-shell .detail-grid, #detailModal .detail-grid { grid-template-columns: 1fr; }
 }

@@ -310,26 +310,6 @@ class ApiStore {
         });
     }
 
-    // --- Notifications ---
-    getNotificationsForUser(empId) {
-        return this.data.notifications ? this.data.notifications.filter(n => n.employee_id === empId) : [];
-    }
-
-    createNotification(empId, message, type = 'info') {
-        if (!this.data.notifications) this.data.notifications = [];
-        const newNotif = {
-            id: 'NOTIF-' + Math.floor(1000 + Math.random() * 9000),
-            employee_id: empId,
-            message,
-            type,
-            timestamp: new Date().toISOString(),
-            is_read: false
-        };
-        this.data.notifications.push(newNotif);
-        this.saveData();
-        return newNotif;
-    }
-
     // --- Calendar ---
     async getHolidays(requesterEmpId, year, month) {
         return this._fetch(`/calendar/holidays?${this._calQuery(requesterEmpId, year, month)}`);
@@ -785,6 +765,88 @@ class ApiStore {
 
     async getSupportCompanySummary(id) {
         return this._fetch(`/support-member/companies/${id}`);
+    }
+
+    // --- Technical Member: Dashboard ---
+    async getTechnicalMemberStats() {
+        return this._fetch('/technical-member/stats');
+    }
+
+    async getTechnicalMemberWorkProgress(days = 7) {
+        return this._fetch(`/technical-member/work-progress?days=${days}`);
+    }
+
+    async getTechnicalMemberRecentUpdates(limit = 10) {
+        return this._fetch(`/technical-member/recent-updates?limit=${limit}`);
+    }
+
+    // --- Technical Member: Assigned Issues ---
+    // scope: 'active' for the working queue, 'history' for completed work.
+    async getMyTechnicalIssues(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.status) params.set('status', filters.status);
+        if (filters.priority) params.set('priority', filters.priority);
+        if (filters.search) params.set('search', filters.search);
+        if (filters.scope) params.set('scope', filters.scope);
+        const qs = params.toString();
+        return this._fetch(`/technical-member/issues${qs ? '?' + qs : ''}`);
+    }
+
+    async getMyTechnicalIssueById(id) {
+        return this._fetch(`/technical-member/issues/${id}`);
+    }
+
+    async updateMyIssueStatus(id, status) {
+        return this._fetch(`/technical-member/issues/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
+    async updateMyIssueProgress(id, progress_percentage, note) {
+        return this._fetch(`/technical-member/issues/${id}/progress`, { method: 'PATCH', body: JSON.stringify({ progress_percentage, note }) });
+    }
+
+    async getMyIssueWorkNotes(id) {
+        return this._fetch(`/technical-member/issues/${id}/notes`);
+    }
+
+    async addMyIssueWorkNote(id, message) {
+        return this._fetch(`/technical-member/issues/${id}/notes`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
+
+    async addMyIssueComment(id, message) {
+        return this._fetch(`/technical-member/issues/${id}/comments`, { method: 'POST', body: JSON.stringify({ message }) });
+    }
+
+    async getMyIssueAttachments(id) {
+        return this._fetch(`/technical-member/issues/${id}/attachments`);
+    }
+
+    async getMyIssueAttachment(id, attachmentId) {
+        return this._fetch(`/technical-member/issues/${id}/attachments/${attachmentId}`);
+    }
+
+    async uploadMyIssueAttachment(id, attachment) {
+        return this._fetch(`/technical-member/issues/${id}/attachments`, { method: 'POST', body: JSON.stringify(attachment) });
+    }
+
+    async deleteMyIssueAttachment(id, attachmentId) {
+        return this._fetch(`/technical-member/issues/${id}/attachments/${attachmentId}`, { method: 'DELETE' });
+    }
+
+    async resolveMyIssue(id, resolution_notes) {
+        return this._fetch(`/technical-member/issues/${id}/resolve`, { method: 'PATCH', body: JSON.stringify({ resolution_notes }) });
+    }
+
+    async submitMyIssueForVerification(id, note) {
+        return this._fetch(`/technical-member/issues/${id}/submit-verification`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    // --- Platform Admin: verification of Technical Member work ---
+    async verifyTechnicalIssue(id, note) {
+        return this._fetch(`/technical-issues/${id}/verify`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    async rejectTechnicalIssueVerification(id, reason) {
+        return this._fetch(`/technical-issues/${id}/reject-verification`, { method: 'PATCH', body: JSON.stringify({ reason }) });
     }
 }
 

@@ -1,0 +1,298 @@
+.tm-shell {
+    --tm-primary: #2563EB;
+    --tm-primary-hover: #1D4ED8;
+    --tm-success: #22C55E;
+    --tm-danger: #EF4444;
+    --tm-warning: #F97316;
+    --tm-info: #3B82F6;
+    --tm-purple: #7C3AED;
+    animation: tmFadeIn 0.3s ease-out forwards;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* The issue detail modal (#tm-issue-modal) is appended to <body>, outside .tm-shell,
+   so it needs its own copy of these custom properties - and every rule below that the
+   modal actually uses is dual-selected against both roots. This block intentionally
+   does NOT get .tm-shell's animation/display/layout declarations: reusing those on the
+   modal overlay would fight its own show/hide (opacity+visibility) toggle. */
+#tm-issue-modal {
+    --tm-primary: #2563EB;
+    --tm-primary-hover: #1D4ED8;
+    --tm-success: #22C55E;
+    --tm-danger: #EF4444;
+    --tm-warning: #F97316;
+    --tm-info: #3B82F6;
+    --tm-purple: #7C3AED;
+}
+
+@keyframes tmFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.tm-shell .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.25s ease;
+}
+.tm-shell .card:hover { box-shadow: var(--shadow-md); }
+
+/* Summary / stat cards */
+.tm-shell .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+.tm-shell .stat-card { padding: 20px; display: flex; align-items: center; gap: 16px; }
+.tm-shell .stat-card.clickable { cursor: pointer; transition: transform 0.15s ease; }
+.tm-shell .stat-card.clickable:hover { transform: translateY(-2px); }
+.tm-shell .stat-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+}
+.tm-shell .stat-icon.primary { background: rgba(37,99,235,0.12); color: var(--tm-primary); }
+.tm-shell .stat-icon.success { background: rgba(34,197,94,0.12); color: var(--tm-success); }
+.tm-shell .stat-icon.warning { background: rgba(249,115,22,0.12); color: var(--tm-warning); }
+.tm-shell .stat-icon.danger  { background: rgba(239,68,68,0.12); color: var(--tm-danger); }
+.tm-shell .stat-icon.info    { background: rgba(59,130,246,0.12); color: var(--tm-info); }
+.tm-shell .stat-icon.purple  { background: rgba(124,58,237,0.12); color: var(--tm-purple); }
+.tm-shell .stat-value { font-size: 26px; font-weight: 700; color: var(--text-main); line-height: 1; }
+.tm-shell .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }
+
+/* Section header */
+.tm-shell .section-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.tm-shell .section-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin: 0; }
+
+/* Filter bar */
+.tm-shell .filter-bar { padding: 16px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.tm-shell .search-wrap { position: relative; flex-grow: 1; max-width: 380px; }
+.tm-shell .search-wrap i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+.tm-shell .search-input {
+    width: 100%; padding: 10px 14px 10px 38px;
+    background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px;
+    color: var(--text-main); font-size: 14px; outline: none; transition: 0.2s;
+}
+.tm-shell .search-input:focus { border-color: var(--tm-primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+.tm-shell .filters-wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.tm-shell .filter-select {
+    padding: 10px 14px; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px;
+    color: var(--text-main); font-size: 14px; outline: none; cursor: pointer;
+}
+.tm-shell .filter-select:focus { border-color: var(--tm-primary); }
+.tm-shell .btn-clear {
+    background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
+    padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+.tm-shell .btn-clear:hover { background: var(--bg-main); color: var(--text-main); }
+
+/* Quick sub-filter chips (Assigned Issues / Issue History pages) */
+.tm-shell .chip-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tm-shell .chip-tab {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-surface);
+    color: var(--text-muted); font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.15s;
+}
+.tm-shell .chip-tab:hover { border-color: var(--tm-primary); color: var(--tm-primary); }
+.tm-shell .chip-tab.active { background: var(--tm-primary); border-color: var(--tm-primary); color: #fff; }
+
+/* Table (page content only - the modal never renders a table) */
+.tm-shell .table-container { overflow-x: auto; border-radius: 12px; }
+.tm-shell table { width: 100%; border-collapse: collapse; text-align: left; min-width: 920px; }
+.tm-shell th {
+    background: var(--bg-main); padding: 14px 16px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); white-space: nowrap;
+}
+.tm-shell td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-size: 14px; vertical-align: middle; }
+.tm-shell tbody tr { transition: background 0.15s; }
+.tm-shell tbody tr:hover { background: var(--bg-main); }
+.tm-shell tbody tr:last-child td { border-bottom: none; }
+.tm-shell tbody tr.critical-row { box-shadow: inset 3px 0 0 var(--tm-danger); }
+
+.tm-shell .cell-primary { display: flex; flex-direction: column; gap: 3px; }
+.tm-shell .cell-name { font-weight: 600; color: var(--text-main); }
+.tm-shell .cell-sub { font-size: 12px; color: var(--text-muted); }
+
+/* Status / priority / verification badges - used in both the page tables (inside
+   .tm-shell) and the issue detail modal (outside .tm-shell, appended to <body>). */
+.tm-shell .badge-active, .tm-shell .badge-success, .tm-shell .badge-resolved, .tm-shell .badge-verified,
+#tm-issue-modal .badge-active, #tm-issue-modal .badge-success, #tm-issue-modal .badge-resolved, #tm-issue-modal .badge-verified
+  { background: rgba(34,197,94,0.15); color: var(--tm-success); }
+.tm-shell .badge-inactive, .tm-shell .badge-neutral, .tm-shell .badge-closed,
+#tm-issue-modal .badge-inactive, #tm-issue-modal .badge-neutral, #tm-issue-modal .badge-closed
+  { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+.tm-shell .badge-suspended, .tm-shell .badge-danger, .tm-shell .badge-escalated, .tm-shell .badge-rejected,
+#tm-issue-modal .badge-suspended, #tm-issue-modal .badge-danger, #tm-issue-modal .badge-escalated, #tm-issue-modal .badge-rejected
+  { background: rgba(239,68,68,0.15); color: var(--tm-danger); }
+.tm-shell .badge-pending, .tm-shell .badge-warning, .tm-shell .badge-waiting,
+#tm-issue-modal .badge-pending, #tm-issue-modal .badge-warning, #tm-issue-modal .badge-waiting
+  { background: rgba(249,115,22,0.15); color: var(--tm-warning); }
+.tm-shell .badge-info, .tm-shell .badge-open,
+#tm-issue-modal .badge-info, #tm-issue-modal .badge-open
+  { background: rgba(59,130,246,0.15); color: var(--tm-info); }
+.tm-shell .badge-purple, .tm-shell .badge-in-progress,
+#tm-issue-modal .badge-purple, #tm-issue-modal .badge-in-progress
+  { background: rgba(124,58,237,0.15); color: var(--tm-purple); }
+.tm-shell .badge-priority-critical, #tm-issue-modal .badge-priority-critical { background: rgba(239,68,68,0.15); color: var(--tm-danger); font-weight: 700; }
+.tm-shell .badge-priority-high, #tm-issue-modal .badge-priority-high { background: rgba(249,115,22,0.15); color: var(--tm-warning); }
+.tm-shell .badge-priority-medium, #tm-issue-modal .badge-priority-medium { background: rgba(59,130,246,0.15); color: var(--tm-info); }
+.tm-shell .badge-priority-low, #tm-issue-modal .badge-priority-low { background: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+
+/* Actions - the view/delete buttons in the page table AND in the modal's attachment list */
+.tm-shell .row-actions, #tm-issue-modal .row-actions { display: flex; gap: 8px; align-items: center; }
+.tm-shell .icon-btn, #tm-issue-modal .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface);
+    color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.15s;
+}
+.tm-shell .icon-btn:hover, #tm-issue-modal .icon-btn:hover { background: var(--bg-main); color: var(--tm-primary); border-color: var(--tm-primary); }
+.tm-shell .icon-btn.danger:hover, #tm-issue-modal .icon-btn.danger:hover { color: var(--tm-danger); border-color: var(--tm-danger); }
+
+/* Loading / empty / error states */
+.tm-shell .loader-row td, .tm-shell .empty-row td, .tm-shell .error-row td { padding: 48px 20px; text-align: center; color: var(--text-muted); }
+.tm-shell .spinner {
+    display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border-color);
+    border-top-color: var(--tm-primary); border-radius: 50%; animation: tmSpin 0.9s linear infinite; margin-bottom: 8px;
+}
+@keyframes tmSpin { to { transform: rotate(360deg); } }
+.tm-shell .empty-state, .tm-shell .error-state,
+#tm-issue-modal .empty-state, #tm-issue-modal .error-state {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 20px; color: var(--text-muted); text-align: center;
+}
+.tm-shell .empty-state i, .tm-shell .error-state i,
+#tm-issue-modal .empty-state i, #tm-issue-modal .error-state i { font-size: 32px; opacity: 0.6; }
+.tm-shell .error-state, #tm-issue-modal .error-state { color: var(--tm-danger); }
+
+/* Pagination (page content only) */
+.tm-shell .pagination { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; flex-wrap: wrap; gap: 12px; }
+.tm-shell .pagination-info { font-size: 13px; color: var(--text-muted); }
+.tm-shell .pagination-controls { display: flex; gap: 6px; }
+.tm-shell .page-btn {
+    min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--border-color);
+    background: var(--bg-surface); color: var(--text-main); font-size: 13px; cursor: pointer; transition: 0.15s;
+}
+.tm-shell .page-btn:hover:not(:disabled) { background: var(--bg-main); border-color: var(--tm-primary); color: var(--tm-primary); }
+.tm-shell .page-btn.active { background: var(--tm-primary); border-color: var(--tm-primary); color: #fff; }
+.tm-shell .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Forms (the modal's Investigation Controls section) */
+.tm-shell .form-grid, #tm-issue-modal .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.tm-shell .form-section-title, #tm-issue-modal .form-section-title {
+    font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 4px 0 4px 0; padding-top: 12px; border-top: 1px solid var(--border-light);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.tm-shell .form-section-title:first-child, #tm-issue-modal .form-section-title:first-child { border-top: none; padding-top: 0; }
+.tm-shell .form-hint, #tm-issue-modal .form-hint { font-size: 12px; color: var(--text-muted); margin-top: -8px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+/* Progress bar - rendered in the page table cells AND in the modal header + controls */
+.tm-shell .progress-row, #tm-issue-modal .progress-row { display: flex; align-items: center; gap: 10px; }
+.tm-shell .progress-track, #tm-issue-modal .progress-track { flex-grow: 1; height: 8px; border-radius: 6px; background: var(--bg-main); border: 1px solid var(--border-color); overflow: hidden; }
+.tm-shell .progress-fill, #tm-issue-modal .progress-fill { height: 100%; background: linear-gradient(90deg, var(--tm-primary), var(--tm-purple)); border-radius: 6px; transition: width 0.3s ease; }
+.tm-shell .progress-fill.complete, #tm-issue-modal .progress-fill.complete { background: var(--tm-success); }
+.tm-shell .progress-pct, #tm-issue-modal .progress-pct { font-size: 12px; font-weight: 700; color: var(--text-main); min-width: 34px; text-align: right; }
+.tm-shell input[type="range"].progress-slider, #tm-issue-modal input[type="range"].progress-slider { width: 100%; accent-color: var(--tm-primary); }
+
+/* Toast */
+#toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text-main); color: var(--bg-surface);
+    padding: 12px 20px; border-radius: 8px; font-weight: 500; font-size: 14px;
+    box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
+    display: flex; align-items: center; gap: 8px; max-width: 360px;
+}
+#toast-container.show { transform: translateY(0); opacity: 1; }
+#toast-container.error { background: var(--tm-danger); color: #fff; }
+#toast-container.success { background: var(--tm-success); color: #fff; }
+
+/* Detail / modal helpers */
+.tm-shell .detail-grid, #tm-issue-modal .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.tm-shell .detail-item, #tm-issue-modal .detail-item { display: flex; flex-direction: column; gap: 4px; }
+.tm-shell .detail-label, #tm-issue-modal .detail-label { font-size: 12px; color: var(--text-muted); }
+.tm-shell .detail-value, #tm-issue-modal .detail-value { font-size: 14px; font-weight: 500; color: var(--text-main); }
+
+/* Conversation / notes */
+.tm-shell .msg-tabs, #tm-issue-modal .msg-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 12px; flex-wrap: wrap; }
+.tm-shell .msg-tab, #tm-issue-modal .msg-tab {
+    padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--text-muted); background: none; border: none;
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: 0.15s;
+}
+.tm-shell .msg-tab.active, #tm-issue-modal .msg-tab.active { color: var(--tm-primary); border-bottom-color: var(--tm-primary); }
+.tm-shell .msg-pane, #tm-issue-modal .msg-pane { display: none; }
+.tm-shell .msg-pane.active, #tm-issue-modal .msg-pane.active { display: block; }
+
+.tm-shell .comment-item, #tm-issue-modal .comment-item { padding: 12px; background: var(--bg-main); border-radius: 8px; margin-bottom: 8px; }
+.tm-shell .comment-item.internal, #tm-issue-modal .comment-item.internal { background: rgba(249,115,22,0.08); border: 1px dashed var(--tm-warning); }
+.tm-shell .comment-author, #tm-issue-modal .comment-author { font-weight: 600; font-size: 13px; color: var(--text-main); }
+.tm-shell .comment-author .sender-tag, #tm-issue-modal .comment-author .sender-tag {
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+    padding: 2px 6px; border-radius: 4px; margin-left: 6px; background: rgba(37,99,235,0.15); color: var(--tm-primary);
+}
+.tm-shell .comment-item.internal .sender-tag, #tm-issue-modal .comment-item.internal .sender-tag { background: rgba(249,115,22,0.2); color: var(--tm-warning); }
+.tm-shell .comment-time, #tm-issue-modal .comment-time { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
+.tm-shell .comment-message, #tm-issue-modal .comment-message { font-size: 13px; color: var(--text-main); margin-top: 4px; white-space: pre-wrap; }
+
+/* Attachments */
+.tm-shell .attach-row, #tm-issue-modal .attach-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.tm-shell .attach-chip, #tm-issue-modal .attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 16px; background: var(--bg-main); border: 1px solid var(--border-color); font-size: 12px; color: var(--text-main); }
+.tm-shell .attachment-list, #tm-issue-modal .attachment-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.tm-shell .attachment-item, #tm-issue-modal .attachment-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-main); border-radius: 8px; border: 1px solid var(--border-color); }
+.tm-shell .attachment-icon, #tm-issue-modal .attachment-icon { width: 34px; height: 34px; border-radius: 8px; background: rgba(37,99,235,0.12); color: var(--tm-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 16px; }
+.tm-shell .attachment-icon.log, #tm-issue-modal .attachment-icon.log { background: rgba(249,115,22,0.12); color: var(--tm-warning); }
+.tm-shell .attachment-meta, #tm-issue-modal .attachment-meta { flex-grow: 1; min-width: 0; }
+.tm-shell .attachment-name, #tm-issue-modal .attachment-name { font-size: 13px; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-shell .attachment-sub, #tm-issue-modal .attachment-sub { font-size: 11px; color: var(--text-muted); }
+.tm-shell .attachment-preview, #tm-issue-modal .attachment-preview { max-width: 100%; max-height: 240px; border-radius: 8px; margin-top: 8px; border: 1px solid var(--border-color); }
+
+/* Progress log timeline - rendered on the dashboard (inside .tm-shell) and in the
+   modal's Progress Log tab (outside .tm-shell). */
+.tm-shell .timeline, #tm-issue-modal .timeline { display: flex; flex-direction: column; gap: 0; }
+.tm-shell .timeline-item, #tm-issue-modal .timeline-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.tm-shell .timeline-item:last-child, #tm-issue-modal .timeline-item:last-child { border-bottom: none; }
+.tm-shell .timeline-dot, #tm-issue-modal .timeline-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tm-primary); margin-top: 6px; flex-shrink: 0; }
+.tm-shell .timeline-body, #tm-issue-modal .timeline-body { flex-grow: 1; min-width: 0; }
+.tm-shell .timeline-title, #tm-issue-modal .timeline-title { font-size: 13px; font-weight: 600; color: var(--text-main); }
+.tm-shell .timeline-sub, #tm-issue-modal .timeline-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.tm-shell .timeline-time, #tm-issue-modal .timeline-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+.tm-shell .company-panel, #tm-issue-modal .company-panel {
+    background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+}
+.tm-shell .company-panel-title, #tm-issue-modal .company-panel-title { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+
+/* Profile banner */
+.tm-shell .tm-profile-banner {
+    background: linear-gradient(135deg, var(--tm-primary, #2563EB) 0%, var(--tm-purple, #7C3AED) 100%);
+    color: #fff; padding: 32px; display: flex; align-items: center; gap: 20px;
+}
+.tm-shell .tm-avatar-large {
+    width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 700;
+    border: 3px solid #fff; flex-shrink: 0;
+}
+.tm-shell .tm-banner-name { margin: 0 0 4px 0; font-size: 22px; }
+.tm-shell .tm-banner-role { font-size: 14px; opacity: 0.9; }
+.tm-shell .card-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+.tm-shell .card-title i { color: var(--tm-primary); font-size: 20px; }
+.tm-shell .btn-save {
+    margin-top: 16px; padding: 10px 20px; background: linear-gradient(90deg, var(--tm-primary, #2563EB), var(--tm-purple, #7C3AED));
+    color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;
+    transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-family);
+}
+.tm-shell .btn-save:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.tm-shell .cell-name a { color: var(--text-main); text-decoration: none; }
+.tm-shell .cell-name a:hover { color: var(--tm-primary); text-decoration: underline; }
+
+@media (max-width: 768px) {
+    .tm-shell .filter-bar { flex-direction: column; align-items: stretch; }
+    .tm-shell .search-wrap { max-width: 100%; }
+    .tm-shell .filters-wrap { flex-wrap: wrap; }
+    .tm-shell .filter-select { flex-grow: 1; }
+    .tm-shell .detail-grid, #tm-issue-modal .detail-grid { grid-template-columns: 1fr; }
+}
