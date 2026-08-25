@@ -89,7 +89,6 @@ export function initLayout() {
     } else if (user.role === 'SUPPORT_MEMBER') {
         navItems = `
             <a href="/front-end/support_member/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Dashboard</a>
-            <a href="/front-end/support_member/tickets.html" class="nav-item ${isActive('tickets')}"><i class="ph ph-ticket"></i> Tickets</a>
             <a href="/front-end/support_member/my-tickets.html" class="nav-item ${isActive('my-tickets')}"><i class="ph ph-user-focus"></i> My Tickets</a>
             <a href="/front-end/support_member/escalated.html" class="nav-item ${isActive('escalated')}"><i class="ph ph-arrow-up-right"></i> Escalated</a>
         `;

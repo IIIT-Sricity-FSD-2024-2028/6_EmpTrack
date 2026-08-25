@@ -35,16 +35,49 @@
 
                 <div class="sm-shell">
                     <div class="section-header">
-                        <h2 class="section-title">Tickets Assigned to Me</h2>
+                        <h2 class="section-title" id="mt-section-title">Tickets Assigned to Me</h2>
+                    </div>
+
+                    <div class="card" style="padding:16px 20px;">
+                        <div class="chip-tabs">
+                            <button class="chip-tab active" data-assignment="">My Tickets</button>
+                            <button class="chip-tab" data-assignment="unassigned">Unassigned Support Queue</button>
+                        </div>
                     </div>
 
                     <div class="card filter-bar">
-                        <div class="chip-tabs">
-                            <button class="chip-tab active" data-filter="all">All</button>
-                            <button class="chip-tab" data-filter="open">Open</button>
-                            <button class="chip-tab" data-filter="high">High Priority</button>
-                            <button class="chip-tab" data-filter="escalated">Escalated</button>
-                            <button class="chip-tab" data-filter="resolved">Resolved</button>
+                        <div class="search-wrap">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" class="search-input" id="search-input" placeholder="Search by Ticket ID, company, subject, user or email...">
+                        </div>
+                        <div class="filters-wrap">
+                            <select id="status-filter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="OPEN">Open</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="WAITING_FOR_CUSTOMER">Waiting for Customer</option>
+                                <option value="ESCALATED">Escalated</option>
+                                <option value="RESOLVED">Resolved</option>
+                                <option value="CLOSED">Closed</option>
+                            </select>
+                            <select id="priority-filter" class="filter-select">
+                                <option value="all">All Priorities</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                            <select id="category-filter" class="filter-select">
+                                <option value="all">All Categories</option>
+                            </select>
+                            <select id="date-filter" class="filter-select">
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="7days">Last 7 Days</option>
+                                <option value="30days">Last 30 Days</option>
+                                <option value="month">This Month</option>
+                            </select>
+                            <button class="btn-clear" id="btn-clear-filters"><i class="ph ph-x"></i> Clear</button>
                         </div>
                     </div>
 

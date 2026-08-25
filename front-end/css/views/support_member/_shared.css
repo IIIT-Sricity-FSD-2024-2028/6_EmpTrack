@@ -150,6 +150,16 @@
 .sm-shell .page-btn.active { background: var(--sm-primary); border-color: var(--sm-primary); color: #fff; }
 .sm-shell .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Resolve action - success-toned button, not covered by the global .btn-* set.
+   Unscoped (not ".sm-shell .btn-success") because the ticket detail / resolve
+   modals are appended directly to <body>, outside the .sm-shell subtree. */
+.btn-success {
+    background: #22C55E;
+    color: #fff;
+    border: none;
+}
+.btn-success:hover { opacity: 0.9; }
+
 /* Forms (within modals) */
 .sm-shell .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
 .sm-shell .form-section-title {

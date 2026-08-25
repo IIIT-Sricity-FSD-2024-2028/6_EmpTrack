@@ -1,6 +1,6 @@
 // /js/views/support_member/_board.js
 // Shared ticket table + detail-modal logic for the Support Member dashboard
-// (used by tickets.js, my-tickets.js and escalated.js so the three pages stay in sync
+// (used by dashboard.js, my-tickets.js and escalated.js so those pages stay in sync
 // without duplicating the modal markup and action handlers three times).
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
@@ -33,6 +33,7 @@ export function formatStatus(status) {
 }
 
 const MODAL_ID = 'sm-ticket-modal';
+const RESOLVE_MODAL_ID = 'sm-resolve-modal';
 
 function ensureModal() {
     if (document.getElementById(MODAL_ID)) return;
@@ -55,67 +56,76 @@ function ensureModal() {
                 <div class="detail-grid" id="sm-detail-info" style="margin-bottom:16px;"></div>
                 <div class="detail-item" style="margin-bottom:16px;"><span class="detail-label">Description</span><span class="detail-value" id="sm-d-description">-</span></div>
 
-                <div class="form-section-title">Ticket Controls</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select class="form-control" id="sm-d-status">
-                            <option value="OPEN">Open</option>
-                            <option value="IN_PROGRESS">In Progress</option>
-                            <option value="WAITING_FOR_CUSTOMER">Waiting for Customer</option>
-                            <option value="RESOLVED">Resolved</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Priority</label>
-                        <select class="form-control" id="sm-d-priority">
-                            <option value="LOW">Low</option>
-                            <option value="MEDIUM">Medium</option>
-                            <option value="HIGH">High</option>
-                            <option value="CRITICAL">Critical</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select class="form-control" id="sm-d-category"></select>
-                    </div>
-                </div>
-                <div style="display:flex; gap:10px; margin:12px 0 20px; flex-wrap:wrap;">
+                <div style="display:flex; gap:10px; margin:0 0 16px; flex-wrap:wrap;">
                     <button class="btn btn-outline" id="sm-btn-claim"><i class="ph ph-hand-pointing"></i> Claim Ticket</button>
-                    <button class="btn btn-secondary" id="sm-btn-update"><i class="ph ph-check-circle"></i> Update Status / Priority / Category</button>
-                    <button class="btn btn-outline" id="sm-btn-reopen"><i class="ph ph-arrow-counter-clockwise"></i> Reopen</button>
-                    <button class="btn btn-outline" id="sm-btn-close"><i class="ph ph-x-circle"></i> Close Ticket</button>
-                    <button class="btn btn-danger" id="sm-btn-esc-tech"><i class="ph ph-hard-drives"></i> Escalate to Technical Team</button>
-                    <button class="btn btn-danger" id="sm-btn-esc-admin"><i class="ph ph-shield-star"></i> Escalate to Platform Admin</button>
                 </div>
 
-                <div id="sm-linked-ticket" style="display:none; margin-bottom:16px;"></div>
-
-                <div class="msg-tabs">
-                    <button class="msg-tab active" data-tab="conversation">Conversation</button>
-                    <button class="msg-tab" data-tab="notes">Internal Notes</button>
+                <div class="form-hint" id="sm-unassigned-hint" style="display:none;">
+                    <i class="ph ph-info"></i> This ticket is unassigned. Claim it to reply, update, resolve, or escalate it.
                 </div>
 
-                <div class="msg-pane active" id="sm-pane-conversation">
-                    <div id="sm-detail-comments" style="max-height:220px; overflow-y:auto; margin-bottom:12px;"></div>
-                    <div class="form-group">
-                        <textarea class="form-control" id="sm-d-comment" rows="2" placeholder="Write your response..."></textarea>
+                <div id="sm-controls-section">
+                    <div class="form-section-title">Ticket Controls</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" id="sm-d-status">
+                                <option value="OPEN">Open</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="WAITING_FOR_CUSTOMER">Waiting for Customer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Priority</label>
+                            <select class="form-control" id="sm-d-priority">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM">Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="CRITICAL">Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category</label>
+                            <select class="form-control" id="sm-d-category"></select>
+                        </div>
                     </div>
-                    <div class="attach-row">
-                        <button class="btn btn-outline" id="sm-btn-attach" type="button"><i class="ph ph-paperclip"></i> Attach File</button>
-                        <button class="btn btn-primary" id="sm-btn-send"><i class="ph ph-paper-plane-tilt"></i> Send</button>
-                        <span class="attach-chip" id="sm-attach-chip" style="display:none;"><i class="ph ph-file"></i> <span id="sm-attach-name"></span></span>
-                        <input type="file" id="sm-attach-input" style="display:none;">
+                    <div style="display:flex; gap:10px; margin:12px 0 20px; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" id="sm-btn-update"><i class="ph ph-check-circle"></i> Update Status / Priority / Category</button>
+                        <button class="btn btn-success" id="sm-btn-resolve"><i class="ph ph-check-fat"></i> Resolve</button>
+                        <button class="btn btn-outline" id="sm-btn-reopen"><i class="ph ph-arrow-counter-clockwise"></i> Reopen</button>
+                        <button class="btn btn-outline" id="sm-btn-close"><i class="ph ph-x-circle"></i> Close Ticket</button>
+                        <button class="btn btn-danger" id="sm-btn-esc-tech"><i class="ph ph-hard-drives"></i> Escalate to Technical Team</button>
+                        <button class="btn btn-danger" id="sm-btn-esc-admin"><i class="ph ph-shield-star"></i> Escalate to Platform Admin</button>
                     </div>
-                </div>
 
-                <div class="msg-pane" id="sm-pane-notes">
-                    <div class="form-hint"><i class="ph ph-eye-slash"></i> Internal notes are never visible to the Company Admin.</div>
-                    <div id="sm-detail-notes" style="max-height:220px; overflow-y:auto; margin-bottom:12px;"></div>
-                    <div class="form-group">
-                        <textarea class="form-control" id="sm-d-note" rows="2" placeholder="Add an internal note..."></textarea>
+                    <div id="sm-linked-ticket" style="display:none; margin-bottom:16px;"></div>
+
+                    <div class="msg-tabs">
+                        <button class="msg-tab active" data-tab="conversation">Conversation</button>
+                        <button class="msg-tab" data-tab="notes">Internal Notes</button>
                     </div>
-                    <button class="btn btn-outline" id="sm-btn-add-note"><i class="ph ph-note-pencil"></i> Add Internal Note</button>
+
+                    <div class="msg-pane active" id="sm-pane-conversation">
+                        <div id="sm-detail-comments" style="max-height:220px; overflow-y:auto; margin-bottom:12px;"></div>
+                        <div class="form-group">
+                            <textarea class="form-control" id="sm-d-comment" rows="2" placeholder="Write your response..."></textarea>
+                        </div>
+                        <div class="attach-row">
+                            <button class="btn btn-outline" id="sm-btn-attach" type="button"><i class="ph ph-paperclip"></i> Attach File</button>
+                            <button class="btn btn-primary" id="sm-btn-send"><i class="ph ph-paper-plane-tilt"></i> Send</button>
+                            <span class="attach-chip" id="sm-attach-chip" style="display:none;"><i class="ph ph-file"></i> <span id="sm-attach-name"></span></span>
+                            <input type="file" id="sm-attach-input" style="display:none;">
+                        </div>
+                    </div>
+
+                    <div class="msg-pane" id="sm-pane-notes">
+                        <div class="form-hint"><i class="ph ph-eye-slash"></i> Internal notes are never visible to the Company Admin.</div>
+                        <div id="sm-detail-notes" style="max-height:220px; overflow-y:auto; margin-bottom:12px;"></div>
+                        <div class="form-group">
+                            <textarea class="form-control" id="sm-d-note" rows="2" placeholder="Add an internal note..."></textarea>
+                        </div>
+                        <button class="btn btn-outline" id="sm-btn-add-note"><i class="ph ph-note-pencil"></i> Add Internal Note</button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -125,9 +135,39 @@ function ensureModal() {
     </div>`;
     document.body.appendChild(wrap.firstElementChild);
 
+    const resolveWrap = document.createElement('div');
+    resolveWrap.innerHTML = `
+    <div class="modal-overlay" id="${RESOLVE_MODAL_ID}">
+        <div class="modal" style="max-width:440px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Resolve Ticket?</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin:0 0 16px; color:var(--text-main); font-size:14px;">
+                    Are you sure you want to mark <strong id="sm-resolve-ticket-id"></strong> as resolved?
+                </p>
+                <div class="form-group">
+                    <label class="form-label">Resolution note (optional)</label>
+                    <textarea class="form-control" id="sm-resolve-note" rows="3" placeholder="Briefly describe how the issue was resolved..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-success" id="sm-btn-confirm-resolve"><i class="ph ph-check-fat"></i> Resolve Ticket</button>
+            </div>
+        </div>
+    </div>`;
+    document.body.appendChild(resolveWrap.firstElementChild);
+
     const modal = document.getElementById(MODAL_ID);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeTicketModal(); });
     modal.querySelectorAll('[data-modal-close]').forEach((btn) => btn.addEventListener('click', closeTicketModal));
+
+    const resolveModal = document.getElementById(RESOLVE_MODAL_ID);
+    resolveModal.addEventListener('click', (e) => { if (e.target === resolveModal) closeResolveModal(); });
+    resolveModal.querySelectorAll('[data-modal-close]').forEach((btn) => btn.addEventListener('click', closeResolveModal));
+    document.getElementById('sm-btn-confirm-resolve').addEventListener('click', confirmResolve);
 
     modal.querySelectorAll('.msg-tab').forEach((tab) => {
         tab.addEventListener('click', () => {
@@ -154,6 +194,24 @@ function ensureModal() {
 
 function openModal() { document.getElementById(MODAL_ID).classList.add('active'); }
 function closeTicketModal() { const m = document.getElementById(MODAL_ID); if (m) m.classList.remove('active'); }
+
+function openResolveModal() {
+    document.getElementById('sm-resolve-ticket-id').textContent = currentTicket.ticket_id;
+    document.getElementById('sm-resolve-note').value = '';
+    document.getElementById(RESOLVE_MODAL_ID).classList.add('active');
+}
+function closeResolveModal() { const m = document.getElementById(RESOLVE_MODAL_ID); if (m) m.classList.remove('active'); }
+
+async function confirmResolve() {
+    const id = currentTicket.ticket_id;
+    const note = document.getElementById('sm-resolve-note').value.trim() || undefined;
+    try {
+        await db.resolveMyTicket(id, note);
+        closeResolveModal();
+        showToast(`Ticket ${id} has been resolved successfully.`);
+        await refresh();
+    } catch (e) { showToast(e.message || 'Failed to resolve ticket.', 'error'); }
+}
 
 let currentTicket = null;
 let currentCategories = [];
@@ -248,14 +306,22 @@ export async function openTicketDetail(ticket, categories, onChanged) {
     const categorySelect = document.getElementById('sm-d-category');
     categorySelect.innerHTML = currentCategories.map((c) => `<option value="${escapeHtml(c)}" ${c === ticket.category ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')
         || `<option value="${escapeHtml(ticket.category)}" selected>${escapeHtml(ticket.category)}</option>`;
-    document.getElementById('sm-d-status').value = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'RESOLVED'].includes(ticket.status) ? ticket.status : 'OPEN';
+    document.getElementById('sm-d-status').value = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(ticket.status) ? ticket.status : 'OPEN';
     document.getElementById('sm-d-priority').value = (ticket.priority || 'LOW').toUpperCase();
 
+    // Unassigned tickets are claim-only: no status/priority/category edits, no Resolve/
+    // Escalate, no reply/notes, until a Support Member claims ownership (section 8/12).
+    const isUnassigned = !ticket.assigned_to;
     const isTerminal = ['RESOLVED', 'CLOSED'].includes(ticket.status);
-    document.getElementById('sm-btn-claim').style.display = ticket.assigned_to ? 'none' : 'inline-flex';
+    document.getElementById('sm-btn-claim').style.display = isUnassigned ? 'inline-flex' : 'none';
+    document.getElementById('sm-unassigned-hint').style.display = isUnassigned ? 'flex' : 'none';
+    document.getElementById('sm-controls-section').style.display = isUnassigned ? 'none' : 'block';
     document.getElementById('sm-btn-update').style.display = isTerminal ? 'none' : 'inline-flex';
+    document.getElementById('sm-btn-resolve').style.display = isTerminal ? 'none' : 'inline-flex';
     document.getElementById('sm-btn-reopen').style.display = isTerminal ? 'inline-flex' : 'none';
     document.getElementById('sm-btn-close').style.display = ticket.status === 'RESOLVED' ? 'inline-flex' : 'none';
+    document.getElementById('sm-btn-esc-tech').style.display = isTerminal ? 'none' : 'inline-flex';
+    document.getElementById('sm-btn-esc-admin').style.display = isTerminal ? 'none' : 'inline-flex';
     const escalateDisabled = ticket.status === 'ESCALATED';
     document.getElementById('sm-btn-esc-tech').disabled = escalateDisabled;
     document.getElementById('sm-btn-esc-admin').disabled = escalateDisabled;
@@ -301,6 +367,10 @@ function bindModalActions() {
             showToast('Ticket updated.');
             await refresh();
         } catch (e) { showToast(e.message || 'Failed to update ticket.', 'error'); }
+    });
+
+    document.getElementById('sm-btn-resolve').addEventListener('click', () => {
+        openResolveModal();
     });
 
     document.getElementById('sm-btn-reopen').addEventListener('click', async () => {
@@ -387,7 +457,8 @@ export function renderTicketRows(tbody, tickets, { categories, onChanged, emptyM
             <td>${formatDate(t.created_date)}</td>
             <td>
                 <div class="row-actions" style="justify-content:flex-end;">
-                    <button class="icon-btn" title="View / Manage" data-detail="${t.ticket_id}"><i class="ph ph-eye"></i></button>
+                    <button class="icon-btn" title="View" data-detail="${t.ticket_id}"><i class="ph ph-eye"></i></button>
+                    ${!t.assigned_to ? `<button class="icon-btn" title="Claim" data-claim="${t.ticket_id}"><i class="ph ph-hand-pointing"></i></button>` : ''}
                 </div>
             </td>
         </tr>
@@ -399,6 +470,20 @@ export function renderTicketRows(tbody, tickets, { categories, onChanged, emptyM
         btn.addEventListener('click', () => {
             const ticket = tickets.find((x) => x.ticket_id === btn.getAttribute('data-detail'));
             if (ticket) openTicketDetail(ticket, categories, onChanged);
+        });
+    });
+
+    // Quick-claim straight from the Unassigned Support Queue row, without opening the
+    // detail modal - the modal's Claim button covers the same action for anyone who
+    // opened View first.
+    tbody.querySelectorAll('[data-claim]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-claim');
+            try {
+                await db.claimTicket(id);
+                showToast(`Ticket ${id} claimed.`);
+                if (onChanged) onChanged();
+            } catch (e) { showToast(e.message || 'Failed to claim ticket.', 'error'); }
         });
     });
 }

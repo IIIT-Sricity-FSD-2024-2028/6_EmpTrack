@@ -147,11 +147,24 @@ export class PlatformTicketService {
     const ticket = this.find(ticketType, id, scopePlatformAdminId);
     ticket.comments.push({ author: actor.emp_name, message: dto.message, timestamp: new Date().toISOString() });
     this.touch(ticket);
+
+    // Only the ticket's assigned owner is notified - never every member of the team -
+    // and only when the reply came from someone else (e.g. a Platform Admin relaying a
+    // customer's message), so the assignee doesn't get notified of their own reply.
+    if (ticket.assigned_to && ticket.assigned_to !== actor.emp_id) {
+      this.notificationService.createNotification({
+        employee_id: ticket.assigned_to,
+        message: `${actor.emp_name} replied on ${ticket.ticket_id} (${ticket.title}).`,
+        type: 'info',
+      });
+    }
+
     return this.enrich(ticket);
   }
 
   resolve(ticketType: TicketType, id: string, dto: ResolveTicketDto, actor: Actor, scopePlatformAdminId: string | null) {
     const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    if (['RESOLVED', 'CLOSED'].includes(ticket.status)) throw new BadRequestException('This ticket is already resolved or closed.');
     ticket.status = 'RESOLVED';
     ticket.resolved_date = new Date().toISOString().split('T')[0];
     if (dto.resolution_notes) ticket.comments.push({ author: actor.emp_name, message: dto.resolution_notes, timestamp: new Date().toISOString() });
@@ -249,7 +262,7 @@ export class PlatformTicketService {
 
   claim(ticketType: TicketType, id: string, actor: Actor, scopePlatformAdminId: string | null) {
     const ticket = this.find(ticketType, id, scopePlatformAdminId);
-    if (ticket.assigned_to) throw new BadRequestException('This ticket is already assigned.');
+    if (ticket.assigned_to) throw new BadRequestException('Ticket has already been claimed by another Support Member.');
     ticket.assigned_to = actor.emp_id;
     if (ticket.status === 'OPEN') ticket.status = 'IN_PROGRESS';
     this.touch(ticket);
@@ -560,13 +573,18 @@ export class PlatformTicketService {
     });
 
     return {
+      // Assignment is a separate axis from priority - unassigned/critical are both
+      // scope-wide counts (who owns nothing / what's urgent), never filtered to "mine".
+      unassigned_tickets: tickets.filter((t) => !t.assigned_to).length,
+      critical_tickets: tickets.filter((t) => t.priority === 'Critical' && !['RESOLVED', 'CLOSED'].includes(t.status)).length,
       new_tickets: tickets.filter((t) => t.status === 'OPEN').length,
       my_open_tickets: mine.filter((t) => openStatuses.includes(t.status)).length,
       high_priority_tickets: tickets.filter((t) => (t.priority === 'High' || t.priority === 'Critical') && openStatuses.includes(t.status)).length,
       in_progress: tickets.filter((t) => t.status === 'IN_PROGRESS').length,
       awaiting_customer: tickets.filter((t) => t.status === 'WAITING_FOR_CUSTOMER').length,
       escalated_tickets: tickets.filter((t) => t.status === 'ESCALATED').length,
-      resolved_today: tickets.filter((t) => t.resolved_date === today).length,
+      // Ownership-scoped: tickets THIS Support Member resolved today, not the whole team's.
+      resolved_today: mine.filter((t) => t.resolved_date === today).length,
       total_open_tickets: tickets.filter((t) => openStatuses.includes(t.status)).length,
       tickets_received: tickets.length,
       tickets_resolved: tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length,

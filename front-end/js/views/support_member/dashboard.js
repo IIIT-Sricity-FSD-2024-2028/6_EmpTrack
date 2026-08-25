@@ -8,26 +8,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return;
 
+    // Assignment (who owns it) and priority (how urgent it is) are separate axes -
+    // Unassigned/Critical are scope-wide counts, not filtered to this member's own
+    // tickets. Critical has no `link`: there's no single-scope page that matches a
+    // scope-wide "everyone's critical tickets" view (My Tickets is always either
+    // "mine" or "unassigned"), so it's shown as context only, not a false navigation.
     const STAT_DEFS = [
-        { key: 'new_tickets', label: 'New Tickets', icon: 'ph-ticket', tone: 'primary', link: 'tickets.html?status=OPEN' },
+        { key: 'unassigned_tickets', label: 'Unassigned', icon: 'ph-tray', tone: 'warning', link: 'my-tickets.html?assignment=unassigned' },
         { key: 'my_open_tickets', label: 'My Open Tickets', icon: 'ph-user-focus', tone: 'info', link: 'my-tickets.html' },
-        { key: 'high_priority_tickets', label: 'High Priority Tickets', icon: 'ph-fire', tone: 'danger', link: 'tickets.html?priority=High' },
-        { key: 'in_progress', label: 'In Progress', icon: 'ph-spinner-gap', tone: 'purple', link: 'tickets.html?status=IN_PROGRESS' },
-        { key: 'awaiting_customer', label: 'Awaiting Customer Response', icon: 'ph-hourglass-medium', tone: 'warning', link: 'tickets.html?status=WAITING_FOR_CUSTOMER' },
-        { key: 'escalated_tickets', label: 'Escalated Tickets', icon: 'ph-arrow-up-right', tone: 'danger', link: 'escalated.html' },
-        { key: 'resolved_today', label: 'Resolved Today', icon: 'ph-check-circle', tone: 'success', link: 'tickets.html?status=RESOLVED' },
-        { key: 'total_open_tickets', label: 'Total Open Tickets', icon: 'ph-tray', tone: 'info', link: 'tickets.html' },
+        { key: 'critical_tickets', label: 'Critical Tickets', icon: 'ph-fire', tone: 'danger' },
+        { key: 'escalated_tickets', label: 'Escalated', icon: 'ph-arrow-up-right', tone: 'purple', link: 'escalated.html' },
+        { key: 'resolved_today', label: 'Resolved Today', icon: 'ph-check-circle', tone: 'success', link: 'my-tickets.html?status=RESOLVED&date=today' },
     ];
 
     const grid = document.getElementById('sm-stats-grid');
-    const recentEl = document.getElementById('sm-recent-tickets');
+    const queueEl = document.getElementById('sm-unassigned-queue');
+    const attentionEl = document.getElementById('sm-my-attention');
 
     let stats = null;
     try {
         stats = await db.getSupportMemberStats();
 
         grid.innerHTML = STAT_DEFS.map((def) => `
-            <div class="card stat-card clickable" data-link="${def.link}">
+            <div class="card stat-card ${def.link ? 'clickable' : ''}" ${def.link ? `data-link="${def.link}"` : ''}>
                 <div class="stat-icon ${def.tone}"><i class="ph-fill ${def.icon}"></i></div>
                 <div>
                     <div class="stat-value" id="stat-${def.key}">0</div>
@@ -47,19 +50,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         grid.innerHTML = `<div class="error-state" style="grid-column:1/-1;"><i class="ph ph-warning-circle"></i> Failed to load dashboard summary.</div>`;
     }
 
-    // Recent tickets needing attention: unassigned or critical/high priority, open, most recent first.
+    const priorityRank = (t) => ({ Critical: 0, High: 1, Medium: 2, Low: 3 }[t.priority] ?? 4);
+    const topByPriority = (tickets) => tickets.filter((t) => !['RESOLVED', 'CLOSED'].includes(t.status)).sort((a, b) => priorityRank(a) - priorityRank(b)).slice(0, 6);
+
+    // Two distinct, clearly-scoped queries - the shared queue of unclaimed work vs.
+    // this member's own workload - instead of one ambiguous mixed list.
     try {
-        const tickets = await db.getMyDashboardTickets({ status: 'all' });
-        const attention = tickets
-            .filter((t) => !['RESOLVED', 'CLOSED'].includes(t.status))
-            .sort((a, b) => {
-                const rank = (t) => (t.priority === 'Critical' ? 0 : t.priority === 'High' ? 1 : t.assigned_to ? 3 : 2);
-                return rank(a) - rank(b);
-            })
-            .slice(0, 6);
-        renderTicketRows(recentEl, attention, { categories: [], onChanged: () => window.location.reload(), emptyMessage: 'No open tickets need attention right now.' });
+        const unassigned = await db.getMyDashboardTickets({ assignedTo: 'unassigned', status: 'all' });
+        renderTicketRows(queueEl, topByPriority(unassigned), { categories: [], onChanged: () => window.location.reload(), emptyMessage: 'No unassigned tickets right now.' });
     } catch (e) {
-        recentEl.innerHTML = `<tr class="error-row"><td colspan="9"><i class="ph ph-warning-circle"></i> Failed to load recent tickets.</td></tr>`;
+        queueEl.innerHTML = `<tr class="error-row"><td colspan="9"><i class="ph ph-warning-circle"></i> Failed to load the unassigned queue.</td></tr>`;
+    }
+
+    try {
+        const mine = await db.getMyDashboardTickets({ assignedTo: 'me', status: 'all' });
+        renderTicketRows(attentionEl, topByPriority(mine), { categories: [], onChanged: () => window.location.reload(), emptyMessage: 'No open tickets need your attention right now.' });
+    } catch (e) {
+        attentionEl.innerHTML = `<tr class="error-row"><td colspan="9"><i class="ph ph-warning-circle"></i> Failed to load your tickets.</td></tr>`;
     }
 
     if (stats) {

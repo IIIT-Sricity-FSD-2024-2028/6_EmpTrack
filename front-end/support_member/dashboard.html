@@ -57,8 +57,8 @@
 
                     <div class="card" style="padding:20px;">
                         <div class="section-header" style="margin-bottom:16px;">
-                            <h2 class="section-title">Tickets Needing Attention</h2>
-                            <a href="tickets.html" style="font-size:13px; color:var(--sm-primary); text-decoration:none;">View all &rarr;</a>
+                            <h2 class="section-title">Unassigned Support Queue</h2>
+                            <a href="my-tickets.html?assignment=unassigned" style="font-size:13px; color:var(--sm-primary); text-decoration:none;">View all &rarr;</a>
                         </div>
                         <div class="table-container">
                             <table>
@@ -67,7 +67,26 @@
                                         <th>Ticket ID</th><th>Company</th><th>Subject</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th><th style="text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="sm-recent-tickets">
+                                <tbody id="sm-unassigned-queue">
+                                    <tr class="loader-row"><td colspan="9"><div class="spinner"></div><div>Loading...</div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding:20px;">
+                        <div class="section-header" style="margin-bottom:16px;">
+                            <h2 class="section-title">My Tickets Needing Attention</h2>
+                            <a href="my-tickets.html" style="font-size:13px; color:var(--sm-primary); text-decoration:none;">View all &rarr;</a>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Ticket ID</th><th>Company</th><th>Subject</th><th>Category</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th><th style="text-align:right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sm-my-attention">
                                     <tr class="loader-row"><td colspan="9"><div class="spinner"></div><div>Loading...</div></td></tr>
                                 </tbody>
                             </table>
