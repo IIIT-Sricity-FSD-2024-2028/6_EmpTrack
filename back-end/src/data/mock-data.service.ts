@@ -96,30 +96,36 @@ const INITIAL_MOCK_DATA = {
 
     // --- Super Admin / multi-company platform data ---
     companies: [
-        { company_id: "C001", company_name: "Acme Technologies", company_email: "contact@acmetech.com", phone: "1234567890", industry: "Information Technology", address: "123 Innovation Drive, Springfield", status: "ACTIVE", subscription_plan_id: "PLAN-ENT", platform_admin_id: "PA001", created_date: "2024-01-01" },
-        { company_id: "C002", company_name: "Stark Industries", company_email: "contact@starkindustries.com", phone: "2223334444", industry: "Manufacturing", address: "200 Park Avenue, New York", status: "ACTIVE", subscription_plan_id: "PLAN-PRO", platform_admin_id: "PA001", created_date: "2023-03-01" },
-        { company_id: "C003", company_name: "Wayne Enterprises", company_email: "contact@wayneenterprises.com", phone: "3334445555", industry: "Conglomerate", address: "1007 Mountain Drive, Gotham", status: "SUSPENDED", subscription_plan_id: "PLAN-BASIC", platform_admin_id: "PA002", created_date: "2025-06-15" }
+        { company_id: "C001", company_name: "Acme Technologies", company_email: "contact@acmetech.com", phone: "1234567890", industry: "Information Technology", address: "123 Innovation Drive, Springfield", status: "ACTIVE", subscription_plan_id: "PLAN-ENT", platform_admin_id: "PA001", created_date: "2024-01-01", last_payment_date: "2026-08-01", next_billing_date: "2026-09-01", last_transaction_id: "TXN-006" },
+        { company_id: "C002", company_name: "Stark Industries", company_email: "contact@starkindustries.com", phone: "2223334444", industry: "Manufacturing", address: "200 Park Avenue, New York", status: "ACTIVE", subscription_plan_id: "PLAN-PRO", platform_admin_id: "PA001", created_date: "2023-03-01", last_payment_date: "2026-07-01", next_billing_date: "2026-08-01", last_transaction_id: "TXN-011" },
+        { company_id: "C003", company_name: "Wayne Enterprises", company_email: "contact@wayneenterprises.com", phone: "3334445555", industry: "Conglomerate", address: "1007 Mountain Drive, Gotham", status: "SUSPENDED", subscription_plan_id: "PLAN-BASIC", platform_admin_id: "PA002", created_date: "2025-06-15", last_payment_date: "2026-06-15", next_billing_date: "2026-07-15", last_transaction_id: "TXN-013" }
     ],
     subscription_plans: [
         { plan_id: "PLAN-BASIC", name: "Basic", price: 49, billing_cycle: "MONTHLY", max_employees: 50, features: ["Attendance Tracking", "Leave Management", "Basic Reports"], status: "ACTIVE", created_date: "2024-01-01" },
         { plan_id: "PLAN-PRO", name: "Professional", price: 149, billing_cycle: "MONTHLY", max_employees: 200, features: ["Attendance Tracking", "Leave Management", "Task Management", "Advanced Reports", "Priority Support"], status: "ACTIVE", created_date: "2024-01-01" },
         { plan_id: "PLAN-ENT", name: "Enterprise", price: 499, billing_cycle: "MONTHLY", max_employees: 1000, features: ["All Professional Features", "Custom Integrations", "Dedicated Support", "SLA Guarantee", "Advanced Security"], status: "ACTIVE", created_date: "2024-01-01" }
     ],
+    // Every row here is a completed subscription payment - company_id + subscription
+    // plan_id, never a direct link to a Platform Admin (see PaymentService: Platform
+    // Admin visibility is always derived through the company's platform_admin_id).
+    // Legacy rows predate the mock-payment feature (is_mock: false, payment_method:
+    // "CARD"); rows created via POST /payments/mock/complete carry is_mock: true and
+    // payment_method: "MOCK".
     revenue_transactions: [
-        { transaction_id: "TXN-001", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-03-01", payment_status: "PAID" },
-        { transaction_id: "TXN-002", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-04-01", payment_status: "PAID" },
-        { transaction_id: "TXN-003", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-05-01", payment_status: "PAID" },
-        { transaction_id: "TXN-004", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-06-01", payment_status: "PAID" },
-        { transaction_id: "TXN-005", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-07-01", payment_status: "PAID" },
-        { transaction_id: "TXN-006", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, billing_cycle: "MONTHLY", payment_date: "2026-08-01", payment_status: "PAID" },
-        { transaction_id: "TXN-007", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-03-01", payment_status: "PAID" },
-        { transaction_id: "TXN-008", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-04-01", payment_status: "PAID" },
-        { transaction_id: "TXN-009", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-05-01", payment_status: "PAID" },
-        { transaction_id: "TXN-010", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-06-01", payment_status: "PAID" },
-        { transaction_id: "TXN-011", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-07-01", payment_status: "PENDING" },
-        { transaction_id: "TXN-012", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, billing_cycle: "MONTHLY", payment_date: "2026-08-01", payment_status: "PAID" },
-        { transaction_id: "TXN-013", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, billing_cycle: "MONTHLY", payment_date: "2026-06-15", payment_status: "PAID" },
-        { transaction_id: "TXN-014", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, billing_cycle: "MONTHLY", payment_date: "2026-07-15", payment_status: "FAILED" }
+        { transaction_id: "TXN-001", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-03-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-002", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-04-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-003", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-05-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-004", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-06-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-005", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-07-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-006", company_id: "C001", plan_id: "PLAN-ENT", amount: 499, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-08-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-007", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-03-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-008", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-04-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-009", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-05-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-010", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-06-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-011", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-07-01", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-012", company_id: "C002", plan_id: "PLAN-PRO", amount: 149, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-08-01", payment_status: "PENDING", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-013", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-06-15", payment_status: "PAID", payment_method: "CARD", is_mock: false },
+        { transaction_id: "TXN-014", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-07-15", payment_status: "FAILED", payment_method: "CARD", is_mock: false }
     ],
     invitations: [],
     ticket_categories: [

@@ -1,0 +1,129 @@
+.ca-shell {
+    --ca-primary: #2563EB;
+    --ca-primary-hover: #1D4ED8;
+    --ca-success: #22C55E;
+    --ca-danger: #EF4444;
+    --ca-warning: #F97316;
+    --ca-info: #3B82F6;
+    --ca-purple: #7C3AED;
+    animation: caFadeIn 0.3s ease-out forwards;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    font-family: 'Inter', sans-serif;
+}
+
+@keyframes caFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* #confirmPaymentModal sits outside .ca-shell in the DOM (same pattern as the
+   Platform Admin detail modal), so it needs its own copy of these custom properties. */
+#confirmPaymentModal {
+    --ca-primary: #2563EB;
+    --ca-success: #22C55E;
+    --ca-danger: #EF4444;
+    --ca-warning: #F97316;
+}
+
+.ca-shell .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.25s ease;
+}
+
+.ca-shell .card:hover { box-shadow: var(--shadow-md); }
+
+/* Summary / stat cards */
+.ca-shell .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.ca-shell .stat-card {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ca-shell .stat-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+}
+.ca-shell .stat-icon.primary { background: rgba(37,99,235,0.12); color: var(--ca-primary); }
+.ca-shell .stat-icon.success { background: rgba(34,197,94,0.12); color: var(--ca-success); }
+.ca-shell .stat-icon.warning { background: rgba(249,115,22,0.12); color: var(--ca-warning); }
+.ca-shell .stat-icon.danger  { background: rgba(239,68,68,0.12); color: var(--ca-danger); }
+.ca-shell .stat-icon.info    { background: rgba(59,130,246,0.12); color: var(--ca-info); }
+
+.ca-shell .stat-value { font-size: 26px; font-weight: 700; color: var(--text-main); line-height: 1; }
+.ca-shell .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-top: 4px; }
+
+/* Section header */
+.ca-shell .section-header {
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+}
+.ca-shell .section-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin: 0; }
+
+/* Table */
+.ca-shell .table-container { overflow-x: auto; border-radius: 12px; }
+.ca-shell table { width: 100%; border-collapse: collapse; text-align: left; min-width: 640px; }
+.ca-shell th {
+    background: var(--bg-main); padding: 14px 20px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); white-space: nowrap;
+}
+.ca-shell td { padding: 14px 20px; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-size: 14px; vertical-align: middle; }
+.ca-shell tbody tr { transition: background 0.15s; }
+.ca-shell tbody tr:hover { background: var(--bg-main); }
+.ca-shell tbody tr:last-child td { border-bottom: none; }
+
+/* Status badges */
+.ca-shell .badge, #confirmPaymentModal .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.ca-shell .badge-active, .ca-shell .badge-success { background: rgba(34,197,94,0.15); color: var(--ca-success); }
+.ca-shell .badge-pending, .ca-shell .badge-warning { background: rgba(249,115,22,0.15); color: var(--ca-warning); }
+.ca-shell .badge-suspended, .ca-shell .badge-danger { background: rgba(239,68,68,0.15); color: var(--ca-danger); }
+.ca-shell .badge-info { background: rgba(59,130,246,0.15); color: var(--ca-info); }
+.ca-shell .badge-mock { background: rgba(124,58,237,0.15); color: var(--ca-purple); }
+
+/* Loading / empty / error states */
+.ca-shell .loader-row td, .ca-shell .empty-row td, .ca-shell .error-row td { padding: 48px 20px; text-align: center; color: var(--text-muted); }
+.ca-shell .spinner, #confirmPaymentModal .spinner {
+    display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border-color);
+    border-top-color: var(--ca-primary); border-radius: 50%; animation: caSpin 0.9s linear infinite; margin-bottom: 8px;
+}
+@keyframes caSpin { to { transform: rotate(360deg); } }
+.ca-shell .empty-state, .ca-shell .error-state {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 20px; color: var(--text-muted); text-align: center;
+}
+.ca-shell .empty-state i, .ca-shell .error-state i { font-size: 32px; opacity: 0.6; }
+.ca-shell .error-state { color: var(--ca-danger); }
+
+/* Detail helpers (used in the confirm/success modal) */
+.ca-shell .detail-grid, #confirmPaymentModal .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ca-shell .detail-item, #confirmPaymentModal .detail-item { display: flex; flex-direction: column; gap: 4px; }
+.ca-shell .detail-label, #confirmPaymentModal .detail-label { font-size: 12px; color: var(--text-muted); }
+.ca-shell .detail-value, #confirmPaymentModal .detail-value { font-size: 14px; font-weight: 500; color: var(--text-main); }
+.ca-shell .form-hint, #confirmPaymentModal .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+
+/* Toast (per-page pattern, matching the rest of the app) */
+#toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text-main); color: var(--bg-surface);
+    padding: 12px 20px; border-radius: 8px; font-weight: 500; font-size: 14px;
+    box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
+    display: flex; align-items: center; gap: 8px; max-width: 360px;
+}
+#toast-container.show { transform: translateY(0); opacity: 1; }
+#toast-container.error { background: var(--ca-danger); color: #fff; }
+#toast-container.success { background: var(--ca-success); color: #fff; }
+
+@media (max-width: 768px) {
+    .ca-shell .detail-grid, #confirmPaymentModal .detail-grid { grid-template-columns: 1fr; }
+}

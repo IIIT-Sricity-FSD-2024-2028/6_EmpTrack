@@ -1,0 +1,37 @@
+.ca-shell .billing-card { padding: 28px; }
+.ca-shell .billing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 24px;
+    margin: 20px 0 24px 0;
+}
+.ca-shell .billing-field { display: flex; flex-direction: column; gap: 6px; }
+.ca-shell .billing-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.ca-shell .billing-value { font-size: 18px; font-weight: 700; color: var(--text-main); }
+.ca-shell .billing-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.ca-shell .billing-plan-name { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; color: var(--text-main); }
+.ca-shell .billing-plan-name i { color: var(--ca-primary); font-size: 24px; }
+.ca-shell .mock-disclaimer {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(59,130,246,0.08); color: var(--text-main);
+    border: 1px dashed var(--ca-info); border-radius: 8px;
+    padding: 12px 14px; font-size: 13px; margin-top: 4px;
+}
+.ca-shell .mock-disclaimer i { color: var(--ca-info); font-size: 18px; flex-shrink: 0; }
+
+/* Confirm / processing / success payment modal */
+#confirmPaymentModal .pay-summary { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+#confirmPaymentModal .pay-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+#confirmPaymentModal .pay-row .label { color: var(--text-muted); }
+#confirmPaymentModal .pay-row .value { font-weight: 600; color: var(--text-main); }
+#confirmPaymentModal .pay-row.total .value { font-size: 20px; color: var(--ca-primary); }
+
+#confirmPaymentModal .pay-state { display: none; flex-direction: column; align-items: center; text-align: center; padding: 20px 0; gap: 8px; }
+#confirmPaymentModal .pay-state.active { display: flex; }
+#confirmPaymentModal .pay-state .pay-icon { font-size: 48px; color: var(--ca-success); }
+#confirmPaymentModal .pay-state h4 { margin: 4px 0 0 0; font-size: 18px; color: var(--text-main); }
+#confirmPaymentModal .pay-state .success-detail-grid { width: 100%; margin-top: 12px; }
+
+@media (max-width: 768px) {
+    .ca-shell .billing-header { flex-direction: column; align-items: flex-start; }
+}

@@ -63,6 +63,7 @@ export function initLayout() {
             <a href="/front-end/company_admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Admin Dashboard</a>
             <a href="/front-end/company_admin/employee-management.html" class="nav-item ${isActive('employee-management')}"><i class="ph ph-users"></i> All Employees</a>
             <a href="/front-end/company_admin/raise-issue.html" class="nav-item ${isActive('raise-issue')}"><i class="ph ph-flag"></i> Raise Issue</a>
+            <a href="/front-end/company_admin/billing.html" class="nav-item ${isActive('billing')}"><i class="ph ph-credit-card"></i> Subscription &amp; Billing</a>
         `;
     } else if (user.role === 'SUPER_ADMIN') {
         navItems = `
@@ -80,6 +81,7 @@ export function initLayout() {
         navItems = `
             <a href="/front-end/platform_admin/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Dashboard</a>
             <a href="/front-end/platform_admin/my-companies.html" class="nav-item ${isActive('my-companies')}"><i class="ph ph-buildings"></i> My Companies</a>
+            <a href="/front-end/platform_admin/payments.html" class="nav-item ${isActive('payments')}"><i class="ph ph-credit-card"></i> Company Payments</a>
             <a href="/front-end/platform_admin/technical-team.html" class="nav-item ${isActive('technical-team')}"><i class="ph ph-hard-drives"></i> Technical Team</a>
             <a href="/front-end/platform_admin/support-team.html" class="nav-item ${isActive('support-team')}"><i class="ph ph-headset"></i> Support Team</a>
             <a href="/front-end/platform_admin/technical-issues.html" class="nav-item ${isActive('technical-issues')}"><i class="ph ph-bug"></i> Technical Issues</a>

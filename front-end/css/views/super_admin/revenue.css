@@ -1,1 +1,2 @@
 #revenue-stats-grid .stat-card { align-items: flex-start; flex-direction: column; gap: 10px; }
+.sa-shell input[type="date"].filter-select { min-width: 150px; font-family: inherit; }

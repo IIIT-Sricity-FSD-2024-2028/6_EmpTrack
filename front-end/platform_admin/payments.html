@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmpTrack - Company Payments</title>
+
+    <script src="../js/theme-init.js"></script>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/views.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="../css/views/platform_admin/_shared.css">
+    <link rel="stylesheet" href="../css/views/platform_admin/payments.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <div id="sidebar-container"></div>
+
+        <main class="main-wrapper">
+            <div id="header-container"></div>
+
+            <div class="content-area" id="main-content">
+                <div id="page-title">
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:var(--font-bold); font-size:var(--text-xl);">Company Payments</span>
+                        <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">Platform Admin Portal</span>
+                    </div>
+                </div>
+
+                <div class="pa-shell">
+                    <div class="stats-grid" id="payments-stats-grid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div class="section-header">
+                        <h2 class="section-title">Payments From My Companies</h2>
+                    </div>
+
+                    <div class="card filter-bar">
+                        <div class="search-wrap">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" id="pay-search" class="search-input" placeholder="Search by company or company admin...">
+                        </div>
+                        <div class="filters-wrap">
+                            <select id="pay-company-filter" class="filter-select">
+                                <option value="">All Companies</option>
+                            </select>
+                            <select id="pay-status-filter" class="filter-select">
+                                <option value="all">All Status</option>
+                                <option value="PAID">Paid</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="FAILED">Failed</option>
+                            </select>
+                            <input type="date" id="pay-date-from" class="filter-select" title="From date">
+                            <input type="date" id="pay-date-to" class="filter-select" title="To date">
+                            <button class="btn-clear" id="btn-clear-filters"><i class="ph ph-x"></i> Clear</button>
+                        </div>
+                    </div>
+
+                    <div class="card table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Company Admin</th>
+                                    <th>Plan</th>
+                                    <th>Amount</th>
+                                    <th>Payment Method</th>
+                                    <th>Transaction ID</th>
+                                    <th>Status</th>
+                                    <th>Payment Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pay-tbody">
+                                <tr class="loader-row"><td colspan="8"><div class="spinner"></div><div>Loading payments...</div></td></tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="pay-pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="toast-container"></div>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/views/platform_admin/payments.js"></script>
+</body>
+
+</html>

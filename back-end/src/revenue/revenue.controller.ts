@@ -27,8 +27,18 @@ export class RevenueController {
     return this.revenueService.getByCompany();
   }
 
+  @Get('by-platform-admin')
+  getByPlatformAdmin() {
+    return this.revenueService.getByPlatformAdmin();
+  }
+
   @Get('transactions')
-  getTransactions(@Query('companyId') companyId?: string, @Query('status') status?: string) {
-    return this.revenueService.getTransactions(companyId, status);
+  getTransactions(
+    @Query('companyId') companyId?: string,
+    @Query('status') status?: string,
+    @Query('platformAdminId') platformAdminId?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.revenueService.getTransactions(companyId, status, platformAdminId, search);
   }
 }

@@ -474,8 +474,14 @@ class ApiStore {
         const params = new URLSearchParams();
         if (filters.companyId) params.set('companyId', filters.companyId);
         if (filters.status) params.set('status', filters.status);
+        if (filters.platformAdminId) params.set('platformAdminId', filters.platformAdminId);
+        if (filters.search) params.set('search', filters.search);
         const qs = params.toString();
         return this._fetch(`/revenue/transactions${qs ? '?' + qs : ''}`);
+    }
+
+    async getRevenueByPlatformAdmin() {
+        return this._fetch('/revenue/by-platform-admin');
     }
 
     // --- Super Admin: Platform Analytics ---
@@ -853,6 +859,33 @@ class ApiStore {
 
     async submitMyIssueForVerification(id, note) {
         return this._fetch(`/technical-member/issues/${id}/submit-verification`, { method: 'PATCH', body: JSON.stringify({ note }) });
+    }
+
+    // --- Company Admin: Subscription & Billing (mock payment flow) ---
+    async getMySubscription() {
+        return this._fetch('/payments/subscription');
+    }
+
+    async getMyPaymentHistory() {
+        return this._fetch('/payments/history');
+    }
+
+    async completeMockPayment(data) {
+        return this._fetch('/payments/mock/complete', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    // --- Platform Admin: Company Payments ---
+    async getPlatformAdminPayments(filters = {}) {
+        const params = new URLSearchParams();
+        if (filters.companyId) params.set('companyId', filters.companyId);
+        if (filters.status) params.set('status', filters.status);
+        if (filters.search) params.set('search', filters.search);
+        const qs = params.toString();
+        return this._fetch(`/payments/platform-admin${qs ? '?' + qs : ''}`);
+    }
+
+    async getPlatformAdminPaymentSummary() {
+        return this._fetch('/payments/platform-admin/summary');
     }
 
     // --- Platform Admin: verification of Technical Member work ---

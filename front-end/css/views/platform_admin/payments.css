@@ -1,0 +1,2 @@
+.pa-shell input[type="date"].filter-select { min-width: 150px; font-family: inherit; }
+.pa-shell .badge-mock { background: rgba(124,58,237,0.15); color: var(--pa-purple); }

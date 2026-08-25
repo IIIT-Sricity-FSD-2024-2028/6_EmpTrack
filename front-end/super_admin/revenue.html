@@ -54,6 +54,13 @@
                                 <canvas id="chartByCompany"></canvas>
                             </div>
                         </div>
+                        <div class="card chart-card">
+                            <h3 class="chart-title"><i class="ph-fill ph-shield-star" style="color:var(--sa-purple);"></i> Revenue by Platform Admin</h3>
+                            <div class="chart-wrapper">
+                                <div class="chart-skel" id="skel-by-pa"><div class="spinner"></div></div>
+                                <canvas id="chartByPlatformAdmin"></canvas>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="section-header">
@@ -61,9 +68,16 @@
                     </div>
 
                     <div class="card filter-bar">
+                        <div class="search-wrap">
+                            <i class="ph ph-magnifying-glass"></i>
+                            <input type="text" id="txn-search" class="search-input" placeholder="Search by company, admin, or transaction ID...">
+                        </div>
                         <div class="filters-wrap">
                             <select id="company-filter" class="filter-select">
                                 <option value="">All Companies</option>
+                            </select>
+                            <select id="platform-admin-filter" class="filter-select">
+                                <option value="">All Platform Admins</option>
                             </select>
                             <select id="status-filter" class="filter-select">
                                 <option value="all">All Payment Status</option>
@@ -71,6 +85,8 @@
                                 <option value="PENDING">Pending</option>
                                 <option value="FAILED">Failed</option>
                             </select>
+                            <input type="date" id="txn-date-from" class="filter-select" title="From date">
+                            <input type="date" id="txn-date-to" class="filter-select" title="To date">
                             <button class="btn-clear" id="btn-clear-filters"><i class="ph ph-x"></i> Clear</button>
                         </div>
                     </div>
@@ -80,17 +96,21 @@
                             <thead>
                                 <tr>
                                     <th>Company</th>
+                                    <th>Company Admin</th>
+                                    <th>Platform Admin</th>
                                     <th>Plan</th>
                                     <th>Amount</th>
-                                    <th>Billing Cycle</th>
-                                    <th>Payment Date</th>
+                                    <th>Payment Method</th>
+                                    <th>Transaction ID</th>
                                     <th>Status</th>
+                                    <th>Payment Date</th>
                                 </tr>
                             </thead>
                             <tbody id="txn-tbody">
-                                <tr class="loader-row"><td colspan="6"><div class="spinner"></div><div>Loading transactions...</div></td></tr>
+                                <tr class="loader-row"><td colspan="9"><div class="spinner"></div><div>Loading transactions...</div></td></tr>
                             </tbody>
                         </table>
+                        <div class="pagination" id="txn-pagination"></div>
                     </div>
                 </div>
             </div>

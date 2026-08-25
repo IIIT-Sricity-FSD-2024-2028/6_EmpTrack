@@ -15,6 +15,7 @@ import { CompanyModule } from './company/company.module';
 import { PlatformAdminModule } from './platform-admin/platform-admin.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { RevenueModule } from './revenue/revenue.module';
+import { PaymentModule } from './payment/payment.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { ActivityLogModule } from './activity-log/activity-log.module';
 import { CriticalEscalationModule } from './critical-escalation/critical-escalation.module';
@@ -45,6 +46,7 @@ import { AppService } from './app.service';
     PlatformAdminModule,
     SubscriptionModule,
     RevenueModule,
+    PaymentModule,
     AnalyticsModule,
     ActivityLogModule,
     CriticalEscalationModule,
