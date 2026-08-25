@@ -99,8 +99,6 @@ export function initLayout() {
             <a href="/front-end/technical_member/dashboard.html" class="nav-item ${isActive('dashboard')}"><i class="ph ph-squares-four"></i> Dashboard</a>
             <a href="/front-end/technical_member/assigned-issues.html" class="nav-item ${isActive('assigned-issues')}"><i class="ph ph-bug"></i> Assigned Issues</a>
             <a href="/front-end/technical_member/issue-history.html" class="nav-item ${isActive('issue-history')}"><i class="ph ph-clock-counter-clockwise"></i> Issue History</a>
-            <a href="/front-end/technical_member/notifications.html" class="nav-item ${isActive('notifications')}"><i class="ph ph-bell"></i> Notifications</a>
-            <a href="/front-end/technical_member/profile.html" class="nav-item ${isActive('profile')}"><i class="ph ph-user-circle"></i> Profile</a>
         `;
     }
 
