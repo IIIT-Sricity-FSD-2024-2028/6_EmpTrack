@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { LoginDto } from './dto/login.dto';
+import { comparePassword } from '../common/utils/password.util';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +14,7 @@ export class AuthService {
 
     // Same generic message whether the email doesn't exist or the password is wrong,
     // so a caller can't use this endpoint to enumerate registered accounts.
-    if (!employee || employee.password !== dto.password) {
+    if (!employee || !comparePassword(dto.password, employee.password)) {
       throw new UnauthorizedException('Invalid email or password.');
     }
     if (employee.status && employee.status !== 'ACTIVE') {

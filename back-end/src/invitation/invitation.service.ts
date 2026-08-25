@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { MockDataService } from '../data/mock-data.service';
+import { hashPassword } from '../common/utils/password.util';
 
 @Injectable()
 export class InvitationService {
@@ -46,7 +47,7 @@ export class InvitationService {
     const employee = this.dataStore.getEmployees().find((e) => e.emp_id === invitation.emp_id);
     if (!employee) throw new NotFoundException('The account linked to this invitation no longer exists');
 
-    employee.password = password;
+    employee.password = hashPassword(password);
     employee.status = 'ACTIVE';
     invitation.status = 'ACCEPTED';
     invitation.accepted_date = new Date().toISOString();

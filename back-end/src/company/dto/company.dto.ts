@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsEmail } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEmail, MinLength, Matches } from 'class-validator';
+import { STRONG_PASSWORD_REGEX } from '../../common/utils/password.util';
 
 export class CreateCompanyDto {
   @IsString() @IsNotEmpty() company_name: string;
@@ -13,6 +14,11 @@ export class CreateCompanyDto {
   @IsString() @IsNotEmpty() admin_name: string;
   @IsEmail() admin_email: string;
   @IsString() @IsNotEmpty() admin_phone: string;
+  @IsString() @MinLength(8) @Matches(STRONG_PASSWORD_REGEX, {
+    message: 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.',
+  })
+  admin_password: string;
+  @IsString() @IsNotEmpty() admin_confirm_password: string;
 }
 
 export class UpdateCompanyDto {
@@ -30,4 +36,26 @@ export class UpdateCompanyStatusDto {
 
 export class ReassignPlatformAdminDto {
   @IsString() @IsNotEmpty() platform_admin_id: string;
+}
+
+export class CreateCompanyAdminDto {
+  @IsString() @IsNotEmpty() name: string;
+  @IsEmail() email: string;
+  @IsString() @IsNotEmpty() phone: string;
+  @IsString() @MinLength(8) @Matches(STRONG_PASSWORD_REGEX, {
+    message: 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.',
+  })
+  password: string;
+  @IsString() @IsNotEmpty() confirmPassword: string;
+  @IsString() @IsOptional() status?: string;
+}
+
+export class UpdateCompanyAdminDto {
+  @IsString() @IsOptional() name?: string;
+  @IsEmail() @IsOptional() email?: string;
+  @IsString() @IsOptional() phone?: string;
+}
+
+export class UpdateCompanyAdminStatusDto {
+  @IsString() @IsNotEmpty() status: string;
 }

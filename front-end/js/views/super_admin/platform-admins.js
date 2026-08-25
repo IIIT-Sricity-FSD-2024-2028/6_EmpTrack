@@ -193,26 +193,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         openModal('createPaModal');
     });
 
+    const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     document.getElementById('btn-submit-create-pa').addEventListener('click', async () => {
         const data = {
             name: document.getElementById('cp-name').value.trim(),
             email: document.getElementById('cp-email').value.trim(),
             phone: document.getElementById('cp-phone').value.trim(),
+            password: document.getElementById('cp-password').value,
+            confirmPassword: document.getElementById('cp-confirm-password').value,
+            status: document.getElementById('cp-status').value,
         };
         const errorEl = document.getElementById('create-pa-error');
-        if (!data.name || !data.email || !data.phone) {
+        if (!data.name || !data.email || !data.phone || !data.password || !data.confirmPassword) {
             errorEl.textContent = 'All fields are required.';
             errorEl.style.display = 'block';
             return;
         }
+        if (!EMAIL_RE.test(data.email)) {
+            errorEl.textContent = 'Enter a valid email address.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!STRONG_PASSWORD.test(data.password)) {
+            errorEl.textContent = 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (data.password !== data.confirmPassword) {
+            errorEl.textContent = 'Password and confirmation do not match.';
+            errorEl.style.display = 'block';
+            return;
+        }
         try {
-            const result = await db.createPlatformAdmin(data);
-            showToast('Platform Admin created. Invitation sent successfully.');
+            await db.createPlatformAdmin(data);
+            showToast('Platform Admin created successfully. They can log in immediately.');
             closeModal('createPaModal');
-            if (result.invitation && result.invitation.token) {
-                const link = `${window.location.origin}/front-end/accept-invitation.html?token=${result.invitation.token}`;
-                window.prompt(`Invitation link for ${data.email} (no real email server is configured - copy and share this link):`, link);
-            }
             await loadAdmins();
         } catch (e) {
             errorEl.textContent = e.message || 'Failed to create Platform Admin.';

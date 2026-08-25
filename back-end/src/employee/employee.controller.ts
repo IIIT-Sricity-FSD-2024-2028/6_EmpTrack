@@ -12,14 +12,18 @@ import { Roles } from '../common/decorators/roles.decorator';
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 
-  @ApiOperation({ summary: 'Get all employees' })
+  @ApiOperation({ summary: 'Get all employees - scoped to the caller\'s own company for HR/Team Lead/Company Admin' })
   @Get()
   @Roles('HR', 'TEAMLEAD', 'COMPANY_ADMIN')
-  getAllEmployees(@Query('managerId') managerId: string) {
+  getAllEmployees(
+    @Query('managerId') managerId: string,
+    @Headers('role') role: string,
+    @Headers('x-actor-id') actorId: string,
+  ) {
     if (managerId) {
       return this.employeeService.getUsersByManager(managerId);
     }
-    return this.employeeService.getAllEmployees();
+    return this.employeeService.getAllEmployees(role, actorId);
   }
 
   @Get(':id')

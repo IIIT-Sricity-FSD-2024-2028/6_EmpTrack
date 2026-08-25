@@ -100,7 +100,22 @@
                         <label class="form-label">Phone</label>
                         <input type="text" class="form-control" id="cp-phone" required>
                     </div>
-                    <div class="form-hint"><i class="ph ph-info"></i> An invitation will be sent to this email. The Platform Admin will create their own password.</div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="cp-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="cp-confirm-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-control" id="cp-status">
+                            <option value="ACTIVE" selected>Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-hint"><i class="ph ph-info"></i> The account is created as a Platform Admin and can log in immediately with this email and password.</div>
                     <div id="create-pa-error" class="form-error" style="display:none;"></div>
                 </form>
             </div>

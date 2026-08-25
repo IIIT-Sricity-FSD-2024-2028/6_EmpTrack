@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { InvitationService } from '../invitation/invitation.service';
-import { CreateCompanyDto, UpdateCompanyDto, UpdateCompanyStatusDto, ReassignPlatformAdminDto } from './dto/company.dto';
+import { CreateCompanyDto, UpdateCompanyDto, UpdateCompanyStatusDto, ReassignPlatformAdminDto, CreateCompanyAdminDto, UpdateCompanyAdminDto, UpdateCompanyAdminStatusDto } from './dto/company.dto';
+import { hashPassword } from '../common/utils/password.util';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
@@ -29,7 +30,7 @@ export class CompanyService {
     };
   }
 
-  getAllCompanies(platformAdminId?: string, status?: string, search?: string) {
+  getAllCompanies(platformAdminId?: string | null, status?: string, search?: string) {
     let companies = this.dataStore.getCompanies();
     if (platformAdminId) companies = companies.filter((c) => c.platform_admin_id === platformAdminId);
     if (status && status !== 'all') companies = companies.filter((c) => c.status === status);
@@ -57,6 +58,10 @@ export class CompanyService {
     const existingEmail = this.dataStore.getEmployees().find((e) => e.email === dto.admin_email);
     if (existingEmail) throw new BadRequestException('An account with the Company Admin email already exists');
 
+    if (dto.admin_password !== dto.admin_confirm_password) {
+      throw new BadRequestException('Company Admin password and confirmation do not match');
+    }
+
     const company_id = 'COMP-' + Date.now();
     const created_date = new Date().toISOString().split('T')[0];
     const company = {
@@ -79,21 +84,13 @@ export class CompanyService {
       emp_name: dto.admin_name,
       email: dto.admin_email,
       phone: dto.admin_phone,
-      password: null,
+      password: hashPassword(dto.admin_password),
       role: 'COMPANY_ADMIN',
-      status: 'PENDING',
+      status: 'ACTIVE',
       date_of_joining: created_date,
       companyId: company_id,
     };
     this.dataStore.getEmployees().push(companyAdminEmployee);
-
-    const invitation = this.invitationService.createInvitation({
-      emp_id: admin_emp_id,
-      email: dto.admin_email,
-      name: dto.admin_name,
-      role: 'COMPANY_ADMIN',
-      company_id,
-    });
 
     this.dataStore.logActivity({
       user_id: actor.emp_id,
@@ -102,7 +99,7 @@ export class CompanyService {
       action: 'Company created',
       company_id,
       company_name: company.company_name,
-      details: `Created ${company.company_name} and invited ${dto.admin_name} as Company Admin.`,
+      details: `Created ${company.company_name} and its Company Admin ${dto.admin_name}.`,
     });
     this.dataStore.logActivity({
       user_id: actor.emp_id,
@@ -114,10 +111,7 @@ export class CompanyService {
       details: `Assigned ${platformAdmin.emp_name} to manage ${company.company_name}.`,
     });
 
-    return {
-      company: this.enrich(company),
-      invitation: { email: invitation.email, token: invitation.token, expires_at: invitation.expires_at },
-    };
+    return { company: this.enrich(company) };
   }
 
   updateCompany(id: string, dto: UpdateCompanyDto) {
@@ -168,5 +162,101 @@ export class CompanyService {
       details: `Reassigned from ${previousAdminId || 'unassigned'} to ${platformAdmin.emp_name}.`,
     });
     return this.enrich(company);
+  }
+
+  // A Platform Admin may only create/view/manage Company Admins for companies
+  // actually assigned to them (company.platform_admin_id) - enforced here, not just
+  // hidden in the UI, so the check holds even if a caller edits the request directly.
+  private assertManagesCompany(company: any, actor: Actor) {
+    if (actor.role === 'PLATFORM_ADMIN' && company.platform_admin_id !== actor.emp_id) {
+      throw new ForbiddenException('You do not manage this company');
+    }
+  }
+
+  private getCompanyOrThrow(id: string) {
+    const company = this.dataStore.getCompanies().find((c) => c.company_id === id);
+    if (!company) throw new NotFoundException('Company not found');
+    return company;
+  }
+
+  private enrichAdmin(admin: any) {
+    const { password, ...safe } = admin;
+    return safe;
+  }
+
+  getCompanyAdmins(companyId: string, actor: Actor) {
+    const company = this.getCompanyOrThrow(companyId);
+    this.assertManagesCompany(company, actor);
+    return this.dataStore
+      .getEmployees()
+      .filter((e) => e.companyId === companyId && e.role === 'COMPANY_ADMIN')
+      .map((e) => this.enrichAdmin(e));
+  }
+
+  createCompanyAdmin(companyId: string, dto: CreateCompanyAdminDto, actor: Actor) {
+    const company = this.getCompanyOrThrow(companyId);
+    this.assertManagesCompany(company, actor);
+
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('Password and confirmation do not match');
+    }
+    const existingEmail = this.dataStore.getEmployees().find((e) => e.email === dto.email);
+    if (existingEmail) throw new BadRequestException('An account with this email already exists');
+
+    const emp_id = 'CA-' + Date.now();
+    const admin = {
+      emp_id,
+      emp_name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      password: hashPassword(dto.password),
+      role: 'COMPANY_ADMIN',
+      status: dto.status || 'ACTIVE',
+      date_of_joining: new Date().toISOString().split('T')[0],
+      companyId,
+    };
+    this.dataStore.getEmployees().push(admin);
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Company Admin created',
+      company_id: companyId,
+      company_name: company.company_name,
+      details: `Created ${dto.name} as Company Admin for ${company.company_name}.`,
+    });
+
+    return this.enrichAdmin(admin);
+  }
+
+  updateCompanyAdmin(companyId: string, adminId: string, dto: UpdateCompanyAdminDto, actor: Actor) {
+    const company = this.getCompanyOrThrow(companyId);
+    this.assertManagesCompany(company, actor);
+    const admin = this.dataStore.getEmployees().find((e) => e.emp_id === adminId && e.companyId === companyId && e.role === 'COMPANY_ADMIN');
+    if (!admin) throw new NotFoundException('Company Admin not found');
+    Object.keys(dto).forEach((key) => {
+      if (dto[key] !== undefined) admin[key] = dto[key];
+    });
+    return this.enrichAdmin(admin);
+  }
+
+  updateCompanyAdminStatus(companyId: string, adminId: string, dto: UpdateCompanyAdminStatusDto, actor: Actor) {
+    const company = this.getCompanyOrThrow(companyId);
+    this.assertManagesCompany(company, actor);
+    const admin = this.dataStore.getEmployees().find((e) => e.emp_id === adminId && e.companyId === companyId && e.role === 'COMPANY_ADMIN');
+    if (!admin) throw new NotFoundException('Company Admin not found');
+    admin.status = dto.status;
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: dto.status === 'ACTIVE' ? 'Company Admin activated' : 'Company Admin deactivated',
+      company_id: companyId,
+      company_name: company.company_name,
+      details: `${admin.emp_name}'s account status changed to ${dto.status}.`,
+    });
+    return this.enrichAdmin(admin);
   }
 }

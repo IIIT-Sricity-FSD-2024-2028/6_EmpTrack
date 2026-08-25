@@ -580,6 +580,23 @@ class ApiStore {
         return this.getCompanies();
     }
 
+    // --- Platform Admin: Company Admins for their assigned companies ---
+    async getCompanyAdmins(companyId) {
+        return this._fetch(`/companies/${companyId}/admins`);
+    }
+
+    async createCompanyAdmin(companyId, data) {
+        return this._fetch(`/companies/${companyId}/admins`, { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async updateCompanyAdmin(companyId, adminId, data) {
+        return this._fetch(`/companies/${companyId}/admins/${adminId}`, { method: 'PATCH', body: JSON.stringify(data) });
+    }
+
+    async updateCompanyAdminStatus(companyId, adminId, status) {
+        return this._fetch(`/companies/${companyId}/admins/${adminId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    }
+
     // --- Platform Admin: Technical Team ---
     async getTechnicalTeam(filters = {}) {
         const params = new URLSearchParams();

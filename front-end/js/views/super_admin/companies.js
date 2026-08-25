@@ -231,6 +231,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         openModal('createCompanyModal');
     });
 
+    const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     document.getElementById('btn-submit-create').addEventListener('click', async () => {
         const data = {
             company_name: document.getElementById('cc-name').value.trim(),
@@ -243,23 +246,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             admin_name: document.getElementById('cc-admin-name').value.trim(),
             admin_email: document.getElementById('cc-admin-email').value.trim(),
             admin_phone: document.getElementById('cc-admin-phone').value.trim(),
+            admin_password: document.getElementById('cc-admin-password').value,
+            admin_confirm_password: document.getElementById('cc-admin-confirm-password').value,
             platform_admin_id: document.getElementById('cc-platform-admin').value,
         };
         const errorEl = document.getElementById('create-company-error');
-        const required = ['company_name', 'company_email', 'phone', 'industry', 'address', 'subscription_plan_id', 'admin_name', 'admin_email', 'admin_phone', 'platform_admin_id'];
+        const required = ['company_name', 'company_email', 'phone', 'industry', 'address', 'subscription_plan_id', 'admin_name', 'admin_email', 'admin_phone', 'admin_password', 'admin_confirm_password', 'platform_admin_id'];
         if (required.some((key) => !data[key])) {
             errorEl.textContent = 'Please fill in all required fields.';
             errorEl.style.display = 'block';
             return;
         }
+        if (!EMAIL_RE.test(data.admin_email)) {
+            errorEl.textContent = 'Please enter a valid admin email address.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!STRONG_PASSWORD.test(data.admin_password)) {
+            errorEl.textContent = 'Admin password must be 8+ characters with uppercase, lowercase, a number, and a special character.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (data.admin_password !== data.admin_confirm_password) {
+            errorEl.textContent = 'Admin password and confirmation do not match.';
+            errorEl.style.display = 'block';
+            return;
+        }
         try {
-            const result = await db.createCompany(data);
-            showToast('Company created successfully. Company Admin invitation sent. Platform Admin assigned successfully.');
+            await db.createCompany(data);
+            showToast('Company created successfully. Company Admin can log in immediately.');
             closeModal('createCompanyModal');
-            if (result.invitation && result.invitation.token) {
-                const link = `${window.location.origin}/front-end/accept-invitation.html?token=${result.invitation.token}`;
-                window.prompt(`Invitation link for ${data.admin_email} (no real email server is configured - copy and share this link):`, link);
-            }
             await Promise.all([loadLookups(), loadCompanies()]);
         } catch (e) {
             errorEl.textContent = e.message || 'Failed to create company.';

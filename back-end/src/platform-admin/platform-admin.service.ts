@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { MockDataService } from '../data/mock-data.service';
 import { InvitationService } from '../invitation/invitation.service';
 import { CreatePlatformAdminDto, UpdatePlatformAdminDto, UpdatePlatformAdminStatusDto } from './dto/platform-admin.dto';
+import { hashPassword } from '../common/utils/password.util';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
@@ -56,40 +57,33 @@ export class PlatformAdminService {
     const existing = this.dataStore.getEmployees().find((e) => e.email === dto.email);
     if (existing) throw new BadRequestException('An account with this email already exists');
 
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('Password and confirmation do not match');
+    }
+
     const emp_id = 'PA-' + Date.now();
     const admin = {
       emp_id,
       emp_name: dto.name,
       email: dto.email,
       phone: dto.phone,
-      password: null,
+      password: hashPassword(dto.password),
       role: 'PLATFORM_ADMIN',
-      status: 'PENDING',
+      status: dto.status || 'ACTIVE',
       date_of_joining: new Date().toISOString().split('T')[0],
       companyId: null,
     };
     this.dataStore.getEmployees().push(admin);
 
-    const invitation = this.invitationService.createInvitation({
-      emp_id,
-      email: dto.email,
-      name: dto.name,
-      role: 'PLATFORM_ADMIN',
-      company_id: null,
-    });
-
     this.dataStore.logActivity({
       user_id: actor.emp_id,
       user_name: actor.emp_name,
       role: actor.role,
-      action: 'Admin account created',
-      details: `Invited ${dto.name} as a Platform Admin.`,
+      action: 'Platform Admin created',
+      details: `Created ${dto.name} as a Platform Admin.`,
     });
 
-    return {
-      platformAdmin: this.enrich(admin),
-      invitation: { email: invitation.email, token: invitation.token, expires_at: invitation.expires_at },
-    };
+    return { platformAdmin: this.enrich(admin) };
   }
 
   updatePlatformAdmin(id: string, dto: UpdatePlatformAdminDto) {

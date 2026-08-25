@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { hashPassword } from '../common/utils/password.util';
 
 // Relative-date helpers for the seed data. Ticket timelines are seeded relative to
 // "now" so demo dashboards (Resolved Today, the 7-day work progress chart, recent
@@ -292,6 +293,10 @@ export class MockDataService {
     constructor() {
         this.data = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA));
         this.data.platform_tickets.forEach((t) => this.normalizeTicket(t));
+        // Seed passwords are written in plain text above for readability, but nothing
+        // ever sits in memory unhashed - hash them once at boot, same as any password
+        // created at runtime.
+        this.data.employee.forEach((e) => { if (e.password) e.password = hashPassword(e.password); });
     }
 
     // Guarantees every platform ticket carries the technical-workflow fields, so

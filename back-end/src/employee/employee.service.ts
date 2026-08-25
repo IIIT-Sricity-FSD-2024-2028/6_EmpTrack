@@ -1,17 +1,25 @@
 import { Injectable, NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { STRONG_PASSWORD_REGEX, hashPassword, comparePassword } from '../common/utils/password.util';
 
-// Same strength rule already enforced client-side on the employee profile page -
-// applied server-side too so it can't be bypassed by calling the API directly.
-const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+const COMPANY_SCOPED_ROLES = ['COMPANY_ADMIN', 'HR', 'TEAMLEAD'];
 
 @Injectable()
 export class EmployeeService {
   constructor(private readonly dataStore: MockDataService) {}
 
-  getAllEmployees() {
-    return this.dataStore.getEmployees();
+  // COMPANY_ADMIN/HR/TEAMLEAD only ever see their own company's employees - the scope
+  // is resolved from the caller's own record (via the header-supplied actorId), never
+  // from anything the client could set directly, mirroring resolvePlatformAdminScope.
+  getAllEmployees(role?: string, actorId?: string) {
+    const employees = this.dataStore.getEmployees();
+    if (role && COMPANY_SCOPED_ROLES.includes(role)) {
+      const actor = employees.find((e) => e.emp_id === actorId);
+      if (!actor || !actor.companyId) return [];
+      return employees.filter((e) => e.companyId === actor.companyId);
+    }
+    return employees;
   }
 
   getEmployeeById(id: string) {
@@ -42,17 +50,17 @@ export class EmployeeService {
 
     const emp = this.getEmployeeById(id);
 
-    if (emp.password !== dto.currentPassword) {
+    if (!comparePassword(dto.currentPassword, emp.password)) {
       throw new UnauthorizedException('Incorrect current password.');
     }
     if (dto.confirmPassword !== undefined && dto.newPassword !== dto.confirmPassword) {
       throw new BadRequestException('New password and confirmation do not match.');
     }
-    if (!STRONG_PASSWORD.test(dto.newPassword)) {
+    if (!STRONG_PASSWORD_REGEX.test(dto.newPassword)) {
       throw new BadRequestException('Weak password. Use 8+ characters with uppercase, lowercase, a number, and a special character.');
     }
 
-    emp.password = dto.newPassword;
+    emp.password = hashPassword(dto.newPassword);
 
     const { password, ...safeEmployee } = emp;
     return safeEmployee;
