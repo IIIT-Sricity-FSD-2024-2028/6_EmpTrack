@@ -12,6 +12,7 @@ import { EscalationModule } from './escalation/escalation.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { InvitationModule } from './invitation/invitation.module';
 import { CompanyModule } from './company/company.module';
+import { TeamModule } from './team/team.module';
 import { PlatformAdminModule } from './platform-admin/platform-admin.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { RevenueModule } from './revenue/revenue.module';
@@ -43,6 +44,7 @@ import { AppService } from './app.service';
     CalendarModule,
     InvitationModule,
     CompanyModule,
+    TeamModule,
     PlatformAdminModule,
     SubscriptionModule,
     RevenueModule,

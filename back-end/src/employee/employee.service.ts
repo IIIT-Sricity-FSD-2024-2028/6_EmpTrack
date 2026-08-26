@@ -1,41 +1,103 @@
 import { Injectable, NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { STRONG_PASSWORD_REGEX, hashPassword, comparePassword } from '../common/utils/password.util';
 
-const COMPANY_SCOPED_ROLES = ['COMPANY_ADMIN', 'HR', 'TEAMLEAD'];
+const COMPANY_SCOPED_ROLES = ['COMPANY_ADMIN', 'HR'];
+
+type Actor = { emp_id: string; emp_name: string; role: string };
+
+function safe(emp: any) {
+  const { password, ...rest } = emp;
+  return rest;
+}
 
 @Injectable()
 export class EmployeeService {
   constructor(private readonly dataStore: MockDataService) {}
 
-  // COMPANY_ADMIN/HR/TEAMLEAD only ever see their own company's employees - the scope
-  // is resolved from the caller's own record (via the header-supplied actorId), never
+  // COMPANY_ADMIN/HR only ever see their own company's employees - the scope is
+  // resolved from the caller's own record (via the header-supplied actorId), never
   // from anything the client could set directly, mirroring resolvePlatformAdminScope.
+  // TEAMLEAD is handled separately by the controller (always its own direct reports,
+  // via getUsersByManager) - it never reaches this company-wide branch.
   getAllEmployees(role?: string, actorId?: string) {
     const employees = this.dataStore.getEmployees();
     if (role && COMPANY_SCOPED_ROLES.includes(role)) {
       const actor = employees.find((e) => e.emp_id === actorId);
       if (!actor || !actor.companyId) return [];
-      return employees.filter((e) => e.companyId === actor.companyId);
+      return employees.filter((e) => e.companyId === actor.companyId).map(safe);
     }
-    return employees;
+    return employees.map(safe);
   }
 
   getEmployeeById(id: string) {
     const emp = this.dataStore.getEmployees().find(e => e.emp_id === id);
     if (!emp) throw new NotFoundException('Employee not found');
-    return emp;
+    return safe(emp);
   }
 
   getEmployeeByEmail(email: string) {
     const emp = this.dataStore.getEmployees().find(e => e.email === email);
     if (!emp) throw new NotFoundException('Employee not found');
-    return emp;
+    return safe(emp);
   }
 
   getUsersByManager(managerId: string) {
-    return this.dataStore.getEmployees().filter(e => e.manager_id === managerId);
+    return this.dataStore.getEmployees().filter(e => e.manager_id === managerId).map(safe);
+  }
+
+  // Resolves the actor's own companyId from their header-supplied actorId, same
+  // convention as TeamService - never trusted from the client body.
+  private resolveActorCompanyId(actorId: string): string {
+    const actor = this.dataStore.getEmployees().find((e) => e.emp_id === actorId);
+    if (!actor || !actor.companyId) {
+      throw new ForbiddenException('Could not resolve your company.');
+    }
+    return actor.companyId;
+  }
+
+  createEmployee(dto: CreateEmployeeDto, actor: Actor) {
+    const companyId = this.resolveActorCompanyId(actor.emp_id);
+    const team = this.dataStore.getTeams().find((t) => t.team_id === dto.team_id);
+    if (!team) throw new NotFoundException('Team not found');
+    if (team.companyId !== companyId) throw new ForbiddenException('You do not manage this team');
+    if (!team.team_lead_id) throw new BadRequestException('This team has no Team Lead yet - assign one before adding employees');
+
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('Password and confirmation do not match');
+    }
+    const existingEmail = this.dataStore.getEmployees().find((e) => e.email === dto.email);
+    if (existingEmail) throw new BadRequestException('An account with this email already exists');
+
+    const emp_id = 'EM-' + Date.now();
+    const employee = {
+      emp_id,
+      emp_name: dto.name,
+      email: dto.email,
+      phone: dto.phone,
+      password: hashPassword(dto.password),
+      role: 'EMPLOYEE',
+      status: dto.status || 'ACTIVE',
+      date_of_joining: new Date().toISOString().split('T')[0],
+      department_id: dto.department_id,
+      team_id: team.team_id,
+      manager_id: team.team_lead_id,
+      companyId,
+    };
+    this.dataStore.getEmployees().push(employee);
+
+    this.dataStore.logActivity({
+      user_id: actor.emp_id,
+      user_name: actor.emp_name,
+      role: actor.role,
+      action: 'Employee created',
+      company_id: companyId,
+      details: `Created ${dto.name} as Employee on team "${team.team_name}".`,
+    });
+
+    return safe(employee);
   }
 
   // actorId comes from the x-actor-id header (this app's existing stand-in for an
@@ -75,7 +137,7 @@ export class EmployeeService {
   updateEmployee(id: string, updateData: any) {
     const updated = this.dataStore.updateEmployee(id, updateData);
     if (!updated) throw new NotFoundException('Employee not found');
-    return updated;
+    return safe(updated);
   }
 }
 

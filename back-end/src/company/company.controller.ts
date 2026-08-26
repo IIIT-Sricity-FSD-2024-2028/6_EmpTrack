@@ -92,9 +92,9 @@ export class CompanyController {
     return this.companyService.getCompanyAdmins(id, this.actor(actorId, actorName, role));
   }
 
-  @ApiOperation({ summary: 'Platform Admin creates a Company Admin for one of their assigned companies' })
+  @ApiOperation({ summary: 'Create a Company Admin for a company - Super Admin (any company) or Platform Admin (their own assigned companies)' })
   @Post(':id/admins')
-  @Roles('PLATFORM_ADMIN')
+  @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN')
   createCompanyAdmin(
     @Param('id') id: string,
     @Body() dto: CreateCompanyAdminDto,
@@ -106,7 +106,7 @@ export class CompanyController {
   }
 
   @Patch(':id/admins/:adminId')
-  @Roles('PLATFORM_ADMIN')
+  @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN')
   updateCompanyAdmin(
     @Param('id') id: string,
     @Param('adminId') adminId: string,
@@ -120,7 +120,7 @@ export class CompanyController {
 
   @ApiOperation({ summary: 'Activate or deactivate a Company Admin' })
   @Patch(':id/admins/:adminId/status')
-  @Roles('PLATFORM_ADMIN')
+  @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN')
   updateCompanyAdminStatus(
     @Param('id') id: string,
     @Param('adminId') adminId: string,

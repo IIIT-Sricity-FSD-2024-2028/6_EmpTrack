@@ -95,6 +95,12 @@ const INITIAL_MOCK_DATA = {
     // createPersonalEvent) - scoped to the creating employee, shape mirrors company_events.
     personal_events: [],
 
+    // Company-internal teams (Company Admin -> Team -> Team Lead -> Employees).
+    // Empty at boot - seeded companies use the legacy team_id/manager_id string tags
+    // directly on employee records; only teams created through the Team module get a
+    // row here.
+    teams: [],
+
     // --- Super Admin / multi-company platform data ---
     companies: [
         { company_id: "C001", company_name: "Acme Technologies", company_email: "contact@acmetech.com", phone: "1234567890", industry: "Information Technology", address: "123 Innovation Drive, Springfield", status: "ACTIVE", subscription_plan_id: "PLAN-ENT", platform_admin_id: "PA001", created_date: "2024-01-01", last_payment_date: "2026-08-01", next_billing_date: "2026-09-01", last_transaction_id: "TXN-006" },
@@ -331,6 +337,8 @@ export class MockDataService {
     public getHolidays() { return this.data.holidays; }
     public getCompanyEvents() { return this.data.company_events; }
     public getPersonalEvents() { return this.data.personal_events; }
+
+    public getTeams() { return this.data.teams; }
 
     public getCompanies() { return this.data.companies; }
     public getSubscriptionPlans() { return this.data.subscription_plans; }
