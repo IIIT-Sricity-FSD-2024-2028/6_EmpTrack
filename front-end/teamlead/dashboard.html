@@ -205,13 +205,32 @@
                         <!-- Dynamic content populated by JS -->
                     </div>
                 </div>
-        
+
+                <!-- My Team -->
+                <div class="tl-card">
+                    <h3 class="tl-card-title">My Team <span id="my-team-name" style="font-weight:normal; color:var(--text-muted); font-size:var(--text-sm);"></span></h3>
+                    <div class="table-container" style="border:none; box-shadow:none; padding:0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my-team-tbody">
+                                <tr><td colspan="3" style="text-align:center; padding:16px; color:var(--text-muted);">Loading team...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                     </div>
                 </div>
             </div>
         </main>
     </div>
-    
+
     <!-- Toast Notification Container -->
     <div id="toast-container" style="position:fixed; bottom:20px; right:20px; display:flex; flex-direction:column; gap:10px; z-index:9999;"></div>
 

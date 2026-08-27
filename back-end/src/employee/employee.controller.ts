@@ -68,15 +68,26 @@ export class EmployeeController {
   @ApiOperation({ summary: 'Delete an employee' })
   @Delete(':id')
   @Roles('COMPANY_ADMIN')
-  deleteEmployee(@Param('id') id: string) {
-    return this.employeeService.deleteEmployee(id);
+  deleteEmployee(
+    @Param('id') id: string,
+    @Headers('role') role: string,
+    @Headers('x-actor-id') actorId: string,
+    @Headers('x-actor-name') actorName: string,
+  ) {
+    return this.employeeService.deleteEmployee(id, { emp_id: actorId, emp_name: actorName || 'Company Admin', role: role || 'COMPANY_ADMIN' });
   }
 
   @ApiOperation({ summary: 'Update an employee' })
   @Patch(':id')
   @Roles('COMPANY_ADMIN')
-  updateEmployee(@Param('id') id: string, @Body() updateData: any) {
-    return this.employeeService.updateEmployee(id, updateData);
+  updateEmployee(
+    @Param('id') id: string,
+    @Body() updateData: any,
+    @Headers('role') role: string,
+    @Headers('x-actor-id') actorId: string,
+    @Headers('x-actor-name') actorName: string,
+  ) {
+    return this.employeeService.updateEmployee(id, updateData, { emp_id: actorId, emp_name: actorName || 'Company Admin', role: role || 'COMPANY_ADMIN' });
   }
 }
 

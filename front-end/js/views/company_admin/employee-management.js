@@ -1,41 +1,168 @@
 // /js/views/company_admin/employee-management.js
 import { auth } from '../../auth.js';
+import { db } from '../../store.js';
+import { escapeHtml, showToast, openModal, closeModal, bindModalDismiss } from '../../utils/sa-common.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
     if (!user) return; // Guard
 
-    // Dummy Data
-    const employees = [
-        { id: 'EMP-001', name: 'John Smith', email: 'john.smith@company.com', phone: '(555) 123-4567', address: '123 New York Ave, NY', dept: 'Engineering', role: 'Senior Developer', joinDate: '2024-01-15', status: 'Active' },
-        { id: 'EMP-002', name: 'Sarah Johnson', email: 'sarah.j@company.com', phone: '(555) 234-5678', address: '456 California St, CA', dept: 'Engineering', role: 'Full Stack Developer', joinDate: '2024-02-10', status: 'Active' },
-        { id: 'EMP-003', name: 'Mike Davis', email: 'mike.d@company.com', phone: '(555) 345-6789', address: '789 Seattle Blvd, WA', dept: 'Engineering', role: 'Backend Developer', joinDate: '2024-03-01', status: 'Inactive' },
-        { id: 'EMP-004', name: 'Emma Wilson', email: 'emma.w@company.com', phone: '(555) 456-7890', address: '321 Chicago Blvd, IL', dept: 'Engineering', role: 'QA Engineer', joinDate: '2024-03-20', status: 'On Leave' },
-        { id: 'EMP-005', name: 'James Brown', email: 'james.b@company.com', phone: '(555) 567-8901', address: '654 Austin St, TX', dept: 'Engineering', role: 'Junior Developer', joinDate: '2024-04-05', status: 'Active' },
-        { id: 'EMP-006', name: 'Alice Cooper', email: 'alice.c@company.com', phone: '(555) 678-9012', address: '987 Miami Ave, FL', dept: 'Design', role: 'UI/UX Designer', joinDate: '2023-10-12', status: 'Active' },
-        { id: 'EMP-007', name: 'Bob Wilson', email: 'bob.w@company.com', phone: '(555) 789-0123', address: '147 Denver Rd, CO', dept: 'Marketing', role: 'Marketing Lead', joinDate: '2023-11-20', status: 'Active' },
-        { id: 'EMP-008', name: 'Carol Smith', email: 'carol.s@company.com', phone: '(555) 890-1234', address: '258 Boston Ct, MA', dept: 'Sales', role: 'Sales Executive', joinDate: '2024-01-05', status: 'On Leave' }
-    ];
+    const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Stats
-    const total = 156;
-    const active = 148;
-    const onLeave = 6;
-    const newThisMonth = 5;
+    let employees = [];
+    let teams = [];
 
-    // Output stats to DOM
-    document.getElementById('total-val').setAttribute('data-val', total);
-    document.getElementById('active-val').setAttribute('data-val', active);
-    document.getElementById('leave-val').setAttribute('data-val', onLeave);
-    document.getElementById('new-val').setAttribute('data-val', newThisMonth);
+    ['createTeamModal', 'assignLeadModal'].forEach(bindModalDismiss);
 
     const tableBody = document.getElementById('empTableBody');
+    const teamsTableBody = document.getElementById('teamsTableBody');
     const searchInput = document.getElementById('empSearch');
     const deptFilter = document.getElementById('empDeptFilter');
     const statusFilter = document.getElementById('empStatusFilter');
     const clearBtn = document.getElementById('empClearSort');
 
-    // Make ID clicks global
+    function setStat(id, value) {
+        const el = document.getElementById(id);
+        if (el) { el.setAttribute('data-val', value); el.innerText = value; }
+    }
+
+    function updateSummary() {
+        const total = employees.length;
+        const active = employees.filter(e => e.status === 'ACTIVE').length;
+        const inactive = employees.filter(e => e.status !== 'ACTIVE').length;
+        const now = new Date();
+        const newThisMonth = employees.filter(e => {
+            if (!e.date_of_joining) return false;
+            const d = new Date(e.date_of_joining);
+            return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        }).length;
+        setStat('total-val', total);
+        setStat('active-val', active);
+        setStat('leave-val', inactive);
+        setStat('new-val', newThisMonth);
+    }
+
+    // --- Teams ---
+    async function loadTeams() {
+        try {
+            teams = await db.getTeams();
+        } catch (e) {
+            teams = [];
+            showToast('Failed to load teams.', 'error');
+        }
+        renderTeamsTable();
+        populateTeamSelect();
+    }
+
+    function renderTeamsTable() {
+        if (!teamsTableBody) return;
+        if (teams.length === 0) {
+            teamsTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No teams yet. Create one to get started.</td></tr>`;
+            return;
+        }
+        teamsTableBody.innerHTML = teams.map(t => `
+            <tr>
+                <td>${escapeHtml(t.team_name)}</td>
+                <td>${t.team_lead_name ? escapeHtml(t.team_lead_name) : '<span class="badge inactive">Not assigned</span>'}</td>
+                <td>${t.employee_count}</td>
+                <td style="text-align:right;">
+                    ${!t.team_lead_id ? `<button type="button" class="btn-icon edit-btn" data-assign-lead="${t.team_id}" title="Assign Team Lead" style="background:none; border:none; color:var(--emp-primary); cursor:pointer; font-size:18px;"><i class="ph ph-user-plus"></i></button>` : ''}
+                </td>
+            </tr>
+        `).join('');
+        teamsTableBody.querySelectorAll('[data-assign-lead]').forEach(btn => {
+            btn.addEventListener('click', () => openAssignLeadModal(btn.getAttribute('data-assign-lead')));
+        });
+    }
+
+    function populateTeamSelect() {
+        const select = document.getElementById('addEmpTeam');
+        if (!select) return;
+        const withLead = teams.filter(t => t.team_lead_id);
+        select.innerHTML = '<option value="" disabled selected>Select Team</option>' +
+            withLead.map(t => `<option value="${t.team_id}">${escapeHtml(t.team_name)}</option>`).join('');
+        if (withLead.length === 0) {
+            select.innerHTML = '<option value="" disabled selected>No teams with a Team Lead yet</option>';
+        }
+    }
+
+    document.getElementById('btnOpenCreateTeam').addEventListener('click', () => {
+        document.getElementById('createTeamForm').reset();
+        document.getElementById('createTeamError').style.display = 'none';
+        openModal('createTeamModal');
+    });
+
+    document.getElementById('btnSubmitCreateTeam').addEventListener('click', async () => {
+        const team_name = document.getElementById('ct-name').value.trim();
+        const errorEl = document.getElementById('createTeamError');
+        if (!team_name) {
+            errorEl.textContent = 'Please enter a team name.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        try {
+            await db.createTeam({ team_name });
+            showToast('Team created successfully.');
+            closeModal('createTeamModal');
+            await loadTeams();
+        } catch (e) {
+            errorEl.textContent = e.message || 'Failed to create team.';
+            errorEl.style.display = 'block';
+        }
+    });
+
+    function openAssignLeadModal(teamId) {
+        const team = teams.find(t => t.team_id === teamId);
+        document.getElementById('assignLeadForm').reset();
+        document.getElementById('assignLeadError').style.display = 'none';
+        document.getElementById('al-team-id').value = teamId;
+        document.getElementById('assignLeadTeamName').textContent = team ? `- ${team.team_name}` : '';
+        openModal('assignLeadModal');
+    }
+
+    document.getElementById('btnSubmitAssignLead').addEventListener('click', async () => {
+        const teamId = document.getElementById('al-team-id').value;
+        const data = {
+            name: document.getElementById('al-name').value.trim(),
+            email: document.getElementById('al-email').value.trim(),
+            phone: document.getElementById('al-phone').value.trim(),
+            password: document.getElementById('al-password').value,
+            confirmPassword: document.getElementById('al-confirm-password').value,
+        };
+        const errorEl = document.getElementById('assignLeadError');
+        if (!data.name || !data.email || !data.phone || !data.password || !data.confirmPassword) {
+            errorEl.textContent = 'All fields are required.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!EMAIL_RE.test(data.email)) {
+            errorEl.textContent = 'Please enter a valid email address.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!STRONG_PASSWORD.test(data.password)) {
+            errorEl.textContent = 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (data.password !== data.confirmPassword) {
+            errorEl.textContent = 'Passwords do not match.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        try {
+            await db.createTeamLead(teamId, data);
+            showToast('Team Lead assigned successfully.');
+            closeModal('assignLeadModal');
+            await loadTeams();
+        } catch (e) {
+            errorEl.textContent = e.message || 'Failed to assign Team Lead.';
+            errorEl.style.display = 'block';
+        }
+    });
+
+    // --- Employees ---
     window.handleEmpClick = async (id) => {
         alert('Clicked Employee ID: ' + id + '\n\n(In a full app, this would open the employee profile model or route.)');
     };
@@ -46,127 +173,91 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.currentEditId = id;
         applyFilters();
     };
-    
+
     window.handleEmpEditCancel = () => {
         window.currentEditId = null;
         applyFilters();
     };
 
-    window.handleEmpEditSave = (id) => {
-        const index = employees.findIndex(e => e.id === id);
-        if(index !== -1) {
-            const oldStatus = employees[index].status;
-            const newStatus = document.getElementById('inlineStatus').value;
-            
-            employees[index].name = document.getElementById('inlineName').value.trim();
-            employees[index].email = document.getElementById('inlineEmail').value.trim();
-            employees[index].phone = document.getElementById('inlinePhone').value.trim();
-            employees[index].address = document.getElementById('inlineAddress').value.trim();
-            employees[index].dept = document.getElementById('inlineDept').value;
-            employees[index].role = document.getElementById('inlineRole').value;
-            employees[index].joinDate = document.getElementById('inlineJoinDate').value;
-            employees[index].status = newStatus;
-            
-            if (oldStatus !== newStatus) {
-                const counterMap = { 'Active': 'active-val', 'On Leave': 'leave-val' };
-                if (counterMap[oldStatus]) {
-                    const sVal = document.getElementById(counterMap[oldStatus]);
-                    if(sVal) {
-                        let cCount = parseInt(sVal.getAttribute('data-val'));
-                        sVal.setAttribute('data-val', cCount - 1);
-                        sVal.innerText = cCount - 1;
-                    }
-                }
-                if (counterMap[newStatus]) {
-                    const sVal = document.getElementById(counterMap[newStatus]);
-                    if(sVal) {
-                        let cCount = parseInt(sVal.getAttribute('data-val'));
-                        sVal.setAttribute('data-val', cCount + 1);
-                        sVal.innerText = cCount + 1;
-                    }
-                }
-            }
-        }
-        window.currentEditId = null;
-        applyFilters();
-    };
-    
-    window.handleEmpDelete = async (id) => {
-        if(confirm('Are you sure you want to delete employee ' + id + '?')) {
-            const index = employees.findIndex(e => e.id === id);
-            if(index !== -1) {
-                const status = employees[index].status;
-                employees.splice(index, 1);
-                applyFilters();
-                
-                // Update total count locally
-                const totalVal = document.getElementById('total-val');
-                if(totalVal) {
-                    let currentTotal = parseInt(totalVal.getAttribute('data-val'));
-                    if(currentTotal > 0) {
-                        totalVal.setAttribute('data-val', currentTotal - 1);
-                        totalVal.innerText = currentTotal - 1;
-                    }
-                }
-                
-                // Update active/leave count if applicable
-                const counterMap = { 'Active': 'active-val', 'On Leave': 'leave-val' };
-                if (counterMap[status]) {
-                    const statusVal = document.getElementById(counterMap[status]);
-                    if(statusVal) {
-                        let currentCount = parseInt(statusVal.getAttribute('data-val'));
-                        if(currentCount > 0) {
-                            statusVal.setAttribute('data-val', currentCount - 1);
-                            statusVal.innerText = currentCount - 1;
-                        }
-                    }
-                }
-            }
+    window.handleEmpEditSave = async (id) => {
+        const updateData = {
+            emp_name: document.getElementById('inlineName').value.trim(),
+            email: document.getElementById('inlineEmail').value.trim(),
+            phone: document.getElementById('inlinePhone').value.trim(),
+            department_id: document.getElementById('inlineDept').value,
+            status: document.getElementById('inlineStatus').value,
+        };
+        try {
+            await db.updateEmployee(id, updateData);
+            showToast('Employee updated successfully.');
+            window.currentEditId = null;
+            await loadEmployees();
+        } catch (e) {
+            showToast(e.message || 'Failed to update employee.', 'error');
         }
     };
 
-    async function renderRows(data) {
+    window.handleEmpDelete = async (id) => {
+        if (!confirm('Are you sure you want to delete employee ' + id + '?')) return;
+        try {
+            await db.deleteEmployee(id);
+            showToast('Employee deleted successfully.');
+            await loadEmployees();
+        } catch (e) {
+            showToast(e.message || 'Failed to delete employee.', 'error');
+        }
+    };
+
+    function teamNameFor(teamId) {
+        const t = teams.find(x => x.team_id === teamId);
+        return t ? t.team_name : '-';
+    }
+
+    function teamLeadNameFor(teamId) {
+        const t = teams.find(x => x.team_id === teamId);
+        return t && t.team_lead_name ? t.team_lead_name : '-';
+    }
+
+    function renderRows(data) {
         if (!tableBody) return;
         tableBody.innerHTML = '';
         if (data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color:var(--text-muted);">No employees found matching your criteria.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding: 40px; color:var(--text-muted);">No employees found matching your criteria.</td></tr>`;
             return;
         }
 
         data.forEach(emp => {
-            let badgeCls = emp.status === 'Active' ? 'active' : emp.status === 'Inactive' ? 'inactive' : 'leave';
-            let tooltip = emp.status === 'Active' ? 'Currently working' : emp.status === 'Inactive' ? 'No longer active' : 'Currently on approved leave';
+            const badgeCls = emp.status === 'ACTIVE' ? 'active' : 'inactive';
 
             const tr = document.createElement('tr');
-            if (emp.id === window.currentEditId) {
+            if (emp.emp_id === window.currentEditId) {
                 tr.innerHTML = `
-                    <td>${emp.id}</td>
+                    <td>${emp.emp_id}</td>
                     <td style="min-width: 200px;">
-                        <input type="text" id="inlineName" value="${emp.name}" placeholder="Name" style="width:100%; margin-bottom:4px; padding:4px; border:1px solid #ccc; border-radius:4px;" />
-                        <input type="email" id="inlineEmail" value="${emp.email}" placeholder="Email" style="width:100%; margin-bottom:4px; font-size:12px; padding:4px; border:1px solid #ccc; border-radius:4px;" />
-                        <input type="text" id="inlinePhone" value="${emp.phone || ''}" placeholder="Phone" style="width:100%; margin-bottom:4px; font-size:12px; padding:4px; border:1px solid #ccc; border-radius:4px;" />
-                        <textarea id="inlineAddress" placeholder="Address" style="width:100%; font-size:12px; padding:4px; border:1px solid #ccc; border-radius:4px; resize:vertical; min-height:40px;">${emp.address || ''}</textarea>
+                        <input type="text" id="inlineName" value="${escapeHtml(emp.emp_name)}" placeholder="Name" style="width:100%; margin-bottom:4px; padding:4px; border:1px solid #ccc; border-radius:4px;" />
+                        <input type="email" id="inlineEmail" value="${escapeHtml(emp.email)}" placeholder="Email" style="width:100%; margin-bottom:4px; font-size:12px; padding:4px; border:1px solid #ccc; border-radius:4px;" />
+                        <input type="text" id="inlinePhone" value="${escapeHtml(emp.phone || '')}" placeholder="Phone" style="width:100%; font-size:12px; padding:4px; border:1px solid #ccc; border-radius:4px;" />
                     </td>
                     <td style="min-width: 160px;">
                         <select id="inlineDept" style="width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;">
-                            <option value="Engineering" ${emp.dept==='Engineering'?'selected':''}>Engineering</option>
-                            <option value="Design" ${emp.dept==='Design'?'selected':''}>Design</option>
-                            <option value="Marketing" ${emp.dept==='Marketing'?'selected':''}>Marketing</option>
-                            <option value="Sales" ${emp.dept==='Sales'?'selected':''}>Sales</option>
-                            <option value="HR" ${emp.dept==='HR'?'selected':''}>HR</option>
+                            <option value="Engineering" ${emp.department_id==='Engineering'?'selected':''}>Engineering</option>
+                            <option value="Design" ${emp.department_id==='Design'?'selected':''}>Design</option>
+                            <option value="Marketing" ${emp.department_id==='Marketing'?'selected':''}>Marketing</option>
+                            <option value="Sales" ${emp.department_id==='Sales'?'selected':''}>Sales</option>
+                            <option value="HR" ${emp.department_id==='HR'?'selected':''}>HR</option>
                         </select>
                     </td>
-                    <td style="min-width: 180px;"><input type="text" id="inlineRole" value="${emp.role}" style="width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;" /></td>
-                    <td><input type="date" id="inlineJoinDate" value="${emp.joinDate}" style="width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;" /></td>
+                    <td>${teamNameFor(emp.team_id)}</td>
+                    <td>${teamLeadNameFor(emp.team_id)}</td>
+                    <td>${emp.date_of_joining || '-'}</td>
                     <td>
                         <select id="inlineStatus" style="width:100%; padding:4px; border:1px solid #ccc; border-radius:4px;">
-                            <option value="Active" ${emp.status==='Active'?'selected':''}>Active</option>
-                            <option value="Inactive" ${emp.status==='Inactive'?'selected':''}>Inactive</option>
-                            <option value="On Leave" ${emp.status==='On Leave'?'selected':''}>On Leave</option>
+                            <option value="ACTIVE" ${emp.status==='ACTIVE'?'selected':''}>Active</option>
+                            <option value="INACTIVE" ${emp.status==='INACTIVE'?'selected':''}>Inactive</option>
                         </select>
                     </td>
                     <td style="text-align: center;">
-                        <button class="btn-icon" onclick="handleEmpEditSave('${emp.id}')" title="Save" style="background:none; border:none; color:var(--emp-success); cursor:pointer; font-size:18px; margin-right:8px;">
+                        <button class="btn-icon" onclick="handleEmpEditSave('${emp.emp_id}')" title="Save" style="background:none; border:none; color:var(--emp-success); cursor:pointer; font-size:18px; margin-right:8px;">
                             <i class="ph-bold ph-check"></i>
                         </button>
                         <button class="btn-icon" onclick="handleEmpEditCancel()" title="Cancel" style="background:none; border:none; color:var(--emp-danger); cursor:pointer; font-size:18px;">
@@ -176,24 +267,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             } else {
                 tr.innerHTML = `
-                    <td><a href="javascript:void(0)" class="emp-id-link" onclick="handleEmpClick('${emp.id}')">${emp.id}</a></td>
+                    <td><a href="javascript:void(0)" class="emp-id-link" onclick="handleEmpClick('${emp.emp_id}')">${emp.emp_id}</a></td>
                     <td>
                         <div class="emp-name-col">
-                            <span class="emp-name">${emp.name}</span>
-                            <span class="emp-email" style="margin-bottom:2px;">${emp.email}</span>
-                            <span style="font-size:12px; color:var(--text-muted);"><i class="ph ph-phone" style="vertical-align:middle; margin-right:2px;"></i> ${emp.phone || 'N/A'}</span>
-                            <span style="font-size:11px; color:var(--text-muted);"><i class="ph ph-map-pin" style="vertical-align:middle; margin-right:2px;"></i> ${emp.address || 'N/A'}</span>
+                            <span class="emp-name">${escapeHtml(emp.emp_name)}</span>
+                            <span class="emp-email" style="margin-bottom:2px;">${escapeHtml(emp.email)}</span>
+                            <span style="font-size:12px; color:var(--text-muted);"><i class="ph ph-phone" style="vertical-align:middle; margin-right:2px;"></i> ${escapeHtml(emp.phone || 'N/A')}</span>
                         </div>
                     </td>
-                    <td>${emp.dept}</td>
-                    <td>${emp.role}</td>
-                    <td>${emp.joinDate}</td>
-                    <td><span class="badge ${badgeCls}" data-tooltip="${tooltip}">${emp.status}</span></td>
+                    <td>${escapeHtml(emp.department_id || '-')}</td>
+                    <td>${escapeHtml(teamNameFor(emp.team_id))}</td>
+                    <td>${escapeHtml(teamLeadNameFor(emp.team_id))}</td>
+                    <td>${emp.date_of_joining || '-'}</td>
+                    <td><span class="badge ${badgeCls}">${escapeHtml(emp.status)}</span></td>
                     <td style="text-align: center;">
-                        <button class="btn-icon edit-btn" onclick="handleEmpEdit('${emp.id}')" title="Edit Employee" style="background:none; border:none; color:var(--emp-primary); cursor:pointer; font-size:18px; margin-right:8px;">
+                        <button class="btn-icon edit-btn" onclick="handleEmpEdit('${emp.emp_id}')" title="Edit Employee" style="background:none; border:none; color:var(--emp-primary); cursor:pointer; font-size:18px; margin-right:8px;">
                             <i class="ph ph-pencil-simple"></i>
                         </button>
-                        <button class="btn-icon delete-btn" onclick="handleEmpDelete('${emp.id}')" title="Delete Employee" style="background:none; border:none; color:var(--emp-danger); cursor:pointer; font-size:18px;">
+                        <button class="btn-icon delete-btn" onclick="handleEmpDelete('${emp.emp_id}')" title="Delete Employee" style="background:none; border:none; color:var(--emp-danger); cursor:pointer; font-size:18px;">
                             <i class="ph ph-trash"></i>
                         </button>
                     </td>
@@ -203,14 +294,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    async function applyFilters() {
-        const query = searchInput.value.toLowerCase();
+    function applyFilters() {
+        const query = (searchInput.value || '').toLowerCase();
         const dept = deptFilter.value;
         const status = statusFilter.value;
 
         const filtered = employees.filter(e => {
-            const mText = e.name.toLowerCase().includes(query) || e.email.toLowerCase().includes(query) || e.id.toLowerCase().includes(query);
-            const mDept = dept === 'all' || e.dept === dept;
+            const mText = e.emp_name.toLowerCase().includes(query) || e.email.toLowerCase().includes(query) || e.emp_id.toLowerCase().includes(query);
+            const mDept = dept === 'all' || e.department_id === dept;
             const mStatus = status === 'all' || e.status === status;
             return mText && mDept && mStatus;
         });
@@ -218,13 +309,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderRows(filtered);
     }
 
+    async function loadEmployees() {
+        try {
+            const all = await db.getEmployees();
+            employees = all.filter(e => e.role === 'EMPLOYEE');
+        } catch (e) {
+            employees = [];
+            showToast('Failed to load employees.', 'error');
+        }
+        updateSummary();
+        applyFilters();
+    }
+
     // Bind events
-    if(searchInput) searchInput.addEventListener('input', applyFilters);
-    if(deptFilter) deptFilter.addEventListener('change', applyFilters);
-    if(statusFilter) statusFilter.addEventListener('change', applyFilters);
-    
-    if(clearBtn) {
-        clearBtn.addEventListener('click', async () => {
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (deptFilter) deptFilter.addEventListener('change', applyFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
             searchInput.value = '';
             deptFilter.value = 'all';
             statusFilter.value = 'all';
@@ -232,86 +335,77 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Team select -> auto-fill readonly Team Lead field
+    document.getElementById('addEmpTeam').addEventListener('change', (e) => {
+        const team = teams.find(t => t.team_id === e.target.value);
+        document.getElementById('addEmpTeamLead').value = team ? team.team_lead_name : '';
+    });
+
     // Add Employee Logic
     const addEmpForm = document.getElementById('addEmpForm');
     const addEmpSuccess = document.getElementById('addEmpSuccess');
-    if(addEmpForm) {
+    const addEmpError = document.getElementById('addEmpError');
+    if (addEmpForm) {
         addEmpForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            if(!addEmpForm.checkValidity()) {
+            addEmpError.style.display = 'none';
+
+            if (!addEmpForm.checkValidity()) {
                 addEmpForm.reportValidity();
                 return;
             }
 
-            const name = document.getElementById('addEmpName').value.trim();
-            const email = document.getElementById('addEmpEmail').value.trim();
-            const dept = document.getElementById('addEmpDept').value;
-            const role = document.getElementById('addEmpRole').value;
-            
-            let displayRole = role === 'TL' ? 'Team Lead' : role === 'HR' ? 'HR Manager' : role === 'COMPANY_ADMIN' ? 'Company Admin' : 'Employee';
-            if (dept === 'Engineering' && displayRole === 'Employee') displayRole = 'Developer';
+            const data = {
+                name: document.getElementById('addEmpName').value.trim(),
+                email: document.getElementById('addEmpEmail').value.trim(),
+                phone: document.getElementById('addEmpPhone').value.trim(),
+                password: document.getElementById('addEmpPassword').value,
+                confirmPassword: document.getElementById('addEmpConfirmPassword').value,
+                department_id: document.getElementById('addEmpDept').value,
+                team_id: document.getElementById('addEmpTeam').value,
+            };
 
-            const newId = 'EMP-' + String(employees.length + 1).padStart(3, '0');
-            const today = new Date().toISOString().split('T')[0];
-
-            employees.unshift({
-                id: newId,
-                name: name,
-                email: email,
-                dept: dept,
-                role: displayRole,
-                joinDate: today,
-                status: 'Active'
-            });
-
-            applyFilters();
-            
-            const totalVal = document.getElementById('total-val');
-            if(totalVal) {
-                totalVal.setAttribute('data-val', parseInt(totalVal.getAttribute('data-val')) + 1);
-                totalVal.innerText = totalVal.getAttribute('data-val');
+            if (!EMAIL_RE.test(data.email)) {
+                addEmpError.textContent = 'Please enter a valid email address.';
+                addEmpError.style.display = 'block';
+                return;
+            }
+            if (!/^[0-9+\-\s()]{7,15}$/.test(data.phone)) {
+                addEmpError.textContent = 'Please enter a valid phone number.';
+                addEmpError.style.display = 'block';
+                return;
+            }
+            if (!STRONG_PASSWORD.test(data.password)) {
+                addEmpError.textContent = 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.';
+                addEmpError.style.display = 'block';
+                return;
+            }
+            if (data.password !== data.confirmPassword) {
+                addEmpError.textContent = 'Passwords do not match.';
+                addEmpError.style.display = 'block';
+                return;
+            }
+            if (!data.team_id) {
+                addEmpError.textContent = 'Please select a team.';
+                addEmpError.style.display = 'block';
+                return;
             }
 
-            const activeVal = document.getElementById('active-val');
-            if(activeVal) {
-                activeVal.setAttribute('data-val', parseInt(activeVal.getAttribute('data-val')) + 1);
-                activeVal.innerText = activeVal.getAttribute('data-val');
+            try {
+                await db.createEmployeeAccount(data);
+                await loadEmployees();
+
+                addEmpSuccess.style.display = 'block';
+                addEmpForm.reset();
+                document.getElementById('addEmpTeamLead').value = '';
+                setTimeout(() => { addEmpSuccess.style.display = 'none'; }, 3000);
+            } catch (err) {
+                addEmpError.textContent = err.message || 'Failed to add employee.';
+                addEmpError.style.display = 'block';
             }
-
-            addEmpSuccess.style.display = 'block';
-            addEmpForm.reset();
-
-            setTimeout(() => {
-                addEmpSuccess.style.display = 'none';
-            }, 3000);
         });
     }
 
-
-
-    // Animate summary stats
-    const counters = document.querySelectorAll('.count-anim');
-    counters.forEach(counter => {
-        const target = +counter.getAttribute('data-val');
-        const duration = 1000;
-        const step = Math.max(1, Math.ceil(target / (duration / 16)));
-        let current = 0;
-
-        const timer = setInterval(() => {
-            current += step;
-            if (current >= target) {
-                counter.innerText = target;
-                clearInterval(timer);
-            } else {
-                counter.innerText = current;
-            }
-        }, 16);
-    });
-
-    // Simulate load time for bonus feature
-    setTimeout(() => {
-        renderRows(employees);
-    }, 600);
+    await loadTeams();
+    await loadEmployees();
 });
-

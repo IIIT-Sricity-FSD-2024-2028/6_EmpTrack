@@ -54,6 +54,14 @@ class ApiStore {
     }
 
     // --- Employee ---
+    async getEmployees() {
+        return this._fetch('/employees');
+    }
+
+    async createEmployeeAccount(data) {
+        return this._fetch('/employees', { method: 'POST', body: JSON.stringify(data) });
+    }
+
     async getUserById(id) {
         return this._fetch(`/employees/${id}`);
     }
@@ -80,6 +88,19 @@ class ApiStore {
             method: 'PATCH',
             body: JSON.stringify({ currentPassword, newPassword, confirmPassword })
         });
+    }
+
+    // --- Company Admin: Teams / Team Leads ---
+    async getTeams() {
+        return this._fetch('/teams');
+    }
+
+    async createTeam(data) {
+        return this._fetch('/teams', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    async createTeamLead(teamId, data) {
+        return this._fetch(`/teams/${teamId}/lead`, { method: 'POST', body: JSON.stringify(data) });
     }
 
     // --- Attendance ---

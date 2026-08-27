@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const noAdminBanner = document.getElementById('no-admin-banner');
     const btnOpenCreate = document.getElementById('btn-open-create');
 
-    ['createCompanyModal', 'editCompanyModal', 'viewCompanyModal', 'reassignModal', 'statusConfirmModal'].forEach(bindModalDismiss);
+    ['createCompanyModal', 'editCompanyModal', 'viewCompanyModal', 'reassignModal', 'statusConfirmModal', 'createCaModal'].forEach(bindModalDismiss);
 
     function statusBadgeClass(status) {
         if (status === 'ACTIVE') return 'badge-active';
@@ -279,6 +279,63 @@ document.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([loadLookups(), loadCompanies()]);
         } catch (e) {
             errorEl.textContent = e.message || 'Failed to create company.';
+            errorEl.style.display = 'block';
+        }
+    });
+
+    document.getElementById('btn-open-create-ca').addEventListener('click', async () => {
+        document.getElementById('create-ca-form').reset();
+        document.getElementById('create-ca-error').style.display = 'none';
+        const select = document.getElementById('cca-company');
+        select.innerHTML = '<option value="">Loading companies...</option>';
+        openModal('createCaModal');
+        try {
+            const allCompanies = await db.getCompanies();
+            select.innerHTML = '<option value="">Select a company...</option>' +
+                allCompanies.map((c) => `<option value="${c.company_id}">${escapeHtml(c.company_name)}</option>`).join('');
+        } catch (e) {
+            select.innerHTML = '<option value="">Failed to load companies</option>';
+        }
+    });
+
+    document.getElementById('btn-submit-create-ca').addEventListener('click', async () => {
+        const companyId = document.getElementById('cca-company').value;
+        const data = {
+            name: document.getElementById('cca-name').value.trim(),
+            email: document.getElementById('cca-email').value.trim(),
+            phone: document.getElementById('cca-phone').value.trim(),
+            password: document.getElementById('cca-password').value,
+            confirmPassword: document.getElementById('cca-confirm-password').value,
+            status: document.getElementById('cca-status').value,
+        };
+        const errorEl = document.getElementById('create-ca-error');
+        if (!companyId || !data.name || !data.email || !data.phone || !data.password || !data.confirmPassword) {
+            errorEl.textContent = 'All fields are required.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!EMAIL_RE.test(data.email)) {
+            errorEl.textContent = 'Please enter a valid email address.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!STRONG_PASSWORD.test(data.password)) {
+            errorEl.textContent = 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (data.password !== data.confirmPassword) {
+            errorEl.textContent = 'Passwords do not match.';
+            errorEl.style.display = 'block';
+            return;
+        }
+        try {
+            await db.createCompanyAdmin(companyId, data);
+            showToast('Company Admin created successfully. They can log in immediately.');
+            closeModal('createCaModal');
+            await loadCompanies();
+        } catch (e) {
+            errorEl.textContent = e.message || 'Failed to create Company Admin.';
             errorEl.style.display = 'block';
         }
     });

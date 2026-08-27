@@ -128,15 +128,40 @@ export class EmployeeService {
     return safeEmployee;
   }
 
-  deleteEmployee(id: string) {
+  deleteEmployee(id: string, actor?: Actor) {
+    const target = this.dataStore.getEmployees().find((e) => e.emp_id === id);
     const deleted = this.dataStore.deleteEmployee(id);
     if (!deleted) throw new NotFoundException('Employee not found');
+
+    if (actor?.emp_id) {
+      this.dataStore.logActivity({
+        user_id: actor.emp_id,
+        user_name: actor.emp_name,
+        role: actor.role,
+        action: 'Employee deleted',
+        company_id: target?.companyId || null,
+        details: `Deleted employee ${target?.emp_name || id}.`,
+      });
+    }
+
     return { success: true, message: 'Employee deleted' };
   }
 
-  updateEmployee(id: string, updateData: any) {
+  updateEmployee(id: string, updateData: any, actor?: Actor) {
     const updated = this.dataStore.updateEmployee(id, updateData);
     if (!updated) throw new NotFoundException('Employee not found');
+
+    if (actor?.emp_id) {
+      this.dataStore.logActivity({
+        user_id: actor.emp_id,
+        user_name: actor.emp_name,
+        role: actor.role,
+        action: 'Employee updated',
+        company_id: updated.companyId || null,
+        details: `Updated employee ${updated.emp_name || id} (${Object.keys(updateData).join(', ')}).`,
+      });
+    }
+
     return safe(updated);
   }
 }

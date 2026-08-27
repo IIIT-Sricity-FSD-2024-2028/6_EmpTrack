@@ -35,7 +35,32 @@
                 </div>
                 
                 <div class="hr-emp-manage">
-                    
+
+                    <!-- Teams & Team Leads Card -->
+                    <div class="card add-emp-card">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                            <div style="font-weight:600; font-size:16px; display:flex; align-items:center; gap:8px;">
+                                <i class="ph-fill ph-users-three" style="color:var(--emp-primary);"></i> Teams &amp; Team Leads
+                            </div>
+                            <button type="button" class="btn-submit" id="btnOpenCreateTeam" style="width:auto; padding:8px 16px;"><i class="ph ph-plus"></i> Create Team</button>
+                        </div>
+                        <div class="table-container" style="border:none; box-shadow:none; padding:0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Team</th>
+                                        <th>Team Lead</th>
+                                        <th>Employees</th>
+                                        <th style="text-align:right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teamsTableBody">
+                                    <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Loading teams...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- Add Employee Card -->
                     <div class="card add-emp-card">
                         <div style="font-weight:600; font-size:16px; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
@@ -52,6 +77,18 @@
                                     <input type="email" id="addEmpEmail" required placeholder="jane@company.com">
                                 </div>
                                 <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="text" id="addEmpPhone" required placeholder="e.g. 9000000000">
+                                </div>
+                                <div class="form-group">
+                                    <label>Password</label>
+                                    <input type="password" id="addEmpPassword" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirm Password</label>
+                                    <input type="password" id="addEmpConfirmPassword" required>
+                                </div>
+                                <div class="form-group">
                                     <label>Department</label>
                                     <select id="addEmpDept" required>
                                         <option value="" disabled selected>Select Dept</option>
@@ -63,19 +100,20 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label>System Role</label>
-                                    <select id="addEmpRole" required>
-                                        <option value="" disabled selected>Select Role</option>
-                                        <option value="EMP">Employee</option>
-                                        <option value="TL">Team Lead</option>
-                                        <option value="HR">HR Manager</option>
-                                        <option value="COMPANY_ADMIN">Company Admin</option>
+                                    <label>Team</label>
+                                    <select id="addEmpTeam" required>
+                                        <option value="" disabled selected>Select Team</option>
                                     </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Team Lead</label>
+                                    <input type="text" id="addEmpTeamLead" readonly placeholder="Select a team first" style="background:var(--bg-hover, #f3f4f6);">
                                 </div>
                             </div>
                             <div style="margin-top: 16px;">
                                 <button type="submit" class="btn-submit" id="addEmpSubmitBtn">Add Employee</button>
                             </div>
+                            <div id="addEmpError" class="form-error" style="display:none; margin-top:12px;"></div>
                             <div id="addEmpSuccess" style="display:none; color:var(--emp-success); font-size:13px; font-weight:500; margin-top:12px;">
                                 <i class="ph-fill ph-check-circle"></i> Employee successfully added!
                             </div>
@@ -98,9 +136,8 @@
                             </select>
                             <select id="empStatusFilter" class="filter-select">
                                 <option value="all">All Status</option>
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                                <option value="On Leave">On Leave</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
                             </select>
                             <button class="btn-clear" id="empClearSort"><i class="ph ph-x"></i> Clear</button>
                         </div>
@@ -114,7 +151,8 @@
                                     <th>Employee ID</th>
                                     <th>Employee</th>
                                     <th>Department</th>
-                                    <th>Role</th>
+                                    <th>Team</th>
+                                    <th>Team Lead</th>
                                     <th>Join Date</th>
                                     <th>Status</th>
                                     <th style="width: 80px; text-align: center;">Actions</th>
@@ -122,7 +160,7 @@
                             </thead>
                             <tbody id="empTableBody">
                                 <tr class="loader-row" id="loaderRow">
-                                    <td colspan="6">
+                                    <td colspan="8">
                                         <div class="spinner"></div>
                                         <div>Loading directory...</div>
                                     </td>
@@ -153,6 +191,71 @@
 
                 </div>
             </div>
+
+    <!-- Create Team Modal -->
+    <div class="modal-overlay" id="createTeamModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Team</h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createTeamForm">
+                    <div class="form-group">
+                        <label class="form-label">Team Name</label>
+                        <input type="text" class="form-control" id="ct-name" required>
+                    </div>
+                    <div id="createTeamError" class="form-error" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-primary" id="btnSubmitCreateTeam">Create Team</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Team Lead Modal -->
+    <div class="modal-overlay" id="assignLeadModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Assign Team Lead <span id="assignLeadTeamName"></span></h3>
+                <button class="modal-close" data-modal-close>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="assignLeadForm">
+                    <input type="hidden" id="al-team-id">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="al-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="al-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="al-phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="al-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="al-confirm-password" required>
+                    </div>
+                    <div id="assignLeadError" class="form-error" style="display:none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-primary" id="btnSubmitAssignLead">Assign Team Lead</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/views/company_admin/employee-management.js"></script>
 </body>

@@ -1,6 +1,7 @@
 // /js/views/teamlead/dashboard.js
 import { auth } from '../../auth.js';
 import { db } from '../../store.js';
+import { escapeHtml } from '../../utils/sa-common.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = auth.getCurrentUser();
@@ -91,6 +92,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     renderPendingLeaves();
+
+    // My Team - fetched from the backend (server resolves "my team" from the
+    // logged-in Team Lead's own actor id, never a client-trusted teamLeadId), so it
+    // persists across refresh/logout/login/server restart.
+    async function renderMyTeam() {
+        const tbody = document.getElementById('my-team-tbody');
+        const nameEl = document.getElementById('my-team-name');
+        if (!tbody) return;
+        try {
+            const [members, teams] = await Promise.all([
+                db.getUsersByManager(user.emp_id),
+                db.getTeams().catch(() => []),
+            ]);
+
+            const myTeam = teams.find(t => t.team_lead_id === user.emp_id);
+            if (nameEl) nameEl.textContent = myTeam ? `- ${myTeam.team_name}` : '';
+
+            if (members.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:16px; color:var(--text-muted);">No employees assigned to your team yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = members.map(m => `
+                <tr>
+                    <td>${escapeHtml(m.emp_name)}</td>
+                    <td>${escapeHtml(m.email)}</td>
+                    <td><span class="badge-pending" style="background:${m.status === 'ACTIVE' ? 'var(--secondary-color)' : 'var(--text-muted)'}; color:#fff;">${escapeHtml(m.status)}</span></td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:16px; color:var(--danger-hover);">Failed to load your team.</td></tr>`;
+        }
+    }
+
+    renderMyTeam();
 
 });
 

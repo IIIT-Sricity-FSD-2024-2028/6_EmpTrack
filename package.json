@@ -1,0 +1,10 @@
+{
+  "name": "emptrack",
+  "private": true,
+  "description": "Convenience wrapper - the real projects live in back-end/ and front-end/. Run `npm start` from here instead of cd-ing into back-end.",
+  "scripts": {
+    "install:back-end": "npm install --prefix back-end",
+    "start": "npm run start:dev --prefix back-end",
+    "build": "npm run build --prefix back-end"
+  }
+}
