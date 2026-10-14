@@ -1,0 +1,16 @@
+/* The original #toast-container (sa-common showToast). The page stylesheets color it
+   with --sa-* / --tm-* variables, but the toast renders outside their .sa-shell /
+   .tm-shell roots where those are undefined, so these rules (higher specificity)
+   carry literal fallbacks and make the toast work on every portal. */
+div#toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text-main); color: var(--bg-surface);
+    padding: 12px 20px; border-radius: 8px; font-weight: 500; font-size: 14px;
+    box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2000;
+    display: flex; align-items: center; gap: 8px; max-width: 360px;
+    pointer-events: none;
+}
+div#toast-container.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+div#toast-container.error { background: #EF4444; color: #fff; }
+div#toast-container.success { background: #22C55E; color: #fff; }

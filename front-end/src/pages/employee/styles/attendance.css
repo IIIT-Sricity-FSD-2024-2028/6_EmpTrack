@@ -1,0 +1,210 @@
+/* Converted from front-end/css/views/employee/attendance.css. Every selector is prefixed with
+   .emp-attendance (the page's root element) so these page styles cannot leak into other
+   roles' pages in the single-page app. Rules are otherwise unchanged. */
+
+/* CSS for employee attendance */
+
+/* Section 1: Mark Attendance */
+.emp-attendance .attendance-mark-card {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.emp-attendance .attendance-card-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.emp-attendance .attendance-card-subtitle {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.emp-attendance .attendance-location-container {
+    margin-bottom: var(--spacing-lg);
+}
+
+.emp-attendance .location-label {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* Segmented Control Switch Style */
+.emp-attendance .location-toggle-group, 
+.emp-attendance .attendance-action-group {
+    display: inline-flex;
+    background-color: var(--bg-main);
+    border-radius: var(--radius-full);
+    padding: 4px;
+    border: 1px solid var(--border-light);
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.emp-attendance .location-toggle, 
+.emp-attendance .btn-attendance {
+    min-width: 120px;
+    border: none;
+    background: transparent;
+    padding: 10px 24px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.emp-attendance .location-toggle.active,
+.emp-attendance .btn-attendance.btn-purple {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* The outline class needs to be reset so it looks like an inactive switch option */
+.emp-attendance .btn-attendance.btn-outline {
+    background-color: transparent;
+    color: var(--text-muted);
+    border: none;
+}
+
+.emp-attendance .btn-attendance.btn-outline:hover:not(.action-btn-disabled) {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.emp-attendance .location-toggle:not(.active):hover:not(:disabled) {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.emp-attendance .action-btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed !important;
+}
+
+/* Section 2: Summary Grid (4 cards in one row) */
+.emp-attendance .attendance-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.emp-attendance .attendance-summary-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-lg);
+}
+
+.emp-attendance .summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-md);
+    color: white;
+}
+
+.emp-attendance .bg-green { background-color: #10B981; }
+.emp-attendance .bg-gray { background-color: #6B7280; }
+.emp-attendance .bg-primary-light { background-color: var(--primary-light); color: var(--primary-color); }
+.emp-attendance .color-primary { color: var(--primary-color); }
+
+.emp-attendance .summary-value {
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-main);
+}
+
+.emp-attendance .summary-label {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* Section 3: Monthly Attendance Records */
+.emp-attendance .attendance-records-card {
+    margin-bottom: var(--spacing-xl);
+}
+
+.emp-attendance .attendance-records-header {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.emp-attendance .attendance-records-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+}
+
+/* Section 4: Metrics Grid (3 cards in one row) */
+.emp-attendance .attendance-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.emp-attendance .metric-card, .emp-attendance .metric-card-flex {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-lg);
+}
+
+.emp-attendance .metric-hero-value {
+    font-size: 36px;
+    font-weight: var(--font-bold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.emp-attendance .color-main { color: var(--text-main); }
+.emp-attendance .color-orange { color: #F59E0B; }
+
+.emp-attendance .metric-title {
+    font-weight: var(--font-semibold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.emp-attendance .metric-subtitle {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.emp-attendance .metric-chart-label {
+    margin-top: var(--spacing-md);
+    font-weight: var(--font-semibold);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .emp-attendance .attendance-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .emp-attendance .attendance-metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .emp-attendance .attendance-summary-grid {
+        grid-template-columns: 1fr;
+    }
+    .emp-attendance .attendance-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
