@@ -1,0 +1,316 @@
+/* React foundation additions.
+   variables/global/layout/components/views/calendar.css are copied unchanged
+   from the original front-end/css. This file holds what the original applied
+   as inline styles in js/components/layout.js (now React components) and the
+   styles for shared components that had no original stylesheet. */
+
+/* ---- Sidebar footer (was inline in layout.js) ---- */
+.sidebar-footer.sidebar-footer-user {
+    padding-bottom: var(--spacing-md);
+}
+
+.sidebar-logout-btn {
+    width: 100%;
+    justify-content: flex-start;
+    outline: none;
+    margin-bottom: var(--spacing-md);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+.sidebar-profile-link {
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar-user-profile {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: 0 var(--spacing-lg);
+}
+
+.sidebar-user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 1px solid var(--border-light);
+}
+
+/* ---- Top header (was inline in layout.js) ---- */
+.header-title-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* inherited from .header-left in the original markup */
+    gap: 0;
+}
+
+.header-title-group .header-title {
+    margin-bottom: 0;
+}
+
+.header-portal-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-weight: var(--font-medium);
+}
+
+.top-header .header-right {
+    gap: 16px;
+}
+
+.header-bell-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.notification-bell {
+    font-size: var(--text-xl);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 0.2s;
+    position: relative;
+}
+
+.notification-bell.active-bell {
+    color: var(--primary-color);
+}
+
+.notif-dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--danger-color, #ef4444);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.header-avatar-link {
+    text-decoration: none;
+}
+
+.header-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: var(--text-inverse);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-left: var(--spacing-lg);
+    box-shadow: 0 4px 10px var(--primary-light);
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+/* Mobile menu button + off-canvas sidebar (only below 768px). */
+.header-menu-btn,
+.sidebar-overlay {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .main-wrapper {
+        margin-left: 0;
+    }
+
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sidebar.is-open {
+        transform: translateX(0);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .sidebar-overlay.is-visible {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 99;
+        background-color: rgba(17, 24, 39, 0.5);
+    }
+
+    .header-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--text-xl);
+        color: var(--text-main);
+    }
+
+    .content-area {
+        padding: var(--spacing-md);
+    }
+
+    .top-header {
+        padding: 0 var(--spacing-md);
+    }
+
+    .top-header .header-right {
+        gap: 8px;
+    }
+
+    .header-avatar {
+        margin-left: 0;
+    }
+}
+
+/* ---- Card header title (components/common/Card) ---- */
+.section-title {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+/* ---- Data table (components/common/Table), the "table-modern" pattern used across pages ---- */
+.table-card-header {
+    padding: 24px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.table-card-header h3 {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+.table-modern-container {
+    border-radius: var(--radius-md);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.data-table thead tr {
+    background-color: var(--bg-surface);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.data-table th,
+.data-table td {
+    padding: 16px;
+}
+
+.data-table .table-empty-cell {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-muted);
+}
+
+/* ---- Search bar (components/common/SearchBar) ---- */
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar > .ph-magnifying-glass {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.search-bar .form-control {
+    padding-left: 36px;
+    padding-right: 32px;
+}
+
+.search-bar-clear {
+    position: absolute;
+    right: 8px;
+    color: var(--text-muted);
+    display: flex;
+}
+
+/* ---- Empty state (components/common/EmptyState) ---- */
+.empty-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state-icon {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.empty-state-title {
+    color: var(--text-main);
+    font-size: var(--text-base);
+    margin-bottom: var(--spacing-xs);
+}
+
+.empty-state-action {
+    margin-top: var(--spacing-md);
+}
+
+/* ---- Profile section (components/profile/ProfileSection) ---- */
+.profile-section-title {
+    margin: 0 0 20px 0;
+    font-size: var(--text-lg);
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 12px;
+}
+
+.profile-section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-section-row {
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 12px;
+}
+
+.profile-section-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.profile-section-row.has-icon {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profile-section-icon {
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+.profile-section-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.profile-section-value {
+    font-weight: var(--font-medium);
+}
+
+.profile-section-row:not(.has-icon) .profile-section-label {
+    margin-bottom: 4px;
+}
+
+.profile-section-row:not(.has-icon) .profile-section-value {
+    font-weight: var(--font-bold);
+    color: var(--text-main);
+}

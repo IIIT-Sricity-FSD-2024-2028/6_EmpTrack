@@ -1,8 +1,0 @@
-@keyframes fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .action-btn:hover { transform: scale(1.1); }
-        .tab-btn:hover { color: #6A11CB !important; }
-        #global-escalate-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(106, 17, 203, 0.4); }
-        #back-btn:hover { transform: scale(1.05); }

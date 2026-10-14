@@ -1,0 +1,165 @@
+/* Converted from front-end/css/views/employee/dashboard.css. Every selector is prefixed with
+   .emp-dashboard (the page's root element) so these page styles cannot leak into other
+   roles' pages in the single-page app. Rules are otherwise unchanged. */
+
+/* CSS for employee dashboard */
+
+/* Dashboard Specific Styles */
+
+/* Welcome Banner */
+.emp-dashboard .dashboard-welcome-banner {
+    margin-bottom: var(--spacing-lg);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.emp-dashboard .welcome-title {
+    color: white;
+    margin: 0 0 5px 0;
+    font-size: var(--text-2xl);
+}
+
+.emp-dashboard .welcome-subtitle {
+    color: var(--primary-light);
+    margin: 0;
+    font-size: var(--text-sm);
+}
+
+.emp-dashboard .welcome-icon {
+    font-size: 64px;
+    opacity: 0.8;
+    height: 60px;
+    display: flex;
+    align-items: flex-end;
+}
+
+/* Stats Grid */
+.emp-dashboard .dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.emp-dashboard .stat-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+}
+
+.emp-dashboard .stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.emp-dashboard .stat-value {
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+}
+
+.emp-dashboard .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: var(--font-semibold);
+}
+
+.emp-dashboard .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-lg);
+}
+
+.emp-dashboard .icon-primary { background-color: var(--primary-light); color: var(--primary-color); }
+.emp-dashboard .icon-blue { background-color: var(--accent-light); color: var(--accent-color); }
+.emp-dashboard .icon-yellow { background-color: var(--status-warning-bg); color: var(--warning-color); }
+.emp-dashboard .icon-green { background-color: var(--status-success-bg); color: var(--secondary-color); }
+.emp-dashboard .icon-gray { background-color: var(--status-neutral-bg); color: var(--status-neutral-fg); }
+
+/* Dashboard Tasks Section */
+.emp-dashboard .dashboard-tasks-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.emp-dashboard .section-title {
+    margin: 0;
+    font-size: var(--text-lg);
+}
+
+.emp-dashboard .btn-sm-link {
+    padding: 4px 8px;
+    font-size: var(--text-xs);
+}
+
+.emp-dashboard .dashboard-tasks-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+/* Bottom Grid layout */
+.emp-dashboard .dashboard-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+}
+
+.emp-dashboard .attendance-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: 10px;
+}
+
+.emp-dashboard .attendance-status-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.emp-dashboard .attendance-status-item.border-bottom {
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.emp-dashboard .attendance-status-item.pt-10 {
+    padding-top: 10px;
+}
+
+.emp-dashboard .status-label {
+    color: var(--text-muted);
+}
+
+.emp-dashboard .status-value.font-semibold {
+    font-weight: var(--font-semibold);
+}
+
+.emp-dashboard .month-status {
+    text-align: right;
+}
+
+.emp-dashboard .month-days {
+    font-weight: var(--font-bold);
+    color: var(--primary-color);
+    font-size: var(--text-lg);
+}
+
+.emp-dashboard .month-total {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.emp-dashboard .recent-leaves-list {
+    margin-top: 10px;
+    padding: 0;
+    list-style: none;
+}
+
