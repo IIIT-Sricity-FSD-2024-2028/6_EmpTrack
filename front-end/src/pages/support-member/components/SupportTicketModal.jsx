@@ -3,11 +3,14 @@
 // status/priority/category, reply, add internal notes, resolve / reopen / close,
 // and escalate to the Technical Team or the Platform Admin.
 import { useEffect, useState } from 'react';
+import FieldError from '../../../components/common/FieldError';
 import Modal from '../../../components/common/Modal';
 import { formatDate, formatStatus, isClosedStatus, priorityBadge, supportTicketBadge } from '../../../components/platform/format';
 import { DetailItem, modalClass } from '../../../components/platform/ShellUI';
 import { CommentList, ConfirmDialog } from '../../../components/platform/TicketParts';
 import useFetch from '../../../hooks/useFetch';
+import useFormValidation from '../../../hooks/useFormValidation';
+import { SUPPORT_ATTACHMENT_EXTENSIONS, supportTicketSchema } from '../../../validation/formSchemas';
 import { cx } from '../../../utils/helpers';
 import {
   addInternalNote, addMessage, changeCategory, changePriority, changeStatus, claimTicket, closeTicket, escalateToPlatformAdmin,
@@ -62,6 +65,13 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
   const [dialog, setDialog] = useState(null); // 'resolve' | 'reopen' | 'close' | 'esc-tech' | 'esc-admin'
   const [dialogText, setDialogText] = useState('');
   const [busy, setBusy] = useState(false);
+  const categoryOptions = categories?.length ? categories : [ticket?.category].filter(Boolean);
+  const validation = useFormValidation(
+    // The ticket's current category stays selectable even if it's no longer configured.
+    supportTicketSchema({ statuses: EDITABLE_STATUSES, categories: [...new Set([...categoryOptions, ticket?.category].filter(Boolean))], dialog }),
+    { ...controls, message, note, escalationNote: note, dialogText, attachment },
+    { idPrefix: 'sm', serverFieldMap: { reason: 'dialogText', resolution_notes: 'dialogText' } },
+  );
 
   const sync = (t) => {
     setTicket(t);
@@ -81,6 +91,8 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
     setNote('');
     setAttachment(null);
     setDialog(null);
+    validation.reset();
+    // Runs only when a different ticket is opened.
   }, [initial]);
 
   if (!ticket) return null;
@@ -88,7 +100,6 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
   const isUnassigned = !ticket.assigned_to;
   const isTerminal = isClosedStatus(ticket.status);
   const isEscalated = ticket.status === 'ESCALATED';
-  const categoryOptions = categories?.length ? categories : [ticket.category];
 
   /** Runs an action, then reloads the ticket and notifies the page. */
   const run = async (action, success, after) => {
@@ -102,7 +113,7 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
       if (success) showToast(success);
       return true;
     } catch (err) {
-      showToast(err.message || 'Something went wrong.', 'error');
+      if (!validation.setServerErrors(err)) showToast(err.message || 'Something went wrong.', 'error');
       return false;
     } finally {
       setBusy(false);
@@ -111,7 +122,7 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
 
   const id = ticket.ticket_id;
 
-  const handleUpdate = () => run(async () => {
+  const handleUpdate = () => validation.validateFields(['status', 'priority', 'category']) && run(async () => {
     // Only the fields that changed are sent, each to its own endpoint (as in the original).
     if (controls.status !== ticket.status) await changeStatus(id, controls.status);
     if (controls.priority !== (ticket.priority || '').toUpperCase()) await changePriority(id, controls.priority);
@@ -119,20 +130,30 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
   }, 'Ticket updated.');
 
   const handleSend = () => {
-    if (!message.trim()) return showToast('Write a response first.', 'error');
+    if (!validation.validateFields(['message', 'attachment'])) return undefined;
     return run(() => addMessage(id, message.trim()), null, () => {
       setMessage('');
       setAttachment(null);
+      validation.untouch(['message', 'attachment']);
     });
   };
 
   const handleAddNote = () => {
-    if (!note.trim()) return showToast('Write an internal note first.', 'error');
-    return run(() => addInternalNote(id, note.trim()), null, () => setNote(''));
+    if (!validation.validateFields(['note'])) return undefined;
+    return run(() => addInternalNote(id, note.trim()), null, () => {
+      setNote('');
+      validation.untouch(['note']);
+    });
   };
 
   const openDialog = (kind) => {
+    // Escalations send the Internal Notes box as their note: check its length first.
+    if (kind.startsWith('esc-') && !validation.validateFields(['escalationNote'])) {
+      setTab('notes');
+      return;
+    }
     setDialogText('');
+    validation.untouch(['dialogText']);
     setDialog(kind);
   };
 
@@ -206,21 +227,24 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label" htmlFor="sm-status">Status</label>
-                <select id="sm-status" className="form-control" value={controls.status} onChange={(e) => setControls((c) => ({ ...c, status: e.target.value }))}>
+                <select className="form-control" value={controls.status} onChange={(e) => setControls((c) => ({ ...c, status: e.target.value }))} {...validation.input('status', 'sm-status')}>
                   {EDITABLE_STATUSES.map((s) => <option key={s} value={s}>{formatStatus(s)}</option>)}
                 </select>
+                <FieldError {...validation.errorProps('status')} />
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="sm-priority">Priority</label>
-                <select id="sm-priority" className="form-control" value={controls.priority} onChange={(e) => setControls((c) => ({ ...c, priority: e.target.value }))}>
+                <select className="form-control" value={controls.priority} onChange={(e) => setControls((c) => ({ ...c, priority: e.target.value }))} {...validation.input('priority', 'sm-priority')}>
                   {PRIORITIES.map((p) => <option key={p} value={p}>{p.charAt(0) + p.slice(1).toLowerCase()}</option>)}
                 </select>
+                <FieldError {...validation.errorProps('priority')} />
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="sm-category">Category</label>
-                <select id="sm-category" className="form-control" value={controls.category} onChange={(e) => setControls((c) => ({ ...c, category: e.target.value }))}>
-                  {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+                <select className="form-control" value={controls.category} onChange={(e) => setControls((c) => ({ ...c, category: e.target.value }))} {...validation.input('category', 'sm-category')}>
+                  {[...new Set([...categoryOptions, ticket.category].filter(Boolean))].map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
+                <FieldError {...validation.errorProps('category')} />
               </div>
             </div>
             <div className="action-row" style={{ margin: '12px 0 20px' }}>
@@ -247,27 +271,30 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
               <div role="tabpanel">
                 <CommentList items={ticket.comments} emptyText="No messages yet." />
                 <div className="form-group">
-                  <textarea className="form-control" rows={2} placeholder="Write your response..." aria-label="Write your response" value={message} onChange={(e) => setMessage(e.target.value)} />
+                  <textarea className="form-control" rows={2} maxLength={2000} placeholder="Write your response..." aria-label="Write your response" value={message} onChange={(e) => setMessage(e.target.value)} {...validation.input('message', 'sm-message')} />
+                  <FieldError {...validation.errorProps('message')} />
                 </div>
                 <div className="attach-row">
                   <label className="btn btn-outline" style={{ marginBottom: 0 }}>
                     <i className="ph ph-paperclip"></i> Attach File
-                    <input type="file" hidden onChange={(e) => setAttachment(e.target.files[0] || null)} />
+                    <input type="file" hidden accept={SUPPORT_ATTACHMENT_EXTENSIONS.join(',')} onChange={(e) => { setAttachment(e.target.files[0] || null); validation.touch('attachment'); }} {...validation.input('attachment', 'sm-attachment')} />
                   </label>
                   <button type="button" className="btn btn-primary" disabled={busy} onClick={handleSend}><i className="ph ph-paper-plane-tilt"></i> Send</button>
-                  {attachment && (
+                  {attachment && !validation.errors.attachment && (
                     <span className="attach-chip" title="There is no upload endpoint for support tickets, so the file is not sent.">
                       <i className="ph ph-file"></i> {attachment.name} (preview only - not uploaded)
                     </span>
                   )}
                 </div>
+                <FieldError {...validation.errorProps('attachment')} />
               </div>
             ) : (
               <div role="tabpanel">
                 <div className="form-hint"><i className="ph ph-eye-slash"></i> Internal notes are never visible to the Company Admin.</div>
                 <CommentList items={ticket.internal_notes} internal emptyIcon="ph-note" emptyText="No internal notes yet." />
                 <div className="form-group">
-                  <textarea className="form-control" rows={2} placeholder="Add an internal note..." aria-label="Add an internal note" value={note} onChange={(e) => setNote(e.target.value)} />
+                  <textarea className="form-control" rows={2} maxLength={2000} placeholder="Add an internal note..." aria-label="Add an internal note" value={note} onChange={(e) => setNote(e.target.value)} {...validation.input(validation.errors.escalationNote ? 'escalationNote' : 'note', 'sm-note')} />
+                  <FieldError {...validation.errorProps(validation.errors.escalationNote ? 'escalationNote' : 'note')} />
                 </div>
                 <button type="button" className="btn btn-outline" disabled={busy} onClick={handleAddNote}><i className="ph ph-note-pencil"></i> Add Internal Note</button>
               </div>
@@ -286,13 +313,15 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
         confirmIcon={active?.icon}
         onClose={() => setDialog(null)}
         onConfirm={async () => {
+          if (active.field && !validation.validateFields(['dialogText'])) return;
           if (await run(active.action, active.success, active.after)) setDialog(null);
         }}
       >
         {active?.field && (
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label" htmlFor="sm-dialog-text">{active.field.label}</label>
-            <textarea id="sm-dialog-text" className="form-control" rows={3} placeholder={active.field.placeholder} value={dialogText} onChange={(e) => setDialogText(e.target.value)} />
+            <textarea className="form-control" rows={3} maxLength={dialog === 'reopen' ? 500 : 2000} placeholder={active.field.placeholder} value={dialogText} onChange={(e) => setDialogText(e.target.value)} {...validation.input('dialogText', 'sm-dialog-text')} />
+            <FieldError {...validation.errorProps('dialogText')} />
           </div>
         )}
       </ConfirmDialog>

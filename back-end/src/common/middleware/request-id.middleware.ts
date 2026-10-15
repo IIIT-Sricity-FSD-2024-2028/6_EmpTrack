@@ -11,6 +11,7 @@ const SAFE_REQUEST_ID = /^[a-zA-Z0-9._-]{1,100}$/;
 declare module 'express' {
   interface Request {
     requestId: string;
+    sessionToken?: string;
   }
 }
 

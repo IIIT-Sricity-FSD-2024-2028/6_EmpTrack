@@ -9,6 +9,8 @@ import {
   UploadAttachmentDto,
   ResolveIssueDto,
   SubmitForVerificationDto,
+  WorkProgressQueryDto,
+  RecentUpdatesQueryDto,
 } from './dto/technical-member.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -37,13 +39,13 @@ export class TechnicalMemberController {
 
   @ApiOperation({ summary: 'Daily work progress series for the dashboard chart' })
   @Get('work-progress')
-  getWorkProgress(@Headers('x-actor-id') actorId: string, @Query('days') days?: string) {
+  getWorkProgress(@Headers('x-actor-id') actorId: string, @Query() { days }: WorkProgressQueryDto) {
     return this.service.getWorkProgress(actorId, Number(days) > 0 ? Number(days) : 7);
   }
 
   @ApiOperation({ summary: 'Recent activity across all issues assigned to this member' })
   @Get('recent-updates')
-  getRecentUpdates(@Headers('x-actor-id') actorId: string, @Query('limit') limit?: string) {
+  getRecentUpdates(@Headers('x-actor-id') actorId: string, @Query() { limit }: RecentUpdatesQueryDto) {
     return this.service.getRecentUpdates(actorId, Number(limit) > 0 ? Number(limit) : 10);
   }
 

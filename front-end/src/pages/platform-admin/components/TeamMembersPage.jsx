@@ -10,6 +10,8 @@ import {
 } from '../../../components/platform/ShellUI';
 import { ConfirmDialog } from '../../../components/platform/TicketParts';
 import useFetch from '../../../hooks/useFetch';
+import useFormValidation from '../../../hooks/useFormValidation';
+import { teamMemberSchema } from '../../../validation/formSchemas';
 import { createTeamMember, getTeam, IS_DEMO, updateTeamMember, updateTeamMemberStatus } from '../../../services/platformAdminService';
 
 const PAGE_SIZE = 8;
@@ -38,6 +40,7 @@ export default function TeamMembersPage({ role, label, title }) {
   const [saving, setSaving] = useState(false);
   const [statusChange, setStatusChange] = useState(null); // { member, newStatus }
   const [toast, showToast] = useToast();
+  const validation = useFormValidation(teamMemberSchema({ isCreate: form?.mode !== 'edit' }), form || {}, { idPrefix: `${role}-member` });
 
   const changeFilter = (setter) => (value) => {
     setter(value);
@@ -48,19 +51,23 @@ export default function TeamMembersPage({ role, label, title }) {
   const openCreate = () => {
     setForm({ mode: 'create', ...EMPTY_FORM });
     setFormError('');
+    validation.reset();
   };
   const openEdit = (m) => {
     setForm({ mode: 'edit', id: m.emp_id, name: m.emp_name, email: m.email, phone: m.phone || '', specialization: m.specialization || '' });
     setFormError('');
+    validation.reset();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), specialization: form.specialization.trim() };
-    const isCreate = form.mode === 'create';
+    setFormError('');
     // Same required fields as the original: create needs name/email/phone, edit name/email.
-    if (isCreate && (!data.name || !data.email || !data.phone)) return setFormError('Name, email and phone are required.');
-    if (!isCreate && (!data.name || !data.email)) return setFormError('Name and email are required.');
+    if (!validation.validateAll()) return;
+    const isCreate = form.mode === 'create';
+    const data = { name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), specialization: form.specialization.trim() };
+    // An edit leaves a blank phone unchanged rather than clearing it.
+    if (!isCreate && !data.phone) delete data.phone;
     setSaving(true);
     try {
       if (isCreate) {
@@ -73,7 +80,7 @@ export default function TeamMembersPage({ role, label, title }) {
       setForm(null);
       reload();
     } catch (err) {
-      setFormError(err.message || (isCreate ? 'Failed to add team member.' : 'Failed to update.'));
+      if (!validation.setServerErrors(err)) setFormError(err.message || (isCreate ? 'Failed to add team member.' : 'Failed to update.'));
     } finally {
       setSaving(false);
     }
@@ -166,10 +173,10 @@ export default function TeamMembersPage({ role, label, title }) {
       >
         {form && (
           <form id="team-member-form" onSubmit={handleSubmit} noValidate>
-            <Input label="Name" value={form.name} onChange={set('name')} required />
-            <Input label="Email" type="email" value={form.email} onChange={set('email')} required />
-            <Input label="Phone" value={form.phone} onChange={set('phone')} required />
-            <Input label="Specialization" placeholder="e.g. Infrastructure, Networking" value={form.specialization} onChange={set('specialization')} />
+            <Input label="Name" maxLength={100} value={form.name} onChange={set('name')} required {...validation.field('name')} />
+            <Input label="Email" type="email" maxLength={254} value={form.email} onChange={set('email')} required {...validation.field('email')} />
+            <Input label="Phone" type="tel" maxLength={20} placeholder="e.g. +91 98765 43210" value={form.phone} onChange={set('phone')} required={form.mode !== 'edit'} {...validation.field('phone')} />
+            <Input label="Specialization" maxLength={100} placeholder="e.g. Infrastructure, Networking" value={form.specialization} onChange={set('specialization')} {...validation.field('specialization')} />
             {formError && <div className="form-error" role="alert">{formError}</div>}
           </form>
         )}

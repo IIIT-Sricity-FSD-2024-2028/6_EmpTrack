@@ -9,15 +9,17 @@ import {
   UploadAttachmentDto,
   ResolveIssueDto,
   SubmitForVerificationDto,
+  ATTACHMENT_EXTENSIONS,
+  MAX_ATTACHMENT_BYTES,
 } from './dto/technical-member.dto';
+import { CANONICAL_MIME, contentMatchesExtension, extensionOf } from '../common/utils/file-signature.util';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
 const OPEN_STATUSES = ['OPEN', 'IN_PROGRESS'];
 const TERMINAL_STATUSES = ['RESOLVED', 'CLOSED'];
-// Uploads are held in memory by MockDataService, so a per-file ceiling keeps a
-// long-running dev server from growing without bound.
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+// Uploads are held in memory by MockDataService, so a per-file ceiling
+// (MAX_ATTACHMENT_BYTES) keeps a long-running dev server from growing without bound.
 
 @Injectable()
 export class TechnicalMemberService {
@@ -347,25 +349,34 @@ export class TechnicalMemberService {
   uploadAttachment(actorId: string, id: string, dto: UploadAttachmentDto, actor: Actor) {
     const ticket = this.findOwned(actorId, id);
 
-    if (dto.file_size && dto.file_size > MAX_ATTACHMENT_BYTES) {
-      throw new BadRequestException('Attachments must be 5 MB or smaller.');
+    // Type and size come from the file itself, not from what the client declares.
+    const extension = extensionOf(dto.file_name);
+    if (!ATTACHMENT_EXTENSIONS.includes(extension)) {
+      throw new BadRequestException(`Invalid file type. Allowed: ${ATTACHMENT_EXTENSIONS.join(', ')}.`);
     }
-    // The declared size is client-supplied, so the encoded payload is checked too.
-    if (dto.data_url && dto.data_url.length > MAX_ATTACHMENT_BYTES * 1.4) {
-      throw new BadRequestException('Attachments must be 5 MB or smaller.');
+    const bytes = Buffer.from(dto.data_url.slice(dto.data_url.indexOf(',') + 1), 'base64');
+    if (bytes.length === 0) throw new BadRequestException('The uploaded file is empty.');
+    if (bytes.length > MAX_ATTACHMENT_BYTES) throw new BadRequestException('Attachments must be 5 MB or smaller.');
+    if (dto.file_size !== undefined && dto.file_size !== null && dto.file_size !== bytes.length) {
+      throw new BadRequestException('The file size does not match the uploaded contents.');
     }
+    if (!contentMatchesExtension(bytes, extension)) {
+      throw new BadRequestException(`The file contents do not match its ${extension} extension.`);
+    }
+    const fileType = CANONICAL_MIME[extension];
 
     const attachment = {
       attachment_id: 'ATT-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
       file_name: dto.file_name,
-      file_type: dto.file_type || 'application/octet-stream',
-      file_size: dto.file_size || 0,
-      kind: dto.kind || (dto.file_type && dto.file_type.startsWith('image/') ? 'SCREENSHOT' : 'OTHER'),
+      file_type: fileType,
+      file_size: bytes.length,
+      kind: dto.kind || (fileType.startsWith('image/') ? 'SCREENSHOT' : extension === '.log' ? 'LOG' : 'OTHER'),
       description: dto.description || null,
       uploaded_by: actor.emp_id,
       uploaded_by_name: actor.emp_name,
       uploaded_at: new Date().toISOString(),
-      data_url: dto.data_url || null,
+      // Re-encoded with the verified type so a forged data: prefix is never served back.
+      data_url: `data:${fileType};base64,${bytes.toString('base64')}`,
     };
     ticket.attachments.push(attachment);
     this.touch(ticket);

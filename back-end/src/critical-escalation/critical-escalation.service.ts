@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import {
   CreateCriticalEscalationDto,
@@ -44,6 +44,9 @@ export class CriticalEscalationService {
   }
 
   create(dto: CreateCriticalEscalationDto, actor: Actor) {
+    if (!this.dataStore.getCompanies().some((c) => c.company_id === dto.company_id)) {
+      throw new BadRequestException('Selected company was not found');
+    }
     const escalation = {
       issue_id: 'CESC-' + Date.now(),
       company_id: dto.company_id,

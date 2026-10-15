@@ -6,6 +6,9 @@
 // Event shape: { id, type: 'LEAVE'|'HOLIDAY'|'TASK_DEADLINE'|'COMPANY_EVENT'|'MEETING'|'ATTENDANCE'|'PERSONAL',
 //                title, date: 'YYYY-MM-DD', endDate?: 'YYYY-MM-DD', meta?: { time? } }
 import { useCallback, useEffect, useState } from 'react';
+import FieldError from '../common/FieldError';
+import useFormValidation from '../../hooks/useFormValidation';
+import { calendarEventSchema } from '../../validation/formSchemas';
 import { toDateKey } from '../../utils/helpers';
 
 const TYPE_LABEL = {
@@ -67,6 +70,8 @@ export default function Calendar({ fetchEvents, onAddEvent }) {
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const validation = useFormValidation(calendarEventSchema, form, { idPrefix: 'cal-event' });
 
   const load = useCallback(async () => {
     if (typeof fetchEvents !== 'function') return;
@@ -85,6 +90,7 @@ export default function Calendar({ fetchEvents, onAddEvent }) {
     setFormOpen(false);
     setFormError('');
     setForm(EMPTY_FORM);
+    validation.reset();
   };
 
   const selectDay = (dateKey) => {
@@ -97,13 +103,13 @@ export default function Calendar({ fetchEvents, onAddEvent }) {
     selectDay(toDateKey(new Date()));
   };
 
-  const saveEvent = async () => {
+  const saveEvent = async (e) => {
+    e?.preventDefault();
+    setFormError('');
+    if (!validation.validateAll()) return;
     const title = form.title.trim();
-    if (!title) {
-      setFormError('Please enter an event title.');
-      return;
-    }
     if (typeof onAddEvent !== 'function') return;
+    setSaving(true);
     try {
       await onAddEvent({
         title,
@@ -114,8 +120,10 @@ export default function Calendar({ fetchEvents, onAddEvent }) {
       });
       closeForm();
       await load();
-    } catch (e) {
-      setFormError(e.message || 'Could not save event.');
+    } catch (err) {
+      if (!validation.setServerErrors(err)) setFormError(err.message || 'Could not save event.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -204,36 +212,45 @@ export default function Calendar({ fetchEvents, onAddEvent }) {
         <div className="cal-day-panel-date">{panelDate}</div>
 
         {formOpen ? (
-          <div className="cal-add-form">
+          <form className="cal-add-form" onSubmit={saveEvent} noValidate>
             <input
               type="text"
               className="form-control"
               placeholder="Event title"
+              aria-label="Event title"
+              aria-required="true"
               maxLength={80}
               autoFocus
               value={form.title}
               onChange={updateForm('title')}
+              {...validation.input('title')}
             />
+            <FieldError {...validation.errorProps('title')} />
             <div className="cal-add-form-row">
-              <input type="time" className="form-control" value={form.time} onChange={updateForm('time')} />
-              <select className="form-control" value={form.type} onChange={updateForm('type')}>
+              <input type="time" className="form-control" aria-label="Time (optional)" value={form.time} onChange={updateForm('time')} {...validation.input('time')} />
+              <select className="form-control" aria-label="Event type" value={form.type} onChange={updateForm('type')} {...validation.input('type')}>
                 <option value="PERSONAL">Personal</option>
                 <option value="MEETING">Meeting</option>
               </select>
             </div>
+            <FieldError {...validation.errorProps('time')} />
             <textarea
               className="form-control"
               placeholder="Description (optional)"
+              aria-label="Description (optional)"
               rows={2}
+              maxLength={1000}
               value={form.description}
               onChange={updateForm('description')}
+              {...validation.input('description')}
             ></textarea>
-            {formError && <div className="cal-add-form-error">{formError}</div>}
+            <FieldError {...validation.errorProps('description')} />
+            {formError && <div className="cal-add-form-error" role="alert">{formError}</div>}
             <div className="cal-add-form-actions">
               <button type="button" className="btn btn-outline" onClick={closeForm}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={saveEvent}>Add Event</button>
+              <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Adding...' : 'Add Event'}</button>
             </div>
-          </div>
+          </form>
         ) : (
           <>
             <div className="cal-day-events">

@@ -21,7 +21,7 @@ export default function SaFilterBar({ placeholder, onSearch, onClear, children, 
       <div className="search-wrap">
         <i className="ph ph-magnifying-glass"></i>
         <input
-          type="text" id={searchId} className="search-input" placeholder={placeholder} aria-label={placeholder} value={term}
+          type="text" maxLength={100} id={searchId} className="search-input" placeholder={placeholder} aria-label={placeholder} value={term}
           onChange={(e) => { setTerm(e.target.value); debouncedSearch(e.target.value.trim()); }}
         />
       </div>

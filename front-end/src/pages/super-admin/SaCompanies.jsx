@@ -7,8 +7,11 @@ import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import SaPagination from '../../components/sa-common/SaPagination';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
+import useFormValidation from '../../hooks/useFormValidation';
 import * as sa from '../../services/superAdminService';
-import { EMAIL_RE, STRONG_PASSWORD, companyStatusBadgeClass, formatDate, paginate } from '../../utils/saCommon';
+import { companyStatusBadgeClass, formatDate, paginate } from '../../utils/saCommon';
+import { PASSWORD_HINT } from '../../utils/validation';
+import { createCompanyAdminSchema, createCompanySchema, editCompanySchema, reassignPlatformAdminSchema } from '../../validation/formSchemas';
 import { SA_BASE, SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
 import './styles/companies.css';
@@ -20,7 +23,6 @@ const EMPTY_CREATE = {
   company_name: '', company_email: '', phone: '', industry: '', address: '', subscription_plan_id: '', status: 'ACTIVE',
   admin_name: '', admin_email: '', admin_phone: '', admin_password: '', admin_confirm_password: '', platform_admin_id: '',
 };
-const CREATE_REQUIRED = ['company_name', 'company_email', 'phone', 'industry', 'address', 'subscription_plan_id', 'admin_name', 'admin_email', 'admin_phone', 'admin_password', 'admin_confirm_password', 'platform_admin_id'];
 const EMPTY_CA = { name: '', email: '', password: '', confirmPassword: '', phone: '', companyId: '', status: 'ACTIVE' };
 
 function PlanOptions({ plans, selectedId }) {
@@ -82,10 +84,22 @@ export default function SaCompanies() {
     loadCompanies();
   }, [loadCompanies]);
 
+  const activePlanIds = plans.filter((p) => p.status === 'ACTIVE').map((p) => p.plan_id);
+  const adminIds = activeAdmins.map((a) => a.emp_id);
+  const cv = useFormValidation(createCompanySchema(activePlanIds, adminIds), createForm.values, { idPrefix: 'cc' });
+  const ev = useFormValidation(
+    editCompanySchema([...activePlanIds, ...(selected?.subscription_plan_id ? [selected.subscription_plan_id] : [])]),
+    editForm.values,
+    { idPrefix: 'ec' },
+  );
+  const cav = useFormValidation(createCompanyAdminSchema(Array.isArray(caCompanies) ? caCompanies.map((c) => c.company_id) : []), caForm.values, { idPrefix: 'cca' });
+  const rv = useFormValidation(reassignPlatformAdminSchema(adminIds), { platform_admin_id: reassignTo }, { idPrefix: 'ra' });
+
   const close = () => setModal(null);
   const open = (name, company = null) => {
     setSelected(company);
     setError('');
+    [cv, ev, cav, rv].forEach((v) => v.reset());
     setModal(name);
   };
 
@@ -122,42 +136,42 @@ export default function SaCompanies() {
   };
 
   const submitCreate = async () => {
+    setError('');
+    if (!cv.validateAll()) return;
     const data = Object.fromEntries(Object.entries(createForm.values).map(([k, v]) => [k, typeof v === 'string' && !k.includes('password') ? v.trim() : v]));
-    if (CREATE_REQUIRED.some((key) => !data[key])) return setError('Please fill in all required fields.');
-    if (!EMAIL_RE.test(data.admin_email)) return setError('Please enter a valid admin email address.');
-    if (!STRONG_PASSWORD.test(data.admin_password)) return setError('Admin password must be 8+ characters with uppercase, lowercase, a number, and a special character.');
-    if (data.admin_password !== data.admin_confirm_password) return setError('Admin password and confirmation do not match.');
     try {
       await sa.createCompany(data);
       showToast('Company created successfully. Company Admin can log in immediately.');
       close();
       await Promise.all([loadLookups(), loadCompanies()]);
     } catch (e) {
-      setError(e.message || 'Failed to create company.');
+      if (!cv.setServerErrors(e)) setError(e.message || 'Failed to create company.');
     }
   };
 
   const submitEdit = async () => {
+    setError('');
+    if (!ev.validateAll()) return;
     const data = Object.fromEntries(Object.entries(editForm.values).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]));
-    if (!data.company_name || !data.company_email) return setError('Company name and email are required.');
     try {
       await sa.updateCompany(selected.company_id, data);
       showToast('Company updated successfully.');
       close();
       await loadCompanies();
     } catch (e) {
-      setError(e.message || 'Failed to update company.');
+      if (!ev.setServerErrors(e)) setError(e.message || 'Failed to update company.');
     }
   };
 
   const submitReassign = async () => {
+    if (!rv.validateAll()) return;
     try {
       await sa.reassignCompanyPlatformAdmin(selected.company_id, reassignTo);
       showToast('Platform Admin reassigned successfully.');
       close();
       await Promise.all([loadLookups(), loadCompanies()]);
     } catch (e) {
-      showToast(e.message || 'Failed to reassign.', 'error');
+      if (!rv.setServerErrors(e)) showToast(e.message || 'Failed to reassign.', 'error');
     }
   };
 
@@ -173,19 +187,17 @@ export default function SaCompanies() {
   };
 
   const submitCreateCa = async () => {
+    setError('');
+    if (!cav.validateAll()) return;
     const { companyId, ...rest } = caForm.values;
     const data = { ...rest, name: rest.name.trim(), email: rest.email.trim(), phone: rest.phone.trim() };
-    if (!companyId || !data.name || !data.email || !data.phone || !data.password || !data.confirmPassword) return setError('All fields are required.');
-    if (!EMAIL_RE.test(data.email)) return setError('Please enter a valid email address.');
-    if (!STRONG_PASSWORD.test(data.password)) return setError('Password must be 8+ characters with uppercase, lowercase, a number, and a special character.');
-    if (data.password !== data.confirmPassword) return setError('Passwords do not match.');
     try {
       await sa.createCompanyAdmin(companyId, data);
       showToast('Company Admin created successfully. They can log in immediately.');
       close();
       await loadCompanies();
     } catch (e) {
-      setError(e.message || 'Failed to create Company Admin.');
+      if (!cav.setServerErrors(e)) setError(e.message || 'Failed to create Company Admin.');
     }
   };
 
@@ -292,19 +304,19 @@ export default function SaCompanies() {
       </div>
 
       <SaModal id="createCompanyModal" open={modal === 'create'} onClose={close} title="Create Company" maxWidth="640px" footer={footer('Create Company', submitCreate)}>
-        <form id="create-company-form" onSubmit={(e) => e.preventDefault()}>
+        <form id="create-company-form" onSubmit={(e) => e.preventDefault()} noValidate>
           <div className="form-section-title">Company Information</div>
           <div className="form-grid">
-            <Field label="Company Name" htmlFor="cc-name"><input type="text" className="form-control" id="cc-name" {...createForm.bind('company_name')} /></Field>
-            <Field label="Company Email" htmlFor="cc-email"><input type="email" className="form-control" id="cc-email" {...createForm.bind('company_email')} /></Field>
-            <Field label="Phone Number" htmlFor="cc-phone"><input type="text" className="form-control" id="cc-phone" {...createForm.bind('phone')} /></Field>
-            <Field label="Industry" htmlFor="cc-industry"><input type="text" className="form-control" id="cc-industry" {...createForm.bind('industry')} /></Field>
-            <Field label="Address" htmlFor="cc-address" style={{ gridColumn: '1 / -1' }}><input type="text" className="form-control" id="cc-address" {...createForm.bind('address')} /></Field>
-            <Field label="Subscription Plan" htmlFor="cc-plan">
-              <select className="form-control" id="cc-plan" {...createForm.bind('subscription_plan_id')}><PlanOptions plans={plans} /></select>
+            <Field label="Company Name" htmlFor="cc-name" required error={cv.errors.company_name}><input type="text" className="form-control" maxLength={120} aria-required={true} {...createForm.bind('company_name')} {...cv.input('company_name', 'cc-name')} /></Field>
+            <Field label="Company Email" htmlFor="cc-email" required error={cv.errors.company_email}><input type="email" className="form-control" maxLength={254} aria-required={true} {...createForm.bind('company_email')} {...cv.input('company_email', 'cc-email')} /></Field>
+            <Field label="Phone Number" htmlFor="cc-phone" required error={cv.errors.phone}><input type="tel" className="form-control" maxLength={20} aria-required={true} {...createForm.bind('phone')} {...cv.input('phone', 'cc-phone')} /></Field>
+            <Field label="Industry" htmlFor="cc-industry" required error={cv.errors.industry}><input type="text" className="form-control" maxLength={100} aria-required={true} {...createForm.bind('industry')} {...cv.input('industry', 'cc-industry')} /></Field>
+            <Field label="Address" htmlFor="cc-address" required error={cv.errors.address} style={{ gridColumn: '1 / -1' }}><input type="text" className="form-control" maxLength={300} aria-required={true} {...createForm.bind('address')} {...cv.input('address', 'cc-address')} /></Field>
+            <Field label="Subscription Plan" htmlFor="cc-plan" required error={cv.errors.subscription_plan_id}>
+              <select className="form-control" aria-required={true} {...createForm.bind('subscription_plan_id')} {...cv.input('subscription_plan_id', 'cc-plan')}><PlanOptions plans={plans} /></select>
             </Field>
-            <Field label="Company Status" htmlFor="cc-status">
-              <select className="form-control" id="cc-status" {...createForm.bind('status')}>
+            <Field label="Company Status" htmlFor="cc-status" error={cv.errors.status}>
+              <select className="form-control" aria-required={false} {...createForm.bind('status')} {...cv.input('status', 'cc-status')}>
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
               </select>
@@ -314,16 +326,17 @@ export default function SaCompanies() {
           <div className="form-section-title">Company Admin Information</div>
           <div className="form-hint"><i className="ph ph-info"></i> The Company Admin account is created immediately and can log in with this email and password.</div>
           <div className="form-grid">
-            <Field label="Admin Name" htmlFor="cc-admin-name"><input type="text" className="form-control" id="cc-admin-name" {...createForm.bind('admin_name')} /></Field>
-            <Field label="Admin Email" htmlFor="cc-admin-email"><input type="email" className="form-control" id="cc-admin-email" {...createForm.bind('admin_email')} /></Field>
-            <Field label="Admin Phone" htmlFor="cc-admin-phone"><input type="text" className="form-control" id="cc-admin-phone" {...createForm.bind('admin_phone')} /></Field>
-            <Field label="Admin Password" htmlFor="cc-admin-password"><input type="password" className="form-control" id="cc-admin-password" autoComplete="new-password" {...createForm.bind('admin_password')} /></Field>
-            <Field label="Confirm Admin Password" htmlFor="cc-admin-confirm-password"><input type="password" className="form-control" id="cc-admin-confirm-password" autoComplete="new-password" {...createForm.bind('admin_confirm_password')} /></Field>
+            <Field label="Admin Name" htmlFor="cc-admin-name" required error={cv.errors.admin_name}><input type="text" className="form-control" maxLength={100} aria-required={true} {...createForm.bind('admin_name')} {...cv.input('admin_name', 'cc-admin-name')} /></Field>
+            <Field label="Admin Email" htmlFor="cc-admin-email" required error={cv.errors.admin_email}><input type="email" className="form-control" maxLength={254} aria-required={true} {...createForm.bind('admin_email')} {...cv.input('admin_email', 'cc-admin-email')} /></Field>
+            <Field label="Admin Phone" htmlFor="cc-admin-phone" required error={cv.errors.admin_phone}><input type="tel" className="form-control" maxLength={20} aria-required={true} {...createForm.bind('admin_phone')} {...cv.input('admin_phone', 'cc-admin-phone')} /></Field>
+            <div className="form-hint" style={{ gridColumn: '1 / -1' }}><i className="ph ph-info"></i> {PASSWORD_HINT}</div>
+            <Field label="Admin Password" htmlFor="cc-admin-password" required error={cv.errors.admin_password}><input type="password" className="form-control" autoComplete="new-password" maxLength={64} aria-required={true} {...createForm.bind('admin_password')} {...cv.input('admin_password', 'cc-admin-password')} /></Field>
+            <Field label="Confirm Admin Password" htmlFor="cc-admin-confirm-password" required error={cv.errors.admin_confirm_password}><input type="password" className="form-control" autoComplete="new-password" maxLength={64} aria-required={true} {...createForm.bind('admin_confirm_password')} {...cv.input('admin_confirm_password', 'cc-admin-confirm-password')} /></Field>
           </div>
 
           <div className="form-section-title">Platform Admin Assignment</div>
-          <Field label="Assigned Platform Admin" htmlFor="cc-platform-admin">
-            <select className="form-control" id="cc-platform-admin" {...createForm.bind('platform_admin_id')}><AdminOptions admins={activeAdmins} /></select>
+          <Field label="Assigned Platform Admin" htmlFor="cc-platform-admin" required error={cv.errors.platform_admin_id}>
+            <select className="form-control" aria-required={true} {...createForm.bind('platform_admin_id')} {...cv.input('platform_admin_id', 'cc-platform-admin')}><AdminOptions admins={activeAdmins} /></select>
           </Field>
 
           <FormError id="create-company-error" message={error} />
@@ -331,14 +344,14 @@ export default function SaCompanies() {
       </SaModal>
 
       <SaModal id="createCaModal" open={modal === 'createCa'} onClose={close} title="Create Company Admin" footer={footer('Create Company Admin', submitCreateCa)}>
-        <form id="create-ca-form" onSubmit={(e) => e.preventDefault()}>
-          <Field label="Full Name" htmlFor="cca-name"><input type="text" className="form-control" id="cca-name" {...caForm.bind('name')} /></Field>
-          <Field label="Email" htmlFor="cca-email"><input type="email" className="form-control" id="cca-email" {...caForm.bind('email')} /></Field>
-          <Field label="Password" htmlFor="cca-password"><input type="password" className="form-control" id="cca-password" autoComplete="new-password" {...caForm.bind('password')} /></Field>
-          <Field label="Confirm Password" htmlFor="cca-confirm-password"><input type="password" className="form-control" id="cca-confirm-password" autoComplete="new-password" {...caForm.bind('confirmPassword')} /></Field>
-          <Field label="Phone Number" htmlFor="cca-phone"><input type="text" className="form-control" id="cca-phone" {...caForm.bind('phone')} /></Field>
-          <Field label="Company" htmlFor="cca-company">
-            <select className="form-control" id="cca-company" {...caForm.bind('companyId')}>
+        <form id="create-ca-form" onSubmit={(e) => e.preventDefault()} noValidate>
+          <Field label="Full Name" htmlFor="cca-name" required error={cav.errors.name}><input type="text" className="form-control" maxLength={100} aria-required={true} {...caForm.bind('name')} {...cav.input('name', 'cca-name')} /></Field>
+          <Field label="Email" htmlFor="cca-email" required error={cav.errors.email}><input type="email" className="form-control" maxLength={254} aria-required={true} {...caForm.bind('email')} {...cav.input('email', 'cca-email')} /></Field>
+          <Field label="Password" htmlFor="cca-password" required error={cav.errors.password}><input type="password" className="form-control" autoComplete="new-password" maxLength={64} aria-required={true} {...caForm.bind('password')} {...cav.input('password', 'cca-password')} /></Field>
+          <Field label="Confirm Password" htmlFor="cca-confirm-password" required error={cav.errors.confirmPassword}><input type="password" className="form-control" autoComplete="new-password" maxLength={64} aria-required={true} {...caForm.bind('confirmPassword')} {...cav.input('confirmPassword', 'cca-confirm-password')} /></Field>
+          <Field label="Phone Number" htmlFor="cca-phone" required error={cav.errors.phone}><input type="tel" className="form-control" maxLength={20} aria-required={true} {...caForm.bind('phone')} {...cav.input('phone', 'cca-phone')} /></Field>
+          <Field label="Company" htmlFor="cca-company" required error={cav.errors.companyId}>
+            <select className="form-control" aria-required={true} {...caForm.bind('companyId')} {...cav.input('companyId', 'cca-company')}>
               {caCompanies === null && <option value="">Loading companies...</option>}
               {caCompanies === 'error' && <option value="">Failed to load companies</option>}
               {Array.isArray(caCompanies) && (
@@ -349,8 +362,8 @@ export default function SaCompanies() {
               )}
             </select>
           </Field>
-          <Field label="Status" htmlFor="cca-status">
-            <select className="form-control" id="cca-status" {...caForm.bind('status')}>
+          <Field label="Status" htmlFor="cca-status" error={cav.errors.status}>
+            <select className="form-control" aria-required={false} {...caForm.bind('status')} {...cav.input('status', 'cca-status')}>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </select>
@@ -361,15 +374,15 @@ export default function SaCompanies() {
       </SaModal>
 
       <SaModal id="editCompanyModal" open={modal === 'edit'} onClose={close} title="Edit Company" maxWidth="560px" footer={footer('Save Changes', submitEdit)}>
-        <form id="edit-company-form" onSubmit={(e) => e.preventDefault()}>
+        <form id="edit-company-form" onSubmit={(e) => e.preventDefault()} noValidate>
           <div className="form-grid">
-            <Field label="Company Name" htmlFor="ec-name"><input type="text" className="form-control" id="ec-name" {...editForm.bind('company_name')} /></Field>
-            <Field label="Company Email" htmlFor="ec-email"><input type="email" className="form-control" id="ec-email" {...editForm.bind('company_email')} /></Field>
-            <Field label="Phone Number" htmlFor="ec-phone"><input type="text" className="form-control" id="ec-phone" {...editForm.bind('phone')} /></Field>
-            <Field label="Industry" htmlFor="ec-industry"><input type="text" className="form-control" id="ec-industry" {...editForm.bind('industry')} /></Field>
-            <Field label="Address" htmlFor="ec-address" style={{ gridColumn: '1 / -1' }}><input type="text" className="form-control" id="ec-address" {...editForm.bind('address')} /></Field>
-            <Field label="Subscription Plan" htmlFor="ec-plan">
-              <select className="form-control" id="ec-plan" {...editForm.bind('subscription_plan_id')}><PlanOptions plans={plans} selectedId={v?.subscription_plan_id} /></select>
+            <Field label="Company Name" htmlFor="ec-name" required error={ev.errors.company_name}><input type="text" className="form-control" maxLength={120} aria-required={true} {...editForm.bind('company_name')} {...ev.input('company_name', 'ec-name')} /></Field>
+            <Field label="Company Email" htmlFor="ec-email" required error={ev.errors.company_email}><input type="email" className="form-control" maxLength={254} aria-required={true} {...editForm.bind('company_email')} {...ev.input('company_email', 'ec-email')} /></Field>
+            <Field label="Phone Number" htmlFor="ec-phone" required error={ev.errors.phone}><input type="tel" className="form-control" maxLength={20} aria-required={true} {...editForm.bind('phone')} {...ev.input('phone', 'ec-phone')} /></Field>
+            <Field label="Industry" htmlFor="ec-industry" required error={ev.errors.industry}><input type="text" className="form-control" maxLength={100} aria-required={true} {...editForm.bind('industry')} {...ev.input('industry', 'ec-industry')} /></Field>
+            <Field label="Address" htmlFor="ec-address" required error={ev.errors.address} style={{ gridColumn: '1 / -1' }}><input type="text" className="form-control" maxLength={300} aria-required={true} {...editForm.bind('address')} {...ev.input('address', 'ec-address')} /></Field>
+            <Field label="Subscription Plan" htmlFor="ec-plan" required error={ev.errors.subscription_plan_id}>
+              <select className="form-control" aria-required={true} {...editForm.bind('subscription_plan_id')} {...ev.input('subscription_plan_id', 'ec-plan')}><PlanOptions plans={plans} selectedId={v?.subscription_plan_id} /></select>
             </Field>
           </div>
           <FormError id="edit-company-error" message={error} />
@@ -398,8 +411,8 @@ export default function SaCompanies() {
       </SaModal>
 
       <SaModal id="reassignModal" open={modal === 'reassign'} onClose={close} title="Reassign Platform Admin" maxWidth="420px" footer={footer('Reassign', submitReassign)}>
-        <Field label="New Platform Admin" htmlFor="ra-platform-admin">
-          <select className="form-control" id="ra-platform-admin" value={reassignTo} onChange={(e) => setReassignTo(e.target.value)}><AdminOptions admins={activeAdmins} /></select>
+        <Field label="New Platform Admin" htmlFor="ra-platform-admin" required error={rv.errors.platform_admin_id}>
+          <select className="form-control" value={reassignTo} onChange={(e) => setReassignTo(e.target.value)} {...rv.input('platform_admin_id', 'ra-platform-admin')}><AdminOptions admins={activeAdmins} /></select>
         </Field>
       </SaModal>
 

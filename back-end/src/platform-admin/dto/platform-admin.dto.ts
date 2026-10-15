@@ -1,24 +1,22 @@
-import { IsString, IsNotEmpty, IsOptional, IsEmail, MinLength, Matches } from 'class-validator';
-import { STRONG_PASSWORD_REGEX } from '../../common/utils/password.util';
+import { EmailField, EnumField, PasswordInputField, PersonNameField, PhoneField, StrongPasswordField } from '../../common/validation/validators';
+import { ACCOUNT_STATUSES } from '../../common/validation/enums';
 
 export class CreatePlatformAdminDto {
-  @IsString() @IsNotEmpty() name: string;
-  @IsEmail() email: string;
-  @IsString() @IsNotEmpty() phone: string;
-  @IsString() @MinLength(8) @Matches(STRONG_PASSWORD_REGEX, {
-    message: 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.',
-  })
-  password: string;
-  @IsString() @IsNotEmpty() confirmPassword: string;
-  @IsString() @IsOptional() status?: string;
+  @PersonNameField('Name') name: string;
+  @EmailField('Email') email: string;
+  @PhoneField('Phone number') phone: string;
+  @StrongPasswordField('Password') password: string;
+  // Compared with password in PlatformAdminService.
+  @PasswordInputField('Password confirmation') confirmPassword: string;
+  @EnumField('Status', ACCOUNT_STATUSES, { optional: true }) status?: string;
 }
 
 export class UpdatePlatformAdminDto {
-  @IsString() @IsOptional() name?: string;
-  @IsEmail() @IsOptional() email?: string;
-  @IsString() @IsOptional() phone?: string;
+  @PersonNameField('Name', { optional: 'partial' }) name?: string;
+  @EmailField('Email', { optional: 'partial' }) email?: string;
+  @PhoneField('Phone number', { optional: 'partial' }) phone?: string;
 }
 
 export class UpdatePlatformAdminStatusDto {
-  @IsString() @IsNotEmpty() status: string;
+  @EnumField('Status', ACCOUNT_STATUSES) status: string;
 }

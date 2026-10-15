@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
+import { UpdatePlatformSettingsDto } from './dto/platform-settings.dto';
 
 @Injectable()
 export class PlatformSettingsService {
@@ -9,17 +10,18 @@ export class PlatformSettingsService {
     return this.dataStore.getPlatformSettings();
   }
 
-  update(updateData: any) {
+  update(updateData: UpdatePlatformSettingsDto) {
     const settings = this.dataStore.getPlatformSettings();
-    Object.keys(updateData || {}).forEach((key) => {
-      if (updateData[key] === undefined) return;
-      const isPlainObject = typeof updateData[key] === 'object' && updateData[key] !== null && !Array.isArray(updateData[key]);
-      if (isPlainObject && typeof settings[key] === 'object') {
-        settings[key] = { ...settings[key], ...updateData[key] };
+    // DTO instances carry every declared field (undefined when not sent), so only
+    // the values actually sent are merged - nested groups key by key.
+    const sent = (obj: object) => Object.entries(obj).filter(([, value]) => value !== undefined);
+    for (const [key, value] of sent(updateData || {})) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        settings[key] = { ...settings[key], ...Object.fromEntries(sent(value)) };
       } else {
-        settings[key] = updateData[key];
+        settings[key] = value;
       }
-    });
+    }
     return settings;
   }
 }

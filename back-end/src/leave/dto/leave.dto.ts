@@ -1,42 +1,43 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { DateField, EnumField, IdField, LIMITS, NotBeforeField, TextField } from '../../common/validation/validators';
+
+export const LEAVE_TYPES = ['CASUAL', 'SICK', 'UNPAID'];
+export const LEAVE_DECISIONS = ['APPROVED', 'REJECTED'];
 
 export class CreateLeaveDto {
-  @IsString()
-  @IsNotEmpty()
-  empId: string;
+  // Optional and only accepted when it matches the caller - the applicant is always
+  // the logged-in employee (see LeaveService.createLeave).
+  @IdField('Employee ID', { optional: true })
+  empId?: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @DateField('Start date')
   start_date: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @DateField('End date')
+  @NotBeforeField('start_date', 'End date must be on or after the start date.')
   end_date: string;
 
-  @IsString()
-  @IsNotEmpty()
-  days: string;
+  // Ignored - recomputed server-side from the dates. Kept so existing clients that
+  // still send it pass validation.
+  @TextField('Days', { optional: true, max: 4 })
+  days?: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @EnumField('Leave type', LEAVE_TYPES)
   leave_type: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @TextField('Reason', { min: 3, max: LIMITS.REASON_MAX, multiline: true })
   reason: string;
 }
 
 export class UpdateLeaveStatusDto {
-  @IsString()
-  @IsNotEmpty()
+  @EnumField('Status', LEAVE_DECISIONS)
   status: string;
 
-  @IsString()
-  @IsNotEmpty()
-  approved_by_id: string;
+  // Ignored - the approver is always the logged-in caller. Kept optional so existing
+  // clients that still send it pass validation.
+  @IdField('Approver', { optional: true })
+  approved_by_id?: string;
 
-  @IsString()
-  @IsOptional()
+  // Optional: the dashboards' one-click reject sends none.
+  @TextField('Rejection reason', { optional: true, min: 5, max: LIMITS.REASON_MAX, multiline: true })
   reject_reason?: string;
 }
-

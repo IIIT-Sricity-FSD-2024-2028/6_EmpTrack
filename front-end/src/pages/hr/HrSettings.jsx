@@ -3,9 +3,12 @@
 // settings are kept in this browser (hrService) and restored on the next visit;
 // the late-arrival threshold is used by the Attendance page.
 import { useState } from 'react';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import useSaToast from '../../components/sa-common/useSaToast';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getHrSettings, saveHrSettings } from '../../services/hrService';
+import { hrSettingsSchemas } from '../../validation/formSchemas';
 import './styles/settings.css';
 
 function Toggle({ title, desc, checked, onChange }) {
@@ -30,11 +33,26 @@ export default function HrSettings() {
   usePageTitle('System Settings');
   const [toast, showToast] = useSaToast();
   const [settings, setSettings] = useState(getHrSettings);
+  const validations = {
+    general: useFormValidation(hrSettingsSchemas.general, settings.general, { idPrefix: 'hs-general' }),
+    attendance: useFormValidation(hrSettingsSchemas.attendance, settings.attendance, { idPrefix: 'hs-attendance' }),
+    email: useFormValidation(hrSettingsSchemas.email, settings.email, { idPrefix: 'hs-email' }),
+  };
 
-  const field = (section, key) => ({
-    value: settings[section][key],
+  const field = (section, key, id) => ({
+    value: settings[section][key] ?? '',
     onChange: (e) => setSettings((s) => ({ ...s, [section]: { ...s[section], [key]: e.target.value } })),
+    'aria-required': true,
+    ...validations[section].input(key, id),
   });
+  // Label + input + message for one validated setting.
+  const row = (section, key, id, label, inputProps) => (
+    <div className="form-group">
+      <label htmlFor={id}>{label}<RequiredMark /></label>
+      <input {...inputProps} {...field(section, key, id)} />
+      <FieldError {...validations[section].errorProps(key)} />
+    </div>
+  );
   const toggle = (section, key) => ({
     checked: Boolean(settings[section][key]),
     onChange: (value) => setSettings((s) => ({ ...s, [section]: { ...s[section], [key]: value } })),
@@ -42,11 +60,9 @@ export default function HrSettings() {
 
   const save = (section) => (e) => {
     e.preventDefault();
-    if (!e.currentTarget.checkValidity()) {
-      e.currentTarget.reportValidity();
-      return;
-    }
-    saveHrSettings(section, settings[section]);
+    if (validations[section] && !validations[section].validateAll()) return;
+    const values = Object.fromEntries(Object.entries(settings[section]).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]));
+    saveHrSettings(section, values);
     showToast('Settings saved successfully!');
   };
 
@@ -60,19 +76,19 @@ export default function HrSettings() {
       <div className="settings-grid">
         <div className="card">
           <div className="card-title"><i className="ph-fill ph-buildings"></i> General Settings</div>
-          <form className="settings-form" onSubmit={save('general')}>
-            <div className="form-group"><label htmlFor="hs-company">Company Name</label><input id="hs-company" type="text" required {...field('general', 'companyName')} /></div>
-            <div className="form-group"><label htmlFor="hs-hours">Working Hours Per Day</label><input id="hs-hours" type="number" required min="1" max="24" {...field('general', 'hoursPerDay')} /></div>
-            <div className="form-group"><label htmlFor="hs-days">Working Days Per Week</label><input id="hs-days" type="number" required min="1" max="7" {...field('general', 'daysPerWeek')} /></div>
+          <form className="settings-form" onSubmit={save('general')} noValidate>
+            {row('general', 'companyName', 'hs-company', 'Company Name', { type: 'text', maxLength: 120 })}
+            {row('general', 'hoursPerDay', 'hs-hours', 'Working Hours Per Day', { type: 'number', min: 1, max: 24, step: 1 })}
+            {row('general', 'daysPerWeek', 'hs-days', 'Working Days Per Week', { type: 'number', min: 1, max: 7, step: 1 })}
             {saveButton}
           </form>
         </div>
 
         <div className="card">
           <div className="card-title"><i className="ph-fill ph-calendar-check"></i> Attendance Settings</div>
-          <form className="settings-form" onSubmit={save('attendance')}>
-            <div className="form-group"><label htmlFor="hs-progress">Min Progress for Full Attendance (%)</label><input id="hs-progress" type="number" required min="1" max="100" {...field('attendance', 'minProgress')} /></div>
-            <div className="form-group"><label htmlFor="hs-late">Late Check-in Threshold (mins after 09:00)</label><input id="hs-late" type="number" required min="0" {...field('attendance', 'lateThreshold')} /></div>
+          <form className="settings-form" onSubmit={save('attendance')} noValidate>
+            {row('attendance', 'minProgress', 'hs-progress', 'Min Progress for Full Attendance (%)', { type: 'number', min: 1, max: 100, step: 1 })}
+            {row('attendance', 'lateThreshold', 'hs-late', 'Late Check-in Threshold (mins after 09:00)', { type: 'number', min: 0, max: 240, step: 1 })}
             <div style={{ marginTop: 16 }}>
               <Toggle title="Auto Mark Attendance" desc="Automatically determine attendance based on tasks" {...toggle('attendance', 'autoMark')} />
             </div>
@@ -94,11 +110,11 @@ export default function HrSettings() {
 
         <div className="card">
           <div className="card-title"><i className="ph-fill ph-envelope-simple"></i> Email Settings</div>
-          <form className="settings-form" onSubmit={save('email')}>
-            <div className="form-group"><label htmlFor="hs-smtp">SMTP Server</label><input id="hs-smtp" type="text" required {...field('email', 'smtpServer')} /></div>
-            <div className="form-group"><label htmlFor="hs-port">SMTP Port</label><input id="hs-port" type="number" required {...field('email', 'smtpPort')} /></div>
-            <div className="form-group"><label htmlFor="hs-from-email">From Email</label><input id="hs-from-email" type="email" required {...field('email', 'fromEmail')} /></div>
-            <div className="form-group"><label htmlFor="hs-from-name">From Name</label><input id="hs-from-name" type="text" required {...field('email', 'fromName')} /></div>
+          <form className="settings-form" onSubmit={save('email')} noValidate>
+            {row('email', 'smtpServer', 'hs-smtp', 'SMTP Server', { type: 'text', maxLength: 253, placeholder: 'smtp.company.com' })}
+            {row('email', 'smtpPort', 'hs-port', 'SMTP Port', { type: 'number', min: 1, max: 65535, step: 1 })}
+            {row('email', 'fromEmail', 'hs-from-email', 'From Email', { type: 'email', maxLength: 254 })}
+            {row('email', 'fromName', 'hs-from-name', 'From Name', { type: 'text', maxLength: 100 })}
             {saveButton}
           </form>
         </div>

@@ -4,27 +4,19 @@ import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { updateIssue } from '../../services/teamLeadService';
 import { cx, formatDate } from '../../utils/helpers';
 import { DemoNotice, LoadState, tlPath, useTeamData } from './components/TeamLeadUI';
 import { issueStatusBadge, nameOf, priorityBadge, resolutionStats, teamIssues, todayKey } from './tlUtils';
+import { RESOLUTION_EVIDENCE_EXTENSIONS, resolutionEvidence, resolveIssueSchema } from '../../validation/formSchemas';
 import './teamlead.css';
 
 const RESOLUTION_TYPES = ['Bug Fix', 'Configuration Change', 'Workaround Provided', 'Access Granted', 'Training / User Error', 'Policy Clarification', 'Not an Issue'];
 const MAX_FILE_MB = 5;
 const EMPTY = { type: '', hours: '', rootCause: '', actions: '', preventive: '', followUp: false };
 
-function validate(v, issueId) {
-  const errors = {};
-  if (!issueId) errors.issueId = 'Select the issue to resolve.';
-  if (!v.type) errors.type = 'Select how it was resolved.';
-  const hours = Number(v.hours);
-  if (!(hours > 0) || hours > 200) errors.hours = 'Enter the time spent (0.5 - 200 hours).';
-  if (v.rootCause.trim().length < 10) errors.rootCause = 'Describe the root cause (at least 10 characters).';
-  if (v.actions.trim().length < 10) errors.actions = 'Describe the actions taken (at least 10 characters).';
-  return errors;
-}
 
 export default function ResolveIssue() {
   usePageTitle('Resolve Issue');
@@ -36,7 +28,6 @@ export default function ResolveIssue() {
   const [files, setFiles] = useState([]);
   const [fileError, setFileError] = useState('');
   const [dragging, setDragging] = useState(false);
-  const [errors, setErrors] = useState({});
   const [status, setStatus] = useState(null);
   const [saving, setSaving] = useState(false);
   const fileInput = useRef(null);
@@ -46,20 +37,26 @@ export default function ResolveIssue() {
   const issue = (data?.issues ?? []).find((i) => i.issue_id === issueId);
   const stats = resolutionStats(issues);
   const set = (name) => (e) => setForm((f) => ({ ...f, [name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+  const validation = useFormValidation(
+    resolveIssueSchema(issues.map((i) => i.issue_id), RESOLUTION_TYPES),
+    { ...form, issueId, files },
+    { idPrefix: 'resolve', serverFieldMap: { 'resolution.type': 'type', 'resolution.time_spent': 'hours', 'resolution.root_cause': 'rootCause', 'resolution.actions_taken': 'actions', 'resolution.preventive_measures': 'preventive' } },
+  );
 
+  // Each picked file is checked on its own; rejected ones are listed and not added.
   const addFiles = (list) => {
     const all = Array.from(list);
-    const ok = all.filter((f) => f.size <= MAX_FILE_MB * 1024 * 1024);
-    setFileError(ok.length < all.length ? `Files over ${MAX_FILE_MB} MB were skipped.` : '');
-    setFiles((current) => [...current, ...ok]);
+    const rejected = all.map((f) => resolutionEvidence([f])).filter(Boolean);
+    const ok = all.filter((f) => !resolutionEvidence([f]));
+    const total = files.length + ok.length;
+    setFileError(total > 20 ? 'You can attach at most 20 files.' : rejected.join(' '));
+    if (total <= 20) setFiles((current) => [...current, ...ok]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const found = validate(form, issueId);
-    setErrors(found);
     setStatus(null);
-    if (Object.keys(found).length) return;
+    if (!validation.validateAll()) return;
     setSaving(true);
     try {
       await updateIssue(issueId, {
@@ -80,9 +77,10 @@ export default function ResolveIssue() {
       setStatus({ type: 'success', message: `${issueId} marked as resolved.` });
       setForm(EMPTY);
       setFiles([]);
+      validation.reset();
       await reload();
     } catch (err) {
-      setStatus({ type: 'error', message: err.message || 'Failed to resolve the issue.' });
+      if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Failed to resolve the issue.' });
     } finally {
       setSaving(false);
     }
@@ -100,7 +98,7 @@ export default function ResolveIssue() {
         <div className="tl-grid-main">
           <div className="tl-stack">
             <div className="card">
-              <Input as="select" label="Issue" value={issueId} error={errors.issueId} onChange={(e) => setIssueId(e.target.value)}>
+              <Input as="select" label="Issue" required value={issueId} onChange={(e) => setIssueId(e.target.value)} {...validation.field('issueId')}>
                 <option value="">Select an issue</option>
                 {issues.map((i) => (
                   <option key={i.issue_id} value={i.issue_id}>{i.issue_id} - {i.title} ({i.status})</option>
@@ -142,15 +140,15 @@ export default function ResolveIssue() {
                   </div>
                 )}
                 <div className="tl-form-grid">
-                  <Input as="select" label="Resolution Type" value={form.type} error={errors.type} onChange={set('type')}>
+                  <Input as="select" label="Resolution Type" required value={form.type} onChange={set('type')} {...validation.field('type')}>
                     <option value="">Select how it was resolved</option>
                     {RESOLUTION_TYPES.map((t) => <option key={t}>{t}</option>)}
                   </Input>
-                  <Input type="number" min="0.5" step="0.5" label="Time Spent (hours)" placeholder="e.g. 2.5" value={form.hours} error={errors.hours} onChange={set('hours')} />
+                  <Input type="number" min="0.5" max="200" step="0.5" inputMode="decimal" required label="Time Spent (hours)" placeholder="e.g. 2.5" value={form.hours} onChange={set('hours')} {...validation.field('hours')} />
                 </div>
-                <Input as="textarea" rows={2} label="Root Cause" placeholder="Why did this happen?" value={form.rootCause} error={errors.rootCause} onChange={set('rootCause')} />
-                <Input as="textarea" rows={3} label="Actions Taken" placeholder="Step by step, what was done" value={form.actions} error={errors.actions} onChange={set('actions')} />
-                <Input as="textarea" rows={2} label="Preventive Measures (optional)" placeholder="How do we avoid this next time?" value={form.preventive} onChange={set('preventive')} />
+                <Input as="textarea" rows={2} required maxLength={2000} label="Root Cause" placeholder="Why did this happen?" value={form.rootCause} onChange={set('rootCause')} {...validation.field('rootCause')} />
+                <Input as="textarea" rows={3} required maxLength={2000} label="Actions Taken" placeholder="Step by step, what was done" value={form.actions} onChange={set('actions')} {...validation.field('actions')} />
+                <Input as="textarea" rows={2} maxLength={2000} label="Preventive Measures (optional)" placeholder="How do we avoid this next time?" value={form.preventive} onChange={set('preventive')} {...validation.field('preventive')} />
 
                 <div className="form-group">
                   <span className="form-label">Supporting Evidence (optional)</span>
@@ -166,10 +164,10 @@ export default function ResolveIssue() {
                   >
                     <i className="ph ph-upload-simple" style={{ fontSize: 28 }}></i>
                     <div>Click to upload or drag &amp; drop</div>
-                    <div className="tl-muted">Logs, screenshots or diffs (max {MAX_FILE_MB} MB each)</div>
+                    <div className="tl-muted">Logs, screenshots or diffs ({RESOLUTION_EVIDENCE_EXTENSIONS.join(', ')}; max {MAX_FILE_MB} MB each)</div>
                   </div>
-                  <input ref={fileInput} type="file" multiple hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
-                  {fileError && <div className="form-error" style={{ display: 'block' }}>{fileError}</div>}
+                  <input ref={fileInput} type="file" multiple hidden accept={RESOLUTION_EVIDENCE_EXTENSIONS.join(',')} onChange={(e) => { addFiles(e.target.files); e.target.value = ''; }} />
+                  {(fileError || validation.errors.files) && <div className="form-error field-error" role="alert"><i className="ph ph-warning-circle" aria-hidden="true"></i><span>{fileError || validation.errors.files}</span></div>}
                   {files.map((f, index) => (
                     <div key={`${f.name}-${index}`} className="tl-file">
                       <span><i className="ph-fill ph-file-text"></i> {f.name} <span className="tl-muted">({(f.size / 1024 / 1024).toFixed(2)} MB)</span></span>

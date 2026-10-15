@@ -1,69 +1,78 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { EnumField, IdField, LIMITS, TextField } from '../../common/validation/validators';
+import { PRIORITY_VALUES } from '../../common/validation/enums';
+
+export const TICKET_STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'ESCALATED', 'RESOLVED', 'CLOSED'];
+export const TICKET_TYPES = ['TECHNICAL', 'SUPPORT'];
+
+const Note = (label = 'Note') => TextField(label, { optional: true, max: LIMITS.COMMENT_MAX, multiline: true });
+const Message = (label = 'Message') => TextField(label, { max: LIMITS.DESCRIPTION_MAX, multiline: true });
+const Reason = (label = 'Reason') => TextField(label, { min: 5, max: LIMITS.REASON_MAX, multiline: true });
 
 export class AssignTicketDto {
-  @IsString() @IsNotEmpty() assigned_to: string;
+  @IdField('Assignee') assigned_to: string;
 }
 
 export class ReassignTicketDto {
-  @IsString() @IsNotEmpty() assigned_to: string;
-  @IsString() @IsNotEmpty() reason: string;
+  @IdField('Assignee') assigned_to: string;
+  @Reason('Reassignment reason') reason: string;
 }
 
 export class ResolveTicketDto {
-  @IsString() @IsOptional() resolution_notes?: string;
+  @TextField('Resolution notes', { optional: true, max: LIMITS.DESCRIPTION_MAX, multiline: true }) resolution_notes?: string;
 }
 
 export class EscalateTicketDto {
-  @IsString() @IsOptional() note?: string;
+  @Note() note?: string;
 }
 
 export class AddTicketCommentDto {
-  @IsString() @IsNotEmpty() message: string;
+  @Message('Comment') message: string;
 }
 
 export class ChangeTicketStatusDto {
-  @IsString() @IsNotEmpty() status: string;
+  @EnumField('Status', TICKET_STATUSES) status: string;
 }
 
 export class ChangeTicketPriorityDto {
-  @IsString() @IsNotEmpty() priority: string;
+  @EnumField('Priority', PRIORITY_VALUES, { caseInsensitive: true }) priority: string;
 }
 
+// Checked against the configured categories in PlatformTicketService.
 export class ChangeTicketCategoryDto {
-  @IsString() @IsNotEmpty() category: string;
+  @TextField('Category', { min: 2, max: LIMITS.SHORT_TEXT_MAX }) category: string;
 }
 
 export class AddInternalNoteDto {
-  @IsString() @IsNotEmpty() message: string;
+  @Message('Internal note') message: string;
 }
 
 export class ReopenTicketDto {
-  @IsString() @IsOptional() reason?: string;
+  @TextField('Reopen reason', { optional: true, max: LIMITS.REASON_MAX, multiline: true }) reason?: string;
 }
 
 export class EscalateToTechnicalDto {
-  @IsString() @IsOptional() note?: string;
+  @Note() note?: string;
 }
 
 export class EscalateToPlatformAdminDto {
-  @IsString() @IsOptional() note?: string;
-  @IsString() @IsOptional() reason?: string;
+  @Note() note?: string;
+  @TextField('Reason', { optional: true, max: LIMITS.REASON_MAX, multiline: true }) reason?: string;
 }
 
 // Platform Admin sign-off on work a Technical Member sent back for verification.
 export class VerifyResolutionDto {
-  @IsString() @IsOptional() note?: string;
+  @Note() note?: string;
 }
 
 export class RejectResolutionDto {
-  @IsString() @IsNotEmpty() reason: string;
+  @Reason('Rejection reason') reason: string;
 }
 
 // Company Admin raising a new issue to their company's Platform Admin.
 export class RaiseTicketDto {
-  @IsString() @IsNotEmpty() title: string;
-  @IsString() @IsNotEmpty() description: string;
-  @IsString() @IsOptional() priority?: string;
-  @IsString() @IsOptional() category?: string;
-  @IsString() @IsOptional() ticket_type?: string;
+  @TextField('Title', { min: 5, max: LIMITS.TITLE_MAX }) title: string;
+  @TextField('Description', { min: 10, max: LIMITS.DESCRIPTION_MAX, multiline: true }) description: string;
+  @EnumField('Priority', PRIORITY_VALUES, { optional: true, caseInsensitive: true }) priority?: string;
+  @TextField('Category', { optional: true, min: 2, max: LIMITS.SHORT_TEXT_MAX }) category?: string;
+  @EnumField('Ticket type', TICKET_TYPES, { optional: true, caseInsensitive: true }) ticket_type?: string;
 }

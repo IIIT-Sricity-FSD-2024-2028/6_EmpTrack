@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getTasksForUser } from '../../services/taskService';
 import { createWorkLog, getWorkLogsForUser } from '../../services/worklogService';
+import { workLogSchema } from '../../validation/formSchemas';
 
 const fieldStyle = { borderRadius: 'var(--radius-md)', padding: '12px 16px' };
 const labelStyle = { fontWeight: 'var(--font-medium)' };
@@ -60,6 +63,12 @@ export default function WorkLogs() {
   const emptyForm = { taskId: presetTaskId, start: '', end: '', description: '' };
   const [form, setForm] = useState(emptyForm);
   const [toastVisible, setToastVisible] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const validation = useFormValidation(workLogSchema(tasks.map((t) => t.task_id)), form, {
+    idPrefix: 'wl',
+    serverFieldMap: { task_id: 'taskId', start_time: 'start', end_time: 'end', hours_spent: 'end' },
+  });
 
   useEffect(() => {
     setForm((f) => ({ ...f, taskId: presetTaskId }));
@@ -76,22 +85,29 @@ export default function WorkLogs() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (new Date(form.end) <= new Date(form.start)) {
-      window.alert('Error: Work End Time must be strictly greater than Work Start Time.');
-      return;
-    }
+    setSubmitError('');
+    if (!validation.validateAll()) return;
+    setSubmitting(true);
     const task = tasks.find((t) => t.task_id === form.taskId);
-    await createWorkLog({
-      emp_id: user.emp_id,
-      task_id: form.taskId,
-      task_title: task?.task_title,
-      hours_spent: Number(hoursSpent),
-      start_time: form.start,
-      end_time: form.end,
-      description: form.description,
-    });
+    try {
+      await createWorkLog({
+        emp_id: user.emp_id,
+        task_id: form.taskId,
+        task_title: task?.task_title,
+        hours_spent: Number(hoursSpent),
+        start_time: form.start,
+        end_time: form.end,
+        description: form.description.trim(),
+      });
+    } catch (err) {
+      if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to save the work log.');
+      return;
+    } finally {
+      setSubmitting(false);
+    }
     setToastVisible(true);
-    setForm(emptyForm); // keeps the task pre-selected from the URL, like the original
+    setForm(emptyForm);
+    validation.reset(); // keeps the task pre-selected from the URL, like the original
     reloadLogs();
   };
 
@@ -109,16 +125,17 @@ export default function WorkLogs() {
         <h3 style={{ margin: '0 0 24px 0', fontSize: 'var(--text-lg)', borderBottom: '1px solid var(--border-light)', paddingBottom: 16 }}>
           Log Work Activity
         </h3>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div style={rowGrid}>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label" style={labelStyle} htmlFor="wl_task_id">Task ID</label>
-              <select id="wl_task_id" className="form-control" style={fieldStyle} required value={form.taskId} onChange={update('taskId')}>
+              <label className="form-label" style={labelStyle} htmlFor="wl_task_id">Task ID<RequiredMark /></label>
+              <select className="form-control" style={fieldStyle} aria-required="true" value={form.taskId} onChange={update('taskId')} {...validation.input('taskId', 'wl_task_id')}>
                 <option value="" disabled>Select assigned task</option>
                 {tasks.map((t) => (
                   <option key={t.task_id} value={t.task_id}>#{t.task_id} - {t.task_title}</option>
                 ))}
               </select>
+              <FieldError {...validation.errorProps('taskId')} />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
               <label className="form-label" style={labelStyle} htmlFor="hours-spent-wl">Hours Spent</label>
@@ -139,31 +156,37 @@ export default function WorkLogs() {
 
           <div style={rowGrid}>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label" style={labelStyle} htmlFor="wl_start">Work Start Time</label>
-              <input type="datetime-local" id="wl_start" className="form-control" required style={fieldStyle} value={form.start} onChange={update('start')} />
+              <label className="form-label" style={labelStyle} htmlFor="wl_start">Work Start Time<RequiredMark /></label>
+              <input type="datetime-local" className="form-control" aria-required="true" style={fieldStyle} value={form.start} onChange={update('start')} {...validation.input('start', 'wl_start')} />
+              <FieldError {...validation.errorProps('start')} />
             </div>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label" style={labelStyle} htmlFor="wl_end">Work End Time</label>
-              <input type="datetime-local" id="wl_end" className="form-control" required style={fieldStyle} value={form.end} onChange={update('end')} />
+              <label className="form-label" style={labelStyle} htmlFor="wl_end">Work End Time<RequiredMark /></label>
+              <input type="datetime-local" className="form-control" aria-required="true" min={form.start || undefined} style={fieldStyle} value={form.end} onChange={update('end')} {...validation.input('end', 'wl_end')} />
+              <FieldError {...validation.errorProps('end')} />
             </div>
           </div>
 
           <div className="form-group" style={{ marginBottom: 24 }}>
-            <label className="form-label" style={labelStyle} htmlFor="wl_desc">Work Description</label>
+            <label className="form-label" style={labelStyle} htmlFor="wl_desc">Work Description<RequiredMark /></label>
             <textarea
-              id="wl_desc"
               className="form-control"
               rows={4}
               placeholder="Describe the work completed in this session"
-              required
+              aria-required="true"
+              maxLength={1000}
+              {...validation.input('description', 'wl_desc')}
               style={{ borderRadius: 'var(--radius-md)', padding: 16, resize: 'vertical' }}
               value={form.description}
               onChange={update('description')}
             ></textarea>
+            <FieldError {...validation.errorProps('description')} />
           </div>
 
+          {submitError && <div className="form-error field-error" role="alert" style={{ marginBottom: 12 }}><i className="ph ph-warning-circle" aria-hidden="true"></i><span>{submitError}</span></div>}
           <button
             type="submit"
+            disabled={submitting}
             className="btn btn-purple"
             style={{
               width: '100%',

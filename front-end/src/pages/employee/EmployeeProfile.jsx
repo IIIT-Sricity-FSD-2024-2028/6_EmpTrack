@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import ProfileSection from '../../components/profile/ProfileSection';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getUserById, updateUserPassword } from '../../services/employeeService';
 import { formatDate } from '../../utils/helpers';
+import { changePasswordSchema } from '../../validation/formSchemas';
 
 // Skills and performance figures are fixed in the original page (no endpoint yet).
 const SKILLS = ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'MongoDB', 'GraphQL'];
@@ -15,7 +18,6 @@ const PERFORMANCE = [
   { label: 'Attendance Rate', value: '96%', trend: '+2%' },
 ];
 
-const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 const EMPTY_PASSWORDS = { current: '', next: '', confirm: '' };
 const fieldStyle = { borderRadius: 'var(--radius-md)', padding: '12px 16px' };
 const invalidBorder = { borderColor: 'var(--danger-color)' };
@@ -27,9 +29,13 @@ function formatPhone(phone) {
 
 function ChangePasswordForm({ empId }) {
   const [values, setValues] = useState(EMPTY_PASSWORDS);
-  const [error, setError] = useState(null); // { field, message }
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const validation = useFormValidation(changePasswordSchema, values, {
+    idPrefix: 'emp-pw',
+    serverFieldMap: { currentPassword: 'current', newPassword: 'next', confirmPassword: 'confirm' },
+  });
 
   useEffect(() => {
     if (!success) return undefined;
@@ -41,92 +47,67 @@ function ChangePasswordForm({ empId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setError('');
     setSuccess(false);
-
-    // The current password is verified by the backend.
-    if (!STRONG_PASSWORD.test(values.next)) {
-      setError({ field: 'next', message: 'Weak password! Use 8+ chars, uppercase, lowercase, number & special character.' });
-      return;
-    }
-    if (values.next !== values.confirm) {
-      setError({ field: 'confirm', message: 'Passwords do not match!' });
-      return;
-    }
-    if (values.next === values.current) {
-      setError({ field: null, message: 'New password cannot be same as current password!' });
-      return;
-    }
+    // The current password itself is verified by the backend.
+    if (!validation.validateAll()) return;
 
     setSubmitting(true);
     try {
       await updateUserPassword(empId, values.current, values.next, values.confirm);
       setValues(EMPTY_PASSWORDS);
+      validation.reset();
       setSuccess(true);
     } catch (err) {
-      const message = err.message || 'Failed to update password. Please try again.';
-      setError({ field: /current/i.test(message) ? 'current' : null, message });
+      if (!validation.setServerErrors(err)) setError(err.message || 'Failed to update password. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const borderFor = (field) => (error?.field === field ? invalidBorder : undefined);
+  const passwordInput = (name, id, placeholder, autoComplete) => (
+    <>
+      <input
+        type="password"
+        className="form-control"
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        aria-required="true"
+        maxLength={64}
+        style={{ ...fieldStyle, ...(validation.errors[name] ? invalidBorder : undefined) }}
+        value={values[name]}
+        onChange={update(name)}
+        {...validation.input(name, id)}
+      />
+      <FieldError {...validation.errorProps(name)} />
+    </>
+  );
 
   return (
     <div className="card" style={{ padding: 24 }}>
       <h3 style={sectionTitle}>Change Password</h3>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="form-group" style={{ maxWidth: 400, marginBottom: 24 }}>
-          <label className="form-label" htmlFor="current_pw">Current Password</label>
-          <input
-            type="password"
-            id="current_pw"
-            className="form-control"
-            placeholder="Enter current password"
-            required
-            style={{ ...fieldStyle, ...borderFor('current') }}
-            value={values.current}
-            onChange={update('current')}
-          />
+          <label className="form-label" htmlFor="current_pw">Current Password<RequiredMark /></label>
+          {passwordInput('current', 'current_pw', 'Enter current password', 'current-password')}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, marginBottom: 24 }}>
           <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" htmlFor="new_pw">New Password</label>
-            <input
-              type="password"
-              id="new_pw"
-              className="form-control"
-              placeholder="Enter new password"
-              required
-              minLength={6}
-              style={{ ...fieldStyle, ...borderFor('next') }}
-              value={values.next}
-              onChange={update('next')}
-            />
+            <label className="form-label" htmlFor="new_pw">New Password<RequiredMark /></label>
+            {passwordInput('next', 'new_pw', 'Enter new password', 'new-password')}
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
               Password must contain: • Minimum 8 characters<br />• Uppercase letter<br />• Lowercase letter<br />• Number
               <br />• Special character (@$!%*?&amp;)
             </div>
           </div>
           <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label" htmlFor="confirm_pw">Confirm New Password</label>
-            <input
-              type="password"
-              id="confirm_pw"
-              className="form-control"
-              placeholder="Confirm new password"
-              required
-              minLength={6}
-              style={{ ...fieldStyle, ...borderFor('confirm') }}
-              value={values.confirm}
-              onChange={update('confirm')}
-            />
-            {error && <div style={{ color: 'var(--danger-color)', fontSize: 12, marginTop: 6 }}>{error.message}</div>}
+            <label className="form-label" htmlFor="confirm_pw">Confirm New Password<RequiredMark /></label>
+            {passwordInput('confirm', 'confirm_pw', 'Confirm new password', 'new-password')}
           </div>
         </div>
 
+        {error && <div className="form-error field-error" role="alert" style={{ marginBottom: 12 }}><i className="ph ph-warning-circle" aria-hidden="true"></i><span>{error}</span></div>}
         <button
           type="submit"
           className="btn btn-purple"
@@ -136,7 +117,7 @@ function ChangePasswordForm({ empId }) {
           {submitting ? 'Updating...' : 'Update Password'}
         </button>
         {success && (
-          <div style={{ color: '#10B981', fontWeight: 'var(--font-medium)', fontSize: 13, marginTop: 16 }}>
+          <div role="status" style={{ color: '#10B981', fontWeight: 'var(--font-medium)', fontSize: 13, marginTop: 16 }}>
             <i className="ph-fill ph-check-circle"></i> Password updated successfully!
           </div>
         )}

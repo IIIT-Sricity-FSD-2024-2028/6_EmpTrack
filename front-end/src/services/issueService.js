@@ -1,6 +1,7 @@
 // Issue endpoints (converted from the original js/store.js).
-// Like the original, a new issue is also kept in localStorage
-// ('empTrack_local_issues') so it is not lost if the API is unreachable.
+// Like the original, a copy of a new issue is also kept in localStorage
+// ('empTrack_local_issues') as a backup, but a failed request is reported to the
+// caller rather than pretending the issue was submitted.
 import { readStorage, writeStorage } from '../utils/helpers';
 import api from './api';
 
@@ -22,9 +23,5 @@ export async function createIssue(issueData) {
   localIssues.push(newIssue);
   writeStorage(LOCAL_ISSUES_KEY, localIssues);
 
-  try {
-    return await api.post('/issues', issueData);
-  } catch {
-    return newIssue;
-  }
+  return api.post('/issues', issueData);
 }

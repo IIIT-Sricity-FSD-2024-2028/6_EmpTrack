@@ -1,6 +1,7 @@
 // Small form helpers for the Super Admin / HR / Company Admin pages, using the
 // original .form-group / .form-label / .form-control markup.
 import { useState } from 'react';
+import FieldError, { RequiredMark } from '../common/FieldError';
 
 /**
  * const form = useFormState({ name: '' });
@@ -16,12 +17,17 @@ export function useFormState(initial) {
   return { values, setValues, bind, reset: (next = initial) => setValues(next) };
 }
 
-/** <Field label="Email" style={{ gridColumn: '1 / -1' }}><input .../></Field> */
-export function Field({ label, htmlFor, style, children }) {
+/**
+ * <Field label="Email" style={{ gridColumn: '1 / -1' }}><input .../></Field>
+ * required adds the * marker; error shows the field's message below it (its id,
+ * `${htmlFor}-error`, is what useFormValidation's aria-describedby points at).
+ */
+export function Field({ label, htmlFor, style, required, error, children }) {
   return (
     <div className="form-group" style={style}>
-      <label className="form-label" htmlFor={htmlFor}>{label}</label>
+      <label className="form-label" htmlFor={htmlFor}>{label}{required && <RequiredMark />}</label>
       {children}
+      <FieldError id={`${htmlFor}-error`} message={error} />
     </div>
   );
 }

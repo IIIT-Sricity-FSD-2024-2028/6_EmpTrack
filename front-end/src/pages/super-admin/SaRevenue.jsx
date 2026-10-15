@@ -7,6 +7,9 @@ import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import SaPagination from '../../components/sa-common/SaPagination';
 import { StateRow } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
+import FieldError from '../../components/common/FieldError';
+import { validateForm } from '../../utils/validation';
+import { dateRangeSchema } from '../../validation/formSchemas';
 import * as sa from '../../services/superAdminService';
 import { chartTheme, formatCurrency, formatDate, loadChartJs, paginate } from '../../utils/saCommon';
 import { SA_PORTAL } from './saConstants';
@@ -112,7 +115,8 @@ export default function SaRevenue() {
   };
 
   // Date range is applied client-side over the already-filtered result set (as in the original).
-  const visible = transactions.filter((t) => (!dates.from || t.payment_date >= dates.from) && (!dates.to || t.payment_date <= dates.to));
+  const dateErrors = validateForm(dateRangeSchema(), dates);
+  const visible = Object.keys(dateErrors).length ? [] : transactions.filter((t) => (!dates.from || t.payment_date >= dates.from) && (!dates.to || t.payment_date <= dates.to));
   const { pageItems, page: safePage, totalPages, total } = paginate(visible, page, PAGE_SIZE);
 
   let rows;
@@ -187,9 +191,11 @@ export default function SaRevenue() {
             <option value="PENDING">Pending</option>
             <option value="FAILED">Failed</option>
           </select>
-          <input type="date" id="txn-date-from" className="filter-select" title="From date" aria-label="From date" value={dates.from} onChange={setDate('from')} />
-          <input type="date" id="txn-date-to" className="filter-select" title="To date" aria-label="To date" value={dates.to} onChange={setDate('to')} />
+          <input type="date" id="txn-date-from" className="filter-select" title="From date" aria-label="From date" max={dates.to || undefined} aria-invalid={Boolean(dateErrors.from)} aria-describedby={dateErrors.from ? 'txn-date-from-error' : undefined} value={dates.from} onChange={setDate('from')} />
+          <input type="date" id="txn-date-to" className="filter-select" title="To date" aria-label="To date" min={dates.from || undefined} aria-invalid={Boolean(dateErrors.to)} aria-describedby={dateErrors.to ? 'txn-date-to-error' : undefined} value={dates.to} onChange={setDate('to')} />
         </SaFilterBar>
+        <FieldError id="txn-date-from-error" message={dateErrors.from} />
+        <FieldError id="txn-date-to-error" message={dateErrors.to} />
 
         <div className="card table-container">
           <table>

@@ -4,11 +4,14 @@
 // Send Back for Rework step for work a Technical Member submitted.
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import FieldError from '../../../components/common/FieldError';
 import Modal from '../../../components/common/Modal';
 import { formatDate, formatPlatformStatus, platformTicketBadge, priorityBadge } from '../../../components/platform/format';
 import { ClearButton, DetailItem, FilterSelect, modalClass, PortalShell, SectionHeader, ShellTable, useToast } from '../../../components/platform/ShellUI';
 import { CommentList, ConfirmDialog } from '../../../components/platform/TicketParts';
 import useFetch from '../../../hooks/useFetch';
+import useFormValidation from '../../../hooks/useFormValidation';
+import { platformTicketActionSchema } from '../../../validation/formSchemas';
 import {
   addTicketComment, assignTicket, escalateTicket, getTeam, getTicket, getTickets, IS_DEMO, reassignTicket,
   rejectTechnicalIssueVerification, resolveTicket, verifyTechnicalIssue,
@@ -71,6 +74,7 @@ export default function PlatformTicketsPage({ type, title }) {
     setReason('');
     setComment('');
     setVerifyNote('');
+    validation.reset();
   };
 
   // Deep link from a notification's "View Issue" link (?open=TIX-...).
@@ -88,6 +92,11 @@ export default function PlatformTicketsPage({ type, title }) {
   // Default the picker to the first member when the ticket is unassigned (the
   // original <select> had no empty option, so the first member was preselected).
   const assigneeValue = assignee || members?.[0]?.emp_id || '';
+  const validation = useFormValidation(
+    platformTicketActionSchema((members ?? []).map((m) => m.emp_id)),
+    { assignee: assigneeValue, reason, verifyNote, rejectNote: verifyNote, comment },
+    { idPrefix: 'pa-ticket', serverFieldMap: { assigned_to: 'assignee', message: 'comment' } },
+  );
 
   /** Runs an action, then refreshes the open ticket, the table and the workload counts. */
   const run = async (action, success, after) => {
@@ -103,7 +112,7 @@ export default function PlatformTicketsPage({ type, title }) {
       reloadMembers();
       return true;
     } catch (err) {
-      showToast(err.message || 'Something went wrong.', 'error');
+      if (!validation.setServerErrors(err)) showToast(err.message || 'Something went wrong.', 'error');
       return false;
     } finally {
       setBusy(false);
@@ -111,26 +120,30 @@ export default function PlatformTicketsPage({ type, title }) {
   };
 
   const handleAssign = () => {
-    if (!assigneeValue) return showToast('Select a team member first.', 'error');
+    if (!validation.validateFields(['assignee'])) return undefined;
     return run(() => assignTicket(type, ticket.ticket_id, assigneeValue), `${text.Noun} assigned successfully.`);
   };
 
   const handleReassign = () => {
     if (!showReason) return setShowReason(true);
-    if (!assigneeValue || !reason.trim()) return showToast('Select a member and enter a reassignment reason.', 'error');
+    if (!validation.validateFields(['assignee', 'reason'])) return undefined;
     return run(() => reassignTicket(type, ticket.ticket_id, assigneeValue, reason.trim()), `${text.Noun} reassigned successfully.`, () => {
       setShowReason(false);
       setReason('');
+      validation.untouch(['reason']);
     });
   };
 
   const handleComment = () => {
-    if (!comment.trim()) return showToast('Enter a comment first.', 'error');
-    return run(() => addTicketComment(type, ticket.ticket_id, comment.trim()), 'Comment added.', () => setComment(''));
+    if (!validation.validateFields(['comment'])) return undefined;
+    return run(() => addTicketComment(type, ticket.ticket_id, comment.trim()), 'Comment added.', () => {
+      setComment('');
+      validation.untouch(['comment']);
+    });
   };
 
   const handleRejectClick = () => {
-    if (!verifyNote.trim()) return showToast('Explain what needs rework first.', 'error');
+    if (!validation.validateFields(['rejectNote'])) return undefined;
     return setPending('reject');
   };
 
@@ -235,17 +248,19 @@ export default function PlatformTicketsPage({ type, title }) {
             <div className="form-grid">
               <div className="form-group">
                 <label className="form-label" htmlFor="pa-assignee">Team Member</label>
-                <select id="pa-assignee" className="form-control" value={assigneeValue} onChange={(e) => setAssignee(e.target.value)}>
+                <select className="form-control" value={assigneeValue} onChange={(e) => setAssignee(e.target.value)} {...validation.input('assignee', 'pa-assignee')}>
                   {(members ?? []).length === 0 && <option value="">No active team members</option>}
                   {(members ?? []).map((m) => (
                     <option key={m.emp_id} value={m.emp_id}>{m.emp_name} (Open: {m.open_tickets}, In Progress: {m.in_progress_tickets})</option>
                   ))}
                 </select>
+                <FieldError {...validation.errorProps('assignee')} />
               </div>
               {showReason && (
                 <div className="form-group">
                   <label className="form-label" htmlFor="pa-reason">Reassignment Reason</label>
-                  <input id="pa-reason" type="text" className="form-control" placeholder="Why is this being reassigned?" value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
+                  <input type="text" className="form-control" aria-required="true" maxLength={500} placeholder="Why is this being reassigned?" value={reason} onChange={(e) => setReason(e.target.value)} autoFocus {...validation.input('reason', 'pa-reason')} />
+                  <FieldError {...validation.errorProps('reason')} />
                 </div>
               )}
             </div>
@@ -263,7 +278,8 @@ export default function PlatformTicketsPage({ type, title }) {
                 {ticket.resolution_notes && <div className="comment-item"><span className="comment-author">Resolution notes</span><div className="comment-message">{ticket.resolution_notes}</div></div>}
                 <div className="form-group">
                   <label className="form-label" htmlFor="pa-verify-note">Note (optional for verify, required to send back)</label>
-                  <textarea id="pa-verify-note" className="form-control" rows={2} placeholder="Add a note..." value={verifyNote} onChange={(e) => setVerifyNote(e.target.value)} />
+                  <textarea className="form-control" rows={2} maxLength={500} placeholder="Add a note..." value={verifyNote} onChange={(e) => setVerifyNote(e.target.value)} {...validation.input('rejectNote', 'pa-verify-note')} />
+                  <FieldError {...validation.errorProps('rejectNote')} />
                 </div>
                 <div className="action-row" style={{ marginBottom: 0 }}>
                   <button type="button" className="btn btn-secondary" onClick={() => setPending('verify')} disabled={busy}><i className="ph ph-check-circle"></i> Verify &amp; Close</button>
@@ -288,7 +304,8 @@ export default function PlatformTicketsPage({ type, title }) {
             <div className="form-section-title">Comments</div>
             <CommentList items={ticket.comments} emptyText="No comments yet." />
             <div className="form-group">
-              <textarea className="form-control" rows={2} placeholder="Add a comment..." aria-label="Add a comment" value={comment} onChange={(e) => setComment(e.target.value)} />
+              <textarea className="form-control" rows={2} maxLength={2000} placeholder="Add a comment..." aria-label="Add a comment" value={comment} onChange={(e) => setComment(e.target.value)} {...validation.input('comment', 'pa-comment')} />
+              <FieldError {...validation.errorProps('comment')} />
             </div>
             <button type="button" className="btn btn-outline" onClick={handleComment} disabled={busy}><i className="ph ph-chat-circle-text"></i> Add Comment</button>
           </>

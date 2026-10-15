@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { STRONG_PASSWORD_REGEX, hashPassword, comparePassword } from '../common/utils/password.util';
 
 const COMPANY_SCOPED_ROLES = ['COMPANY_ADMIN', 'HR'];
@@ -32,20 +33,46 @@ export class EmployeeService {
     return employees.map(safe);
   }
 
-  getEmployeeById(id: string) {
-    const emp = this.dataStore.getEmployees().find(e => e.emp_id === id);
-    if (!emp) throw new NotFoundException('Employee not found');
-    return safe(emp);
+  // A profile is readable by its owner, by anyone in the same company (e.g. an
+  // employee looking up their own Team Lead), and by the Super Admin. Out-of-scope and
+  // unknown ids get the same 404 so other companies' ids can't be probed.
+  private findReadable(match: (e: any) => boolean, actorId: string) {
+    const actor = this.dataStore.getEmployees().find((e) => e.emp_id === actorId);
+    const emp = this.dataStore.getEmployees().find(match);
+    const allowed = !!actor && !!emp && (
+      actor.emp_id === emp.emp_id ||
+      actor.role === 'SUPER_ADMIN' ||
+      (!!actor.companyId && actor.companyId === emp.companyId)
+    );
+    if (!allowed) throw new NotFoundException('Employee not found');
+    return emp;
   }
 
-  getEmployeeByEmail(email: string) {
-    const emp = this.dataStore.getEmployees().find(e => e.email === email);
-    if (!emp) throw new NotFoundException('Employee not found');
-    return safe(emp);
+  getEmployeeById(id: string, actorId: string) {
+    return safe(this.findReadable((e) => e.emp_id === id, actorId));
   }
 
-  getUsersByManager(managerId: string) {
-    return this.dataStore.getEmployees().filter(e => e.manager_id === managerId).map(safe);
+  getEmployeeByEmail(email: string, actorId: string) {
+    const wanted = String(email).toLowerCase();
+    return safe(this.findReadable((e) => String(e.email).toLowerCase() === wanted, actorId));
+  }
+
+  // Direct reports of a manager - limited to the caller's own company, so HR/Company
+  // Admin can't list another company's team via ?managerId=.
+  getUsersByManager(managerId: string, actorId?: string) {
+    const actor = this.dataStore.getEmployees().find((e) => e.emp_id === actorId);
+    return this.dataStore.getEmployees()
+      .filter(e => e.manager_id === managerId)
+      .filter(e => !actor || actor.emp_id === managerId || (!!actor.companyId && e.companyId === actor.companyId))
+      .map(safe);
+  }
+
+  // Company Admin may only manage accounts inside their own company.
+  private findManageable(id: string, actor: Actor) {
+    const companyId = this.resolveActorCompanyId(actor.emp_id);
+    const target = this.dataStore.getEmployees().find((e) => e.emp_id === id);
+    if (!target || target.companyId !== companyId) throw new NotFoundException('Employee not found');
+    return target;
   }
 
   // Resolves the actor's own companyId from their header-supplied actorId, same
@@ -68,7 +95,7 @@ export class EmployeeService {
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Password and confirmation do not match');
     }
-    const existingEmail = this.dataStore.getEmployees().find((e) => e.email === dto.email);
+    const existingEmail = this.dataStore.getEmployees().find((e) => String(e.email).toLowerCase() === dto.email.toLowerCase());
     if (existingEmail) throw new BadRequestException('An account with this email already exists');
 
     const emp_id = 'EM-' + Date.now();
@@ -100,20 +127,26 @@ export class EmployeeService {
     return safe(employee);
   }
 
-  // actorId comes from the x-actor-id header (this app's existing stand-in for an
-  // authenticated identity, set by the frontend from the logged-in user's own
-  // session on every request - see store.js's _fetch). It is never trusted from
-  // the client-editable :id route param alone, so a caller can't change another
-  // employee's password just by editing the URL.
+  // actorId comes from the x-actor-id header, which AuthGuard sets from the caller's
+  // login session. It is never trusted from the client-editable :id route param
+  // alone, so a caller can't change another employee's password by editing the URL.
   updatePassword(id: string, actorId: string, dto: UpdatePasswordDto) {
     if (!actorId || actorId !== id) {
       throw new ForbiddenException('You can only change your own password.');
     }
 
-    const emp = this.getEmployeeById(id);
+    // The stored record itself (not the password-stripped copy getEmployeeById
+    // returns) - comparing against / assigning to that copy made every change fail.
+    const emp = this.dataStore.getEmployees().find((e) => e.emp_id === id);
+    if (!emp) throw new NotFoundException('Employee not found');
 
+    // 400 rather than 401: the session is fine, only the form input is wrong (a 401
+    // makes the frontend end the session).
     if (!comparePassword(dto.currentPassword, emp.password)) {
-      throw new UnauthorizedException('Incorrect current password.');
+      throw new BadRequestException('Incorrect current password.');
+    }
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException('The new password must be different from the current one.');
     }
     if (dto.confirmPassword !== undefined && dto.newPassword !== dto.confirmPassword) {
       throw new BadRequestException('New password and confirmation do not match.');
@@ -128,8 +161,14 @@ export class EmployeeService {
     return safeEmployee;
   }
 
-  deleteEmployee(id: string, actor?: Actor) {
-    const target = this.dataStore.getEmployees().find((e) => e.emp_id === id);
+  deleteEmployee(id: string, actor: Actor) {
+    const target = this.findManageable(id, actor);
+    if (target.emp_id === actor.emp_id) {
+      throw new BadRequestException('You cannot delete your own account.');
+    }
+    if (this.dataStore.getTeams().some((t) => t.team_lead_id === id)) {
+      throw new BadRequestException('This employee leads a team. Assign the team a new lead before deleting them.');
+    }
     const deleted = this.dataStore.deleteEmployee(id);
     if (!deleted) throw new NotFoundException('Employee not found');
 
@@ -147,7 +186,21 @@ export class EmployeeService {
     return { success: true, message: 'Employee deleted' };
   }
 
-  updateEmployee(id: string, updateData: any, actor?: Actor) {
+  updateEmployee(id: string, dto: UpdateEmployeeDto, actor: Actor) {
+    const target = this.findManageable(id, actor);
+    const updateData: Record<string, any> = Object.fromEntries(Object.entries(dto).filter(([, v]) => v !== undefined));
+    if (updateData.emp_name !== undefined) updateData.emp_name = updateData.emp_name.trim();
+    if (updateData.email !== undefined) {
+      updateData.email = updateData.email.trim();
+      const taken = this.dataStore.getEmployees().some(
+        (e) => e.emp_id !== id && String(e.email).toLowerCase() === updateData.email.toLowerCase(),
+      );
+      if (taken) throw new BadRequestException('An account with this email already exists');
+    }
+    if (target.emp_id === actor.emp_id && updateData.status && updateData.status !== 'ACTIVE') {
+      throw new BadRequestException('You cannot deactivate your own account.');
+    }
+
     const updated = this.dataStore.updateEmployee(id, updateData);
     if (!updated) throw new NotFoundException('Employee not found');
 

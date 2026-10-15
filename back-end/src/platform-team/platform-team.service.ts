@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { CreateTeamMemberDto, UpdateTeamMemberDto, UpdateTeamMemberStatusDto } from './dto/platform-team.dto';
+import { applyAccountUpdate, emailTaken } from '../common/utils/account.util';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 type TeamRole = 'TECHNICAL_MEMBER' | 'SUPPORT_MEMBER';
@@ -39,7 +40,7 @@ export class PlatformTeamService {
   }
 
   create(teamRole: TeamRole, dto: CreateTeamMemberDto, actor: Actor) {
-    const existing = this.dataStore.getEmployees().find((e) => e.email === dto.email);
+    const existing = emailTaken(this.dataStore, dto.email);
     if (existing) throw new BadRequestException('An account with this email already exists');
 
     const prefix = teamRole === 'TECHNICAL_MEMBER' ? 'TT-' : 'ST-';
@@ -73,9 +74,7 @@ export class PlatformTeamService {
     const member = this.dataStore.getEmployees().find((e) => e.emp_id === id && e.role === teamRole);
     if (!member) throw new NotFoundException('Team member not found');
     if (scopePlatformAdminId && member.platform_admin_id !== scopePlatformAdminId) throw new NotFoundException('Team member not found');
-    Object.keys(dto).forEach((key) => {
-      if (dto[key] !== undefined) member[key] = dto[key];
-    });
+    applyAccountUpdate(this.dataStore, member, dto);
     return this.enrich(member);
   }
 

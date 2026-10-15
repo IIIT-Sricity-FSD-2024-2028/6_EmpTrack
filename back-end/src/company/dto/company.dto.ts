@@ -1,61 +1,66 @@
-import { IsString, IsNotEmpty, IsOptional, IsEmail, MinLength, Matches } from 'class-validator';
-import { STRONG_PASSWORD_REGEX } from '../../common/utils/password.util';
+import {
+  EmailField,
+  EnumField,
+  IdField,
+  LIMITS,
+  PasswordInputField,
+  PersonNameField,
+  PhoneField,
+  StrongPasswordField,
+  TextField,
+} from '../../common/validation/validators';
+import { ACCOUNT_STATUSES, COMPANY_STATUSES } from '../../common/validation/enums';
 
 export class CreateCompanyDto {
-  @IsString() @IsNotEmpty() company_name: string;
-  @IsEmail() company_email: string;
-  @IsString() @IsNotEmpty() phone: string;
-  @IsString() @IsNotEmpty() industry: string;
-  @IsString() @IsNotEmpty() address: string;
-  @IsString() @IsNotEmpty() subscription_plan_id: string;
-  @IsString() @IsNotEmpty() platform_admin_id: string;
-  @IsString() @IsOptional() status?: string;
+  @TextField('Company name', { min: 2, max: 120 }) company_name: string;
+  @EmailField('Company email') company_email: string;
+  @PhoneField('Company phone') phone: string;
+  @TextField('Industry', { min: 2, max: LIMITS.SHORT_TEXT_MAX }) industry: string;
+  @TextField('Address', { min: 5, max: LIMITS.ADDRESS_MAX, multiline: true }) address: string;
+  @IdField('Subscription plan') subscription_plan_id: string;
+  @IdField('Platform Admin') platform_admin_id: string;
+  @EnumField('Status', COMPANY_STATUSES, { optional: true }) status?: string;
 
-  @IsString() @IsNotEmpty() admin_name: string;
-  @IsEmail() admin_email: string;
-  @IsString() @IsNotEmpty() admin_phone: string;
-  @IsString() @MinLength(8) @Matches(STRONG_PASSWORD_REGEX, {
-    message: 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.',
-  })
-  admin_password: string;
-  @IsString() @IsNotEmpty() admin_confirm_password: string;
+  @PersonNameField('Admin name') admin_name: string;
+  @EmailField('Admin email') admin_email: string;
+  @PhoneField('Admin phone') admin_phone: string;
+  @StrongPasswordField('Admin password') admin_password: string;
+  // Compared with admin_password in CompanyService.
+  @PasswordInputField('Password confirmation') admin_confirm_password: string;
 }
 
 export class UpdateCompanyDto {
-  @IsString() @IsOptional() company_name?: string;
-  @IsEmail() @IsOptional() company_email?: string;
-  @IsString() @IsOptional() phone?: string;
-  @IsString() @IsOptional() industry?: string;
-  @IsString() @IsOptional() address?: string;
-  @IsString() @IsOptional() subscription_plan_id?: string;
+  @TextField('Company name', { min: 2, max: 120, optional: 'partial' }) company_name?: string;
+  @EmailField('Company email', { optional: 'partial' }) company_email?: string;
+  @PhoneField('Company phone', { optional: 'partial' }) phone?: string;
+  @TextField('Industry', { min: 2, max: LIMITS.SHORT_TEXT_MAX, optional: 'partial' }) industry?: string;
+  @TextField('Address', { min: 5, max: LIMITS.ADDRESS_MAX, multiline: true, optional: 'partial' }) address?: string;
+  @IdField('Subscription plan', { optional: 'partial' }) subscription_plan_id?: string;
 }
 
 export class UpdateCompanyStatusDto {
-  @IsString() @IsNotEmpty() status: string;
+  @EnumField('Status', COMPANY_STATUSES) status: string;
 }
 
 export class ReassignPlatformAdminDto {
-  @IsString() @IsNotEmpty() platform_admin_id: string;
+  @IdField('Platform Admin') platform_admin_id: string;
 }
 
 export class CreateCompanyAdminDto {
-  @IsString() @IsNotEmpty() name: string;
-  @IsEmail() email: string;
-  @IsString() @IsNotEmpty() phone: string;
-  @IsString() @MinLength(8) @Matches(STRONG_PASSWORD_REGEX, {
-    message: 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.',
-  })
-  password: string;
-  @IsString() @IsNotEmpty() confirmPassword: string;
-  @IsString() @IsOptional() status?: string;
+  @PersonNameField('Name') name: string;
+  @EmailField('Email') email: string;
+  @PhoneField('Phone number') phone: string;
+  @StrongPasswordField('Password') password: string;
+  @PasswordInputField('Password confirmation') confirmPassword: string;
+  @EnumField('Status', ACCOUNT_STATUSES, { optional: true }) status?: string;
 }
 
 export class UpdateCompanyAdminDto {
-  @IsString() @IsOptional() name?: string;
-  @IsEmail() @IsOptional() email?: string;
-  @IsString() @IsOptional() phone?: string;
+  @PersonNameField('Name', { optional: 'partial' }) name?: string;
+  @EmailField('Email', { optional: 'partial' }) email?: string;
+  @PhoneField('Phone number', { optional: 'partial' }) phone?: string;
 }
 
 export class UpdateCompanyAdminStatusDto {
-  @IsString() @IsNotEmpty() status: string;
+  @EnumField('Status', ACCOUNT_STATUSES) status: string;
 }

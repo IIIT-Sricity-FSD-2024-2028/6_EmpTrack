@@ -1,54 +1,52 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import { DateField, EnumField, IdField, LIMITS, NumberField, NumericField, TextField } from '../../common/validation/validators';
+
+export const TASK_STATUSES = ['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED'];
+// Compared case-insensitively - the Team Lead UI sends 'Medium', seed data uses 'HIGH'.
+export const TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+export const MAX_EST_HOURS = 1000;
 
 export class CreateTaskDto {
-  @IsString()
-  @IsNotEmpty()
+  @TextField('Task title', { min: 3, max: LIMITS.TITLE_MAX })
   task_title: string;
 
-  @IsString()
-  @IsOptional()
+  @IdField('Allocation', { optional: true })
   allocation_id?: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IdField('Assignee')
   assigned_to: string;
 
-  @IsString()
-  @IsOptional()
+  @TextField('Description', { optional: true, max: LIMITS.DESCRIPTION_MAX, multiline: true })
   task_description?: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @EnumField('Priority', TASK_PRIORITIES, { caseInsensitive: true })
   priority: string;
 
-  @IsString()
-  @IsNotEmpty()
+  // Not in the past - checked in TaskService against the server's date.
+  @DateField('Deadline')
   deadline: string;
+
+  // The Team Lead form sends this from a number input (number or numeric string);
+  // converted in TaskService.
+  @NumericField('Estimated hours', { min: 0.5, max: MAX_EST_HOURS, optional: true })
+  est_hours?: string | number;
 }
 
 export class UpdateTaskDto {
-  @IsString()
-  @IsOptional()
+  @EnumField('Status', TASK_STATUSES, { optional: 'partial' })
   status?: string;
 
-  @IsNumber()
-  @IsOptional()
+  @NumberField('Progress', { min: 0, max: 100, integer: true, optional: 'partial' })
   progress_percentage?: number;
 
-  @IsString()
-  @IsOptional()
+  @TextField('Task title', { min: 3, max: LIMITS.TITLE_MAX, optional: 'partial' })
   task_title?: string;
-  
-  @IsString()
-  @IsOptional()
+
+  @EnumField('Priority', TASK_PRIORITIES, { optional: 'partial', caseInsensitive: true })
   priority?: string;
-  
-  @IsString()
-  @IsOptional()
+
+  @DateField('Deadline', { optional: 'partial' })
   deadline?: string;
-  
-  @IsString()
-  @IsOptional()
+
+  @TextField('Description', { optional: true, max: LIMITS.DESCRIPTION_MAX, multiline: true })
   task_description?: string;
 }
-

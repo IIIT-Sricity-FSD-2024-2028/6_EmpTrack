@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { MarkAttendanceDto, CheckOutDto } from './dto/attendance.dto';
@@ -13,18 +13,18 @@ export class AttendanceController {
 
   @ApiOperation({ summary: 'Get attendance for specific user' })
   @Get('user/:empId')
-  getAttendanceForUser(@Param('empId') empId: string) {
-    return this.attendanceService.getAttendanceForUser(empId);
+  getAttendanceForUser(@Param('empId') empId: string, @Headers('x-actor-id') actorId: string) {
+    return this.attendanceService.getAttendanceForUser(empId, actorId);
   }
 
   @Post('check-in')
-  markAttendance(@Body() markDto: MarkAttendanceDto) {
-    return this.attendanceService.markAttendance(markDto);
+  markAttendance(@Body() markDto: MarkAttendanceDto, @Headers('x-actor-id') actorId: string) {
+    return this.attendanceService.markAttendance(markDto, actorId);
   }
 
   @Post('check-out')
-  markCheckOut(@Body() checkOutDto: CheckOutDto) {
-    return this.attendanceService.markCheckOut(checkOutDto);
+  markCheckOut(@Body() checkOutDto: CheckOutDto, @Headers('x-actor-id') actorId: string) {
+    return this.attendanceService.markCheckOut(checkOutDto, actorId);
   }
 }
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, Body, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { LeaveService } from './leave.service';
 import { CreateLeaveDto, UpdateLeaveStatusDto } from './dto/leave.dto';
@@ -15,28 +15,29 @@ export class LeaveController {
   @ApiOperation({ summary: 'Get all leaves (HR/TeamLead)' })
   @Get()
   @Roles('HR', 'TEAMLEAD', 'COMPANY_ADMIN')
-  getAllLeaves() {
-    return this.leaveService.getAllLeaves();
+  getAllLeaves(@Headers('x-actor-id') actorId: string) {
+    return this.leaveService.getAllLeaves(actorId);
   }
 
   @Get('user/:empId')
-  getLeavesForUser(@Param('empId') empId: string) {
-    return this.leaveService.getLeavesForUser(empId);
+  getLeavesForUser(@Param('empId') empId: string, @Headers('x-actor-id') actorId: string) {
+    return this.leaveService.getLeavesForUser(empId, actorId);
   }
 
   @Post()
   @Roles('EMPLOYEE', 'TEAMLEAD', 'COMPANY_ADMIN')
-  createLeave(@Body() createDto: CreateLeaveDto) {
-    return this.leaveService.createLeave(createDto);
+  createLeave(@Body() createDto: CreateLeaveDto, @Headers('x-actor-id') actorId: string) {
+    return this.leaveService.createLeave(createDto, actorId);
   }
 
   @Patch(':id/status')
   @Roles('HR', 'TEAMLEAD', 'COMPANY_ADMIN')
   updateLeaveStatus(
     @Param('id') leaveId: string,
-    @Body() updateDto: UpdateLeaveStatusDto
+    @Body() updateDto: UpdateLeaveStatusDto,
+    @Headers('x-actor-id') actorId: string,
   ) {
-    return this.leaveService.updateLeaveStatus(leaveId, updateDto);
+    return this.leaveService.updateLeaveStatus(leaveId, updateDto, actorId);
   }
 }
 

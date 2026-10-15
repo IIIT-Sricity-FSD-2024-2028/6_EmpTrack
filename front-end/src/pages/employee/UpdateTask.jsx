@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getTasksForUser, updateTaskStatus } from '../../services/taskService';
+import { updateTaskSchema } from '../../validation/formSchemas';
 import BackHeading from './components/BackHeading';
 import { empPath } from './employeeUtils';
 
@@ -26,6 +29,12 @@ export default function UpdateTask() {
   const [status, setStatus] = useState('NOT_STARTED');
   const [hoursSpent, setHoursSpent] = useState('');
   const [notes, setNotes] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const validation = useFormValidation(updateTaskSchema, { progress: String(progress), status, hoursSpent, notes }, {
+    idPrefix: 'task',
+    serverFieldMap: { progress_percentage: 'progress' },
+  });
 
   useEffect(() => {
     if (!task) return;
@@ -42,7 +51,16 @@ export default function UpdateTask() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await updateTaskStatus(taskId, status, progress);
+    setSubmitError('');
+    if (!validation.validateAll()) return;
+    setSubmitting(true);
+    try {
+      await updateTaskStatus(taskId, status, progress);
+    } catch (err) {
+      if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to update the task.');
+      setSubmitting(false);
+      return;
+    }
     navigate(empPath('tasks'));
   };
 
@@ -83,7 +101,7 @@ export default function UpdateTask() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             {/* Progress Section */}
             <div style={{ marginBottom: 32 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -103,6 +121,7 @@ export default function UpdateTask() {
                   value={progress}
                   onChange={handleSlider}
                   aria-label="Task progress"
+                  {...validation.input('progress', 'task_progress')}
                   style={{
                     width: '100%',
                     WebkitAppearance: 'none',
@@ -141,25 +160,31 @@ export default function UpdateTask() {
             {/* Inputs Section */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" htmlFor="hours_spent">Hours Spent (Today)</label>
+                <label className="form-label" htmlFor="hours_spent">Hours Spent (Today)<RequiredMark /></label>
                 <input
                   type="number"
-                  id="hours_spent"
                   className="form-control"
                   placeholder="e.g. 4"
+                  min="0.5"
+                  max="24"
+                  step="0.5"
+                  inputMode="decimal"
                   style={fieldStyle}
-                  required
+                  aria-required="true"
                   value={hoursSpent}
                   onChange={(e) => setHoursSpent(e.target.value)}
+                  {...validation.input('hoursSpent', 'hours_spent')}
                 />
+                <FieldError {...validation.errorProps('hoursSpent')} />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label" htmlFor="status_input">Status</label>
-                <select id="status_input" className="form-control" style={fieldStyle} value={status} onChange={(e) => setStatus(e.target.value)}>
+                <select className="form-control" style={fieldStyle} value={status} onChange={(e) => setStatus(e.target.value)} {...validation.input('status', 'status_input')}>
                   <option value="NOT_STARTED">Not Started</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="COMPLETED">Completed</option>
                 </select>
+                <FieldError {...validation.errorProps('status')} />
               </div>
             </div>
 
@@ -172,9 +197,12 @@ export default function UpdateTask() {
                 rows={4}
                 placeholder="Describe what you've accomplished, any blockers, or next steps"
                 style={{ borderRadius: 'var(--radius-md)', padding: 16, resize: 'vertical' }}
+                maxLength={1000}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
+                {...validation.input('notes', 'update_notes')}
               ></textarea>
+              <FieldError {...validation.errorProps('notes')} />
             </div>
 
             {/* Actions */}
@@ -187,8 +215,10 @@ export default function UpdateTask() {
               >
                 Cancel
               </button>
+              {submitError && <div className="form-error field-error" role="alert"><i className="ph ph-warning-circle" aria-hidden="true"></i><span>{submitError}</span></div>}
               <button
                 type="submit"
+                disabled={submitting}
                 className="btn btn-purple"
                 style={{ padding: '14px 32px', fontSize: 'var(--text-md)', display: 'flex', gap: 8, alignItems: 'center' }}
               >

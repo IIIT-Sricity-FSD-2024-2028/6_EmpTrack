@@ -32,17 +32,19 @@ async function mockLogin(email, password) {
 
 /** Returns { user, token?, expiresAt } and persists the session. */
 export async function login(email, password) {
-  const { user, token } = config.useMockAuth
+  const { user, token, expiresAt } = config.useMockAuth
     ? await mockLogin(email, password)
     : await api.post('/auth/login', { email, password });
 
-  const session = { user, token, expiresAt: Date.now() + config.sessionDuration };
+  // The backend's expiry wins when it sends one, so the UI never thinks a session
+  // is valid after the server has dropped it.
+  const session = { user, token, expiresAt: expiresAt || Date.now() + config.sessionDuration };
   writeStorage(STORAGE_KEYS.AUTH, session);
   return session;
 }
 
 export async function logout() {
-  if (!config.useMockAuth) {
+  if (!config.useMockAuth && readStorage(STORAGE_KEYS.AUTH)?.token) {
     try {
       await api.post('/auth/logout');
     } catch {
@@ -50,6 +52,23 @@ export async function logout() {
     }
   }
   writeStorage(STORAGE_KEYS.AUTH, null);
+}
+
+/**
+ * Asks the backend who the stored token belongs to (GET /auth/me) and stores
+ * the server's copy of the user, so a refresh never trusts a revoked token or a
+ * role edited in localStorage. Resolves to the updated session, or null if it
+ * was replaced/cleared meanwhile. A 401 rejects and clears the session (api.js).
+ */
+export async function verifySession() {
+  const token = readStorage(STORAGE_KEYS.AUTH)?.token;
+  if (config.useMockAuth || !token) return getStoredSession();
+  const { user } = await api.get('/auth/me');
+  const current = getStoredSession();
+  if (current?.token !== token) return current;
+  const session = { ...current, user };
+  writeStorage(STORAGE_KEYS.AUTH, session);
+  return session;
 }
 
 /** Activates an invited account (POST /invitations/:token/accept). */
@@ -61,6 +80,11 @@ export function acceptInvitation(token, password) {
 export function getStoredSession() {
   const session = readStorage(STORAGE_KEYS.AUTH);
   if (!session?.user) return null;
+  // Sessions saved before the backend issued tokens can't authenticate any request.
+  if (!config.useMockAuth && !session.token) {
+    writeStorage(STORAGE_KEYS.AUTH, null);
+    return null;
+  }
   if (session.expiresAt && session.expiresAt < Date.now()) {
     writeStorage(STORAGE_KEYS.AUTH, null);
     return null;

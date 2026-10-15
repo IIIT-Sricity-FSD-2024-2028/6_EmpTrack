@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import ExitGuard from './ExitGuard';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
@@ -19,6 +20,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+      <ExitGuard />
     </div>
   );
 }

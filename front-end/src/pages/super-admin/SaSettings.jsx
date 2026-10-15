@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import { Field } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
+import useFormValidation from '../../hooks/useFormValidation';
+import { platformSettingsSchemas } from '../../validation/formSchemas';
 import * as sa from '../../services/superAdminService';
 import { SA_BASE, SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
@@ -59,35 +61,52 @@ export default function SaSettings() {
       .catch(() => showToast('Failed to load platform settings.', 'error'));
   }, [showToast]);
 
-  const text = (key) => ({ value: form[key], onChange: (e) => setForm((f) => ({ ...f, [key]: e.target.value })) });
+  const platformValidation = useFormValidation(platformSettingsSchemas.platform, form, { idPrefix: 'st-platform', serverFieldMap: {} });
+  const securityValidation = useFormValidation(platformSettingsSchemas.security, form, {
+    idPrefix: 'st-security',
+    serverFieldMap: {
+      'security_settings.passwordMinLength': 'passwordMinLength',
+      'security_settings.sessionTimeoutMinutes': 'sessionTimeoutMinutes',
+      'security_settings.invitationExpiryHours': 'invitationExpiryHours',
+    },
+  });
+  const validationFor = (key) => (key in platformSettingsSchemas.security ? securityValidation : platformValidation);
+  const text = (key, id) => ({
+    value: form[key] ?? '',
+    onChange: (e) => setForm((f) => ({ ...f, [key]: e.target.value })),
+    'aria-required': true,
+    ...validationFor(key).input(key, id),
+  });
+  const errorOf = (key) => validationFor(key).errors[key];
   const toggle = (key) => ({ checked: form[key], onChange: (value) => setForm((f) => ({ ...f, [key]: value })) });
 
-  const save = async (data, success) => {
+  const save = async (data, success, validation) => {
     try {
       const updated = await sa.updatePlatformSettings(data);
       if (updated?.role_permissions) setPermissions(updated.role_permissions);
       showToast(success);
     } catch (e) {
-      showToast(e.message || 'Failed to save.', 'error');
+      if (!validation?.setServerErrors(e)) showToast(e.message || 'Failed to save.', 'error');
     }
   };
 
-  const savePlatform = () => save({
+  const savePlatform = () => platformValidation.validateAll() && save({
     platform_name: form.platform_name.trim(),
     support_email: form.support_email.trim(),
     default_currency: form.default_currency.trim().toUpperCase(),
     timezone: form.timezone.trim(),
     maintenance_mode: form.maintenance_mode,
-  }, 'Platform configuration saved.');
+  }, 'Platform configuration saved.', platformValidation);
 
-  const saveSecurity = () => save({
+  // Validated first, so the old "|| default" fallback no longer hides an invalid entry.
+  const saveSecurity = () => securityValidation.validateAll() && save({
     security_settings: {
-      passwordMinLength: Number(form.passwordMinLength) || 8,
-      sessionTimeoutMinutes: Number(form.sessionTimeoutMinutes) || 60,
-      invitationExpiryHours: Number(form.invitationExpiryHours) || 72,
+      passwordMinLength: Number(form.passwordMinLength),
+      sessionTimeoutMinutes: Number(form.sessionTimeoutMinutes),
+      invitationExpiryHours: Number(form.invitationExpiryHours),
       twoFactorRequired: form.twoFactorRequired,
     },
-  }, 'Security settings saved.');
+  }, 'Security settings saved.', securityValidation);
 
   const saveNotifications = () => save({
     notification_settings: {
@@ -106,19 +125,19 @@ export default function SaSettings() {
         <div className="settings-grid">
           <div className="card settings-card">
             <div className="card-title"><i className="ph-fill ph-sliders-horizontal"></i> Platform Configuration</div>
-            <Field label="Platform Name" htmlFor="st-name"><input type="text" className="form-control" id="st-name" {...text('platform_name')} /></Field>
-            <Field label="Support Email" htmlFor="st-support-email"><input type="email" className="form-control" id="st-support-email" {...text('support_email')} /></Field>
-            <Field label="Default Currency" htmlFor="st-currency"><input type="text" className="form-control" id="st-currency" maxLength={3} style={{ textTransform: 'uppercase' }} {...text('default_currency')} /></Field>
-            <Field label="Timezone" htmlFor="st-timezone"><input type="text" className="form-control" id="st-timezone" {...text('timezone')} /></Field>
+            <Field label="Platform Name" htmlFor="st-name" required error={errorOf('platform_name')}><input type="text" className="form-control" maxLength={60} {...text('platform_name', 'st-name')} /></Field>
+            <Field label="Support Email" htmlFor="st-support-email" required error={errorOf('support_email')}><input type="email" className="form-control" maxLength={254} {...text('support_email', 'st-support-email')} /></Field>
+            <Field label="Default Currency" htmlFor="st-currency" required error={errorOf('default_currency')}><input type="text" className="form-control" maxLength={3} style={{ textTransform: 'uppercase' }} {...text('default_currency', 'st-currency')} /></Field>
+            <Field label="Timezone" htmlFor="st-timezone" required error={errorOf('timezone')}><input type="text" className="form-control" maxLength={64} placeholder="e.g. Asia/Kolkata" {...text('timezone', 'st-timezone')} /></Field>
             <Toggle id="st-maintenance" title="Maintenance Mode" desc="Temporarily restrict access for non-Super-Admin users" {...toggle('maintenance_mode')} />
             <button type="button" className="btn-save" id="btn-save-platform" onClick={savePlatform}><i className="ph ph-check-circle"></i> Save Platform Configuration</button>
           </div>
 
           <div className="card settings-card">
             <div className="card-title"><i className="ph-fill ph-shield-check"></i> Security Settings</div>
-            <Field label="Minimum Password Length" htmlFor="st-pwd-len"><input type="number" min="6" max="32" className="form-control" id="st-pwd-len" {...text('passwordMinLength')} /></Field>
-            <Field label="Session Timeout (minutes)" htmlFor="st-session"><input type="number" min="5" className="form-control" id="st-session" {...text('sessionTimeoutMinutes')} /></Field>
-            <Field label="Invitation Expiry (hours)" htmlFor="st-invite-expiry"><input type="number" min="1" className="form-control" id="st-invite-expiry" {...text('invitationExpiryHours')} /></Field>
+            <Field label="Minimum Password Length" htmlFor="st-pwd-len" required error={errorOf('passwordMinLength')}><input type="number" min="8" max="32" step="1" className="form-control" {...text('passwordMinLength', 'st-pwd-len')} /></Field>
+            <Field label="Session Timeout (minutes)" htmlFor="st-session" required error={errorOf('sessionTimeoutMinutes')}><input type="number" min="5" max="1440" step="1" className="form-control" {...text('sessionTimeoutMinutes', 'st-session')} /></Field>
+            <Field label="Invitation Expiry (hours)" htmlFor="st-invite-expiry" required error={errorOf('invitationExpiryHours')}><input type="number" min="1" max="720" step="1" className="form-control" {...text('invitationExpiryHours', 'st-invite-expiry')} /></Field>
             <Toggle id="st-2fa" title="Require Two-Factor Authentication" desc="Applies to Platform Admin and Company Admin accounts" {...toggle('twoFactorRequired')} />
             <button type="button" className="btn-save" id="btn-save-security" onClick={saveSecurity}><i className="ph ph-check-circle"></i> Save Security Settings</button>
           </div>

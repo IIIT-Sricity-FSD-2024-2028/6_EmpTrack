@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { WorkLogService } from './worklog.service';
 import { CreateWorkLogDto } from './dto/worklog.dto';
@@ -13,13 +13,12 @@ export class WorkLogController {
 
   @ApiOperation({ summary: 'Get work logs for a given user' })
   @Get('user/:empId')
-  getWorkLogsForUser(@Param('empId') empId: string) {
-    return this.worklogService.getWorkLogsForUser(empId);
+  getWorkLogsForUser(@Param('empId') empId: string, @Headers('x-actor-id') actorId: string) {
+    return this.worklogService.getWorkLogsForUser(empId, actorId);
   }
 
   @Post()
-  createWorkLog(@Body() createDto: CreateWorkLogDto) {
-    return this.worklogService.createWorkLog(createDto);
+  createWorkLog(@Body() createDto: CreateWorkLogDto, @Headers('x-actor-id') actorId: string) {
+    return this.worklogService.createWorkLog(createDto, actorId);
   }
 }
-

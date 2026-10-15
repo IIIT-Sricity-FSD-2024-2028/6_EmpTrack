@@ -81,6 +81,7 @@ export default function AssignedIssues() {
             <input
               type="text"
               className="search-input"
+              maxLength={100}
               id="search-input"
               placeholder="Search by Issue ID, title, company or category..."
               value={searchInput}

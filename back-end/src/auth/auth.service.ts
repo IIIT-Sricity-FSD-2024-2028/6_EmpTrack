@@ -3,12 +3,14 @@ import { MockDataService } from '../data/mock-data.service';
 import { LoginDto } from './dto/login.dto';
 import { comparePassword } from '../common/utils/password.util';
 import { FileLoggerService } from '../common/logger/file-logger.service';
+import { SessionService } from './session.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly dataStore: MockDataService,
     private readonly logger: FileLoggerService,
+    private readonly sessions: SessionService,
   ) {}
 
   login(dto: LoginDto, ip?: string, requestId?: string) {
@@ -55,10 +57,22 @@ export class AuthService {
     });
 
     const { password, ...safeUser } = employee;
+    const { token, expiresAt } = this.sessions.create(employee.emp_id);
+    return { user: this.enrichScope(safeUser), token, expiresAt };
+  }
+
+  // The frontend calls this on start-up/refresh so it never trusts a stored session
+  // (or the role inside it) that the server no longer accepts. AuthGuard has already
+  // rejected missing/expired/revoked tokens and set x-actor-id from the session.
+  me(empId: string) {
+    const employee = this.dataStore.getEmployees().find((e) => e.emp_id === empId);
+    if (!employee) throw new UnauthorizedException('Your session has expired. Please log in again.');
+    const { password, ...safeUser } = employee;
     return { user: this.enrichScope(safeUser) };
   }
 
-  logout(actorId: string, actorName: string, role: string) {
+  logout(actorId: string, actorName: string, role: string, token?: string) {
+    if (token) this.sessions.revoke(token);
     if (actorId) {
       this.logger.info('Logout', { userId: actorId, role });
       this.dataStore.logActivity({

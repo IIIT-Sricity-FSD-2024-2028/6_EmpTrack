@@ -7,11 +7,12 @@ import {
   ClearButton, DetailItem, FilterSelect, modalClass, Pagination, PortalShell, SearchInput, SectionHeader, ShellTable, useDebounced, useToast,
 } from '../../components/platform/ShellUI';
 import useFetch from '../../hooks/useFetch';
+import useFormValidation from '../../hooks/useFormValidation';
+import { PASSWORD_HINT } from '../../utils/validation';
+import { createCompanyAdminSchema } from '../../validation/formSchemas';
 import { createCompanyAdmin, getMyCompanies, IS_DEMO } from '../../services/platformAdminService';
 
 const PAGE_SIZE = 8;
-const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
   { value: 'ACTIVE', label: 'Active' },
@@ -53,6 +54,7 @@ export default function MyCompanies() {
   const [saving, setSaving] = useState(false);
   const [toast, showToast] = useToast();
   const query = useDebounced(search.trim());
+  const validation = useFormValidation(createCompanyAdminSchema((companies ?? []).map((c) => c.company_id)), form || {}, { idPrefix: 'ca-new' });
 
   const filtered = useMemo(() => {
     let list = companies ?? [];
@@ -73,16 +75,15 @@ export default function MyCompanies() {
   const openCreate = (companyId = '') => {
     setForm({ ...EMPTY_FORM, companyId });
     setFormError('');
+    validation.reset();
   };
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    setFormError('');
+    if (!validation.validateAll()) return;
     const data = { ...form, name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() };
-    if (!data.companyId || !data.name || !data.email || !data.phone || !data.password || !data.confirmPassword) return setFormError('All fields are required.');
-    if (!EMAIL_RE.test(data.email)) return setFormError('Enter a valid email address.');
-    if (!STRONG_PASSWORD.test(data.password)) return setFormError('Password must be 8+ characters with uppercase, lowercase, a number, and a special character.');
-    if (data.password !== data.confirmPassword) return setFormError('Password and confirmation do not match.');
     setSaving(true);
     try {
       const { companyId, ...payload } = data;
@@ -93,7 +94,7 @@ export default function MyCompanies() {
       setForm(null);
       reload();
     } catch (err) {
-      setFormError(err.message || 'Failed to create Company Admin.');
+      if (!validation.setServerErrors(err)) setFormError(err.message || 'Failed to create Company Admin.');
     } finally {
       setSaving(false);
     }
@@ -178,16 +179,16 @@ export default function MyCompanies() {
       >
         {form && (
           <form id="create-ca-form" onSubmit={handleCreate} noValidate>
-            <Input label="Full Name" value={form.name} onChange={set('name')} required />
-            <Input label="Email" type="email" value={form.email} onChange={set('email')} required />
-            <Input label="Password" type="password" autoComplete="new-password" value={form.password} onChange={set('password')} required />
-            <Input label="Confirm Password" type="password" autoComplete="new-password" value={form.confirmPassword} onChange={set('confirmPassword')} required />
-            <Input label="Phone Number" value={form.phone} onChange={set('phone')} required />
-            <Input as="select" label="Company" value={form.companyId} onChange={set('companyId')} required>
+            <Input label="Full Name" maxLength={100} value={form.name} onChange={set('name')} required {...validation.field('name')} />
+            <Input label="Email" type="email" maxLength={254} value={form.email} onChange={set('email')} required {...validation.field('email')} />
+            <Input label="Password" type="password" maxLength={64} hint={PASSWORD_HINT} autoComplete="new-password" value={form.password} onChange={set('password')} required {...validation.field('password')} />
+            <Input label="Confirm Password" type="password" maxLength={64} autoComplete="new-password" value={form.confirmPassword} onChange={set('confirmPassword')} required {...validation.field('confirmPassword')} />
+            <Input label="Phone Number" type="tel" maxLength={20} placeholder="e.g. +91 98765 43210" value={form.phone} onChange={set('phone')} required {...validation.field('phone')} />
+            <Input as="select" label="Company" value={form.companyId} onChange={set('companyId')} required {...validation.field('companyId')}>
               <option value="">Select a company...</option>
               {(companies ?? []).map((c) => <option key={c.company_id} value={c.company_id}>{c.company_name}</option>)}
             </Input>
-            <Input as="select" label="Status" value={form.status} onChange={set('status')}>
+            <Input as="select" label="Status" value={form.status} onChange={set('status')} {...validation.field('status')}>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </Input>

@@ -3,7 +3,10 @@ import { useCallback, useEffect, useState } from 'react';
 import SaModal from '../../components/sa-common/SaModal';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
+import FieldError from '../../components/common/FieldError';
 import useSaToast from '../../components/sa-common/useSaToast';
+import useFormValidation from '../../hooks/useFormValidation';
+import { createEscalationSchema, escalationCommentSchema } from '../../validation/formSchemas';
 import * as sa from '../../services/superAdminService';
 import { formatDate, formatDateTime } from '../../utils/saCommon';
 import { SA_PORTAL } from './saConstants';
@@ -29,19 +32,25 @@ function EscalationDetail({ esc, onChanged, showToast }) {
   const [priority, setPriority] = useState(esc.priority);
   const [team, setTeam] = useState(esc.assigned_team && esc.assigned_team !== 'Unassigned' ? esc.assigned_team : 'Unassigned');
   const [comment, setComment] = useState('');
+  const commentValidation = useFormValidation(escalationCommentSchema, { comment, note: comment }, { idPrefix: 'de', serverFieldMap: { message: 'comment' } });
 
   const act = async (run, success, failure, { clearComment } = {}) => {
     try {
       await run();
       if (success) showToast(success);
-      if (clearComment) setComment('');
+      if (clearComment) {
+        setComment('');
+        commentValidation.reset();
+      }
       await onChanged(esc.issue_id);
     } catch (e) {
-      showToast(e.message || failure, 'error');
+      if (!commentValidation.setServerErrors(e)) showToast(e.message || failure, 'error');
     }
   };
 
   const note = () => comment.trim() || undefined;
+  // Resolve / escalate send the comment box as an optional note (max length only).
+  const withNote = (fn) => () => commentValidation.validateFields(['note']) && fn();
 
   return (
     <>
@@ -73,13 +82,13 @@ function EscalationDetail({ esc, onChanged, showToast }) {
         <button type="button" className="btn btn-outline" id="btn-save-assign" onClick={() => act(() => sa.assignCriticalEscalation(esc.issue_id, team), 'Escalation assigned successfully.', 'Failed to assign.')}>Save Assignment</button>
         <button
           type="button" className="btn btn-secondary" id="btn-resolve"
-          onClick={() => window.confirm('Mark this escalation as resolved?') && act(() => sa.resolveCriticalEscalation(esc.issue_id, note()), 'Escalation resolved successfully.', 'Failed to resolve.', { clearComment: true })}
+          onClick={withNote(() => window.confirm('Mark this escalation as resolved?') && act(() => sa.resolveCriticalEscalation(esc.issue_id, note()), 'Escalation resolved successfully.', 'Failed to resolve.', { clearComment: true }))}
         >
           Resolve
         </button>
         <button
           type="button" className="btn btn-danger" id="btn-escalate"
-          onClick={() => window.confirm('Escalate this issue further with Critical priority?') && act(() => sa.escalateCriticalEscalation(esc.issue_id, note()), 'Escalation raised to Critical priority.', 'Failed to escalate.', { clearComment: true })}
+          onClick={withNote(() => window.confirm('Escalate this issue further with Critical priority?') && act(() => sa.escalateCriticalEscalation(esc.issue_id, note()), 'Escalation raised to Critical priority.', 'Failed to escalate.', { clearComment: true }))}
         >
           Escalate Further
         </button>
@@ -100,11 +109,12 @@ function EscalationDetail({ esc, onChanged, showToast }) {
         )}
       </div>
       <div className="form-group">
-        <textarea className="form-control" id="de-comment" rows="2" placeholder="Add a comment..." aria-label="Comment" value={comment} onChange={(e) => setComment(e.target.value)}></textarea>
+        <textarea className="form-control" rows="2" maxLength={1000} placeholder="Add a comment..." aria-label="Comment" value={comment} onChange={(e) => setComment(e.target.value)} {...commentValidation.input(commentValidation.errors.note ? 'note' : 'comment', 'de-comment')}></textarea>
+        <FieldError {...commentValidation.errorProps(commentValidation.errors.note ? 'note' : 'comment')} />
       </div>
       <button
         type="button" className="btn btn-outline" id="btn-add-comment"
-        onClick={() => (comment.trim() ? act(() => sa.addCriticalEscalationComment(esc.issue_id, comment.trim()), null, 'Failed to add comment.', { clearComment: true }) : showToast('Enter a comment first.', 'error'))}
+        onClick={() => commentValidation.validateFields(['comment']) && act(() => sa.addCriticalEscalationComment(esc.issue_id, comment.trim()), null, 'Failed to add comment.', { clearComment: true })}
       >
         <i className="ph ph-chat-circle-text"></i> Add Comment
       </button>
@@ -123,6 +133,7 @@ export default function SaEscalations() {
   const [companies, setCompanies] = useState(null); // null loading | 'error' | []
   const [error, setError] = useState('');
   const createForm = useFormState(EMPTY_CREATE);
+  const createValidation = useFormValidation(createEscalationSchema(Array.isArray(companies) ? companies.map((c) => c.company_id) : []), createForm.values, { idPrefix: 'ce' });
 
   const loadEscalations = useCallback(async () => {
     setLoadState('loading');
@@ -149,6 +160,7 @@ export default function SaEscalations() {
 
   const openCreate = async () => {
     createForm.reset();
+    createValidation.reset();
     setError('');
     setCompanies(null);
     setModal('create');
@@ -162,8 +174,9 @@ export default function SaEscalations() {
   };
 
   const submitCreate = async () => {
+    setError('');
+    if (!createValidation.validateAll()) return;
     const data = { ...createForm.values, description: createForm.values.description.trim() };
-    if (!data.company_id) return setError('Please select a company.');
     try {
       await sa.createCriticalEscalation(data);
       showToast('Escalation raised successfully.');
@@ -243,32 +256,32 @@ export default function SaEscalations() {
         id="createEscModal" open={modal === 'create'} onClose={close} title="Raise Critical Escalation"
         footer={<><button type="button" className="btn btn-outline" onClick={close}>Cancel</button><button type="button" className="btn btn-primary" onClick={submitCreate}>Raise Escalation</button></>}
       >
-        <form id="create-esc-form" onSubmit={(e) => e.preventDefault()}>
-          <Field label="Company" htmlFor="ce-company">
-            <select className="form-control" id="ce-company" {...createForm.bind('company_id')}>
+        <form id="create-esc-form" onSubmit={(e) => e.preventDefault()} noValidate>
+          <Field label="Company" htmlFor="ce-company" required error={createValidation.errors.company_id}>
+            <select className="form-control" aria-required={true} {...createForm.bind('company_id')} {...createValidation.input('company_id', 'ce-company')}>
               {companies === null && <option value="">Loading...</option>}
               {companies === 'error' && <option value="">Failed to load companies</option>}
               {Array.isArray(companies) && companies.map((c) => <option key={c.company_id} value={c.company_id}>{c.company_name}</option>)}
             </select>
           </Field>
           <div className="form-grid">
-            <Field label="Category" htmlFor="ce-category">
-              <select className="form-control" id="ce-category" {...createForm.bind('category')}>
+            <Field label="Category" htmlFor="ce-category" required error={createValidation.errors.category}>
+              <select className="form-control" aria-required={true} {...createForm.bind('category')} {...createValidation.input('category', 'ce-category')}>
                 {['Technical', 'Billing', 'Support', 'Security', 'Other'].map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </Field>
-            <Field label="Priority" htmlFor="ce-priority">
-              <select className="form-control" id="ce-priority" {...createForm.bind('priority')}>
+            <Field label="Priority" htmlFor="ce-priority" required error={createValidation.errors.priority}>
+              <select className="form-control" aria-required={true} {...createForm.bind('priority')} {...createValidation.input('priority', 'ce-priority')}>
                 {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </Field>
           </div>
-          <Field label="Assigned Team" htmlFor="ce-team">
-            <select className="form-control" id="ce-team" {...createForm.bind('assigned_team')}>
+          <Field label="Assigned Team" htmlFor="ce-team" required error={createValidation.errors.assigned_team}>
+            <select className="form-control" aria-required={true} {...createForm.bind('assigned_team')} {...createValidation.input('assigned_team', 'ce-team')}>
               {TEAMS.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </Field>
-          <Field label="Description" htmlFor="ce-description"><textarea className="form-control" id="ce-description" rows="3" {...createForm.bind('description')}></textarea></Field>
+          <Field label="Description" htmlFor="ce-description" error={createValidation.errors.description}><textarea className="form-control" rows="3" aria-required={false} {...createForm.bind('description')} {...createValidation.input('description', 'ce-description')} maxLength={2000}></textarea></Field>
           <FormError id="create-esc-error" message={error} />
         </form>
       </SaModal>

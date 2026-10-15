@@ -7,6 +7,7 @@ export default function SearchBar({ value, onChange, placeholder = 'Search...', 
       <i className="ph ph-magnifying-glass"></i>
       <input
         type="text"
+        maxLength={100}
         className="form-control"
         value={value}
         placeholder={placeholder}

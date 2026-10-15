@@ -1,32 +1,27 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { DateTimeField, IdField, LIMITS, NotBeforeField, NumberField, TextField } from '../../common/validation/validators';
 
 export class CreateWorkLogDto {
-  @IsString()
-  @IsNotEmpty()
-  emp_id: string;
+  // Optional and only accepted when it matches the caller (see WorkLogService).
+  @IdField('Employee ID', { optional: true })
+  emp_id?: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IdField('Task')
   task_id: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @TextField('Task title', { max: LIMITS.TITLE_MAX })
   task_title: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @DateTimeField('Start time')
   start_time: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @DateTimeField('End time')
+  @NotBeforeField('start_time', 'End time must be after the start time.', { strict: true })
   end_time: string;
 
-  @IsNumber()
-  @IsNotEmpty()
+  // WorkLogService also requires it to be more than 0.
+  @NumberField('Hours spent', { min: 0, max: 24 })
   hours_spent: number;
-  
-  @IsString()
-  @IsNotEmpty()
+
+  @TextField('Description', { min: 5, max: LIMITS.COMMENT_MAX, multiline: true })
   description: string;
 }
-

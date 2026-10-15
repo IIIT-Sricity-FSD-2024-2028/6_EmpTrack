@@ -144,7 +144,7 @@ export default function HrAttendance() {
       <section className="filters-section">
         <div className="search-bar">
           <i className="ph ph-magnifying-glass"></i>
-          <input type="text" id="hrSearchInput" placeholder="Search by name or ID..." aria-label="Search by name or ID" value={filters.search} onChange={set('search')} />
+          <input type="text" maxLength={100} id="hrSearchInput" placeholder="Search by name or ID..." aria-label="Search by name or ID" value={filters.search} onChange={set('search')} />
         </div>
         <div className="filter-dropdowns">
           <input type="date" id="hrDateFilter" aria-label="Attendance date" value={filters.date} max={todayKey()} onChange={(e) => e.target.value && set('date')(e)} />

@@ -1,18 +1,16 @@
-import { IsString, IsNotEmpty, IsOptional, IsEmail, MinLength, Matches } from 'class-validator';
-import { STRONG_PASSWORD_REGEX } from '../../common/utils/password.util';
+import { EmailField, EnumField, PasswordInputField, PersonNameField, PhoneField, StrongPasswordField, TextField } from '../../common/validation/validators';
+import { ACCOUNT_STATUSES } from '../../common/validation/enums';
 
 export class CreateTeamDto {
-  @IsString() @IsNotEmpty() team_name: string;
+  @TextField('Team name', { min: 2, max: 60 }) team_name: string;
 }
 
 export class CreateTeamLeadDto {
-  @IsString() @IsNotEmpty() name: string;
-  @IsEmail() email: string;
-  @IsString() @IsNotEmpty() phone: string;
-  @IsString() @MinLength(8) @Matches(STRONG_PASSWORD_REGEX, {
-    message: 'Password must be 8+ characters with uppercase, lowercase, a number, and a special character.',
-  })
-  password: string;
-  @IsString() @IsNotEmpty() confirmPassword: string;
-  @IsString() @IsOptional() status?: string;
+  @PersonNameField('Name') name: string;
+  @EmailField('Email') email: string;
+  @PhoneField('Phone number') phone: string;
+  @StrongPasswordField('Password') password: string;
+  // Compared with password in TeamService.
+  @PasswordInputField('Password confirmation') confirmPassword: string;
+  @EnumField('Status', ACCOUNT_STATUSES, { optional: true }) status?: string;
 }

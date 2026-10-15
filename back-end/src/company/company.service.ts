@@ -3,6 +3,7 @@ import { MockDataService } from '../data/mock-data.service';
 import { InvitationService } from '../invitation/invitation.service';
 import { CreateCompanyDto, UpdateCompanyDto, UpdateCompanyStatusDto, ReassignPlatformAdminDto, CreateCompanyAdminDto, UpdateCompanyAdminDto, UpdateCompanyAdminStatusDto } from './dto/company.dto';
 import { hashPassword } from '../common/utils/password.util';
+import { applyAccountUpdate, emailTaken } from '../common/utils/account.util';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
@@ -41,9 +42,13 @@ export class CompanyService {
     return companies.map((c) => this.enrich(c));
   }
 
-  getCompanyById(id: string) {
+  // scopePlatformAdminId: when set (a Platform Admin caller), only that admin's own
+  // companies are visible - same rule as getAllCompanies.
+  getCompanyById(id: string, scopePlatformAdminId: string | null = null) {
     const company = this.dataStore.getCompanies().find((c) => c.company_id === id);
-    if (!company) throw new NotFoundException('Company not found');
+    if (!company || (scopePlatformAdminId && company.platform_admin_id !== scopePlatformAdminId)) {
+      throw new NotFoundException('Company not found');
+    }
     return this.enrich(company);
   }
 
@@ -55,7 +60,7 @@ export class CompanyService {
     const plan = this.dataStore.getSubscriptionPlans().find((p) => p.plan_id === dto.subscription_plan_id);
     if (!plan) throw new BadRequestException('Selected subscription plan was not found');
 
-    const existingEmail = this.dataStore.getEmployees().find((e) => e.email === dto.admin_email);
+    const existingEmail = emailTaken(this.dataStore, dto.admin_email);
     if (existingEmail) throw new BadRequestException('An account with the Company Admin email already exists');
 
     if (dto.admin_password !== dto.admin_confirm_password) {
@@ -117,6 +122,9 @@ export class CompanyService {
   updateCompany(id: string, dto: UpdateCompanyDto) {
     const company = this.dataStore.getCompanies().find((c) => c.company_id === id);
     if (!company) throw new NotFoundException('Company not found');
+    if (dto.subscription_plan_id && !this.dataStore.getSubscriptionPlans().some((p) => p.plan_id === dto.subscription_plan_id)) {
+      throw new BadRequestException('Selected subscription plan was not found');
+    }
     Object.keys(dto).forEach((key) => {
       if (dto[key] !== undefined) company[key] = dto[key];
     });
@@ -200,7 +208,7 @@ export class CompanyService {
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Password and confirmation do not match');
     }
-    const existingEmail = this.dataStore.getEmployees().find((e) => e.email === dto.email);
+    const existingEmail = emailTaken(this.dataStore, dto.email);
     if (existingEmail) throw new BadRequestException('An account with this email already exists');
 
     const emp_id = 'CA-' + Date.now();
@@ -235,9 +243,7 @@ export class CompanyService {
     this.assertManagesCompany(company, actor);
     const admin = this.dataStore.getEmployees().find((e) => e.emp_id === adminId && e.companyId === companyId && e.role === 'COMPANY_ADMIN');
     if (!admin) throw new NotFoundException('Company Admin not found');
-    Object.keys(dto).forEach((key) => {
-      if (dto[key] !== undefined) admin[key] = dto[key];
-    });
+    applyAccountUpdate(this.dataStore, admin, dto);
     return this.enrichAdmin(admin);
   }
 

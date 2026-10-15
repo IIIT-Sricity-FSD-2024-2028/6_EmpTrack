@@ -1,6 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { AnalyticsService } from './analytics.service';
+import { AnalyticsRangeQueryDto } from './dto/analytics.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
@@ -20,12 +21,12 @@ export class AnalyticsController {
 
   @ApiOperation({ summary: 'Monthly company growth. range: today|7d|30d|6m|1y, or from/to for a custom range' })
   @Get('company-growth')
-  getCompanyGrowth(@Query('range') range?: string, @Query('from') from?: string, @Query('to') to?: string) {
+  getCompanyGrowth(@Query() { range, from, to }: AnalyticsRangeQueryDto) {
     return this.analyticsService.getCompanyGrowth(range, from, to);
   }
 
   @Get('employee-growth')
-  getEmployeeGrowth(@Query('range') range?: string, @Query('from') from?: string, @Query('to') to?: string) {
+  getEmployeeGrowth(@Query() { range, from, to }: AnalyticsRangeQueryDto) {
     return this.analyticsService.getEmployeeGrowth(range, from, to);
   }
 
@@ -35,7 +36,7 @@ export class AnalyticsController {
   }
 
   @Get('platform-activity')
-  getPlatformActivity(@Query('range') range?: string, @Query('from') from?: string, @Query('to') to?: string) {
+  getPlatformActivity(@Query() { range, from, to }: AnalyticsRangeQueryDto) {
     return this.analyticsService.getPlatformActivity(range, from, to);
   }
 }

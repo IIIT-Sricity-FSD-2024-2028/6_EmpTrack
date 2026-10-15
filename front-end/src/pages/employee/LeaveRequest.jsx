@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import Badge from '../../components/common/Badge';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { createLeave, getLeavesForUser } from '../../services/leaveService';
+import { leaveRequestSchema } from '../../validation/formSchemas';
 import PortalHeading from './components/PortalHeading';
 import { LEAVE_TYPES, leaveStatusBadge } from './employeeUtils';
 
@@ -30,6 +33,7 @@ const labelStyle = { fontWeight: 'var(--font-medium)' };
 const rowGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 20 };
 const mutedSmall = { color: 'var(--text-muted)', fontSize: 13 };
 const EMPTY_FORM = { type: '', start: '', end: '', reason: '' };
+const SERVER_FIELDS = { leave_type: 'type', start_date: 'start', end_date: 'end' };
 
 const columns = [
   { key: 'leave_id', header: 'Leave ID', render: (l) => <span style={{ color: '#3B82F6', fontWeight: 'var(--font-medium)' }}>{l.leave_id}</span> },
@@ -82,26 +86,38 @@ export default function LeaveRequest() {
   const { user } = useAuth();
   const { data: leaves = [], reload } = useFetch(() => getLeavesForUser(user.emp_id), [user.emp_id]);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const validation = useFormValidation(leaveRequestSchema, form, { idPrefix: 'lv', serverFieldMap: SERVER_FIELDS });
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   const days = countDays(form.start, form.end);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (new Date(form.end) < new Date(form.start)) {
-      window.alert('Error: End date must be greater than or equal to the Start date.');
+    setSubmitError('');
+    setSubmitted(false);
+    if (!validation.validateAll()) return;
+    setSubmitting(true);
+    try {
+      await createLeave({
+        empId: user.emp_id,
+        leave_type: form.type,
+        days: String(days),
+        start_date: form.start,
+        end_date: form.end,
+        reason: form.reason.trim(),
+      });
+    } catch (err) {
+      if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to submit the leave request.');
       return;
+    } finally {
+      setSubmitting(false);
     }
-    await createLeave({
-      empId: user.emp_id,
-      leave_type: form.type,
-      days: String(days),
-      start_date: form.start,
-      end_date: form.end,
-      reason: form.reason,
-      reject_reason: null,
-    });
     setForm(EMPTY_FORM);
+    validation.reset();
+    setSubmitted(true);
     reload();
   };
 
@@ -143,16 +159,17 @@ export default function LeaveRequest() {
           <h3 style={{ margin: '0 0 24px 0', fontSize: 'var(--text-lg)', borderBottom: '1px solid var(--border-light)', paddingBottom: 16 }}>
             Apply for Leave
           </h3>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <div style={rowGrid}>
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={labelStyle} htmlFor="lv_type">Leave Type</label>
-                <select id="lv_type" className="form-control" required style={fieldStyle} value={form.type} onChange={update('type')}>
+                <label className="form-label" style={labelStyle} htmlFor="lv_type">Leave Type<RequiredMark /></label>
+                <select className="form-control" aria-required="true" style={fieldStyle} value={form.type} onChange={update('type')} {...validation.input('type', 'lv_type')}>
                   <option value="" disabled>Enter leave type</option>
                   {Object.entries(LEAVE_TYPES).map(([value, { label }]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
+                <FieldError {...validation.errorProps('type')} />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label" style={labelStyle} htmlFor="lv_days">Number of Days</label>
@@ -172,35 +189,42 @@ export default function LeaveRequest() {
 
             <div style={rowGrid}>
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={labelStyle} htmlFor="lv_start">Start Date</label>
-                <input type="date" id="lv_start" className="form-control" required style={fieldStyle} value={form.start} onChange={update('start')} />
+                <label className="form-label" style={labelStyle} htmlFor="lv_start">Start Date<RequiredMark /></label>
+                <input type="date" className="form-control" aria-required="true" style={fieldStyle} value={form.start} onChange={update('start')} {...validation.input('start', 'lv_start')} />
+                <FieldError {...validation.errorProps('start')} />
               </div>
               <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" style={labelStyle} htmlFor="lv_end">End Date</label>
-                <input type="date" id="lv_end" className="form-control" required style={fieldStyle} value={form.end} onChange={update('end')} />
+                <label className="form-label" style={labelStyle} htmlFor="lv_end">End Date<RequiredMark /></label>
+                <input type="date" className="form-control" aria-required="true" min={form.start || undefined} style={fieldStyle} value={form.end} onChange={update('end')} {...validation.input('end', 'lv_end')} />
+                <FieldError {...validation.errorProps('end')} />
               </div>
             </div>
 
             <div className="form-group" style={{ marginBottom: 24 }}>
-              <label className="form-label" style={labelStyle} htmlFor="lv_reason">Reason for Leave</label>
+              <label className="form-label" style={labelStyle} htmlFor="lv_reason">Reason for Leave<RequiredMark /></label>
               <textarea
-                id="lv_reason"
                 className="form-control"
                 rows={4}
                 placeholder="Give the reason for the leave..."
-                required
+                aria-required="true"
+                maxLength={500}
                 style={{ borderRadius: 'var(--radius-md)', padding: 16, resize: 'vertical' }}
                 value={form.reason}
                 onChange={update('reason')}
+                {...validation.input('reason', 'lv_reason')}
               ></textarea>
+              <FieldError {...validation.errorProps('reason')} />
             </div>
 
+            {submitError && <div className="form-error field-error" role="alert" style={{ marginBottom: 12 }}><i className="ph ph-warning-circle" aria-hidden="true"></i><span>{submitError}</span></div>}
+            {submitted && <div role="status" style={{ color: 'var(--success-color, #059669)', marginBottom: 12, fontSize: 13 }}><i className="ph-fill ph-check-circle"></i> Leave request submitted.</div>}
             <button
               type="submit"
               className="btn btn-purple"
+              disabled={submitting}
               style={{ width: '100%', padding: 16, fontSize: 'var(--text-md)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, borderRadius: 50 }}
             >
-              <i className="ph ph-paper-plane-right" style={{ fontSize: 20 }}></i> Submit Leave Request
+              <i className="ph ph-paper-plane-right" style={{ fontSize: 20 }}></i> {submitting ? 'Submitting...' : 'Submit Leave Request'}
             </button>
           </form>
         </div>

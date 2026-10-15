@@ -5,8 +5,8 @@
 
 export { formatDateTime } from './helpers';
 
-export const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Field rules live in utils/validation.js; re-exported for older imports.
+export { EMAIL as EMAIL_RE, STRONG_PASSWORD } from './validation';
 
 /** "Mar 28, 2026"; '-' when empty (unlike helpers.formatDate). */
 export function formatDate(value) {

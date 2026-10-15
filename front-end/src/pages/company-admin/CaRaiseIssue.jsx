@@ -1,7 +1,10 @@
 // Converted from front-end/company_admin/raise-issue.html + js/views/company_admin/raise-issue.js
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
+import { raiseCompanyTicketSchema } from '../../validation/formSchemas';
 import { raiseCompanyIssue } from '../../services/companyAdminService';
 import { CA_BASE } from './caConstants';
 
@@ -21,16 +24,18 @@ export default function CaRaiseIssue() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const validation = useFormValidation(raiseCompanyTicketSchema, form, { idPrefix: 'ca-issue' });
 
   const submit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!validation.validateAll()) return;
     setSubmitting(true);
     try {
-      await raiseCompanyIssue({ title: form.title, description: form.description, priority: form.priority, category: form.category || undefined });
+      await raiseCompanyIssue({ title: form.title.trim(), description: form.description.trim(), priority: form.priority, category: form.category.trim() || undefined });
       navigate(`${CA_BASE}/dashboard`);
     } catch (err) {
-      setError(err.message || 'Could not raise issue. Please try again.');
+      if (!validation.setServerErrors(err)) setError(err.message || 'Could not raise issue. Please try again.');
       setSubmitting(false);
     }
   };
@@ -54,7 +59,7 @@ export default function CaRaiseIssue() {
         <div className="card" style={{ padding: 32 }}>
           <h3 style={{ margin: '0 0 24px 0', fontSize: 'var(--text-lg)', borderBottom: '1px solid var(--border-light)', paddingBottom: 16 }}>Issue Details</h3>
 
-          <form id="raise-company-issue-form" onSubmit={submit}>
+          <form id="raise-company-issue-form" onSubmit={submit} noValidate>
             <div style={{ marginBottom: 24 }}>
               <span className="form-label" style={{ fontWeight: 'var(--font-medium)' }}>Priority Level</span>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }} id="priority-grid" role="radiogroup" aria-label="Priority Level">
@@ -73,17 +78,20 @@ export default function CaRaiseIssue() {
 
             <div className="form-group" style={{ marginBottom: 24 }}>
               <label className="form-label" htmlFor="category" style={{ fontWeight: 'var(--font-medium)' }}>Category</label>
-              <input type="text" id="category" className="form-control" placeholder="e.g. Billing, Bug, Integration" style={fieldStyle} value={form.category} onChange={set('category')} />
+              <input type="text" className="form-control" maxLength={100} placeholder="e.g. Billing, Bug, Integration" style={fieldStyle} value={form.category} onChange={set('category')} {...validation.input('category', 'category')} />
+              <FieldError {...validation.errorProps('category')} />
             </div>
 
             <div className="form-group" style={{ marginBottom: 24 }}>
-              <label className="form-label" htmlFor="title" style={{ fontWeight: 'var(--font-medium)' }}>Issue Title</label>
-              <input type="text" id="title" className="form-control" required placeholder="Brief summary of the issue" style={fieldStyle} value={form.title} onChange={set('title')} />
+              <label className="form-label" htmlFor="title" style={{ fontWeight: 'var(--font-medium)' }}>Issue Title<RequiredMark /></label>
+              <input type="text" className="form-control" aria-required="true" maxLength={150} placeholder="Brief summary of the issue" style={fieldStyle} value={form.title} onChange={set('title')} {...validation.input('title', 'title')} />
+              <FieldError {...validation.errorProps('title')} />
             </div>
 
             <div className="form-group" style={{ marginBottom: 32 }}>
-              <label className="form-label" htmlFor="description" style={{ fontWeight: 'var(--font-medium)' }}>Detailed Description</label>
-              <textarea id="description" className="form-control" required rows={5} placeholder="What's happening, and what have you tried?" style={{ ...fieldStyle, padding: 16, resize: 'vertical' }} value={form.description} onChange={set('description')}></textarea>
+              <label className="form-label" htmlFor="description" style={{ fontWeight: 'var(--font-medium)' }}>Detailed Description<RequiredMark /></label>
+              <textarea className="form-control" aria-required="true" maxLength={2000} rows={5} placeholder="What's happening, and what have you tried?" style={{ ...fieldStyle, padding: 16, resize: 'vertical' }} value={form.description} onChange={set('description')} {...validation.input('description', 'description')}></textarea>
+              <FieldError {...validation.errorProps('description')} />
             </div>
 
             {error && <div id="raise-issue-error" role="alert" style={{ color: 'var(--danger-color)', fontSize: 'var(--text-sm)', marginBottom: 16 }}>{error}</div>}

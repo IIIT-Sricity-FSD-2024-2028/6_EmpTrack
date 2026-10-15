@@ -1,13 +1,13 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { createValidationPipe } from './common/validation/validators';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -34,10 +34,8 @@ async function bootstrap() {
   app.use(json({ limit: '12mb' }));
   app.use(urlencoded({ extended: true, limit: '12mb' }));
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true
-  }));
+  // Strips undeclared fields and returns field-level errors - see createValidationPipe.
+  app.useGlobalPipes(createValidationPipe());
 
   app.useGlobalFilters(app.get(HttpExceptionFilter));
 
@@ -45,6 +43,7 @@ async function bootstrap() {
     .setTitle('EmpTrack API')
     .setDescription('The EmpTrack API documentation for backend mock structure')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
 
 

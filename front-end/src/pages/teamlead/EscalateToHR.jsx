@@ -5,7 +5,9 @@ import Button from '../../components/common/Button';
 import EmptyState from '../../components/common/EmptyState';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
+import FieldError from '../../components/common/FieldError';
 import useFetch from '../../hooks/useFetch';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
   clearEscalationDraft,
@@ -19,6 +21,7 @@ import {
 import { cx, formatDate } from '../../utils/helpers';
 import { tlPath, useToast } from './components/TeamLeadUI';
 import { nameOf, priorityBadge } from './tlUtils';
+import { escalateToHrSchema } from '../../validation/formSchemas';
 import './teamlead.css';
 
 const CATEGORIES = [
@@ -52,24 +55,22 @@ export default function EscalateToHR() {
     title: params.get('title') || '',
     description: '',
   });
-  const [errors, setErrors] = useState({});
   const [status, setStatus] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, showToast] = useToast();
 
   const set = (name, value) => setForm((f) => ({ ...f, [name]: value }));
+  const validation = useFormValidation(
+    escalateToHrSchema(CATEGORIES.map(([c]) => c), PRIORITIES.map(([p]) => p), members.map((m) => m.emp_id)),
+    form,
+    { idPrefix: 'esc', serverFieldMap: { reference_type: 'category', escalation_reason: 'description' } },
+  );
+  const errors = validation.errors;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const found = {};
-    if (!form.category) found.category = 'Choose a category.';
-    if (!form.priority) found.priority = 'Choose a priority.';
-    if (!form.personal && form.category !== 'Personal' && !form.employee) found.employee = 'Select the related employee, or mark this as a personal issue.';
-    if (form.title.trim().length < 5) found.title = 'Title must be at least 5 characters.';
-    if (form.description.trim().length < 20) found.description = 'Describe the issue in at least 20 characters.';
-    setErrors(found);
     setStatus(null);
-    if (Object.keys(found).length) return;
+    if (!validation.validateAll()) return;
 
     setSaving(true);
     try {
@@ -87,11 +88,12 @@ export default function EscalateToHR() {
       );
       setStatus({ type: 'success', message: `${record.id} sent to HR.` });
       setForm({ category: '', priority: '', employee: '', personal: false, title: '', description: '' });
+      validation.reset();
       clearEscalationDraft();
       setDraft(null);
       reloadRecent();
     } catch (err) {
-      setStatus({ type: 'error', message: err.message || 'Could not submit the escalation.' });
+      if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Could not submit the escalation.' });
     } finally {
       setSaving(false);
     }
@@ -129,27 +131,27 @@ export default function EscalateToHR() {
 
           <fieldset className="form-group" style={{ border: 0, padding: 0 }}>
             <legend className="form-label">Category <span className="tl-required">*</span></legend>
-            <div className={cx('tl-choice-grid', errors.category && 'is-invalid')}>
+            <div className={cx('tl-choice-grid', errors.category && 'is-invalid')} role="group" aria-label="Category" tabIndex={-1} {...validation.input('category', 'esc-category')}>
               {CATEGORIES.map(([name, icon]) => (
-                <button key={name} type="button" className="tl-choice" aria-pressed={form.category === name} onClick={() => set('category', name)}>
+                <button key={name} type="button" className="tl-choice" aria-pressed={form.category === name} onClick={() => { set('category', name); validation.touch('category'); }}>
                   <i className={`ph ${icon}`}></i> {name}
                 </button>
               ))}
             </div>
-            {errors.category && <div className="form-error" style={{ display: 'block' }}>{errors.category}</div>}
+            <FieldError {...validation.errorProps('category')} />
           </fieldset>
 
           <fieldset className="form-group" style={{ border: 0, padding: 0 }}>
             <legend className="form-label">Priority <span className="tl-required">*</span></legend>
-            <div className={cx('tl-choice-grid', errors.priority && 'is-invalid')}>
+            <div className={cx('tl-choice-grid', errors.priority && 'is-invalid')} role="group" aria-label="Priority" tabIndex={-1} {...validation.input('priority', 'esc-priority')}>
               {PRIORITIES.map(([name, hint]) => (
-                <button key={name} type="button" className="tl-choice" aria-pressed={form.priority === name} onClick={() => set('priority', name)}>
+                <button key={name} type="button" className="tl-choice" aria-pressed={form.priority === name} onClick={() => { set('priority', name); validation.touch('priority'); }}>
                   <strong>{name}</strong>
                   <span className="tl-muted">{hint}</span>
                 </button>
               ))}
             </div>
-            {errors.priority && <div className="form-error" style={{ display: 'block' }}>{errors.priority}</div>}
+            <FieldError {...validation.errorProps('priority')} />
           </fieldset>
 
           <label className="tl-switch" style={{ marginBottom: 'var(--spacing-md)' }}>
@@ -160,12 +162,12 @@ export default function EscalateToHR() {
             </span>
           </label>
 
-          <Input as="select" label="Related Employee" value={form.employee} error={errors.employee} disabled={form.personal} onChange={(e) => set('employee', e.target.value)}>
+          <Input as="select" label="Related Employee" required={!form.personal && form.category !== 'Personal'} value={form.employee} disabled={form.personal} onChange={(e) => set('employee', e.target.value)} {...validation.field('employee')}>
             <option value="">Select team member</option>
             {members.map((m) => <option key={m.emp_id} value={m.emp_id}>{m.emp_name}</option>)}
           </Input>
-          <Input label="Issue Title" placeholder="Short summary" value={form.title} error={errors.title} onChange={(e) => set('title', e.target.value)} />
-          <Input as="textarea" rows={5} label="Detailed Description" placeholder="What happened, when, and what you have tried" value={form.description} error={errors.description} onChange={(e) => set('description', e.target.value)} />
+          <Input label="Issue Title" required maxLength={150} placeholder="Short summary" value={form.title} onChange={(e) => set('title', e.target.value)} {...validation.field('title')} />
+          <Input as="textarea" rows={5} required maxLength={1800} hint="At least 20 characters." label="Detailed Description" placeholder="What happened, when, and what you have tried" value={form.description} onChange={(e) => set('description', e.target.value)} {...validation.field('description')} />
 
           <div className="tl-form-actions">
             <Button type="submit" variant="orange" icon="ph-paper-plane-tilt" disabled={saving}>{saving ? 'Submitting...' : 'Submit to HR'}</Button>

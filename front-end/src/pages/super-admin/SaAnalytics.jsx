@@ -4,6 +4,9 @@ import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import SaChartCard from '../../components/sa-common/SaChartCard';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import useSaToast from '../../components/sa-common/useSaToast';
+import FieldError from '../../components/common/FieldError';
+import useFormValidation from '../../hooks/useFormValidation';
+import { dateRangeSchema } from '../../validation/formSchemas';
 import * as sa from '../../services/superAdminService';
 import { chartTheme, loadChartJs } from '../../utils/saCommon';
 import { SA_PORTAL, commonChartOptions } from './saConstants';
@@ -86,6 +89,13 @@ export default function SaAnalytics() {
 
   const isCustom = form.range === 'custom';
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  // A custom range needs a start date; the end date is optional but not before it.
+  const rangeValidation = useFormValidation(dateRangeSchema({ fromRequired: true }), form, { idPrefix: 'analytics' });
+  const applyRange = () => {
+    if (isCustom && !rangeValidation.validateAll()) return;
+    rangeValidation.reset();
+    apply(form);
+  };
 
   return (
     <>
@@ -104,12 +114,18 @@ export default function SaAnalytics() {
             </select>
             {isCustom && (
               <>
-                <input type="date" id="from-date" className="filter-select" aria-label="From date" value={form.from} onChange={set('from')} />
-                <input type="date" id="to-date" className="filter-select" aria-label="To date" value={form.to} onChange={set('to')} />
+                <input type="date" className="filter-select" aria-label="From date" aria-required="true" max={form.to || undefined} value={form.from} onChange={set('from')} {...rangeValidation.input('from', 'from-date')} />
+                <input type="date" className="filter-select" aria-label="To date" min={form.from || undefined} value={form.to} onChange={set('to')} {...rangeValidation.input('to', 'to-date')} />
               </>
             )}
-            <button type="button" className="btn btn-primary" id="btn-apply-range" onClick={() => apply(form)}>Apply</button>
+            <button type="button" className="btn btn-primary" id="btn-apply-range" onClick={applyRange}>Apply</button>
           </div>
+          {isCustom && (
+            <div style={{ width: '100%' }}>
+              <FieldError {...rangeValidation.errorProps('from')} />
+              <FieldError {...rangeValidation.errorProps('to')} />
+            </div>
+          )}
         </div>
 
         <div className="stats-grid" id="analytics-stats-grid">

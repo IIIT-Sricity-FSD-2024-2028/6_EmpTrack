@@ -5,9 +5,11 @@ import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { getTeams, updateIssue } from '../../services/teamLeadService';
 import { formatDate } from '../../utils/helpers';
+import { assignIssueSchema } from '../../validation/formSchemas';
 import { DemoNotice, LoadState, tlPath, useTeamData } from './components/TeamLeadUI';
 import { issueStatusBadge, nameOf, priorityBadge, teamIssues, todayKey } from './tlUtils';
 import './teamlead.css';
@@ -20,17 +22,6 @@ const TIPS = [
   'Raise the priority if the issue blocks a task near its deadline.',
 ];
 
-function validate(v) {
-  const errors = {};
-  if (!v.issueId) errors.issueId = 'Select the issue to assign.';
-  if (!v.type) errors.type = 'Select the issue type.';
-  if (!v.teamId) errors.teamId = 'Select a team.';
-  if (v.isMyTeam && !v.assignee) errors.assignee = 'Select who will handle it.';
-  if (!v.deadline) errors.deadline = 'Pick a deadline.';
-  else if (v.deadline < todayKey()) errors.deadline = 'Deadline cannot be in the past.';
-  if (v.notes.trim().length < 10) errors.notes = 'Add instructions (at least 10 characters).';
-  return errors;
-}
 
 export default function AssignIssue() {
   usePageTitle('Assign Issue');
@@ -39,7 +30,6 @@ export default function AssignIssue() {
   const { data, error, reload } = useTeamData({ tasks: false, issues: true });
   const { data: teams = [] } = useFetch(getTeams, []);
   const [form, setForm] = useState({ issueId: params.get('id') || '', type: '', teamId: '', assignee: '', priority: '', deadline: '', notes: '' });
-  const [errors, setErrors] = useState({});
   const [status, setStatus] = useState(null); // { type: 'success'|'error', message }
   const [saving, setSaving] = useState(false);
 
@@ -63,13 +53,20 @@ export default function AssignIssue() {
   };
   // Pre-fill type/priority from the issue in the URL once it has loaded.
   const values = { ...form, type: form.type || issue?.type || '', priority: form.priority || issue?.priority || 'Medium' };
+  const validation = useFormValidation(
+    assignIssueSchema(
+      [...openIssues.map((i) => i.issue_id), ...(issue ? [issue.issue_id] : [])],
+      teams.map((t) => t.team_id),
+      { assigneeRequired: isMyTeam },
+    ),
+    values,
+    { idPrefix: 'assign', serverFieldMap: { assignment_notes: 'notes', assigned_to: 'assignee' } },
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const found = validate({ ...values, isMyTeam });
-    setErrors(found);
     setStatus(null);
-    if (Object.keys(found).length) return;
+    if (!validation.validateAll()) return;
     setSaving(true);
     const assignedTo = isMyTeam ? (values.assignee === user.emp_id ? user.emp_name : nameOf(members, values.assignee)) : team.team_name;
     try {
@@ -85,7 +82,7 @@ export default function AssignIssue() {
       setStatus({ type: 'success', message: `${values.issueId} assigned to ${assignedTo}.` });
       await reload();
     } catch (err) {
-      setStatus({ type: 'error', message: err.message || 'Failed to assign the issue.' });
+      if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Failed to assign the issue.' });
     } finally {
       setSaving(false);
     }
@@ -111,31 +108,31 @@ export default function AssignIssue() {
                   {status.type === 'success' && <Link to={tlPath('issue-management')} style={{ marginLeft: 'auto' }}>View all issues</Link>}
                 </div>
               )}
-              <Input as="select" label="Issue" value={values.issueId} error={errors.issueId} onChange={set('issueId')}>
+              <Input as="select" label="Issue" required value={values.issueId} onChange={set('issueId')} {...validation.field('issueId')}>
                 <option value="">Select an open issue</option>
                 {openIssues.map((i) => <option key={i.issue_id} value={i.issue_id}>{i.issue_id} - {i.title}</option>)}
                 {issue && !openIssues.includes(issue) && <option value={issue.issue_id}>{issue.issue_id} - {issue.title}</option>}
               </Input>
               <div className="tl-form-grid">
-                <Input as="select" label="Issue Type" value={values.type} error={errors.type} onChange={set('type')}>
+                <Input as="select" label="Issue Type" required value={values.type} onChange={set('type')} {...validation.field('type')}>
                   <option value="">Select type</option>
                   {[...new Set([...ISSUE_TYPES, values.type].filter(Boolean))].map((t) => <option key={t}>{t}</option>)}
                 </Input>
-                <Input as="select" label="Team" value={values.teamId} error={errors.teamId} onChange={set('teamId')}>
+                <Input as="select" label="Team" required value={values.teamId} onChange={set('teamId')} {...validation.field('teamId')}>
                   <option value="">Route issue to...</option>
                   {teams.map((t) => <option key={t.team_id} value={t.team_id}>{t.team_name}</option>)}
                 </Input>
-                <Input as="select" label="Assignee" value={values.assignee} error={errors.assignee} onChange={set('assignee')} disabled={!isMyTeam}>
+                <Input as="select" label="Assignee" required={isMyTeam} value={values.assignee} onChange={set('assignee')} disabled={!isMyTeam} {...validation.field('assignee')}>
                   <option value="">{team && !isMyTeam ? `Whole team (${team.team_name})` : 'Select assignee'}</option>
                   {isMyTeam && <option value={user.emp_id}>Myself ({user.emp_name})</option>}
                   {isMyTeam && members.map((m) => <option key={m.emp_id} value={m.emp_id}>{m.emp_name}</option>)}
                 </Input>
-                <Input as="select" label="Priority Override" value={values.priority} onChange={set('priority')}>
+                <Input as="select" label="Priority Override" value={values.priority} onChange={set('priority')} {...validation.field('priority')}>
                   {['High', 'Medium', 'Low'].map((p) => <option key={p}>{p}</option>)}
                 </Input>
-                <Input type="date" label="Resolution Deadline" min={todayKey()} value={values.deadline} error={errors.deadline} onChange={set('deadline')} />
+                <Input type="date" label="Resolution Deadline" required min={todayKey()} value={values.deadline} onChange={set('deadline')} {...validation.field('deadline')} />
               </div>
-              <Input as="textarea" rows={4} label="Assignment Notes" placeholder="Instructions for the assignee..." value={values.notes} error={errors.notes} onChange={set('notes')} />
+              <Input as="textarea" rows={4} label="Assignment Notes" required maxLength={2000} hint="At least 10 characters." placeholder="Instructions for the assignee..." value={values.notes} onChange={set('notes')} {...validation.field('notes')} />
               <div className="tl-form-actions">
                 <Button type="submit" variant="purple" icon="ph-user-switch" disabled={saving}>{saving ? 'Saving...' : 'Assign Issue'}</Button>
                 <Link to={tlPath('issue-management')} className="btn btn-outline">Cancel</Link>

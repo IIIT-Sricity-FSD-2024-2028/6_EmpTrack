@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import SaModal from '../../components/sa-common/SaModal';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
+import useFormValidation from '../../hooks/useFormValidation';
+import { planSchema } from '../../validation/formSchemas';
 import useSaToast from '../../components/sa-common/useSaToast';
 import * as sa from '../../services/superAdminService';
 import { companyStatusBadgeClass, formatCurrency } from '../../utils/saCommon';
@@ -25,26 +27,27 @@ function toPlanData(v) {
   };
 }
 
-function PlanFields({ form, prefix }) {
+function PlanFields({ form, prefix, validation }) {
+  const bind = (key, id) => ({ ...form.bind(key), ...validation.input(key, id) });
   return (
     <>
-      <Field label="Plan Name" htmlFor={`${prefix}-name`}>
-        <input type="text" className="form-control" id={`${prefix}-name`} placeholder={prefix === 'cp' ? 'e.g. Basic, Professional, Enterprise' : undefined} {...form.bind('name')} />
+      <Field label="Plan Name" htmlFor={`${prefix}-name`} required error={validation.errors.name}>
+        <input type="text" className="form-control" aria-required="true" maxLength={60} placeholder={prefix === 'cp' ? 'e.g. Basic, Professional, Enterprise' : undefined} {...bind('name', `${prefix}-name`)} />
       </Field>
       <div className="form-grid">
-        <Field label="Price (USD)" htmlFor={`${prefix}-price`}><input type="number" min="0" className="form-control" id={`${prefix}-price`} {...form.bind('price')} /></Field>
-        <Field label="Billing Cycle" htmlFor={`${prefix}-cycle`}>
-          <select className="form-control" id={`${prefix}-cycle`} {...form.bind('billing_cycle')}>
+        <Field label="Price (USD)" htmlFor={`${prefix}-price`} required error={validation.errors.price}><input type="number" min="0" step="0.01" inputMode="decimal" aria-required="true" className="form-control" {...bind('price', `${prefix}-price`)} /></Field>
+        <Field label="Billing Cycle" htmlFor={`${prefix}-cycle`} required error={validation.errors.billing_cycle}>
+          <select className="form-control" aria-required="true" {...bind('billing_cycle', `${prefix}-cycle`)}>
             <option value="MONTHLY">Monthly</option>
             <option value="ANNUAL">Annual</option>
           </select>
         </Field>
       </div>
-      <Field label="Max Employees" htmlFor={`${prefix}-max-emp`}>
-        <input type="number" min="1" className="form-control" id={`${prefix}-max-emp`} placeholder={prefix === 'cp' ? 'e.g. 50' : undefined} {...form.bind('max_employees')} />
+      <Field label="Max Employees" htmlFor={`${prefix}-max-emp`} error={validation.errors.max_employees}>
+        <input type="number" min="1" step="1" className="form-control" placeholder={prefix === 'cp' ? 'e.g. 50' : undefined} {...bind('max_employees', `${prefix}-max-emp`)} />
       </Field>
-      <Field label="Features (comma-separated)" htmlFor={`${prefix}-features`}>
-        <input type="text" className="form-control" id={`${prefix}-features`} placeholder={prefix === 'cp' ? 'Attendance Tracking, Leave Management, ...' : undefined} {...form.bind('features')} />
+      <Field label="Features (comma-separated)" htmlFor={`${prefix}-features`} error={validation.errors.features}>
+        <input type="text" className="form-control" maxLength={3000} placeholder={prefix === 'cp' ? 'Attendance Tracking, Leave Management, ...' : undefined} {...bind('features', `${prefix}-features`)} />
       </Field>
     </>
   );
@@ -61,6 +64,8 @@ export default function SaSubscriptions() {
   const [error, setError] = useState('');
   const createForm = useFormState(EMPTY_PLAN);
   const editForm = useFormState(EMPTY_PLAN);
+  const createValidation = useFormValidation(planSchema, createForm.values, { idPrefix: 'cp' });
+  const editValidation = useFormValidation(planSchema, editForm.values, { idPrefix: 'ep' });
 
   const loadPlans = useCallback(async () => {
     setLoadState('loading');
@@ -94,8 +99,10 @@ export default function SaSubscriptions() {
   };
 
   const save = async (action, success, failure) => {
+    const validation = action === 'create' ? createValidation : editValidation;
+    setError('');
+    if (!validation.validateAll()) return;
     const data = toPlanData(action === 'create' ? createForm.values : editForm.values);
-    if (!data.name || Number.isNaN(data.price)) return setError('Plan name and a valid price are required.');
     try {
       if (action === 'create') await sa.createSubscriptionPlan(data);
       else await sa.updateSubscriptionPlan(selected.plan_id, data);
@@ -103,7 +110,7 @@ export default function SaSubscriptions() {
       close();
       await loadPlans();
     } catch (e) {
-      setError(e.message || failure);
+      if (!validation.setServerErrors(e)) setError(e.message || failure);
     }
   };
 
@@ -205,15 +212,15 @@ export default function SaSubscriptions() {
       </div>
 
       <SaModal id="createPlanModal" open={modal === 'create'} onClose={close} title="Create Subscription Plan" footer={footer('Create Plan', () => save('create', 'Subscription plan created successfully.', 'Failed to create plan.'))}>
-        <form id="create-plan-form" onSubmit={(e) => e.preventDefault()}>
-          <PlanFields form={createForm} prefix="cp" />
+        <form id="create-plan-form" onSubmit={(e) => e.preventDefault()} noValidate>
+          <PlanFields form={createForm} prefix="cp" validation={createValidation} />
           <FormError id="create-plan-error" message={error} />
         </form>
       </SaModal>
 
       <SaModal id="editPlanModal" open={modal === 'edit'} onClose={close} title="Edit Subscription Plan" footer={footer('Save Changes', () => save('edit', 'Plan updated successfully.', 'Failed to update plan.'))}>
-        <form id="edit-plan-form" onSubmit={(e) => e.preventDefault()}>
-          <PlanFields form={editForm} prefix="ep" />
+        <form id="edit-plan-form" onSubmit={(e) => e.preventDefault()} noValidate>
+          <PlanFields form={editForm} prefix="ep" validation={editValidation} />
           <FormError id="edit-plan-error" message={error} />
         </form>
       </SaModal>

@@ -10,40 +10,39 @@ import { changePassword, getProfile, saveProfile } from '../../services/teamLead
 import { formatDate, getInitials } from '../../utils/helpers';
 import { LoadState, useTeamData, useToast } from './components/TeamLeadUI';
 import { isEscalated, teamIssues } from './tlUtils';
+import useFormValidation from '../../hooks/useFormValidation';
+import { changePasswordSchema, teamLeadProfileSchema } from '../../validation/formSchemas';
+import { PASSWORD_HINT } from '../../utils/validation';
 import './teamlead.css';
 
-// Same rule as the employee profile page.
-const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
 const EMPTY_PASSWORDS = { current: '', next: '', confirm: '' };
 
 const formatPhone = (p) => (p && p.length === 10 ? `+1 (${p.slice(0, 3)}) ${p.slice(3, 6)}-${p.slice(6)}` : p || '--');
 
 function ChangePassword({ empId }) {
   const [values, setValues] = useState(EMPTY_PASSWORDS);
-  const [errors, setErrors] = useState({});
   const [status, setStatus] = useState(null);
+  const validation = useFormValidation(changePasswordSchema, values, {
+    idPrefix: 'tl-pw',
+    serverFieldMap: { currentPassword: 'current', newPassword: 'next', confirmPassword: 'confirm' },
+  });
   const [saving, setSaving] = useState(false);
   const set = (name) => (e) => setValues((v) => ({ ...v, [name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const found = {};
-    if (!values.current) found.current = 'Enter your current password.';
-    if (!STRONG_PASSWORD.test(values.next)) found.next = 'Use 8+ characters with upper and lower case, a number and a special character (@$!%*?&).';
-    else if (values.next === values.current) found.next = 'The new password must differ from the current one.';
-    if (values.confirm !== values.next) found.confirm = 'Passwords do not match.';
-    setErrors(found);
     setStatus(null);
-    if (Object.keys(found).length) return;
+    if (!validation.validateAll()) return;
     setSaving(true);
     try {
       const { saved } = await changePassword(empId, values.current, values.next, values.confirm);
       setValues(EMPTY_PASSWORDS);
+      validation.reset();
       setStatus(saved
         ? { type: 'success', message: 'Password updated successfully.' }
         : { type: 'success', message: 'Demo mode: your current password was verified, but passwords can only be changed with a backend.' });
     } catch (err) {
-      setStatus({ type: 'error', message: err.message || 'Failed to update password.' });
+      if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Failed to update password.' });
     } finally {
       setSaving(false);
     }
@@ -58,9 +57,9 @@ function ChangePassword({ empId }) {
         </div>
       )}
       <div className="tl-form-grid">
-        <Input type="password" label="Current Password" autoComplete="current-password" value={values.current} error={errors.current} onChange={set('current')} />
-        <Input type="password" label="New Password" autoComplete="new-password" value={values.next} error={errors.next} onChange={set('next')} />
-        <Input type="password" label="Confirm New Password" autoComplete="new-password" value={values.confirm} error={errors.confirm} onChange={set('confirm')} />
+        <Input type="password" label="Current Password" required maxLength={64} autoComplete="current-password" value={values.current} onChange={set('current')} {...validation.field('current')} />
+        <Input type="password" label="New Password" required maxLength={64} hint={PASSWORD_HINT} autoComplete="new-password" value={values.next} onChange={set('next')} {...validation.field('next')} />
+        <Input type="password" label="Confirm New Password" required maxLength={64} autoComplete="new-password" value={values.confirm} onChange={set('confirm')} {...validation.field('confirm')} />
       </div>
       <Button type="submit" variant="purple" icon="ph-lock-key" disabled={saving}>{saving ? 'Updating...' : 'Update Password'}</Button>
     </form>
@@ -73,7 +72,7 @@ export default function Profile() {
   const { data: profile, error, reload } = useFetch(() => getProfile(user), [user.emp_id]);
   const { data: team } = useTeamData({ leaves: true, issues: true });
   const [editing, setEditing] = useState(null);
-  const [editErrors, setEditErrors] = useState({});
+  const profileValidation = useFormValidation(teamLeadProfileSchema, editing || {}, { idPrefix: 'tl-profile' });
   const [toast, showToast] = useToast();
 
   const members = team?.members ?? [];
@@ -90,20 +89,15 @@ export default function Profile() {
   ];
 
   const openEdit = () => {
-    setEditErrors({});
+    profileValidation.reset();
     setEditing({ phone: profile.phone || '', address: profile.address || '', experience: profile.experience || '', skills: (profile.skills || []).join(', ') });
   };
 
   const handleSave = async (e) => {
     e.preventDefault();
-    const found = {};
-    const phone = editing.phone.replace(/\D/g, '');
-    if (phone && phone.length !== 10) found.phone = 'Enter a 10 digit phone number.';
-    if (editing.address.length > 200) found.address = 'Keep the address under 200 characters.';
-    setEditErrors(found);
-    if (Object.keys(found).length) return;
+    if (!profileValidation.validateAll()) return;
     await saveProfile({
-      phone,
+      phone: editing.phone.trim(),
       address: editing.address.trim(),
       experience: editing.experience.trim(),
       skills: editing.skills.split(',').map((s) => s.trim()).filter(Boolean),
@@ -196,10 +190,10 @@ export default function Profile() {
       >
         {editing && (
           <form id="tl-edit-profile" className="tl-page" style={{ gap: 0 }} onSubmit={handleSave} noValidate>
-            <Input label="Phone Number" inputMode="tel" value={editing.phone} error={editErrors.phone} onChange={(e) => setEditing((v) => ({ ...v, phone: e.target.value }))} />
-            <Input label="Address" value={editing.address} error={editErrors.address} onChange={(e) => setEditing((v) => ({ ...v, address: e.target.value }))} />
-            <Input label="Experience" placeholder="e.g. 6 years" value={editing.experience} onChange={(e) => setEditing((v) => ({ ...v, experience: e.target.value }))} />
-            <Input as="textarea" rows={3} label="Skills (comma separated)" value={editing.skills} onChange={(e) => setEditing((v) => ({ ...v, skills: e.target.value }))} />
+            <Input label="Phone Number" type="tel" inputMode="tel" maxLength={20} placeholder="e.g. +91 98765 43210" value={editing.phone} onChange={(e) => setEditing((v) => ({ ...v, phone: e.target.value }))} {...profileValidation.field('phone')} />
+            <Input label="Address" maxLength={200} value={editing.address} onChange={(e) => setEditing((v) => ({ ...v, address: e.target.value }))} {...profileValidation.field('address')} />
+            <Input label="Experience" maxLength={50} placeholder="e.g. 6 years" value={editing.experience} onChange={(e) => setEditing((v) => ({ ...v, experience: e.target.value }))} {...profileValidation.field('experience')} />
+            <Input as="textarea" rows={3} label="Skills (comma separated)" value={editing.skills} onChange={(e) => setEditing((v) => ({ ...v, skills: e.target.value }))} {...profileValidation.field('skills')} />
             <p className="tl-muted" style={{ margin: 0 }}>There is no self-service profile endpoint yet, so these changes are saved in this browser.</p>
           </form>
         )}

@@ -8,10 +8,9 @@ export class CalendarService {
 
   // Resolves the calling employee and cross-checks their role against the
   // Role header, deriving companyId server-side rather than trusting a
-  // client-supplied companyId directly. requesterEmpId is still a client-
-  // supplied string (same trust class as every existing empId param in this
-  // app, e.g. LeaveService.getLeavesForUser) - this is a known, accepted
-  // limitation given the app has no real auth (see project plan notes).
+  // client-supplied companyId directly. requesterEmpId is the session-verified
+  // x-actor-id (CalendarController reads it from the header AuthGuard sets; any
+  // requesterEmpId query param the client sends is ignored).
   private resolveRequester(requesterEmpId: string, roleHeader?: string) {
     if (!requesterEmpId) throw new ForbiddenException('requesterEmpId is required');
     const employee = this.dataStore.getEmployees().find(e => e.emp_id === requesterEmpId);

@@ -1,6 +1,6 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IdField } from '../../common/validation/validators';
 
 export class CompleteMockPaymentDto {
-  @IsString() @IsOptional() companyId?: string;
-  @IsString() @IsOptional() subscriptionId?: string;
+  @IdField('Company', { optional: true }) companyId?: string;
+  @IdField('Subscription', { optional: true }) subscriptionId?: string;
 }

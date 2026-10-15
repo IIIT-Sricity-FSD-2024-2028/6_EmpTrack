@@ -2,12 +2,13 @@
 // Usage: api.get('/employees', { params: { status: 'active' } })
 //        api.post('/tasks', { title: '...' })
 //
-// The backend authorizes requests by the `Role`, `x-actor-id` and
-// `x-actor-name` headers (see back-end/src/common/guards/roles.guard.ts),
-// which are filled in from the logged-in user's session.
+// Requests carry the session token from POST /auth/login as
+// `Authorization: Bearer <token>`. The backend resolves the caller's identity
+// and role from that token alone (back-end/src/common/guards/auth.guard.ts);
+// it ignores any Role / x-actor-* headers a client sends.
 import config from '../config/config';
 import { STORAGE_KEYS } from '../utils/constants';
-import { readStorage } from '../utils/helpers';
+import { readStorage, writeStorage } from '../utils/helpers';
 
 export class ApiError extends Error {
   constructor(message, status, data) {
@@ -15,6 +16,9 @@ export class ApiError extends Error {
     this.name = 'ApiError';
     this.status = status;
     this.data = data;
+    // { field: [messages] } from a 400 validation response (see the backend's
+    // createValidationPipe); forms show these next to the matching fields.
+    this.fieldErrors = data && typeof data === 'object' && data.errors ? data.errors : null;
   }
 }
 
@@ -27,17 +31,12 @@ function buildUrl(path, params) {
   return query ? `${url}?${query}` : url;
 }
 
-function sessionHeaders() {
-  const session = readStorage(STORAGE_KEYS.AUTH);
-  const user = session?.user;
-  const headers = {};
-  if (user) {
-    headers.Role = user.role;
-    headers['x-actor-id'] = user.emp_id || '';
-    headers['x-actor-name'] = user.emp_name || '';
-  }
-  if (session?.token) headers.Authorization = `Bearer ${session.token}`;
-  return headers;
+// Fired when the backend rejects the stored session (expired, revoked, account
+// deactivated); AuthContext listens for it and logs the user out.
+export const SESSION_EXPIRED_EVENT = 'emptrack:session-expired';
+
+function sessionToken() {
+  return readStorage(STORAGE_KEYS.AUTH)?.token || null;
 }
 
 async function request(method, path, { body, params, headers, signal } = {}) {
@@ -46,6 +45,7 @@ async function request(method, path, { body, params, headers, signal } = {}) {
   }
 
   const isFormData = body instanceof FormData;
+  const token = sessionToken();
 
   const response = await fetch(buildUrl(path, params), {
     method,
@@ -53,7 +53,7 @@ async function request(method, path, { body, params, headers, signal } = {}) {
     headers: {
       Accept: 'application/json',
       ...(body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
-      ...sessionHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
     body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
@@ -61,6 +61,11 @@ async function request(method, path, { body, params, headers, signal } = {}) {
 
   const contentType = response.headers.get('content-type') || '';
   const data = contentType.includes('application/json') ? await response.json() : await response.text();
+
+  if (response.status === 401 && token) {
+    writeStorage(STORAGE_KEYS.AUTH, null);
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+  }
 
   if (!response.ok) {
     const message = (data && data.message) || response.statusText || 'API request failed';

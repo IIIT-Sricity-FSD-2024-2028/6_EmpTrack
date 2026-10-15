@@ -372,7 +372,10 @@ export class MockDataService {
         this.data.leave_details = this.data.leave_details.filter(l => l.emp_id !== id);
         this.data.work_logs = this.data.work_logs.filter(w => w.emp_id !== id);
         this.data.task = this.data.task.filter(t => t.assigned_to !== id);
-        this.data.issue = this.data.issue.filter(i => i.emp_id !== id && i.assigned_to !== id);
+        this.data.issue = this.data.issue.filter(i => i.emp_id !== id);
+        // Issues raised by other people that were merely assigned to this employee stay,
+        // just unassigned again - deleting them would lose another employee's report.
+        this.data.issue.forEach(i => { if (i.assigned_to === id) i.assigned_to = 'Unassigned'; });
         this.data.escalation = this.data.escalation.filter(e => e.escalated_from !== id && e.escalated_to !== id);
         this.data.platform_tickets.forEach(t => { if (t.assigned_to === id) t.assigned_to = null; });
 

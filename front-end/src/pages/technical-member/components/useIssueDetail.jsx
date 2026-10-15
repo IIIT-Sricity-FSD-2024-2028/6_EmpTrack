@@ -1,14 +1,17 @@
 // Issue detail modal shared by the Technical Member dashboard, Assigned Issues
 // and Issue History pages (converted from js/views/technical_member/_board.js).
 import { Fragment, useEffect, useRef, useState } from 'react';
+import FieldError from '../../../components/common/FieldError';
 import SaModal from '../../../components/sa-common/SaModal';
 import useAuth from '../../../hooks/useAuth';
+import useFormValidation from '../../../hooks/useFormValidation';
 import * as tm from '../../../services/technicalMemberService';
 import { cx } from '../../../utils/helpers';
 import { formatDate, formatDateTime } from '../../../utils/saCommon';
 import {
   formatBytes, formatStatus, formatVerification, priorityBadgeClass, readFileAsDataUrl, statusBadgeClass,
 } from '../tmConstants';
+import { TECHNICAL_ATTACHMENT_EXTENSIONS, technicalIssueSchema } from '../../../validation/formSchemas';
 import { ProgressBar } from './IssueRows';
 
 const TABS = [
@@ -96,6 +99,14 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
   const [attachKind, setAttachKind] = useState('SCREENSHOT');
   const [pendingFile, setPendingFile] = useState(null);
   const [previews, setPreviews] = useState({});
+  const validation = useFormValidation(
+    technicalIssueSchema({ currentStatus: issue.status }),
+    { status, progress: String(progress), progressNote, resolution, submitNote, comment, note, attachKind, pendingFile },
+    {
+      idPrefix: 'tm-d',
+      serverFieldMap: { progress_percentage: 'progress', resolution_notes: 'resolution', file_name: 'pendingFile', data_url: 'pendingFile', file_size: 'pendingFile', kind: 'attachKind' },
+    },
+  );
 
   const fileInputRef = useRef(null);
   const resolutionRef = useRef(null);
@@ -116,52 +127,41 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
       if (success) showToast(success);
       await refresh();
     } catch (e) {
-      showToast(e.message || failure, 'error');
+      if (!validation.setServerErrors(e)) showToast(e.message || failure, 'error');
     }
   };
 
   const update = () =>
+    validation.validateFields(['status', 'progress', 'progressNote']) &&
     act(async () => {
       if (status !== issue.status) await tm.updateMyIssueStatus(issue.ticket_id, status);
       if (Number(progress) !== pct) await tm.updateMyIssueProgress(issue.ticket_id, Number(progress), progressNote.trim() || undefined);
     }, 'Issue updated.', 'Failed to update issue.');
 
   const confirmResolve = () => {
+    if (!validation.validateFields(['resolution'])) return;
     const notes = resolution.trim();
-    if (!notes) {
-      showToast('Describe how the issue was resolved.', 'error');
-      return;
-    }
     act(() => tm.resolveMyIssue(issue.ticket_id, notes), 'Issue marked as resolved.', 'Failed to resolve issue.');
   };
 
   const submitVerification = () =>
+    validation.validateFields(['submitNote']) &&
     act(() => tm.submitMyIssueForVerification(issue.ticket_id, submitNote.trim() || undefined), 'Sent to the Platform Admin for verification.', 'Failed to send for verification.');
 
   const send = () => {
+    if (!validation.validateFields(['comment'])) return;
     const message = comment.trim();
-    if (!message) {
-      showToast('Write a message first.', 'error');
-      return;
-    }
     act(() => tm.addMyIssueComment(issue.ticket_id, message), null, 'Failed to send message.');
   };
 
   const addNote = () => {
+    if (!validation.validateFields(['note'])) return;
     const message = note.trim();
-    if (!message) {
-      showToast('Write a technical note first.', 'error');
-      return;
-    }
     act(() => tm.addMyIssueWorkNote(issue.ticket_id, message), null, 'Failed to add note.');
   };
 
   const upload = async () => {
-    if (!pendingFile) return;
-    if (pendingFile.size > 5 * 1024 * 1024) {
-      showToast('Attachments must be 5 MB or smaller.', 'error');
-      return;
-    }
+    if (!validation.validateFields(['attachKind', 'pendingFile'])) return;
     await act(async () => {
       const data_url = await readFileAsDataUrl(pendingFile);
       await tm.uploadMyIssueAttachment(issue.ticket_id, {
@@ -233,20 +233,24 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
         <div className="form-section-title">Investigation Controls</div>
         <div className="form-grid">
           <div className="form-group">
-            <label className="form-label">Status</label>
-            <select className="form-control" id="tm-d-status" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <label className="form-label" htmlFor="tm-d-status">Status</label>
+            <select className="form-control" value={status} onChange={(e) => setStatus(e.target.value)} {...validation.input('status', 'tm-d-status')}>
               <option value="OPEN">Open</option>
               <option value="IN_PROGRESS">In Progress</option>
+              {!['OPEN', 'IN_PROGRESS'].includes(issue.status) && <option value={issue.status}>{formatStatus(issue.status)}</option>}
             </select>
+            <FieldError {...validation.errorProps('status')} />
           </div>
           <div className="form-group">
-            <label className="form-label">Progress: <span id="tm-slider-value">{progress}</span>%</label>
-            <input type="range" className="progress-slider" id="tm-d-progress" min="0" max="100" step="5" value={progress} onChange={(e) => setProgress(e.target.value)} />
+            <label className="form-label" htmlFor="tm-d-progress">Progress: <span id="tm-slider-value">{progress}</span>%</label>
+            <input type="range" className="progress-slider" min="0" max="100" step="5" value={progress} onChange={(e) => setProgress(e.target.value)} {...validation.input('progress', 'tm-d-progress')} />
+            <FieldError {...validation.errorProps('progress')} />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Progress note (optional)</label>
-          <input type="text" className="form-control" id="tm-d-progress-note" placeholder="What changed since the last update?" value={progressNote} onChange={(e) => setProgressNote(e.target.value)} />
+          <label className="form-label" htmlFor="tm-d-progress-note">Progress note (optional)</label>
+          <input type="text" className="form-control" maxLength={1000} placeholder="What changed since the last update?" value={progressNote} onChange={(e) => setProgressNote(e.target.value)} {...validation.input('progressNote', 'tm-d-progress-note')} />
+          <FieldError {...validation.errorProps('progressNote')} />
         </div>
         <div style={{ display: 'flex', gap: 10, margin: '4px 0 20px', flexWrap: 'wrap' }}>
           <button type="button" className="btn btn-secondary" id="tm-btn-update" onClick={update}><i className="ph ph-check-circle"></i> Update Status / Progress</button>
@@ -257,8 +261,10 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
       <div id="tm-resolve-form" style={{ display: showResolve ? 'block' : 'none', marginBottom: 20 }}>
         <div className="form-section-title">Resolution</div>
         <div className="form-group">
-          <label className="form-label">Resolution notes</label>
-          <textarea ref={resolutionRef} className="form-control" id="tm-d-resolution" rows="3" placeholder="Describe what was done to resolve this issue..." value={resolution} onChange={(e) => setResolution(e.target.value)}></textarea>
+          <label className="form-label" htmlFor="tm-d-resolution">Resolution notes<span className="required-indicator" aria-hidden="true">*</span></label>
+          <textarea ref={resolutionRef} className="form-control" aria-required="true" maxLength={2000} rows="3" placeholder="Describe what was done to resolve this issue..." value={resolution} onChange={(e) => setResolution(e.target.value)} {...validation.input('resolution', 'tm-d-resolution')}></textarea>
+          <span className="form-hint">At least 10 characters.</span>
+          <FieldError {...validation.errorProps('resolution')} />
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button type="button" className="btn btn-primary" id="tm-btn-confirm-resolve" onClick={confirmResolve}><i className="ph ph-check-circle"></i> Confirm Resolution</button>
@@ -269,7 +275,8 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
       <div id="tm-submit-section" style={{ display: canSubmitForVerification ? 'block' : 'none', marginBottom: 20 }}>
         <div className="form-hint" style={{ marginTop: 0 }}><i className="ph ph-info"></i> This issue is resolved. Send it back to the Platform Admin for verification.</div>
         <div className="form-group">
-          <textarea className="form-control" id="tm-d-submit-note" rows="2" placeholder="Note for the Platform Admin (optional)..." value={submitNote} onChange={(e) => setSubmitNote(e.target.value)}></textarea>
+          <textarea className="form-control" rows="2" maxLength={1000} placeholder="Note for the Platform Admin (optional)..." aria-label="Note for the Platform Admin" value={submitNote} onChange={(e) => setSubmitNote(e.target.value)} {...validation.input('submitNote', 'tm-d-submit-note')}></textarea>
+          <FieldError {...validation.errorProps('submitNote')} />
         </div>
         <button type="button" className="btn btn-primary" id="tm-btn-submit-verification" onClick={submitVerification}><i className="ph ph-paper-plane-tilt"></i> Send for Verification</button>
       </div>
@@ -295,7 +302,8 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           )}
         </div>
         <div className="form-group">
-          <textarea className="form-control" id="tm-d-comment" rows="2" placeholder="Message the Platform Admin..." value={comment} onChange={(e) => setComment(e.target.value)}></textarea>
+          <textarea className="form-control" rows="2" maxLength={2000} placeholder="Message the Platform Admin..." aria-label="Message the Platform Admin" value={comment} onChange={(e) => setComment(e.target.value)} {...validation.input('comment', 'tm-d-comment')}></textarea>
+          <FieldError {...validation.errorProps('comment')} />
         </div>
         <button type="button" className="btn btn-primary" id="tm-btn-send" onClick={send}><i className="ph ph-paper-plane-tilt"></i> Send</button>
       </div>
@@ -316,7 +324,8 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           )}
         </div>
         <div className="form-group">
-          <textarea className="form-control" id="tm-d-note" rows="2" placeholder="Add a technical note..." value={note} onChange={(e) => setNote(e.target.value)}></textarea>
+          <textarea className="form-control" rows="2" maxLength={2000} placeholder="Add a technical note..." aria-label="Add a technical note" value={note} onChange={(e) => setNote(e.target.value)} {...validation.input('note', 'tm-d-note')}></textarea>
+          <FieldError {...validation.errorProps('note')} />
         </div>
         <button type="button" className="btn btn-outline" id="tm-btn-add-note" onClick={addNote}><i className="ph ph-note-pencil"></i> Add Note</button>
       </div>
@@ -347,7 +356,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           )}
         </div>
         <div className="attach-row">
-          <select className="filter-select" id="tm-attach-kind" style={{ padding: '8px 12px' }} value={attachKind} onChange={(e) => setAttachKind(e.target.value)}>
+          <select className="filter-select" aria-label="Attachment type" style={{ padding: '8px 12px' }} value={attachKind} onChange={(e) => setAttachKind(e.target.value)} {...validation.input('attachKind', 'tm-attach-kind')}>
             <option value="SCREENSHOT">Screenshot</option>
             <option value="LOG">Log File</option>
             <option value="OTHER">Other</option>
@@ -356,10 +365,11 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           <span className="attach-chip" id="tm-attach-chip" style={{ display: pendingFile ? 'inline-flex' : 'none' }}>
             <i className="ph ph-file"></i> <span id="tm-attach-name">{pendingFile?.name}</span>
           </span>
-          <input type="file" id="tm-attach-input" ref={fileInputRef} style={{ display: 'none' }} accept="image/*,.log,.txt" onChange={(e) => setPendingFile(e.target.files[0] || null)} />
+          <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept={TECHNICAL_ATTACHMENT_EXTENSIONS.join(',')} onChange={(e) => { setPendingFile(e.target.files[0] || null); validation.touch('pendingFile'); }} {...validation.input('pendingFile', 'tm-attach-input')} />
           <button type="button" className="btn btn-primary" id="tm-btn-upload" disabled={!pendingFile} onClick={upload}><i className="ph ph-cloud-arrow-up"></i> Upload</button>
         </div>
-        <div className="form-hint"><i className="ph ph-info"></i> Screenshots and log files up to 5 MB.</div>
+        <FieldError {...validation.errorProps('pendingFile')} />
+        <div className="form-hint"><i className="ph ph-info"></i> Screenshots and log files up to 5 MB ({TECHNICAL_ATTACHMENT_EXTENSIONS.join(', ')}).</div>
       </div>
 
       <div className={cx('msg-pane', activeTab === 'timeline' && 'active')} id="tm-pane-timeline">

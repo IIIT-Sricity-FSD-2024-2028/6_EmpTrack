@@ -1,24 +1,22 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IdField, LIMITS, TextField } from '../../common/validation/validators';
 
 export class CreateEscalationDto {
-  @IsString()
-  @IsNotEmpty()
+  // What the escalation is about: a Team Lead category ("Conflict", "Workload"...)
+  // or a record type ("ATTENDANCE").
+  @TextField('Escalation category', { min: 2, max: 50 })
   reference_type: string;
 
-  @IsString()
-  @IsNotEmpty()
+  @IdField('Reference')
   reference_id: string;
 
-  @IsString()
-  @IsNotEmpty()
-  escalated_from: string;
+  // Optional and only accepted when it matches the caller (see EscalationService).
+  @IdField('Escalated from', { optional: true })
+  escalated_from?: string;
 
-  @IsString()
-  @IsNotEmpty()
+  // An employee id or a department such as "HR".
+  @IdField('Escalated to')
   escalated_to: string;
-  
-  @IsString()
-  @IsNotEmpty()
+
+  @TextField('Escalation reason', { min: 10, max: LIMITS.DESCRIPTION_MAX, multiline: true })
   escalation_reason: string;
 }
-

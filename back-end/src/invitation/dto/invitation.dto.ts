@@ -1,7 +1,7 @@
-import { IsString, MinLength } from 'class-validator';
+import { StrongPasswordField } from '../../common/validation/validators';
 
 export class AcceptInvitationDto {
-  @IsString()
-  @MinLength(8)
+  // Same strength rule as every other account-creation/password-change path.
+  @StrongPasswordField('Password')
   password: string;
 }

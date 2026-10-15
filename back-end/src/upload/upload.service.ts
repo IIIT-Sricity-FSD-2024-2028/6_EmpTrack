@@ -9,6 +9,7 @@ import {
   UploadCategory,
 } from './upload.constants';
 import { FileLoggerService } from '../common/logger/file-logger.service';
+import { contentMatchesExtension } from '../common/utils/file-signature.util';
 
 @Injectable()
 export class UploadService {
@@ -65,6 +66,11 @@ export class UploadService {
     if (!file.buffer || file.buffer.length === 0) {
       this.logFailure(category, file, actor, 'Empty or corrupted file buffer');
       throw new BadRequestException('The uploaded file is empty or corrupted.');
+    }
+    // The MIME type and name above are browser-supplied; the bytes must agree.
+    if (!contentMatchesExtension(file.buffer, originalExt)) {
+      this.logFailure(category, file, actor, `Content does not match ${originalExt}`);
+      throw new BadRequestException(`The file contents do not match its ${originalExt} extension.`);
     }
 
     const storedName = `${randomUUID()}${originalExt}`;

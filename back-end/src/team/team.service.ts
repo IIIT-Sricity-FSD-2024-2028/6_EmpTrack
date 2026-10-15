@@ -87,7 +87,7 @@ export class TeamService {
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Password and confirmation do not match');
     }
-    const existingEmail = this.dataStore.getEmployees().find((e) => e.email === dto.email);
+    const existingEmail = this.dataStore.getEmployees().find((e) => String(e.email).toLowerCase() === dto.email.toLowerCase());
     if (existingEmail) throw new BadRequestException('An account with this email already exists');
 
     const emp_id = 'TL-' + Date.now();

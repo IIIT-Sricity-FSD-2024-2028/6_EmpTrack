@@ -9,6 +9,8 @@ import { CAN_EDIT_ASSIGNMENT, reassignTask, sendNotification, updateTask } from 
 import { formatDate } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, Progress, StatCard, tlPath, useTeamData, useToast } from './components/TeamLeadUI';
 import { escalationReason, isEscalated, isOverdue, nameOf, todayKey } from './tlUtils';
+import { escalationActionSchema } from '../../validation/formSchemas';
+import { validateForm } from '../../utils/validation';
 import './teamlead.css';
 
 const TITLES = { warn: 'Send Warning', extend: 'Extend Deadline', reassign: 'Reassign Task' };
@@ -41,19 +43,21 @@ export default function Escalations() {
 
   const submit = async () => {
     const { kind, task } = action;
+    const found = validateForm(escalationActionSchema(kind, {
+      currentDeadline: task.deadline,
+      memberIds: members.filter((m) => m.emp_id !== task.assigned_to).map((m) => m.emp_id),
+    }), { value });
+    if (found.value) return setFieldError(found.value);
+    setFieldError('');
     let run;
     let success;
     if (kind === 'warn') {
-      if (value.trim().length < 10) return setFieldError('Write a message of at least 10 characters.');
       run = () => sendNotification(task.assigned_to, value.trim(), 'warning');
       success = `Warning sent to ${nameOf(members, task.assigned_to)}`;
     } else if (kind === 'extend') {
-      if (!value) return setFieldError('Pick the new deadline.');
-      if (value <= (task.deadline || '') || value < today) return setFieldError('The new deadline must be later than the current one and not in the past.');
       run = () => updateTask(task.task_id, { deadline: value });
       success = `${task.task_id} deadline moved to ${formatDate(value)}`;
     } else {
-      if (!value) return setFieldError('Select a team member.');
       run = () => reassignTask(task.task_id, value);
       success = `${task.task_id} reassigned to ${nameOf(members, value)}`;
     }
@@ -145,13 +149,13 @@ export default function Escalations() {
         }
       >
         {action?.kind === 'warn' && (
-          <Input as="textarea" rows={5} label={`Message to ${nameOf(members, action.task.assigned_to)}`} value={value} error={fieldError} onChange={(e) => setValue(e.target.value)} />
+          <Input as="textarea" rows={5} required maxLength={500} label={`Message to ${nameOf(members, action.task.assigned_to)}`} value={value} error={fieldError} onChange={(e) => setValue(e.target.value)} />
         )}
         {action?.kind === 'extend' && (
-          <Input type="date" label={`New deadline (currently ${formatDate(action.task.deadline)})`} min={today} value={value} error={fieldError} onChange={(e) => setValue(e.target.value)} />
+          <Input type="date" required label={`New deadline (currently ${formatDate(action.task.deadline)})`} min={today} value={value} error={fieldError} onChange={(e) => setValue(e.target.value)} />
         )}
         {action?.kind === 'reassign' && (
-          <Input as="select" label={`Reassign from ${nameOf(members, action.task.assigned_to)} to`} value={value} error={fieldError} onChange={(e) => setValue(e.target.value)}>
+          <Input as="select" required label={`Reassign from ${nameOf(members, action.task.assigned_to)} to`} value={value} error={fieldError} onChange={(e) => setValue(e.target.value)}>
             <option value="">Select team member</option>
             {members.filter((m) => m.emp_id !== action.task.assigned_to).map((m) => <option key={m.emp_id} value={m.emp_id}>{m.emp_name}</option>)}
           </Input>

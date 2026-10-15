@@ -5,33 +5,26 @@ import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import SearchBar from '../../components/common/SearchBar';
 import Table from '../../components/common/Table';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { CAN_EDIT_ASSIGNMENT, createTask, deleteTask, updateTask } from '../../services/teamLeadService';
 import { formatDate } from '../../utils/helpers';
+import { teamLeadTaskSchema } from '../../validation/formSchemas';
 import { DemoNotice, LoadState, StatCard, useTeamData, useToast } from './components/TeamLeadUI';
 import { matchesSearch, nameOf, TASK_STATUSES, taskStatusBadge, taskStatusLabel, todayKey } from './tlUtils';
 import './teamlead.css';
 
 const EMPTY_TASK = { assigned_to: '', task_title: '', task_description: '', est_hours: '', deadline: '', priority: 'Medium' };
 
-function validate(values, { isNew }) {
-  const errors = {};
-  if (!values.assigned_to) errors.assigned_to = 'Select a team member.';
-  if (values.task_title.trim().length < 3) errors.task_title = 'Title must be at least 3 characters.';
-  if (!(Number(values.est_hours) > 0)) errors.est_hours = 'Enter the estimated hours (more than 0).';
-  if (!values.deadline) errors.deadline = 'Pick a deadline.';
-  else if (isNew && values.deadline < todayKey()) errors.deadline = 'Deadline cannot be in the past.';
-  return errors;
-}
 
 /** Fields shared by the create form and the edit modal. */
-function TaskFields({ values, errors, members, onChange, withStatus }) {
+function TaskFields({ values, validation, members, onChange, withStatus, idPrefix }) {
   // The backend cannot change the assignee or estimate of an existing task.
   const locked = (name) => withStatus && !CAN_EDIT_ASSIGNMENT && (name === 'assigned_to' || name === 'est_hours');
   const field = (name) => ({
-    name,
+    ...validation.field(name, `${idPrefix}-${name}`),
+    required: name !== 'task_description' && !locked(name),
     value: values[name],
-    error: errors[name],
     disabled: locked(name),
     title: locked(name) ? 'The backend cannot change this after a task is created' : undefined,
     onChange: (e) => onChange(name, e.target.value),
@@ -44,18 +37,19 @@ function TaskFields({ values, errors, members, onChange, withStatus }) {
           <option key={m.emp_id} value={m.emp_id}>{m.emp_name}</option>
         ))}
       </Input>
-      <Input label="Task Title" placeholder="e.g. Payment gateway integration" {...field('task_title')} />
-      <Input label="Estimated Hours" type="number" min="1" step="0.5" {...field('est_hours')} />
-      <Input label="Deadline" type="date" {...field('deadline')} />
+      <Input label="Task Title" placeholder="e.g. Payment gateway integration" maxLength={150} {...field('task_title')} />
+      <Input label="Estimated Hours" type="number" min="0.5" max="1000" step="0.5" inputMode="decimal" {...field('est_hours')} />
+      <Input label="Deadline" type="date" min={withStatus ? undefined : todayKey()} {...field('deadline')} />
       <Input as="select" label="Priority" {...field('priority')}>
         {['High', 'Medium', 'Low'].map((p) => <option key={p}>{p}</option>)}
+        {values.priority && !['high', 'medium', 'low'].includes(String(values.priority).toLowerCase()) && <option>{values.priority}</option>}
       </Input>
       {withStatus && (
         <Input as="select" label="Status" {...field('status')}>
           {TASK_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
         </Input>
       )}
-      <Input as="textarea" rows={3} label="Description" placeholder="What needs to be done?" groupStyle={{ gridColumn: '1 / -1' }} {...field('task_description')} />
+      <Input as="textarea" rows={3} maxLength={2000} label="Description" placeholder="What needs to be done?" groupStyle={{ gridColumn: '1 / -1' }} {...field('task_description')} />
     </div>
   );
 }
@@ -66,10 +60,8 @@ export default function Tasks() {
   const [toast, showToast] = useToast();
 
   const [form, setForm] = useState(EMPTY_TASK);
-  const [formErrors, setFormErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(null); // task being edited (form values)
-  const [editErrors, setEditErrors] = useState({});
   const [deleting, setDeleting] = useState(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('ACTIVE');
@@ -77,6 +69,14 @@ export default function Tasks() {
 
   const members = data?.members ?? [];
   const tasks = data?.tasks ?? [];
+  const memberIds = members.map((m) => m.emp_id);
+  const createValidation = useFormValidation(teamLeadTaskSchema(memberIds, { isNew: true }), form, { idPrefix: 'tl-task' });
+  // A task's current assignee stays valid even if they've since left the team list.
+  const editValidation = useFormValidation(
+    teamLeadTaskSchema(editing ? [...memberIds, editing.assigned_to] : memberIds, { isNew: false }),
+    editing || {},
+    { idPrefix: 'tl-edit' },
+  );
   const count = (s) => tasks.filter((t) => t.status === s).length;
 
   const visible = tasks
@@ -84,14 +84,14 @@ export default function Tasks() {
     .filter((t) => matchesSearch(search, t.task_id, t.task_title, nameOf(members, t.assigned_to)))
     .sort((a, b) => (sortBy === 'hours' ? Number(b.est_hours) - Number(a.est_hours) : String(a.deadline).localeCompare(String(b.deadline))));
 
-  const run = async (action, success) => {
+  const run = async (action, success, validation) => {
     try {
       await action();
       showToast(success);
       await reload();
       return true;
     } catch (err) {
-      showToast(err.message || 'Something went wrong.', 'error');
+      if (!validation?.setServerErrors(err)) showToast(err.message || 'Something went wrong.', 'error');
       return false;
     }
   };
@@ -100,27 +100,26 @@ export default function Tasks() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    const errors = validate(form, { isNew: true });
-    setFormErrors(errors);
-    if (Object.keys(errors).length) return;
+    if (!createValidation.validateAll()) return;
     setSaving(true);
-    if (await run(() => createTask(toPayload(form)), `Task assigned to ${nameOf(members, form.assigned_to)}`)) setForm(EMPTY_TASK);
+    if (await run(() => createTask(toPayload(form)), `Task assigned to ${nameOf(members, form.assigned_to)}`, createValidation)) {
+      setForm(EMPTY_TASK);
+      createValidation.reset();
+    }
     setSaving(false);
   };
 
   const handleEdit = async (e) => {
     e.preventDefault();
-    const errors = validate(editing, { isNew: false });
-    setEditErrors(errors);
-    if (Object.keys(errors).length) return;
+    if (!editValidation.validateAll()) return;
     setSaving(true);
     const { task_id, ...changes } = editing;
-    if (await run(() => updateTask(task_id, toPayload(changes)), 'Task updated')) setEditing(null);
+    if (await run(() => updateTask(task_id, toPayload(changes)), 'Task updated', editValidation)) setEditing(null);
     setSaving(false);
   };
 
   const openEdit = (t) => {
-    setEditErrors({});
+    editValidation.reset();
     setEditing({
       task_id: t.task_id,
       assigned_to: t.assigned_to,
@@ -181,10 +180,10 @@ export default function Tasks() {
 
         <form className="card" onSubmit={handleCreate} noValidate>
           <h3 className="tl-section-title">Create &amp; Assign Task</h3>
-          <TaskFields values={form} errors={formErrors} members={members} onChange={(name, value) => setForm((f) => ({ ...f, [name]: value }))} />
+          <TaskFields values={form} validation={createValidation} idPrefix="tl-task" members={members} onChange={(name, value) => setForm((f) => ({ ...f, [name]: value }))} />
           <div className="tl-form-actions">
             <Button type="submit" icon="ph-paper-plane-tilt" disabled={saving}>{saving ? 'Assigning...' : 'Assign Task'}</Button>
-            <Button variant="outline" onClick={() => { setForm(EMPTY_TASK); setFormErrors({}); }}>Clear</Button>
+            <Button variant="outline" onClick={() => { setForm(EMPTY_TASK); createValidation.reset(); }}>Clear</Button>
           </div>
         </form>
 
@@ -220,7 +219,7 @@ export default function Tasks() {
       >
         {editing && (
           <form id="edit-task-form" className="tl-page" onSubmit={handleEdit} noValidate>
-            <TaskFields values={editing} errors={editErrors} members={members} withStatus onChange={(name, value) => setEditing((t) => ({ ...t, [name]: value }))} />
+            <TaskFields values={editing} validation={editValidation} idPrefix="tl-edit" members={members} withStatus onChange={(name, value) => setEditing((t) => ({ ...t, [name]: value }))} />
           </form>
         )}
       </Modal>

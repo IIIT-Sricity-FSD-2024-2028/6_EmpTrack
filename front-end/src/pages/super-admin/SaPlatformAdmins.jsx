@@ -7,7 +7,10 @@ import SaPagination from '../../components/sa-common/SaPagination';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
 import * as sa from '../../services/superAdminService';
-import { EMAIL_RE, STRONG_PASSWORD, companyStatusBadgeClass, formatDate, formatDateTime, paginate } from '../../utils/saCommon';
+import { companyStatusBadgeClass, formatDate, formatDateTime, paginate } from '../../utils/saCommon';
+import useFormValidation from '../../hooks/useFormValidation';
+import { PASSWORD_HINT } from '../../utils/validation';
+import { createPlatformAdminSchema, editPlatformAdminSchema } from '../../validation/formSchemas';
 import { SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
 import './styles/platform-admins.css';
@@ -52,9 +55,14 @@ export default function SaPlatformAdmins() {
   }, [loadAdmins]);
 
   const close = () => setModal(null);
+  const cv = useFormValidation(createPlatformAdminSchema, createForm.values, { idPrefix: 'cp' });
+  const ev = useFormValidation(editPlatformAdminSchema, editForm.values, { idPrefix: 'ep' });
+
   const open = (name, admin = null) => {
     setSelected(admin);
     setError('');
+    cv.reset();
+    ev.reset();
     setModal(name);
   };
 
@@ -69,33 +77,34 @@ export default function SaPlatformAdmins() {
   };
 
   const submitCreate = async () => {
+    setError('');
+    if (!cv.validateAll()) return;
     const { values } = createForm;
     const data = { ...values, name: values.name.trim(), email: values.email.trim(), phone: values.phone.trim() };
-    if (!data.name || !data.email || !data.phone || !data.password || !data.confirmPassword) return setError('All fields are required.');
-    if (!EMAIL_RE.test(data.email)) return setError('Enter a valid email address.');
-    if (!STRONG_PASSWORD.test(data.password)) return setError('Password must be 8+ characters with uppercase, lowercase, a number, and a special character.');
-    if (data.password !== data.confirmPassword) return setError('Password and confirmation do not match.');
     try {
       await sa.createPlatformAdmin(data);
       showToast('Platform Admin created successfully. They can log in immediately.');
       close();
       await loadAdmins();
     } catch (e) {
-      setError(e.message || 'Failed to create Platform Admin.');
+      if (!cv.setServerErrors(e)) setError(e.message || 'Failed to create Platform Admin.');
     }
   };
 
   const submitEdit = async () => {
+    setError('');
+    if (!ev.validateAll()) return;
     const { values } = editForm;
     const data = { name: values.name.trim(), email: values.email.trim(), phone: values.phone.trim() };
-    if (!data.name || !data.email) return setError('Name and email are required.');
+    // A blank phone leaves the stored number unchanged.
+    if (!data.phone) delete data.phone;
     try {
       await sa.updatePlatformAdmin(selected.emp_id, data);
       showToast('Platform Admin updated successfully.');
       close();
       await loadAdmins();
     } catch (e) {
-      setError(e.message || 'Failed to update.');
+      if (!ev.setServerErrors(e)) setError(e.message || 'Failed to update.');
     }
   };
 
@@ -200,14 +209,15 @@ export default function SaPlatformAdmins() {
       </div>
 
       <SaModal id="createPaModal" open={modal === 'create'} onClose={close} title="Create Platform Admin" footer={footer('Create Platform Admin', submitCreate)}>
-        <form id="create-pa-form" onSubmit={(e) => e.preventDefault()}>
-          <Field label="Name" htmlFor="cp-name"><input type="text" className="form-control" id="cp-name" {...createForm.bind('name')} /></Field>
-          <Field label="Email" htmlFor="cp-email"><input type="email" className="form-control" id="cp-email" {...createForm.bind('email')} /></Field>
-          <Field label="Phone" htmlFor="cp-phone"><input type="text" className="form-control" id="cp-phone" {...createForm.bind('phone')} /></Field>
-          <Field label="Password" htmlFor="cp-password"><input type="password" className="form-control" id="cp-password" autoComplete="new-password" {...createForm.bind('password')} /></Field>
-          <Field label="Confirm Password" htmlFor="cp-confirm-password"><input type="password" className="form-control" id="cp-confirm-password" autoComplete="new-password" {...createForm.bind('confirmPassword')} /></Field>
-          <Field label="Status" htmlFor="cp-status">
-            <select className="form-control" id="cp-status" {...createForm.bind('status')}>
+        <form id="create-pa-form" onSubmit={(e) => e.preventDefault()} noValidate>
+          <Field label="Name" htmlFor="cp-name" required error={cv.errors.name}><input type="text" className="form-control" maxLength={100} aria-required={true} {...createForm.bind('name')} {...cv.input('name', 'cp-name')} /></Field>
+          <Field label="Email" htmlFor="cp-email" required error={cv.errors.email}><input type="email" className="form-control" maxLength={254} aria-required={true} {...createForm.bind('email')} {...cv.input('email', 'cp-email')} /></Field>
+          <Field label="Phone" htmlFor="cp-phone" required error={cv.errors.phone}><input type="tel" className="form-control" maxLength={20} aria-required={true} {...createForm.bind('phone')} {...cv.input('phone', 'cp-phone')} /></Field>
+          <div className="form-hint"><i className="ph ph-info"></i> {PASSWORD_HINT}</div>
+          <Field label="Password" htmlFor="cp-password" required error={cv.errors.password}><input type="password" className="form-control" autoComplete="new-password" maxLength={64} aria-required={true} {...createForm.bind('password')} {...cv.input('password', 'cp-password')} /></Field>
+          <Field label="Confirm Password" htmlFor="cp-confirm-password" required error={cv.errors.confirmPassword}><input type="password" className="form-control" autoComplete="new-password" maxLength={64} aria-required={true} {...createForm.bind('confirmPassword')} {...cv.input('confirmPassword', 'cp-confirm-password')} /></Field>
+          <Field label="Status" htmlFor="cp-status" error={cv.errors.status}>
+            <select className="form-control" aria-required={false} {...createForm.bind('status')} {...cv.input('status', 'cp-status')}>
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
             </select>
@@ -218,10 +228,10 @@ export default function SaPlatformAdmins() {
       </SaModal>
 
       <SaModal id="editPaModal" open={modal === 'edit'} onClose={close} title="Edit Platform Admin" footer={footer('Save Changes', submitEdit)}>
-        <form id="edit-pa-form" onSubmit={(e) => e.preventDefault()}>
-          <Field label="Name" htmlFor="ep-name"><input type="text" className="form-control" id="ep-name" {...editForm.bind('name')} /></Field>
-          <Field label="Email" htmlFor="ep-email"><input type="email" className="form-control" id="ep-email" {...editForm.bind('email')} /></Field>
-          <Field label="Phone" htmlFor="ep-phone"><input type="text" className="form-control" id="ep-phone" {...editForm.bind('phone')} /></Field>
+        <form id="edit-pa-form" onSubmit={(e) => e.preventDefault()} noValidate>
+          <Field label="Name" htmlFor="ep-name" required error={ev.errors.name}><input type="text" className="form-control" maxLength={100} aria-required={true} {...editForm.bind('name')} {...ev.input('name', 'ep-name')} /></Field>
+          <Field label="Email" htmlFor="ep-email" required error={ev.errors.email}><input type="email" className="form-control" maxLength={254} aria-required={true} {...editForm.bind('email')} {...ev.input('email', 'ep-email')} /></Field>
+          <Field label="Phone" htmlFor="ep-phone" error={ev.errors.phone}><input type="tel" className="form-control" maxLength={20} aria-required={false} {...editForm.bind('phone')} {...ev.input('phone', 'ep-phone')} /></Field>
           <FormError id="edit-pa-error" message={error} />
         </form>
       </SaModal>

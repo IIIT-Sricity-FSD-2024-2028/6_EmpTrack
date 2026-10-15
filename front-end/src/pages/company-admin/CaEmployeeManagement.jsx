@@ -1,13 +1,16 @@
 // Converted from front-end/company_admin/employee-management.html + js/views/company_admin/employee-management.js
 import { useCallback, useEffect, useState } from 'react';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import SaModal from '../../components/sa-common/SaModal';
 import { FormError, useFormState } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import * as ca from '../../services/companyAdminService';
 import { departmentsOf, joinedThisMonth } from '../hr/hrUtils';
-import { DEPARTMENTS, EMAIL_RE, PHONE_RE, STRONG_PASSWORD } from './caConstants';
+import { addEmployeeSchema, createTeamSchema, editEmployeeSchema, newAccountSchema } from '../../validation/formSchemas';
+import { DEPARTMENTS } from './caConstants';
 import '../hr/styles/employee-management.css';
 
 const EMPTY_EMP = { name: '', email: '', phone: '', password: '', confirmPassword: '', department_id: '', team_id: '' };
@@ -15,8 +18,14 @@ const EMPTY_LEAD = { name: '', email: '', phone: '', password: '', confirmPasswo
 const inlineInput = { width: '100%', padding: 4, border: '1px solid var(--border-color)', borderRadius: 4, background: 'var(--bg-surface)', color: 'var(--text-main)' };
 const iconBtn = (color) => ({ background: 'none', border: 'none', color, cursor: 'pointer', fontSize: 18 });
 
-function Labeled({ label, htmlFor, children }) {
-  return <div className="form-group"><label htmlFor={htmlFor}>{label}</label>{children}</div>;
+function Labeled({ label, htmlFor, required, error, children }) {
+  return (
+    <div className="form-group">
+      <label htmlFor={htmlFor}>{label}{required && <RequiredMark />}</label>
+      {children}
+      <FieldError id={`${htmlFor}-error`} message={error} />
+    </div>
+  );
 }
 
 export default function CaEmployeeManagement() {
@@ -32,8 +41,11 @@ export default function CaEmployeeManagement() {
   const [modalError, setModalError] = useState('');
   const [addError, setAddError] = useState('');
   const [addSuccess, setAddSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
   const empForm = useFormState(EMPTY_EMP);
   const leadForm = useFormState(EMPTY_LEAD);
+  const teamValidation = useFormValidation(createTeamSchema, { team_name: teamName }, { idPrefix: 'ct' });
+  const leadValidation = useFormValidation(newAccountSchema, leadForm.values, { idPrefix: 'al' });
 
   const loadTeams = useCallback(async () => {
     try {
@@ -66,34 +78,42 @@ export default function CaEmployeeManagement() {
 
   const team = (id) => teams.find((t) => t.team_id === id);
   const teamsWithLead = teams.filter((t) => t.team_lead_id);
+  const empValidation = useFormValidation(addEmployeeSchema(DEPARTMENTS, teamsWithLead.map((t) => t.team_id)), empForm.values, { idPrefix: 'addEmp' });
+  const deptChoices = [...new Set([...DEPARTMENTS, ...(editing?.department_id ? [editing.department_id] : [])])];
+  const editValidation = useFormValidation(editEmployeeSchema(deptChoices), editing || {}, { idPrefix: 'editEmp' });
 
   // ---- teams ----
   const submitTeam = async () => {
-    if (!teamName.trim()) return setModalError('Please enter a team name.');
+    setModalError('');
+    if (!teamValidation.validateAll()) return;
+    setSaving(true);
     try {
       await ca.createTeam({ team_name: teamName.trim() });
       showToast('Team created successfully.');
       setModal(null);
       await loadTeams();
     } catch (e) {
-      setModalError(e.message || 'Failed to create team.');
+      if (!teamValidation.setServerErrors(e)) setModalError(e.message || 'Failed to create team.');
+    } finally {
+      setSaving(false);
     }
   };
 
   const submitLead = async () => {
+    setModalError('');
+    if (!leadValidation.validateAll()) return;
     const v = leadForm.values;
     const data = { ...v, name: v.name.trim(), email: v.email.trim(), phone: v.phone.trim() };
-    if (!data.name || !data.email || !data.phone || !data.password || !data.confirmPassword) return setModalError('All fields are required.');
-    if (!EMAIL_RE.test(data.email)) return setModalError('Please enter a valid email address.');
-    if (!STRONG_PASSWORD.test(data.password)) return setModalError('Password must be 8+ characters with uppercase, lowercase, a number, and a special character.');
-    if (data.password !== data.confirmPassword) return setModalError('Passwords do not match.');
+    setSaving(true);
     try {
       await ca.createTeamLead(leadTeam.team_id, data);
       showToast('Team Lead assigned successfully.');
       setModal(null);
       await loadTeams();
     } catch (e) {
-      setModalError(e.message || 'Failed to assign Team Lead.');
+      if (!leadValidation.setServerErrors(e)) setModalError(e.message || 'Failed to assign Team Lead.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -101,29 +121,26 @@ export default function CaEmployeeManagement() {
   const submitEmployee = async (e) => {
     e.preventDefault();
     setAddError('');
-    if (!e.currentTarget.checkValidity()) {
-      e.currentTarget.reportValidity();
-      return;
-    }
+    if (!empValidation.validateAll()) return;
     const v = empForm.values;
     const data = { ...v, name: v.name.trim(), email: v.email.trim(), phone: v.phone.trim() };
-    if (!EMAIL_RE.test(data.email)) return setAddError('Please enter a valid email address.');
-    if (!PHONE_RE.test(data.phone)) return setAddError('Please enter a valid phone number.');
-    if (!STRONG_PASSWORD.test(data.password)) return setAddError('Password must be 8+ characters with uppercase, lowercase, a number, and a special character.');
-    if (data.password !== data.confirmPassword) return setAddError('Passwords do not match.');
-    if (!data.team_id) return setAddError('Please select a team.');
+    setSaving(true);
     try {
       await ca.createEmployee(data);
       await Promise.all([loadEmployees(), loadTeams()]);
       empForm.reset();
+      empValidation.reset();
       setAddSuccess(true);
     } catch (err) {
-      setAddError(err.message || 'Failed to add employee.');
+      if (!empValidation.setServerErrors(err)) setAddError(err.message || 'Failed to add employee.');
+    } finally {
+      setSaving(false);
     }
   };
 
   // ---- edit / delete ----
   const saveEdit = async () => {
+    if (!editValidation.validateAll()) return;
     const { emp_id, ...draft } = editing;
     try {
       await ca.updateEmployee(emp_id, { ...draft, emp_name: draft.emp_name.trim(), email: draft.email.trim(), phone: draft.phone.trim() });
@@ -131,7 +148,7 @@ export default function CaEmployeeManagement() {
       setEditing(null);
       await loadEmployees();
     } catch (e) {
-      showToast(e.message || 'Failed to update employee.', 'error');
+      if (!editValidation.setServerErrors(e)) showToast(e.message || 'Failed to update employee.', 'error');
     }
   };
 
@@ -153,11 +170,17 @@ export default function CaEmployeeManagement() {
     && (filters.dept === 'all' || e.department_id === filters.dept)
     && (filters.status === 'all' || e.status === filters.status));
   const setFilter = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
-  const draft = (key) => ({ value: editing?.[key] ?? '', onChange: (e) => setEditing((d) => ({ ...d, [key]: e.target.value })) });
-  const deptOptions = (current) => [...new Set([...DEPARTMENTS, ...(current ? [current] : [])])];
+  const draft = (key) => ({
+    value: editing?.[key] ?? '',
+    onChange: (e) => setEditing((d) => ({ ...d, [key]: e.target.value })),
+    onKeyDown: (e) => e.key === 'Enter' && saveEdit(),
+    ...editValidation.input(key, `editEmp-${key}`),
+  });
+  const draftError = (key) => <FieldError {...editValidation.errorProps(key)} />;
   const modalFooter = (label, onClick) => (
-    <><button type="button" className="btn btn-outline" onClick={() => setModal(null)}>Cancel</button><button type="button" className="btn btn-primary" onClick={onClick}>{label}</button></>
+    <><button type="button" className="btn btn-outline" onClick={() => setModal(null)}>Cancel</button><button type="button" className="btn btn-primary" onClick={onClick} disabled={saving}>{saving ? 'Saving...' : label}</button></>
   );
+  const bindEmp = (key, id) => ({ ...empForm.bind(key), ...empValidation.input(key, id), 'aria-required': true });
 
   let rows;
   if (!employees) rows = <tr className="loader-row"><td colSpan={8}><div className="spinner"></div><div>Loading directory...</div></td></tr>;
@@ -170,14 +193,18 @@ export default function CaEmployeeManagement() {
           <tr key={emp.emp_id}>
             <td>{emp.emp_id}</td>
             <td style={{ minWidth: 200 }}>
-              <input type="text" aria-label="Name" placeholder="Name" style={{ ...inlineInput, marginBottom: 4 }} {...draft('emp_name')} />
-              <input type="email" aria-label="Email" placeholder="Email" style={{ ...inlineInput, marginBottom: 4, fontSize: 12 }} {...draft('email')} />
-              <input type="text" aria-label="Phone" placeholder="Phone" style={{ ...inlineInput, fontSize: 12 }} {...draft('phone')} />
+              <input type="text" aria-label="Name" placeholder="Name" maxLength={100} style={{ ...inlineInput, marginBottom: 4 }} {...draft('emp_name')} />
+              {draftError('emp_name')}
+              <input type="email" aria-label="Email" placeholder="Email" maxLength={254} style={{ ...inlineInput, marginBottom: 4, fontSize: 12 }} {...draft('email')} />
+              {draftError('email')}
+              <input type="tel" aria-label="Phone" placeholder="Phone" maxLength={20} style={{ ...inlineInput, fontSize: 12 }} {...draft('phone')} />
+              {draftError('phone')}
             </td>
             <td style={{ minWidth: 160 }}>
               <select aria-label="Department" style={inlineInput} {...draft('department_id')}>
-                {deptOptions(emp.department_id).map((d) => <option key={d} value={d}>{d}</option>)}
+                {deptChoices.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
+              {draftError('department_id')}
             </td>
             <td>{t?.team_name || '-'}</td>
             <td>{t?.team_lead_name || '-'}</td>
@@ -187,6 +214,7 @@ export default function CaEmployeeManagement() {
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
               </select>
+              {draftError('status')}
             </td>
             <td style={{ textAlign: 'center' }}>
               <button type="button" title="Save" aria-label="Save" style={{ ...iconBtn('var(--emp-success)'), marginRight: 8 }} onClick={saveEdit}><i className="ph-bold ph-check"></i></button>
@@ -213,7 +241,7 @@ export default function CaEmployeeManagement() {
           <td style={{ textAlign: 'center' }}>
             <button
               type="button" className="btn-icon edit-btn" title="Edit Employee" aria-label="Edit employee" style={{ ...iconBtn('var(--emp-primary)'), marginRight: 8 }}
-              onClick={() => setEditing({ emp_id: emp.emp_id, emp_name: emp.emp_name, email: emp.email, phone: emp.phone || '', department_id: emp.department_id || DEPARTMENTS[0], status: emp.status })}
+              onClick={() => { editValidation.reset(); setEditing({ emp_id: emp.emp_id, emp_name: emp.emp_name, email: emp.email, phone: emp.phone || '', department_id: emp.department_id || DEPARTMENTS[0], status: emp.status }); }}
             >
               <i className="ph ph-pencil-simple"></i>
             </button>
@@ -231,7 +259,7 @@ export default function CaEmployeeManagement() {
           <div style={{ fontWeight: 600, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
             <i className="ph-fill ph-users-three" style={{ color: 'var(--emp-primary)' }}></i> Teams &amp; Team Leads
           </div>
-          <button type="button" className="btn-submit" id="btnOpenCreateTeam" style={{ width: 'auto', padding: '8px 16px' }} onClick={() => { setTeamName(''); setModalError(''); setModal('team'); }}>
+          <button type="button" className="btn-submit" id="btnOpenCreateTeam" style={{ width: 'auto', padding: '8px 16px' }} onClick={() => { setTeamName(''); setModalError(''); teamValidation.reset(); setModal('team'); }}>
             <i className="ph ph-plus"></i> Create Team
           </button>
         </div>
@@ -249,7 +277,7 @@ export default function CaEmployeeManagement() {
                     <td>{t.employee_count}</td>
                     <td style={{ textAlign: 'right' }}>
                       {!t.team_lead_id && (
-                        <button type="button" className="btn-icon edit-btn" title="Assign Team Lead" aria-label="Assign Team Lead" style={iconBtn('var(--emp-primary)')} onClick={() => { leadForm.reset(); setLeadTeam(t); setModalError(''); setModal('lead'); }}>
+                        <button type="button" className="btn-icon edit-btn" title="Assign Team Lead" aria-label="Assign Team Lead" style={iconBtn('var(--emp-primary)')} onClick={() => { leadForm.reset(); leadValidation.reset(); setLeadTeam(t); setModalError(''); setModal('lead'); }}>
                           <i className="ph ph-user-plus"></i>
                         </button>
                       )}
@@ -266,21 +294,21 @@ export default function CaEmployeeManagement() {
         <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
           <i className="ph-fill ph-user-plus" style={{ color: 'var(--emp-primary)' }}></i> Add New Employee
         </div>
-        <form id="addEmpForm" onSubmit={submitEmployee}>
+        <form id="addEmpForm" onSubmit={submitEmployee} noValidate>
           <div className="form-grid">
-            <Labeled label="Full Name" htmlFor="addEmpName"><input type="text" id="addEmpName" required placeholder="e.g. Jane Doe" {...empForm.bind('name')} /></Labeled>
-            <Labeled label="Email Address" htmlFor="addEmpEmail"><input type="email" id="addEmpEmail" required placeholder="jane@company.com" {...empForm.bind('email')} /></Labeled>
-            <Labeled label="Phone Number" htmlFor="addEmpPhone"><input type="text" id="addEmpPhone" required placeholder="e.g. 9000000000" {...empForm.bind('phone')} /></Labeled>
-            <Labeled label="Password" htmlFor="addEmpPassword"><input type="password" id="addEmpPassword" required autoComplete="new-password" {...empForm.bind('password')} /></Labeled>
-            <Labeled label="Confirm Password" htmlFor="addEmpConfirmPassword"><input type="password" id="addEmpConfirmPassword" required autoComplete="new-password" {...empForm.bind('confirmPassword')} /></Labeled>
-            <Labeled label="Department" htmlFor="addEmpDept">
-              <select id="addEmpDept" required {...empForm.bind('department_id')}>
+            <Labeled label="Full Name" htmlFor="addEmpName" required error={empValidation.errors.name}><input type="text" maxLength={100} placeholder="e.g. Jane Doe" {...bindEmp('name', 'addEmpName')} /></Labeled>
+            <Labeled label="Email Address" htmlFor="addEmpEmail" required error={empValidation.errors.email}><input type="email" maxLength={254} placeholder="jane@company.com" {...bindEmp('email', 'addEmpEmail')} /></Labeled>
+            <Labeled label="Phone Number" htmlFor="addEmpPhone" required error={empValidation.errors.phone}><input type="tel" maxLength={20} placeholder="e.g. +91 98765 43210" {...bindEmp('phone', 'addEmpPhone')} /></Labeled>
+            <Labeled label="Password" htmlFor="addEmpPassword" required error={empValidation.errors.password}><input type="password" maxLength={64} autoComplete="new-password" {...bindEmp('password', 'addEmpPassword')} /></Labeled>
+            <Labeled label="Confirm Password" htmlFor="addEmpConfirmPassword" required error={empValidation.errors.confirmPassword}><input type="password" maxLength={64} autoComplete="new-password" {...bindEmp('confirmPassword', 'addEmpConfirmPassword')} /></Labeled>
+            <Labeled label="Department" htmlFor="addEmpDept" required error={empValidation.errors.department_id}>
+              <select {...bindEmp('department_id', 'addEmpDept')}>
                 <option value="" disabled>Select Dept</option>
                 {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </Labeled>
-            <Labeled label="Team" htmlFor="addEmpTeam">
-              <select id="addEmpTeam" required {...empForm.bind('team_id')}>
+            <Labeled label="Team" htmlFor="addEmpTeam" required error={empValidation.errors.team_id}>
+              <select {...bindEmp('team_id', 'addEmpTeam')}>
                 <option value="" disabled>{teamsWithLead.length ? 'Select Team' : 'No teams with a Team Lead yet'}</option>
                 {teamsWithLead.map((t) => <option key={t.team_id} value={t.team_id}>{t.team_name}</option>)}
               </select>
@@ -290,7 +318,7 @@ export default function CaEmployeeManagement() {
             </Labeled>
           </div>
           <div style={{ marginTop: 16 }}>
-            <button type="submit" className="btn-submit" id="addEmpSubmitBtn">Add Employee</button>
+            <button type="submit" className="btn-submit" id="addEmpSubmitBtn" disabled={saving}>{saving ? 'Adding...' : 'Add Employee'}</button>
           </div>
           {addError && <div id="addEmpError" className="form-error" style={{ display: 'block', marginTop: 12 }} role="alert">{addError}</div>}
           {addSuccess && (
@@ -304,7 +332,7 @@ export default function CaEmployeeManagement() {
       <div className="card filter-bar">
         <div className="search-wrap">
           <i className="ph ph-magnifying-glass"></i>
-          <input type="text" id="empSearch" className="search-input" placeholder="Search employees by name, email, or ID..." aria-label="Search employees" value={filters.search} onChange={setFilter('search')} />
+          <input type="text" maxLength={100} id="empSearch" className="search-input" placeholder="Search employees by name, email, or ID..." aria-label="Search employees" value={filters.search} onChange={setFilter('search')} />
         </div>
         <div className="filters-wrap">
           <select id="empDeptFilter" className="filter-select" aria-label="Filter by department" value={filters.dept} onChange={setFilter('dept')}>
@@ -337,21 +365,23 @@ export default function CaEmployeeManagement() {
       </div>
 
       <SaModal id="createTeamModal" open={modal === 'team'} onClose={() => setModal(null)} title="Create Team" footer={modalFooter('Create Team', submitTeam)}>
-        <form id="createTeamForm" onSubmit={(e) => { e.preventDefault(); submitTeam(); }}>
+        <form id="createTeamForm" onSubmit={(e) => { e.preventDefault(); submitTeam(); }} noValidate>
           <div className="form-group">
-            <label className="form-label" htmlFor="ct-name">Team Name</label>
-            <input type="text" className="form-control" id="ct-name" value={teamName} onChange={(e) => setTeamName(e.target.value)} />
+            <label className="form-label" htmlFor="ct-name">Team Name<RequiredMark /></label>
+            <input type="text" className="form-control" aria-required="true" maxLength={60} value={teamName} onChange={(e) => setTeamName(e.target.value)} {...teamValidation.input('team_name', 'ct-name')} />
+            <FieldError {...teamValidation.errorProps('team_name')} />
           </div>
           <FormError id="createTeamError" message={modalError} />
         </form>
       </SaModal>
 
       <SaModal id="assignLeadModal" open={modal === 'lead'} onClose={() => setModal(null)} title={`Assign Team Lead${leadTeam ? ` - ${leadTeam.team_name}` : ''}`} footer={modalFooter('Assign Team Lead', submitLead)}>
-        <form id="assignLeadForm" onSubmit={(e) => e.preventDefault()}>
-          {[['name', 'Full Name', 'text'], ['email', 'Email', 'email'], ['phone', 'Phone', 'text'], ['password', 'Password', 'password'], ['confirmPassword', 'Confirm Password', 'password']].map(([key, label, type]) => (
+        <form id="assignLeadForm" onSubmit={(e) => { e.preventDefault(); submitLead(); }} noValidate>
+          {[['name', 'Full Name', 'text', 100], ['email', 'Email', 'email', 254], ['phone', 'Phone', 'tel', 20], ['password', 'Password', 'password', 64], ['confirmPassword', 'Confirm Password', 'password', 64]].map(([key, label, type, max]) => (
             <div key={key} className="form-group">
-              <label className="form-label" htmlFor={`al-${key}`}>{label}</label>
-              <input type={type} className="form-control" id={`al-${key}`} autoComplete={type === 'password' ? 'new-password' : undefined} {...leadForm.bind(key)} />
+              <label className="form-label" htmlFor={`al-${key}`}>{label}<RequiredMark /></label>
+              <input type={type} className="form-control" aria-required="true" maxLength={max} autoComplete={type === 'password' ? 'new-password' : undefined} {...leadForm.bind(key)} {...leadValidation.input(key, `al-${key}`)} />
+              <FieldError {...leadValidation.errorProps(key)} />
             </div>
           ))}
           <FormError id="assignLeadError" message={modalError} />

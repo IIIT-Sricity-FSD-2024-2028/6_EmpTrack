@@ -1,7 +1,7 @@
-import { Controller, Get, Param, Post, Body, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body, Patch, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { IssueService } from './issue.service';
-import { CreateIssueDto } from './dto/issue.dto';
+import { CreateIssueDto, UpdateIssueDto } from './dto/issue.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 
 @ApiTags('Issues')
@@ -13,25 +13,24 @@ export class IssueController {
 
   @ApiOperation({ summary: 'Get issues for a given user' })
   @Get('user/:empId')
-  getIssuesForUser(@Param('empId') empId: string) {
-    return this.issueService.getIssuesForUser(empId);
+  getIssuesForUser(@Param('empId') empId: string, @Headers('x-actor-id') actorId: string) {
+    return this.issueService.getIssuesForUser(empId, actorId);
   }
 
-  @ApiOperation({ summary: 'Get all issues' })
+  @ApiOperation({ summary: 'Get the issues the caller may see (own company / own team / own)' })
   @Get()
-  getAllIssues() {
-    return this.issueService.getAllIssues();
+  getAllIssues(@Headers('x-actor-id') actorId: string) {
+    return this.issueService.getAllIssues(actorId);
   }
 
   @Post()
-  createIssue(@Body() createDto: CreateIssueDto) {
-    return this.issueService.createIssue(createDto);
+  createIssue(@Body() createDto: CreateIssueDto, @Headers('x-actor-id') actorId: string) {
+    return this.issueService.createIssue(createDto, actorId);
   }
 
-  @ApiOperation({ summary: 'Update issue' })
+  @ApiOperation({ summary: 'Update issue (Team Lead / HR / Company Admin of the raiser)' })
   @Patch(':id')
-  updateIssue(@Param('id') id: string, @Body() updateData: any) {
-    return this.issueService.updateIssue(id, updateData);
+  updateIssue(@Param('id') id: string, @Body() updateData: UpdateIssueDto, @Headers('x-actor-id') actorId: string) {
+    return this.issueService.updateIssue(id, updateData, actorId);
   }
 }
-

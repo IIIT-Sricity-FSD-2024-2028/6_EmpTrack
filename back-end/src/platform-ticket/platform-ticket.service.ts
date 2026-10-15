@@ -247,6 +247,12 @@ export class PlatformTicketService {
   changeCategory(ticketType: TicketType, id: string, dto: ChangeTicketCategoryDto, actor: Actor, scopePlatformAdminId: string | null) {
     const ticket = this.find(ticketType, id, scopePlatformAdminId);
     const previousCategory = ticket.category;
+    // A configured category, or the ticket's existing one (older tickets carry labels
+    // that are no longer in the list).
+    const categories: string[] = this.dataStore.getTicketCategories() || [];
+    if (!categories.includes(dto.category) && dto.category !== previousCategory) {
+      throw new BadRequestException(`Category must be one of: ${categories.join(', ')}.`);
+    }
     ticket.category = dto.category;
     this.touch(ticket);
     this.dataStore.logActivity({

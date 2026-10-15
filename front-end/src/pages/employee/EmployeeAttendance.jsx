@@ -58,12 +58,20 @@ export default function EmployeeAttendance() {
     if (todaysRecord?.check_in_time) return;
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    await markAttendance(user.emp_id, time, activeLocation === 'Home' ? 'REMOTE' : 'OFFICE');
+    try {
+      await markAttendance(user.emp_id, time, activeLocation === 'Home' ? 'REMOTE' : 'OFFICE');
+    } catch (err) {
+      window.alert(`Error: ${err.message || 'Check-in failed.'}`);
+    }
     reload();
   };
 
   const handleCheckOut = async () => {
-    await markCheckOut(user.emp_id);
+    try {
+      await markCheckOut(user.emp_id);
+    } catch (err) {
+      window.alert(`Error: ${err.message || 'Check-out failed.'}`);
+    }
     reload();
   };
 

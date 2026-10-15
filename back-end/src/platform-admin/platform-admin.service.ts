@@ -3,6 +3,7 @@ import { MockDataService } from '../data/mock-data.service';
 import { InvitationService } from '../invitation/invitation.service';
 import { CreatePlatformAdminDto, UpdatePlatformAdminDto, UpdatePlatformAdminStatusDto } from './dto/platform-admin.dto';
 import { hashPassword } from '../common/utils/password.util';
+import { applyAccountUpdate, emailTaken } from '../common/utils/account.util';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
@@ -54,7 +55,7 @@ export class PlatformAdminService {
   }
 
   createPlatformAdmin(dto: CreatePlatformAdminDto, actor: Actor) {
-    const existing = this.dataStore.getEmployees().find((e) => e.email === dto.email);
+    const existing = emailTaken(this.dataStore, dto.email);
     if (existing) throw new BadRequestException('An account with this email already exists');
 
     if (dto.password !== dto.confirmPassword) {
@@ -89,9 +90,7 @@ export class PlatformAdminService {
   updatePlatformAdmin(id: string, dto: UpdatePlatformAdminDto) {
     const admin = this.dataStore.getEmployees().find((e) => e.emp_id === id && e.role === 'PLATFORM_ADMIN');
     if (!admin) throw new NotFoundException('Platform Admin not found');
-    Object.keys(dto).forEach((key) => {
-      if (dto[key] !== undefined) admin[key] = dto[key];
-    });
+    applyAccountUpdate(this.dataStore, admin, dto);
     return this.enrich(admin);
   }
 

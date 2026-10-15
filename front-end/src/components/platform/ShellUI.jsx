@@ -106,7 +106,7 @@ export function SearchInput({ value, onChange, placeholder }) {
   return (
     <div className="search-wrap">
       <i className="ph ph-magnifying-glass"></i>
-      <input type="text" className="search-input" value={value} placeholder={placeholder} aria-label={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <input type="text" className="search-input" maxLength={100} value={value} placeholder={placeholder} aria-label={placeholder} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }

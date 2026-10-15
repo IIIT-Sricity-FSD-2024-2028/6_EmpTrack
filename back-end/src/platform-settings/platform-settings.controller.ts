@@ -1,6 +1,7 @@
 import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiHeader } from '@nestjs/swagger';
 import { PlatformSettingsService } from './platform-settings.service';
+import { UpdatePlatformSettingsDto } from './dto/platform-settings.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
@@ -18,7 +19,7 @@ export class PlatformSettingsController {
   }
 
   @Patch()
-  update(@Body() updateData: any) {
+  update(@Body() updateData: UpdatePlatformSettingsDto) {
     return this.service.update(updateData);
   }
 }

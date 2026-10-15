@@ -74,7 +74,7 @@ export default function HrEmployeeManagement() {
       <div className="card filter-bar">
         <div className="search-wrap">
           <i className="ph ph-magnifying-glass"></i>
-          <input type="text" id="empSearch" className="search-input" placeholder="Search employees by name, email, or ID..." aria-label="Search employees" value={filters.search} onChange={set('search')} />
+          <input type="text" maxLength={100} id="empSearch" className="search-input" placeholder="Search employees by name, email, or ID..." aria-label="Search employees" value={filters.search} onChange={set('search')} />
         </div>
         <div className="filters-wrap">
           <select id="empDeptFilter" className="filter-select" aria-label="Filter by department" value={filters.dept} onChange={set('dept')}>

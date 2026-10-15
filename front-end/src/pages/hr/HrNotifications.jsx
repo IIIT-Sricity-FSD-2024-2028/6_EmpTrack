@@ -34,7 +34,7 @@ export default function HrNotifications() {
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         <input
-          type="text" id="notif-search" placeholder="Search notifications..." aria-label="Search notifications" value={search} onChange={(e) => setSearch(e.target.value)}
+          type="text" maxLength={100} id="notif-search" placeholder="Search notifications..." aria-label="Search notifications" value={search} onChange={(e) => setSearch(e.target.value)}
           style={{ padding: '8px 12px', border: '1px solid var(--border-color)', borderRadius: 6, background: 'var(--bg-main)', color: 'var(--text-main)', fontSize: 13, outline: 'none', fontFamily: 'var(--font-family)' }}
         />
       </div>

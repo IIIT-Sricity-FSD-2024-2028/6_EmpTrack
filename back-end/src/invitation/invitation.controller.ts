@@ -4,6 +4,7 @@ import { InvitationService } from './invitation.service';
 import { AcceptInvitationDto } from './dto/invitation.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Invitations')
 @Controller('invitations')
@@ -19,6 +20,7 @@ export class InvitationController {
   }
 
   @ApiOperation({ summary: 'Validate an invitation token - public, used by the invitation acceptance page' })
+  @Public()
   @Get(':token')
   getByToken(@Param('token') token: string) {
     const invitation = this.invitationService.getByToken(token);
@@ -32,6 +34,7 @@ export class InvitationController {
   }
 
   @ApiOperation({ summary: 'Accept an invitation and set a password - public' })
+  @Public()
   @Post(':token/accept')
   acceptInvitation(@Param('token') token: string, @Body() dto: AcceptInvitationDto) {
     return this.invitationService.acceptInvitation(token, dto.password);

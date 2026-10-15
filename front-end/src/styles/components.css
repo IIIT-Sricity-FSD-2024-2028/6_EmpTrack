@@ -167,6 +167,31 @@
     display: block;
 }
 
+/* Field-level validation (components/common/FieldError.jsx, Input.jsx) */
+.form-error.field-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.form-error.field-error i {
+    font-size: 14px;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.required-indicator {
+    color: var(--danger-color);
+    margin-left: 2px;
+}
+
+.form-hint {
+    display: block;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: var(--spacing-xs);
+}
+
 /* Tables */
 .table-container {
     overflow-x: auto;

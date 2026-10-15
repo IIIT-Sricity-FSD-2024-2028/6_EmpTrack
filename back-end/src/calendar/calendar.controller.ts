@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Query, UseGuards, Headers } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { CalendarService } from './calendar.service';
-import { CreateCompanyEventDto, CreateEventDto } from './dto/calendar.dto';
+import { CalendarQueryDto, CreateCompanyEventDto, CreateEventDto } from './dto/calendar.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
@@ -16,10 +16,9 @@ export class CalendarController {
   @Get('holidays')
   @Roles('COMPANY_ADMIN', 'HR', 'TEAMLEAD', 'EMPLOYEE')
   getHolidays(
-    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('x-actor-id') requesterEmpId: string,
     @Headers('role') role: string,
-    @Query('year') year?: string,
-    @Query('month') month?: string,
+    @Query() { year, month }: CalendarQueryDto,
   ) {
     return this.calendarService.getHolidays(requesterEmpId, role, year, month);
   }
@@ -28,10 +27,9 @@ export class CalendarController {
   @Get('company-events')
   @Roles('COMPANY_ADMIN', 'HR', 'TEAMLEAD')
   getCompanyEvents(
-    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('x-actor-id') requesterEmpId: string,
     @Headers('role') role: string,
-    @Query('year') year?: string,
-    @Query('month') month?: string,
+    @Query() { year, month }: CalendarQueryDto,
   ) {
     return this.calendarService.getCompanyEvents(requesterEmpId, role, year, month);
   }
@@ -40,7 +38,7 @@ export class CalendarController {
   @Post('company-events')
   @Roles('COMPANY_ADMIN', 'HR')
   createCompanyEvent(
-    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('x-actor-id') requesterEmpId: string,
     @Headers('role') role: string,
     @Body() dto: CreateCompanyEventDto,
   ) {
@@ -51,7 +49,7 @@ export class CalendarController {
   @Post('events')
   @Roles('EMPLOYEE', 'TEAMLEAD', 'HR', 'COMPANY_ADMIN')
   createEvent(
-    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('x-actor-id') requesterEmpId: string,
     @Headers('role') role: string,
     @Body() dto: CreateEventDto,
   ) {
@@ -62,10 +60,9 @@ export class CalendarController {
   @Get('my-calendar')
   @Roles('EMPLOYEE')
   getMyCalendar(
-    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('x-actor-id') requesterEmpId: string,
     @Headers('role') role: string,
-    @Query('year') year?: string,
-    @Query('month') month?: string,
+    @Query() { year, month }: CalendarQueryDto,
   ) {
     return this.calendarService.getMyCalendar(requesterEmpId, role, year, month);
   }
@@ -74,10 +71,9 @@ export class CalendarController {
   @Get('team-calendar')
   @Roles('TEAMLEAD')
   getTeamCalendar(
-    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('x-actor-id') requesterEmpId: string,
     @Headers('role') role: string,
-    @Query('year') year?: string,
-    @Query('month') month?: string,
+    @Query() { year, month }: CalendarQueryDto,
   ) {
     return this.calendarService.getTeamCalendar(requesterEmpId, role, year, month);
   }
@@ -86,10 +82,9 @@ export class CalendarController {
   @Get('company-calendar')
   @Roles('HR', 'COMPANY_ADMIN')
   getCompanyCalendar(
-    @Query('requesterEmpId') requesterEmpId: string,
+    @Headers('x-actor-id') requesterEmpId: string,
     @Headers('role') role: string,
-    @Query('year') year?: string,
-    @Query('month') month?: string,
+    @Query() { year, month }: CalendarQueryDto,
   ) {
     return this.calendarService.getCompanyCalendar(requesterEmpId, role, year, month);
   }

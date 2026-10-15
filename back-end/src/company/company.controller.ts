@@ -32,8 +32,12 @@ export class CompanyController {
 
   @Get(':id')
   @Roles('SUPER_ADMIN', 'PLATFORM_ADMIN')
-  getCompanyById(@Param('id') id: string) {
-    return this.companyService.getCompanyById(id);
+  getCompanyById(
+    @Param('id') id: string,
+    @Headers('role') role: string,
+    @Headers('x-actor-id') actorId: string,
+  ) {
+    return this.companyService.getCompanyById(id, resolvePlatformAdminScope(role, actorId));
   }
 
   @ApiOperation({ summary: 'Create and onboard a new company, inviting its Company Admin and assigning a Platform Admin' })

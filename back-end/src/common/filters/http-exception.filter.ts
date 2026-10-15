@@ -33,9 +33,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     let message: string | string[];
+    // Field-level validation messages ({ field: [messages] }) from createValidationPipe.
+    let errors: Record<string, string[]> | undefined;
     if (isHttpException) {
       const body = exception.getResponse();
       message = typeof body === 'string' ? body : (body as any).message || exception.message;
+      if (typeof body === 'object' && body && (body as any).errors) errors = (body as any).errors;
     } else if (isMulterError) {
       message = MULTER_ERROR_MESSAGES[(exception as MulterError).code] || 'File upload failed.';
     } else {
@@ -51,6 +54,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request?.originalUrl,
       timestamp: new Date().toISOString(),
       requestId,
+      ...(errors ? { errors } : {}),
     };
 
     // Anything at or above 500 - or any exception that isn't a recognized HttpException

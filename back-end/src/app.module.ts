@@ -33,9 +33,18 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggerModule } from './common/logger/logger.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { AuthGuard } from './common/guards/auth.guard';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AccessLoggingMiddleware } from './common/middleware/access-logging.middleware';
 import { AdminAuditMiddleware } from './common/middleware/admin-audit.middleware';
+import type { NextFunction, Request, Response } from 'express';
+
+// API responses are per-user; never let the browser (or a proxy) keep a copy that
+// could be shown again after logout, e.g. via Back/Forward or a cached GET.
+function noStore(_req: Request, res: Response, next: NextFunction) {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+}
 
 @Module({
   imports: [
@@ -82,13 +91,16 @@ import { AdminAuditMiddleware } from './common/middleware/admin-audit.middleware
     AppService,
     HttpExceptionFilter,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Resolves the bearer session token into the trusted role/x-actor-* headers that
+    // RolesGuard and the controllers rely on - see AuthGuard.
+    { provide: APP_GUARD, useClass: AuthGuard },
   ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Applied to every route: every request needs a correlation id and an access-log
-    // line, regardless of which module handles it.
-    consumer.apply(RequestIdMiddleware, AccessLoggingMiddleware).forRoutes({ path: '*', method: RequestMethod.ALL });
+    // Applied to every route: every request needs a correlation id, an access-log
+    // line and a no-store cache policy, regardless of which module handles it.
+    consumer.apply(RequestIdMiddleware, AccessLoggingMiddleware, noStore).forRoutes({ path: '*', method: RequestMethod.ALL });
 
     // Router/module-scoped: only wired onto the administrative route groups, so it
     // genuinely does not run for e.g. /auth, /attendance, /calendar, /worklogs.

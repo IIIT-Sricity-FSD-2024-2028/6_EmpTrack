@@ -3,22 +3,34 @@
 // this shows the signed-in user's account and live company figures. The Company
 // Admin profile is the same page without the stats row (company_admin/profile.html).
 import { useEffect, useState } from 'react';
+import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useAuth from '../../hooks/useAuth';
+import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
+import { PASSWORD_HINT } from '../../utils/validation';
+import { changePasswordSchema } from '../../validation/formSchemas';
 import * as hr from '../../services/hrService';
 import { shortDate } from './hrUtils';
 import './styles/profile.css';
 
 const EMPTY = { current: '', next: '', confirm: '' };
 
-function PasswordInput({ id, value, onChange, placeholder, toggleable }) {
+function PasswordInput({ id, value, onChange, placeholder, toggleable, inputProps }) {
   const [visible, setVisible] = useState(false);
+  const toggle = () => setVisible((v) => !v);
   return (
     <div className="input-wrap">
-      <input type={visible ? 'text' : 'password'} id={id} required placeholder={placeholder} value={value} onChange={onChange} autoComplete={id === 'currentPwd' ? 'current-password' : 'new-password'} />
+      <input type={visible ? 'text' : 'password'} aria-required="true" maxLength={64} placeholder={placeholder} value={value} onChange={onChange} autoComplete={id === 'currentPwd' ? 'current-password' : 'new-password'} {...inputProps} />
       {toggleable && (
-        <i className={`ph ${visible ? 'ph-eye-slash' : 'ph-eye'} eye-icon`} role="button" tabIndex={0} aria-label={visible ? 'Hide password' : 'Show password'} onClick={() => setVisible((v) => !v)}></i>
+        <i
+          className={`ph ${visible ? 'ph-eye-slash' : 'ph-eye'} eye-icon`}
+          role="button"
+          tabIndex={0}
+          aria-label={visible ? 'Hide password' : 'Show password'}
+          onClick={toggle}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), toggle())}
+        ></i>
       )}
     </div>
   );
@@ -45,23 +57,24 @@ export default function HrProfile({ title = 'My Profile', roleLabel = 'HR Manage
       .catch(() => setStats(null));
   }, [showStats]);
 
-  const mismatch = pwd.confirm.length > 0 && pwd.next !== pwd.confirm;
   const set = (key) => (e) => setPwd((p) => ({ ...p, [key]: e.target.value }));
+  const validation = useFormValidation(changePasswordSchema, pwd, {
+    idPrefix: 'hr-pwd',
+    serverFieldMap: { currentPassword: 'current', newPassword: 'next', confirmPassword: 'confirm' },
+  });
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!e.currentTarget.checkValidity()) {
-      e.currentTarget.reportValidity();
-      return;
-    }
-    setSaving(true);
     setError('');
+    if (!validation.validateAll()) return;
+    setSaving(true);
     try {
       await hr.updateUserPassword(user.emp_id, pwd.current, pwd.next, pwd.confirm);
       setPwd(EMPTY);
+      validation.reset();
       showToast('Password updated successfully!');
     } catch (err) {
-      setError(err.message || 'Failed to update password.');
+      if (!validation.setServerErrors(err)) setError(err.message || 'Failed to update password.');
     } finally {
       setSaving(false);
     }
@@ -122,17 +135,27 @@ export default function HrProfile({ title = 'My Profile', roleLabel = 'HR Manage
         <div className="card" style={{ height: 'fit-content' }}>
           <h3 style={{ margin: '0 0 20px 0', fontSize: 16, color: 'var(--prof-text)', display: 'flex', alignItems: 'center', gap: 8 }}><i className="ph-fill ph-lock-key" style={{ color: '#22C55E' }}></i> Security Settings</h3>
           <p style={{ fontSize: 13, color: 'var(--prof-muted)', marginTop: 0 }}>Update your password regularly to keep your account secure.</p>
-          <form id="password-form" onSubmit={submit}>
-            <div className="form-group"><label htmlFor="currentPwd">Current Password</label><PasswordInput id="currentPwd" placeholder="Enter current password" value={pwd.current} onChange={set('current')} /></div>
-            <div className="form-group"><label htmlFor="newPwd">New Password</label><PasswordInput id="newPwd" placeholder="Enter new password" value={pwd.next} onChange={set('next')} toggleable /></div>
+          <form id="password-form" onSubmit={submit} noValidate>
             <div className="form-group">
-              <label htmlFor="confPwd">Confirm New Password</label>
-              <PasswordInput id="confPwd" placeholder="Re-type new password" value={pwd.confirm} onChange={set('confirm')} toggleable />
-              {(mismatch || error) && (
-                <div id="pwdErr" role="alert" style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}><i className="ph-fill ph-warning-circle"></i> {mismatch ? 'Passwords do not match' : error}</div>
+              <label htmlFor="currentPwd">Current Password<RequiredMark /></label>
+              <PasswordInput id="currentPwd" placeholder="Enter current password" value={pwd.current} onChange={set('current')} inputProps={validation.input('current', 'currentPwd')} />
+              <FieldError {...validation.errorProps('current')} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="newPwd">New Password<RequiredMark /></label>
+              <PasswordInput id="newPwd" placeholder="Enter new password" value={pwd.next} onChange={set('next')} toggleable inputProps={validation.input('next', 'newPwd')} />
+              <span className="form-hint">{PASSWORD_HINT}</span>
+              <FieldError {...validation.errorProps('next')} />
+            </div>
+            <div className="form-group">
+              <label htmlFor="confPwd">Confirm New Password<RequiredMark /></label>
+              <PasswordInput id="confPwd" placeholder="Re-type new password" value={pwd.confirm} onChange={set('confirm')} toggleable inputProps={validation.input('confirm', 'confPwd')} />
+              <FieldError {...validation.errorProps('confirm')} />
+              {error && (
+                <div id="pwdErr" role="alert" style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}><i className="ph-fill ph-warning-circle"></i> {error}</div>
               )}
             </div>
-            <button type="submit" className="btn-save" id="btnUpdatePwd" disabled={mismatch || saving} style={{ opacity: mismatch ? 0.5 : 1 }}>
+            <button type="submit" className="btn-save" id="btnUpdatePwd" disabled={saving}>
               {saving ? 'Updating...' : <><i className="ph ph-check-circle" style={{ fontSize: '1.2rem' }}></i> Update Password</>}
             </button>
           </form>

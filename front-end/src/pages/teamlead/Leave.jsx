@@ -11,6 +11,8 @@ import { updateLeaveStatus } from '../../services/teamLeadService';
 import { formatDate, toTitleCase } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, StatCard, Tabs, tlPath, useTeamData, useToast } from './components/TeamLeadUI';
 import { LEAVE_TYPE_LABELS, leaveStatusBadge, nameOf, todayKey, unauthorizedAbsences } from './tlUtils';
+import { rejectLeaveSchema } from '../../validation/formSchemas';
+import { validateForm } from '../../utils/validation';
 import './teamlead.css';
 
 const TABS = [
@@ -57,10 +59,13 @@ export default function Leave() {
 
   const confirm = async () => {
     const rejecting = action.status === 'REJECTED';
-    if (rejecting && reason.trim().length < 5) {
-      setReasonError('Please give the employee a reason (at least 5 characters).');
+    const found = rejecting ? validateForm(rejectLeaveSchema, { reason }) : {};
+    if (found.reason) {
+      setReasonError(found.reason);
+      document.getElementById('tl-reject-reason')?.focus();
       return;
     }
+    setReasonError('');
     setSaving(true);
     try {
       await updateLeaveStatus(action.leave.leave_id, action.status, user.emp_id, rejecting ? reason.trim() : undefined);
@@ -68,7 +73,9 @@ export default function Leave() {
       setAction(null);
       await reload();
     } catch (err) {
-      showToast(err.message || 'Could not update the leave request.', 'error');
+      const serverReason = err.fieldErrors?.reject_reason?.[0];
+      if (serverReason) setReasonError(serverReason);
+      else showToast(err.message || 'Could not update the leave request.', 'error');
     } finally {
       setSaving(false);
     }
@@ -170,7 +177,7 @@ export default function Leave() {
               {dateRange(action.leave.start_date, action.leave.end_date)} ({action.leave.days ?? 1} day{(action.leave.days ?? 1) > 1 ? 's' : ''})
             </p>
             {action.status === 'REJECTED' && (
-              <Input as="textarea" rows={3} label="Reason for rejection" value={reason} error={reasonError} onChange={(e) => setReason(e.target.value)} />
+              <Input as="textarea" id="tl-reject-reason" rows={3} required maxLength={500} label="Reason for rejection" value={reason} error={reasonError} onChange={(e) => { setReason(e.target.value); if (reasonError) setReasonError(validateForm(rejectLeaveSchema, { reason: e.target.value }).reason || ''); }} />
             )}
           </>
         )}
