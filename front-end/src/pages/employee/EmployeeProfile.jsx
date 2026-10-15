@@ -5,18 +5,18 @@ import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
+import { getAttendanceForUser } from '../../services/attendanceService';
 import { getUserById, updateUserPassword } from '../../services/employeeService';
+import { getTasksForUser } from '../../services/taskService';
+import { getWorkLogsForUser } from '../../services/worklogService';
+import { ROLE_LABELS } from '../../utils/constants';
 import { formatDate } from '../../utils/helpers';
 import { changePasswordSchema } from '../../validation/formSchemas';
+import { performanceFrom } from './employeeUtils';
 
-// Skills and performance figures are fixed in the original page (no endpoint yet).
-const SKILLS = ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'MongoDB', 'GraphQL'];
-const PERFORMANCE = [
-  { label: 'Tasks Completed', value: '142', trend: '+12%' },
-  { label: 'Avg. Task Rating', value: '4.8/5', trend: '+0.3' },
-  { label: 'On-Time Delivery', value: '94%', trend: '+5%' },
-  { label: 'Attendance Rate', value: '96%', trend: '+2%' },
-];
+// The original page showed a fixed address, job title, skills list and performance
+// numbers that no endpoint provides. Those are gone; every value below comes from the
+// employee record or is computed from the employee's own tasks/attendance/work logs.
 
 const EMPTY_PASSWORDS = { current: '', next: '', confirm: '' };
 const fieldStyle = { borderRadius: 'var(--radius-md)', padding: '12px 16px' };
@@ -24,7 +24,8 @@ const invalidBorder = { borderColor: 'var(--danger-color)' };
 const sectionTitle = { margin: '0 0 24px 0', fontSize: 'var(--text-lg)', borderBottom: '1px solid var(--border-light)', paddingBottom: 16 };
 
 function formatPhone(phone) {
-  return phone ? `+1 (${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6, 10)}` : '--';
+  // No country code is stored, so none is shown.
+  return phone ? `${phone.slice(0, 3)}-${phone.slice(3, 6)}-${phone.slice(6)}` : '--';
 }
 
 function ChangePasswordForm({ empId }) {
@@ -130,27 +131,38 @@ export default function EmployeeProfile() {
   usePageTitle('My Profile');
   const { user: session } = useAuth();
 
-  const { data } = useFetch(async () => {
+  const { data, error } = useFetch(async () => {
     const user = await getUserById(session.emp_id);
     const manager = user.manager_id ? await getUserById(user.manager_id).catch(() => null) : null;
     return { user, manager };
   }, [session.emp_id]);
+  const { data: records } = useFetch(async () => {
+    const [tasks, attendance, worklogs] = await Promise.all([
+      getTasksForUser(session.emp_id),
+      getAttendanceForUser(session.emp_id),
+      getWorkLogsForUser(session.emp_id),
+    ]);
+    return { tasks, attendance, worklogs };
+  }, [session.emp_id]);
 
   const user = data?.user;
   const joined = user ? formatDate(user.date_of_joining, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  const roleLabel = user ? ROLE_LABELS[user.role] || user.role : undefined;
+  // Until the records load (or if they fail) show '-' rather than zeros that look real.
+  const performance = records ? performanceFrom(records) : performanceFrom().map((p) => ({ ...p, value: '-' }));
 
   const personalFields = [
     { icon: 'ph-identification-badge', label: 'Employee ID', value: user?.emp_id },
     { icon: 'ph-envelope-simple', label: 'Email Address', value: user?.email },
     { icon: 'ph-phone', label: 'Phone Number', value: user ? formatPhone(user.phone) : undefined },
-    { icon: 'ph-map-pin', label: 'Address', value: '123 Innovation Drive, Tech Park Zone, CA 94016' },
+    { icon: 'ph-calendar-blank', label: 'Joining Date', value: joined || undefined },
   ];
 
   const workFields = [
-    { label: 'Department', value: 'Engineering' },
-    { label: 'Role', value: 'Software Engineer' },
+    { label: 'Department', value: user?.department_id },
+    { label: 'Role', value: roleLabel },
     { label: 'Direct Manager', value: data ? data.manager?.emp_name || 'N/A' : undefined },
-    { label: 'Reporting To', value: user ? `Team Lead - Engineering (${user.team_id})` : 'Team Lead - Engineering' },
+    { label: 'Team', value: user?.team_id },
   ];
 
   return (
@@ -163,18 +175,25 @@ export default function EmployeeProfile() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <h2 style={{ margin: 0, fontSize: 28, fontWeight: 'var(--font-bold)' }}>{user?.emp_name ?? 'Name'}</h2>
-            <div style={{ fontSize: 18, opacity: 0.9 }}>Software Engineer</div>
+            <div style={{ fontSize: 18, opacity: 0.9 }}>{roleLabel ?? ''}</div>
             <div style={{ display: 'flex', gap: 20, marginTop: 8, fontSize: 14, opacity: 0.8, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <i className="ph ph-briefcase"></i> Engineering Dept ({user?.department_id})
+                <i className="ph ph-briefcase"></i> Department {user?.department_id ?? '--'}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <i className="ph ph-calendar-blank"></i> Joined {joined}
+                <i className="ph ph-calendar-blank"></i> Joined {joined || '--'}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="form-error field-error" role="alert">
+          <i className="ph ph-warning-circle" aria-hidden="true"></i>
+          <span>Failed to load your profile: {error.message}</span>
+        </div>
+      )}
 
       {/* SECTION 2: PERSONAL & WORK INFORMATION */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 24 }}>
@@ -182,23 +201,12 @@ export default function EmployeeProfile() {
         <ProfileSection title="Work Information" fields={workFields} />
       </div>
 
-      {/* SECTION 3: SKILLS & EXPERTISE */}
-      <div className="card" style={{ padding: 24 }}>
-        <h3 style={{ margin: '0 0 20px 0', fontSize: 'var(--text-lg)' }}>Skills &amp; Expertise</h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-          {SKILLS.map((skill) => <span key={skill} className="skill-tag">{skill}</span>)}
-        </div>
-      </div>
-
-      {/* SECTION 4: PERFORMANCE OVERVIEW */}
+      {/* SECTION 3: PERFORMANCE OVERVIEW (from tasks, attendance and work logs) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 24 }}>
-        {PERFORMANCE.map((p) => (
+        {performance.map((p) => (
           <div key={p.label} className="card" style={{ padding: 24, textAlign: 'center' }}>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 'var(--font-medium)', marginBottom: 8 }}>{p.label}</div>
             <div style={{ fontSize: 36, fontWeight: 'var(--font-bold)', color: 'var(--text-main)', marginBottom: 4 }}>{p.value}</div>
-            <div className="text-success" style={{ fontSize: 13, fontWeight: 'var(--font-bold)' }}>
-              <i className="ph-bold ph-trend-up"></i> {p.trend}
-            </div>
           </div>
         ))}
       </div>

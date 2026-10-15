@@ -9,7 +9,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { createLeave, getLeavesForUser } from '../../services/leaveService';
 import { leaveRequestSchema } from '../../validation/formSchemas';
 import PortalHeading from './components/PortalHeading';
-import { LEAVE_TYPES, leaveStatusBadge } from './employeeUtils';
+import { LEAVE_TYPES, leaveBalance, leaveStatusBadge } from './employeeUtils';
 
 const POLICY = [
   'Taking leave without Team Lead approval → escalation to HR',
@@ -20,12 +20,12 @@ const POLICY = [
   'Emergency cases must be communicated immediately',
 ];
 
-// Leave balance figures are fixed in the original page (no balance endpoint yet).
+// Summary cards; values come from leaveBalance() over the employee's own records.
 const BALANCE = [
-  { label: 'Total Leave', value: 24, icon: 'ph-calendar-blank', bg: 'var(--bg-main)', color: 'var(--text-main)', valueColor: undefined },
-  { label: 'Used', value: 8, icon: 'ph-check-circle', bg: '#D1FAE5', color: '#059669', valueColor: '#059669' },
-  { label: 'Pending', value: 2, icon: 'ph-clock-counter-clockwise', bg: '#FFEDD5', color: '#EA580C', valueColor: '#EA580C' },
-  { label: 'Remaining', value: 14, icon: 'ph-identification-badge', bg: 'var(--primary-light)', color: 'var(--primary-color)', valueColor: 'var(--primary-color)' },
+  { key: 'total', label: 'Total Leave', icon: 'ph-calendar-blank', bg: 'var(--bg-main)', color: 'var(--text-main)', valueColor: undefined },
+  { key: 'used', label: 'Used', icon: 'ph-check-circle', bg: '#D1FAE5', color: '#059669', valueColor: '#059669' },
+  { key: 'pending', label: 'Pending', icon: 'ph-clock-counter-clockwise', bg: '#FFEDD5', color: '#EA580C', valueColor: '#EA580C' },
+  { key: 'remaining', label: 'Remaining', icon: 'ph-identification-badge', bg: 'var(--primary-light)', color: 'var(--primary-color)', valueColor: 'var(--primary-color)' },
 ];
 
 const fieldStyle = { borderRadius: 'var(--radius-md)', padding: '12px 16px' };
@@ -84,7 +84,10 @@ function countDays(start, end) {
 export default function LeaveRequest() {
   usePageTitle('Leave Request');
   const { user } = useAuth();
-  const { data: leaves = [], reload } = useFetch(() => getLeavesForUser(user.emp_id), [user.emp_id]);
+  const { data: leaves = [], error: leavesError, loading: leavesLoading, reload } = useFetch(() => getLeavesForUser(user.emp_id), [user.emp_id]);
+  // Until the records load (or if they fail) the counts are unknown - show '-' rather
+  // than figures that look real.
+  const balance = leavesLoading || leavesError ? null : leaveBalance(leaves);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -148,7 +151,7 @@ export default function LeaveRequest() {
               <div style={{ width: 48, height: 48, borderRadius: '50%', backgroundColor: b.bg, color: b.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <i className={`ph-fill ${b.icon}`} style={{ fontSize: 24 }}></i>
               </div>
-              <div style={{ fontWeight: 'bold', fontSize: 32, color: b.valueColor }}>{b.value}</div>
+              <div style={{ fontWeight: 'bold', fontSize: 32, color: b.valueColor }}>{balance ? balance[b.key] : '-'}</div>
               <div style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 'var(--font-medium)' }}>{b.label}</div>
             </div>
           ))}
@@ -230,6 +233,12 @@ export default function LeaveRequest() {
         </div>
 
         {/* SECTION 4: MY LEAVE REQUESTS */}
+        {leavesError && (
+          <div className="form-error field-error" role="alert">
+            <i className="ph ph-warning-circle" aria-hidden="true"></i>
+            <span>Failed to load your leave requests: {leavesError.message}</span>
+          </div>
+        )}
         <Table
           title="My Leave Requests"
           columns={columns}

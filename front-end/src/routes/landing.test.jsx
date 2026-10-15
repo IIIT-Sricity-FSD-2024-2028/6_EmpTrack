@@ -1,9 +1,14 @@
 // The public landing page at "/" on the real route table (routes.jsx), with the
-// app's real providers. No VITE_API_URL in tests, so auth uses the mock users.
+// app's real providers. Config is pinned to "no backend" so auth uses the mock users
+// even on a machine whose front-end/.env sets VITE_API_URL (Vitest loads .env too).
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { PATHS, ROLES, STORAGE_KEYS } from '../utils/constants';
+
+vi.mock('../config/config', () => ({
+  default: { appName: 'EmpTrack', apiUrl: '', useMockAuth: true, sessionDuration: 8 * 60 * 60 * 1000 },
+}));
 
 async function openApp(path) {
   window.history.replaceState(null, '', path);

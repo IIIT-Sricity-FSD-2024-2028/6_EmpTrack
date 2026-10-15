@@ -25,6 +25,8 @@ type TicketType = 'TECHNICAL' | 'SUPPORT';
 
 const VALID_STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'ESCALATED', 'RESOLVED', 'CLOSED'];
 const VALID_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+// States a ticket can be moved between freely with changeStatus.
+const WORKING_STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'];
 
 @Injectable()
 export class PlatformTicketService {
@@ -96,8 +98,27 @@ export class PlatformTicketService {
     return this.enrich(this.find(ticketType, id, scopePlatformAdminId));
   }
 
+  // The assignee must be an active member of the right team (support tickets go to
+  // Support Members, technical issues to Technical Members) managed by the same
+  // Platform Admin as the ticket. Without this, any employee id - another Platform
+  // Admin's staff, a company employee, an inactive or unknown account - was accepted
+  // and then notified about a ticket it has no business seeing.
+  private assertAssignable(ticketType: TicketType, ticket: any, assigneeId: string) {
+    const role = ticketType === 'TECHNICAL' ? 'TECHNICAL_MEMBER' : 'SUPPORT_MEMBER';
+    const member = this.dataStore.getEmployees().find((e) => e.emp_id === assigneeId);
+    if (!member || member.role !== role || member.platform_admin_id !== ticket.platform_admin_id) {
+      throw new BadRequestException(
+        `Assignee must be a ${ticketType === 'TECHNICAL' ? 'Technical' : 'Support'} Member of this ticket's Platform Admin team.`,
+      );
+    }
+    if (member.status && member.status !== 'ACTIVE') {
+      throw new BadRequestException('Tickets cannot be assigned to an inactive team member.');
+    }
+  }
+
   assign(ticketType: TicketType, id: string, dto: AssignTicketDto, actor: Actor, scopePlatformAdminId: string | null) {
     const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    this.assertAssignable(ticketType, ticket, dto.assigned_to);
     ticket.assigned_to = dto.assigned_to;
     if (ticket.status === 'OPEN') ticket.status = 'IN_PROGRESS';
     this.touch(ticket);
@@ -117,6 +138,7 @@ export class PlatformTicketService {
 
   reassign(ticketType: TicketType, id: string, dto: ReassignTicketDto, actor: Actor, scopePlatformAdminId: string | null) {
     const ticket = this.find(ticketType, id, scopePlatformAdminId);
+    this.assertAssignable(ticketType, ticket, dto.assigned_to);
     ticket.reassign_log.push({ from: ticket.assigned_to, to: dto.assigned_to, reason: dto.reason, date: new Date().toISOString().split('T')[0] });
     ticket.assigned_to = dto.assigned_to;
     if (ticket.status === 'OPEN') ticket.status = 'IN_PROGRESS';
@@ -208,12 +230,16 @@ export class PlatformTicketService {
     if (!VALID_STATUSES.includes(dto.status)) throw new BadRequestException(`Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`);
     const ticket = this.find(ticketType, id, scopePlatformAdminId);
     const previousStatus = ticket.status;
-    ticket.status = dto.status;
-    if (dto.status === 'RESOLVED') {
-      ticket.resolved_date = new Date().toISOString().split('T')[0];
-    } else if (['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'].includes(dto.status) && ['RESOLVED', 'CLOSED'].includes(previousStatus)) {
-      ticket.resolved_date = null;
+    // This endpoint only moves a ticket between the working states. Resolving,
+    // closing, escalating and reopening each have their own endpoint with their own
+    // rules (resolution notes, "only resolved tickets can be closed", reopen reason...),
+    // which a plain status change used to bypass - e.g. CLOSED -> OPEN with no trace.
+    if (!WORKING_STATUSES.includes(dto.status) || !WORKING_STATUSES.includes(previousStatus)) {
+      throw new BadRequestException(
+        `Status can only be changed between ${WORKING_STATUSES.join(', ')} here; use resolve, close, reopen or escalate for the other transitions.`,
+      );
     }
+    ticket.status = dto.status;
     this.touch(ticket);
     this.dataStore.logActivity({
       user_id: actor.emp_id,

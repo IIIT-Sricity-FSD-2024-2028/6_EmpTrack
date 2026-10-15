@@ -32,6 +32,45 @@ export function leaveStatusBadge(status) {
   return 'warning';
 }
 
+// Yearly leave allowance shown on the Leave Request page. The backend has no leave
+// policy/balance endpoint yet, so this is the page's own figure (the value the
+// original page displayed); used/pending/remaining are computed from real records.
+export const ANNUAL_LEAVE_ALLOWANCE = 24;
+
+/**
+ * Leave balance for `year` from the employee's leave records.
+ * used = APPROVED days, pending = PENDING days; REJECTED requests count for nothing,
+ * and a pending request never reduces the remaining balance until it is approved.
+ */
+export function leaveBalance(leaves = [], year = new Date().getFullYear(), allowance = ANNUAL_LEAVE_ALLOWANCE) {
+  const daysOf = (status) =>
+    leaves
+      .filter((l) => l.status === status && String(l.start_date || '').startsWith(`${year}-`))
+      .reduce((sum, l) => sum + (Number(l.days) > 0 ? Number(l.days) : 0), 0);
+  const used = daysOf('APPROVED');
+  const pending = daysOf('PENDING');
+  return { total: allowance, used, pending, remaining: Math.max(0, allowance - used) };
+}
+
+/**
+ * Profile performance cards from the employee's own tasks, attendance and work logs.
+ * Attendance rate counts working days only (weekends/holidays are not opportunities).
+ */
+export function performanceFrom({ tasks = [], attendance = [], worklogs = [] } = {}) {
+  const statusOf = (t) => String(t.status || '').toUpperCase().replace(' ', '_');
+  const completed = tasks.filter((t) => statusOf(t) === 'COMPLETED').length;
+  const active = tasks.filter((t) => statusOf(t) === 'IN_PROGRESS').length;
+  const workdays = attendance.filter((a) => a.status !== 'WEEKEND' && a.status !== 'HOLIDAY');
+  const present = workdays.filter((a) => a.status === 'PRESENT').length;
+  const hours = worklogs.reduce((sum, w) => sum + (Number(w.hours_spent) || 0), 0);
+  return [
+    { label: 'Tasks Completed', value: String(completed) },
+    { label: 'Tasks In Progress', value: String(active) },
+    { label: 'Attendance Rate', value: workdays.length ? `${Math.round((present / workdays.length) * 100)}%` : 'N/A' },
+    { label: 'Hours Logged', value: String(Math.round(hours * 10) / 10) },
+  ];
+}
+
 // leave_type values -> the labels/badges the leave form uses.
 export const LEAVE_TYPES = {
   CASUAL: { label: 'Vacation', badge: 'vacation' },

@@ -124,7 +124,9 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
 
   const handleUpdate = () => validation.validateFields(['status', 'priority', 'category']) && run(async () => {
     // Only the fields that changed are sent, each to its own endpoint (as in the original).
-    if (controls.status !== ticket.status) await changeStatus(id, controls.status);
+    // An escalated ticket's status isn't editable here (the select falls back to Open),
+    // so a priority/category edit must not quietly de-escalate it.
+    if (EDITABLE_STATUSES.includes(ticket.status) && controls.status !== ticket.status) await changeStatus(id, controls.status);
     if (controls.priority !== (ticket.priority || '').toUpperCase()) await changePriority(id, controls.priority);
     if (controls.category !== ticket.category) await changeCategory(id, controls.category);
   }, 'Ticket updated.');

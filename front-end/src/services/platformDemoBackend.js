@@ -257,9 +257,11 @@ function changeStatus(id, status) {
   const actor = sessionActor();
   return smMutate(id, (t, data) => {
     const previous = t.status;
+    // Same rule as PlatformTicketService.changeStatus: only between working states.
+    if (!OPEN_STATUSES.includes(status) || !OPEN_STATUSES.includes(previous)) {
+      fail(`Status can only be changed between ${OPEN_STATUSES.join(', ')} here; use resolve, close, reopen or escalate for the other transitions.`);
+    }
     t.status = status;
-    if (status === 'RESOLVED') t.resolved_date = today();
-    else if (OPEN_STATUSES.includes(status) && ['RESOLVED', 'CLOSED'].includes(previous)) t.resolved_date = null;
     touch(t);
     logActivity(data, actor, { action: 'Ticket status changed', company_id: t.company_id, details: `${t.ticket_id} status changed from ${previous} to ${status}.` });
   });

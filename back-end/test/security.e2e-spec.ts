@@ -373,3 +373,135 @@ describe('login throttling (e2e)', () => {
     expect(statuses[11]).toBe(429);
   });
 });
+
+// Platform side (Platform Admin / Support Member / Technical Member). Own app
+// instance so the seed tickets are in their original state.
+describe('platform tickets: tenancy, assignment and status rules (e2e)', () => {
+  let app: INestApplication<App>;
+  let http: () => any;
+  const tokens: Record<string, string> = {};
+  const as = (empId: string) => ({ Authorization: `Bearer ${tokens[empId]}` });
+
+  beforeAll(async () => {
+    app = await createApp();
+    http = () => request(app.getHttpServer());
+    const sessions = app.get(SessionService);
+    for (const id of ['EM001', 'HR001', 'AD001', 'PA001', 'PA002', 'ST001', 'ST003', 'TT001', 'TT003']) {
+      tokens[id] = sessions.create(id).token;
+    }
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('role boundaries', () => {
+    it('keeps company-side roles out of the platform portals', async () => {
+      await http().get('/support-tickets').set(as('EM001')).expect(403);
+      await http().get('/technical-member/stats').set(as('HR001')).expect(403);
+      await http().get('/support-member/stats').set(as('AD001')).expect(403);
+      await http().get('/companies').set(as('AD001')).expect(403);
+    });
+
+    it('keeps platform roles inside their own portal', async () => {
+      await http().get('/technical-member/issues').set(as('ST001')).expect(403);
+      await http().get('/support-member/tickets').set(as('TT001')).expect(403);
+      await http().get('/analytics/overview').set(as('PA001')).expect(403);
+      await http().patch('/platform-settings').set(as('PA001')).send({ platform_name: 'x' }).expect(403);
+    });
+
+    it('does not expose company employees to platform staff', async () => {
+      await http().get('/employees/EM001').set(as('PA001')).expect(404);
+      await http().get('/employees/EM001').set(as('ST001')).expect(404);
+    });
+  });
+
+  describe("another Platform Admin's tickets and members", () => {
+    it("hides another Platform Admin's tickets", async () => {
+      await http().get('/support-tickets/TIX-004').set(as('PA002')).expect(404);
+      await http().get('/technical-issues/TIX-001').set(as('PA002')).expect(404);
+      await http().patch('/support-tickets/TIX-004/assign').set(as('PA002')).send({ assigned_to: 'ST003' }).expect(404);
+    });
+
+    it("blocks editing another Platform Admin's team members", async () => {
+      await http().patch('/support-team/ST001').set(as('PA002')).send({ emp_name: 'Renamed' }).expect(404);
+      await http().patch('/technical-team/TT001/status').set(as('PA002')).send({ status: 'INACTIVE' }).expect(404);
+    });
+
+    it("hides tickets from another team's Support / Technical Members", async () => {
+      await http().get('/support-member/tickets/TIX-005').set(as('ST003')).expect(404);
+      await http().patch('/support-member/tickets/TIX-005/status').set(as('ST003')).send({ status: 'OPEN' }).expect(404);
+      await http().get('/technical-member/issues/TIX-011').set(as('TT003')).expect(404);
+      await http().patch('/technical-member/issues/TIX-011/progress').set(as('TT003')).send({ progress_percentage: 90 }).expect(404);
+    });
+  });
+
+  describe('ticket assignment', () => {
+    it("rejects assigning to another Platform Admin's Support Member", () =>
+      http().patch('/support-tickets/TIX-004/assign').set(as('PA001')).send({ assigned_to: 'ST003' }).expect(400));
+
+    it('rejects assigning to a company employee, an unknown id or the wrong team', async () => {
+      await http().patch('/support-tickets/TIX-004/assign').set(as('PA001')).send({ assigned_to: 'EM001' }).expect(400);
+      await http().patch('/support-tickets/TIX-004/assign').set(as('PA001')).send({ assigned_to: 'ST999' }).expect(400);
+      await http().patch('/support-tickets/TIX-004/assign').set(as('PA001')).send({ assigned_to: 'TT001' }).expect(400);
+      await http().patch('/technical-issues/TIX-001/assign').set(as('PA001')).send({ assigned_to: 'ST001' }).expect(400);
+    });
+
+    it('rejects assigning to an inactive member', () =>
+      http().patch('/support-tickets/TIX-004/assign').set(as('PA001')).send({ assigned_to: 'ST002' }).expect(400));
+
+    it('applies the same rules to reassignment', () =>
+      http().patch('/technical-issues/TIX-001/reassign').set(as('PA001')).send({ assigned_to: 'TT003', reason: 'Moving to another team' }).expect(400));
+
+    it('leaves the ticket unchanged after a rejected assignment', async () => {
+      const res = await http().get('/support-tickets/TIX-004').set(as('PA001')).expect(200);
+      expect(res.body.assigned_to).toBeNull();
+      expect(res.body.status).toBe('OPEN');
+    });
+
+    it("assigns to an active member of the ticket's own team", async () => {
+      const res = await http().patch('/support-tickets/TIX-004/assign').set(as('PA001')).send({ assigned_to: 'ST001' }).expect(200);
+      expect(res.body.assigned_to).toBe('ST001');
+      await http().patch('/technical-issues/TIX-001/assign').set(as('PA001')).send({ assigned_to: 'TT002' }).expect(200);
+    });
+  });
+
+  describe('support ticket status changes', () => {
+    it('moves a ticket between the working states', async () => {
+      const res = await http().patch('/support-member/tickets/TIX-005/status').set(as('ST001')).send({ status: 'WAITING_FOR_CUSTOMER' }).expect(200);
+      expect(res.body.status).toBe('WAITING_FOR_CUSTOMER');
+    });
+
+    it('refuses to reopen a closed ticket through a plain status change', async () => {
+      await http().patch('/support-member/tickets/TIX-009/status').set(as('ST001')).send({ status: 'OPEN' }).expect(400);
+      const res = await http().get('/support-member/tickets/TIX-009').set(as('ST001')).expect(200);
+      expect(res.body.status).toBe('CLOSED');
+    });
+
+    it('refuses to resolve, close or escalate through a plain status change', async () => {
+      for (const status of ['RESOLVED', 'CLOSED', 'ESCALATED']) {
+        await http().patch('/support-member/tickets/TIX-005/status').set(as('ST001')).send({ status }).expect(400);
+      }
+    });
+
+    it('still reopens a closed ticket through the reopen endpoint', async () => {
+      const res = await http()
+        .patch('/support-member/tickets/TIX-009/reopen')
+        .set(as('ST001'))
+        .send({ reason: 'Customer reports the export still fails.' })
+        .expect(200);
+      expect(res.body.status).toBe('IN_PROGRESS');
+    });
+  });
+
+  describe('technical issue rules', () => {
+    it('rejects out-of-range progress and member-driven closure', async () => {
+      await http().patch('/technical-member/issues/TIX-011/progress').set(as('TT001')).send({ progress_percentage: 150 }).expect(400);
+      await http().patch('/technical-member/issues/TIX-011/progress').set(as('TT001')).send({ progress_percentage: -1 }).expect(400);
+      await http().patch('/technical-member/issues/TIX-011/status').set(as('TT001')).send({ status: 'CLOSED' }).expect(400);
+    });
+
+    it('refuses verification of an issue that was never submitted for it', () =>
+      http().patch('/technical-issues/TIX-012/verify').set(as('PA001')).send({ note: 'Looks fine' }).expect(400));
+  });
+});

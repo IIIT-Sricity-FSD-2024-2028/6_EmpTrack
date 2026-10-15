@@ -41,7 +41,10 @@ export function loadChartJs() {
   if (!chartJsPromise) {
     chartJsPromise = new Promise((resolve, reject) => {
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+      // Pinned: the bare package URL served whatever version was newest at load
+      // time, so a new release (or a compromised one) ran in the app unreviewed.
+      script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js';
+      script.crossOrigin = 'anonymous';
       script.onload = () => resolve();
       script.onerror = () => {
         chartJsPromise = null;
