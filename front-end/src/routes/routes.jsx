@@ -9,12 +9,13 @@
 //
 // Public pages (landing, login, accept-invitation) go in `publicRoutes`
 // with absolute paths from PATHS in utils/constants.js.
-import { Navigate, useRoutes } from 'react-router-dom';
+import { useRoutes } from 'react-router-dom';
 import EmptyState from '../components/common/EmptyState';
 import Layout from '../components/layout/Layout';
 import companyAdminRoutes from '../pages/company-admin/companyAdminRoutes';
 import employeeRoutes from '../pages/employee/employeeRoutes';
 import hrRoutes from '../pages/hr/hrRoutes';
+import Landing from '../pages/public/Landing';
 import Login from '../pages/public/Login';
 import platformAdminRoutes from '../pages/platform-admin/platformAdminRoutes';
 import superAdminRoutes from '../pages/super-admin/superAdminRoutes';
@@ -28,7 +29,7 @@ import RoleRoute from './RoleRoute';
 
 // ---- Public (no login required) ----
 const publicRoutes = [
-  { path: PATHS.HOME, element: <Navigate to={PATHS.LOGIN} replace /> },
+  { path: PATHS.HOME, element: <Landing /> },
   { path: PATHS.LOGIN, element: <Login /> },
 ];
 

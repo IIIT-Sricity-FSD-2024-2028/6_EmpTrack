@@ -1,0 +1,70 @@
+// The public landing page at "/" on the real route table (routes.jsx), with the
+// app's real providers. No VITE_API_URL in tests, so auth uses the mock users.
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import App from '../App';
+import { PATHS, ROLES, STORAGE_KEYS } from '../utils/constants';
+
+async function openApp(path) {
+  window.history.replaceState(null, '', path);
+  render(<App />);
+  await act(async () => {});
+}
+
+const landingHeading = () => screen.queryByRole('heading', { name: 'Smart Workforce Management for Growing Businesses' });
+const loginHeading = () => screen.findByRole('heading', { name: 'Sign in to your account' });
+
+beforeEach(() => localStorage.clear());
+afterEach(cleanup);
+
+describe('landing page', () => {
+  it('is shown at "/" instead of redirecting to /login', async () => {
+    await openApp(PATHS.HOME);
+    expect(landingHeading()).toBeTruthy();
+    expect(window.location.pathname).toBe(PATHS.HOME);
+  });
+
+  it('links Login and Get Started to /login', async () => {
+    await openApp(PATHS.HOME);
+    const links = [...screen.getAllByRole('link', { name: /^(Login|Get Started)$/ })];
+    expect(links.length).toBeGreaterThan(0);
+    links.forEach((link) => expect(link.getAttribute('href')).toBe(PATHS.LOGIN));
+
+    fireEvent.click(screen.getAllByRole('link', { name: 'Login' })[0]);
+    await loginHeading();
+    expect(window.location.pathname).toBe(PATHS.LOGIN);
+  });
+
+  it('opens and closes FAQ answers', async () => {
+    await openApp(PATHS.HOME);
+    const question = screen.getByRole('button', { name: 'Is my data secure?' });
+    const answer = document.getElementById(question.getAttribute('aria-controls'));
+    expect(answer.hidden).toBe(true);
+    fireEvent.click(question);
+    expect(question.getAttribute('aria-expanded')).toBe('true');
+    expect(answer.hidden).toBe(false);
+    fireEvent.click(question);
+    expect(answer.hidden).toBe(true);
+  });
+
+  it('leaves protected dashboards behind the login', async () => {
+    for (const path of ['/employee/dashboard', '/teamlead/dashboard', '/hr/dashboard']) {
+      await openApp(path);
+      await loginHeading();
+      expect(window.location.pathname).toBe(PATHS.LOGIN);
+      cleanup();
+    }
+  });
+
+  it('logs in from the landing page to the role dashboard', async () => {
+    await openApp(PATHS.HOME);
+    fireEvent.click(screen.getAllByRole('link', { name: 'Login' })[0]);
+    await loginHeading();
+    fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'tl@emp.com' } });
+    fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'Password@123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await act(async () => {});
+    expect(window.location.pathname).toBe('/teamlead/dashboard');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)).user.role).toBe(ROLES.TEAM_LEAD);
+  });
+});

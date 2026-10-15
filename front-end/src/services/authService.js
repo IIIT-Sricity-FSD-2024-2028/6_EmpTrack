@@ -9,16 +9,18 @@ import { ROLES, STORAGE_KEYS } from '../utils/constants';
 import { readStorage, writeStorage } from '../utils/helpers';
 import api from './api';
 
-// Same shape as backend users. Password for all: "Password@123".
+// Same accounts as the backend seed (back-end/src/data/mock-data.service.ts), so
+// the same credentials reach the same role with or without the API.
+// Password for all: "Password@123".
 const MOCK_USERS = [
   { emp_id: 'EM001', emp_name: 'John Doe (EMP)', email: 'emp@emp.com', role: ROLES.EMPLOYEE },
-  { emp_id: 'HR001', emp_name: 'Demo HR', email: 'hr@emptrack.com', role: ROLES.HR },
-  { emp_id: 'CA001', emp_name: 'Demo Company Admin', email: 'companyadmin@emptrack.com', role: ROLES.COMPANY_ADMIN },
-  { emp_id: 'TL001', emp_name: 'Demo Team Lead', email: 'teamlead@emptrack.com', role: ROLES.TEAM_LEAD },
-  { emp_id: 'PA001', emp_name: 'Demo Platform Admin', email: 'platformadmin@emptrack.com', role: ROLES.PLATFORM_ADMIN },
-  { emp_id: 'SM001', emp_name: 'Demo Support Member', email: 'support@emptrack.com', role: ROLES.SUPPORT_MEMBER },
-  { emp_id: 'TM001', emp_name: 'Demo Technical Member', email: 'technical@emptrack.com', role: ROLES.TECHNICAL_MEMBER },
-  { emp_id: 'SA001', emp_name: 'Demo Super Admin', email: 'superadmin@emptrack.com', role: ROLES.SUPER_ADMIN },
+  { emp_id: 'HR001', emp_name: 'HR Manager', email: 'hr@emp.com', role: ROLES.HR },
+  { emp_id: 'AD001', emp_name: 'Kiran', email: 'cmpadmin@emp.com', role: ROLES.COMPANY_ADMIN },
+  { emp_id: 'TL001', emp_name: 'Rinku Singh (TL)', email: 'tl@emp.com', role: ROLES.TEAM_LEAD },
+  { emp_id: 'PA001', emp_name: 'Ravi Kumar', email: 'ravi.platform@emptrack.com', role: ROLES.PLATFORM_ADMIN },
+  { emp_id: 'ST001', emp_name: 'Sam Wilson', email: 'sam.support@emptrack.com', role: ROLES.SUPPORT_MEMBER },
+  { emp_id: 'TT001', emp_name: 'Wanda Maximoff', email: 'wanda.tech@emptrack.com', role: ROLES.TECHNICAL_MEMBER },
+  { emp_id: 'SA001', emp_name: 'Alex Morgan', email: 'superadmin@emptrack.com', role: ROLES.SUPER_ADMIN },
 ];
 const MOCK_PASSWORD = 'Password@123';
 

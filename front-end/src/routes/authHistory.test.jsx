@@ -6,6 +6,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrowserRouter, createMemoryRouter, Link, Navigate, Outlet, Route, RouterProvider, Routes, useNavigate } from 'react-router-dom';
 import ExitGuard from '../components/layout/ExitGuard';
+import config from '../config/config';
 import { AuthProvider } from '../context/AuthContext';
 import useAuth from '../hooks/useAuth';
 import Login from '../pages/public/Login';
@@ -18,6 +19,10 @@ vi.mock('../config/config', () => ({
 }));
 
 const EMPLOYEE = { emp_id: 'EM001', emp_name: 'John Doe', email: 'emp@emp.com', role: ROLES.EMPLOYEE };
+const TEAM_LEAD = { emp_id: 'TL001', emp_name: 'Rinku Singh', email: 'tl@emp.com', role: ROLES.TEAM_LEAD };
+const HR = { emp_id: 'HR001', emp_name: 'HR Manager', email: 'hr@emp.com', role: ROLES.HR };
+const USERS = [EMPLOYEE, TEAM_LEAD, HR];
+const PASSWORD = 'Password@123';
 
 // ---- Fake backend --------------------------------------------------------
 let server;
@@ -36,10 +41,13 @@ async function fakeFetch(url, init = {}) {
   server.calls.push({ path, token });
 
   if (path === '/auth/login') {
+    const { email, password } = JSON.parse(init.body);
+    const user = USERS.find((u) => u.email === email.toLowerCase());
+    if (!user || password !== PASSWORD) return json(401, { message: 'Invalid email or password.' });
     const newToken = `tok-${server.sessions.size + 1}-${Math.random()}`;
     const expiresAt = Date.now() + server.ttlMs;
-    server.sessions.set(newToken, { user: EMPLOYEE, expiresAt });
-    return json(200, { user: EMPLOYEE, token: newToken, expiresAt });
+    server.sessions.set(newToken, { user, expiresAt });
+    return json(200, { user, token: newToken, expiresAt });
   }
   if (!valid) return json(401, { message: 'Authentication required.' });
   if (path === '/auth/logout') {
@@ -93,16 +101,23 @@ function makeRouter(initialEntries = [PATHS.LOGIN]) {
               { path: 'tasks', element: <h1>Employee tasks</h1> },
             ],
           },
-          {
-            path: '/hr',
+          ...[
+            ['/hr', ROLES.HR, 'HR dashboard'],
+            ['/teamlead', ROLES.TEAM_LEAD, 'Team Lead dashboard'],
+          ].map(([path, role, title]) => ({
+            path,
             element: (
               <ProtectedRoute>
-                <RoleRoute allowedRoles={[ROLES.HR]}>
-                  <h1>HR dashboard</h1>
+                <RoleRoute allowedRoles={[role]}>
+                  <Outlet />
                 </RoleRoute>
               </ProtectedRoute>
             ),
-          },
+            children: [
+              { index: true, element: <h1>{title}</h1> },
+              { path: 'dashboard', element: <h1>{title}</h1> },
+            ],
+          })),
         ],
       },
     ],
@@ -120,10 +135,16 @@ async function renderApp(initialEntries) {
 
 const go = (router, delta) => act(() => router.navigate(delta));
 const onLoginPage = () => screen.findByRole('heading', { name: 'Sign in to your account' });
-const protectedContent = () => screen.queryByText(/Employee (dashboard|tasks)|HR dashboard/);
+const protectedContent = () => screen.queryByText(/Employee (dashboard|tasks)|HR dashboard|Team Lead dashboard/);
+
+function submitLogin(email = EMPLOYEE.email, password = PASSWORD) {
+  fireEvent.change(screen.getByLabelText(/Email/), { target: { value: email } });
+  fireEvent.change(screen.getByLabelText(/Password/), { target: { value: password } });
+  fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+}
 
 async function logIn() {
-  fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+  submitLogin();
   await screen.findByText('Employee dashboard');
 }
 
@@ -183,7 +204,7 @@ describe('protected URLs without a session', () => {
   it('returns to the originally requested page after logging in', async () => {
     const router = await renderApp(['/employee/tasks']);
     await onLoginPage();
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    submitLogin();
     expect(await screen.findByText('Employee tasks')).toBeTruthy();
     expect(router.state.location.pathname).toBe('/employee/tasks');
   });
@@ -192,6 +213,76 @@ describe('protected URLs without a session', () => {
     const router = await renderApp([{ pathname: PATHS.LOGIN, state: { from: { pathname: '/hr' } } }]);
     await logIn();
     expect(router.state.location.pathname).toBe('/employee/dashboard');
+  });
+});
+
+describe('role-based redirect after login', () => {
+  const cases = [
+    [EMPLOYEE, '/employee/dashboard', 'Employee dashboard'],
+    [TEAM_LEAD, '/teamlead/dashboard', 'Team Lead dashboard'],
+    [HR, '/hr/dashboard', 'HR dashboard'],
+  ];
+
+  it('starts with an empty form instead of prefilled Employee credentials', async () => {
+    await renderApp([PATHS.LOGIN]);
+    expect(screen.getByLabelText(/Email/).value).toBe('');
+    expect(screen.getByLabelText(/Password/).value).toBe('');
+  });
+
+  it.each(cases)('sends %o to their own dashboard, also after a refresh', async (user, home, title) => {
+    const router = await renderApp([PATHS.LOGIN]);
+    submitLogin(user.email);
+    expect(await screen.findByText(title)).toBeTruthy();
+    expect(router.state.location.pathname).toBe(home);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)).user.role).toBe(user.role);
+
+    // Refresh: a new app instance restores the stored session and keeps the role.
+    cleanup();
+    const reloaded = await renderApp([home]);
+    expect(await screen.findByText(title)).toBeTruthy();
+    expect(reloaded.state.location.pathname).toBe(home);
+  });
+
+  it.each(cases)("keeps %o out of other roles' portals", async (user, home, title) => {
+    const router = await renderApp([PATHS.LOGIN]);
+    submitLogin(user.email);
+    await screen.findByText(title);
+    for (const other of ['/employee/dashboard', '/teamlead/dashboard', '/hr/dashboard'].filter((p) => p !== home)) {
+      await act(() => router.navigate(other));
+      expect(await screen.findByText(title)).toBeTruthy();
+      expect(router.state.location.pathname).toBe(home);
+    }
+  });
+
+  it('shows an error and stays on /login for wrong credentials', async () => {
+    const router = await renderApp([PATHS.LOGIN]);
+    submitLogin(TEAM_LEAD.email, 'wrong-password');
+    expect((await screen.findByRole('alert')).textContent).toMatch(/Invalid email or password/);
+    expect(router.state.location.pathname).toBe(PATHS.LOGIN);
+    expect(localStorage.getItem(STORAGE_KEYS.AUTH)).toBeNull();
+  });
+
+  it('logs in the next user with their own role after a logout', async () => {
+    await renderApp([PATHS.LOGIN]);
+    await logIn();
+    fireEvent.click(screen.getByRole('button', { name: 'Logout' }));
+    await onLoginPage();
+    submitLogin(HR.email);
+    expect(await screen.findByText('HR dashboard')).toBeTruthy();
+  });
+
+  // Without VITE_API_URL the app logs in against authService's MOCK_USERS; the
+  // backend's seed credentials must reach the same roles there.
+  it.each(cases)('resolves %o by the backend seed credentials in mock-auth mode', async (user, home, title) => {
+    config.useMockAuth = true;
+    try {
+      const router = await renderApp([PATHS.LOGIN]);
+      submitLogin(user.email);
+      expect(await screen.findByText(title)).toBeTruthy();
+      expect(router.state.location.pathname).toBe(home);
+    } finally {
+      config.useMockAuth = false;
+    }
   });
 });
 

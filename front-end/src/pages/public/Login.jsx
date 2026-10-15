@@ -18,8 +18,8 @@ export default function Login() {
   const { user, isAuthenticated, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState('emp@emp.com');
-  const [password, setPassword] = useState('Password@123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const validation = useFormValidation(loginSchema, { email, password }, { idPrefix: 'login' });
@@ -79,7 +79,7 @@ export default function Login() {
           </Button>
         </form>
         <p className="text-muted text-center mt-md mb-0">
-          Demo employee: emp@emp.com / Password@123
+          Demo accounts (password Password@123): emp@emp.com, tl@emp.com, hr@emp.com
         </p>
       </section>
     </main>
