@@ -14,7 +14,6 @@ import { PATHS } from '../../utils/constants';
 import './landing.css';
 
 const SECTIONS = [
-  ['#top', 'Home'],
   ['#features', 'Features'],
   ['#solutions', 'Solutions'],
   ['#pricing', 'Pricing'],
@@ -179,7 +178,7 @@ export default function Landing() {
               <Moon className="theme-icon-moon" aria-hidden="true" />
             </button>
             <Link to={PATHS.LOGIN} className="lp-link-login">Login</Link>
-            <Link to={PATHS.COMPANY_REGISTER} className="lp-btn lp-btn-primary">Get Started</Link>
+            <Link to={PATHS.LOGIN} className="lp-btn lp-btn-primary">Get Started</Link>
             <button
               type="button"
               className="lp-menu-toggle"
@@ -195,7 +194,7 @@ export default function Landing() {
         <div className="lp-mobile-menu" id="lpMobileMenu">
           {SECTIONS.map(([href, label]) => <a key={href} href={href} onClick={closeMenu}>{label}</a>)}
           <Link to={PATHS.LOGIN}>Login</Link>
-          <Link to={PATHS.COMPANY_REGISTER} className="lp-btn lp-btn-primary lp-btn-block">Get Started</Link>
+          <Link to={PATHS.LOGIN} className="lp-btn lp-btn-primary lp-btn-block">Get Started</Link>
         </div>
       </header>
 
@@ -212,7 +211,7 @@ export default function Landing() {
                 platform — so HR teams and managers spend less time on admin work and more time on people.
               </p>
               <div className="lp-hero-actions lp-hero-actions-single">
-                <Link to={PATHS.COMPANY_REGISTER} className="lp-btn lp-btn-primary lp-btn-lg lp-btn-hero">
+                <Link to={PATHS.LOGIN} className="lp-btn lp-btn-primary lp-btn-lg lp-btn-hero">
                   Get Started <ArrowRight aria-hidden="true" />
                 </Link>
               </div>
@@ -323,7 +322,7 @@ export default function Landing() {
                   <ul className="lp-price-features">
                     {plan.features.map((f) => <li key={f}><CircleCheckBig aria-hidden="true" /> {f}</li>)}
                   </ul>
-                  <Link to={PATHS.COMPANY_REGISTER} className={`lp-btn ${plan.featured ? 'lp-btn-primary' : 'lp-btn-secondary'} lp-btn-block`}>
+                  <Link to={PATHS.LOGIN} className={`lp-btn ${plan.featured ? 'lp-btn-primary' : 'lp-btn-secondary'} lp-btn-block`}>
                     Get Started
                   </Link>
                 </div>
@@ -382,7 +381,7 @@ export default function Landing() {
               Set up EmpTrack for your organization and bring attendance, tasks, and reporting into one place.
             </p>
             <div className="lp-final-cta-actions lp-reveal" style={delay(120)}>
-              <Link to={PATHS.COMPANY_REGISTER} className="lp-btn lp-btn-secondary lp-btn-lg">Get Started</Link>
+              <Link to={PATHS.LOGIN} className="lp-btn lp-btn-secondary lp-btn-lg">Get Started</Link>
               <a href="mailto:info@emptrack.com" className="lp-btn lp-btn-ghost lp-btn-lg">Schedule Demo</a>
             </div>
           </div>

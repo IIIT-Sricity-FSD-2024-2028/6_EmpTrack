@@ -29,14 +29,11 @@ describe('landing page', () => {
     expect(window.location.pathname).toBe(PATHS.HOME);
   });
 
-  it('links Login to /login and Get Started to company registration', async () => {
+  it('links Login and Get Started to /login', async () => {
     await openApp(PATHS.HOME);
-    const login = screen.getAllByRole('link', { name: /^Login$/ });
-    const getStarted = screen.getAllByRole('link', { name: /^Get Started/ });
-    expect(login.length).toBeGreaterThan(0);
-    expect(getStarted.length).toBeGreaterThan(0);
-    login.forEach((link) => expect(link.getAttribute('href')).toBe(PATHS.LOGIN));
-    getStarted.forEach((link) => expect(link.getAttribute('href')).toBe(PATHS.COMPANY_REGISTER));
+    const links = [...screen.getAllByRole('link', { name: /^(Login|Get Started)$/ })];
+    expect(links.length).toBeGreaterThan(0);
+    links.forEach((link) => expect(link.getAttribute('href')).toBe(PATHS.LOGIN));
 
     fireEvent.click(screen.getAllByRole('link', { name: 'Login' })[0]);
     await loginHeading();

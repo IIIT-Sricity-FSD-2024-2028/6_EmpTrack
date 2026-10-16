@@ -32,14 +32,6 @@ export const reassignCompanyPlatformAdmin = (id, platform_admin_id) =>
   api.patch(`/companies/${id}/reassign`, { platform_admin_id });
 export const createCompanyAdmin = (companyId, data) => api.post(`/companies/${companyId}/admins`, data);
 
-// ---- Company registrations (verification review) ----
-const reviewPath = (ref) => `/registration-reviews/${encodeURIComponent(ref)}`;
-export const getRegistrations = ({ status } = {}) => api.get('/registration-reviews', { params: { status } });
-export const getRegistrationDocument = (ref, docType) => api.get(`${reviewPath(ref)}/documents/${docType}`, { responseType: 'blob' });
-export const startRegistrationReview = (ref) => api.post(`${reviewPath(ref)}/start-review`);
-export const approveRegistration = (ref, data) => api.post(`${reviewPath(ref)}/approve`, data);
-export const rejectRegistration = (ref, reason) => api.post(`${reviewPath(ref)}/reject`, { reason });
-
 // ---- Platform admins ----
 export const getPlatformAdmins = ({ status, search } = {}) =>
   api.get('/platform-admins', { params: { status, search } });

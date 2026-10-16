@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
 import useFormValidation from '../../hooks/useFormValidation';
 import { loginSchema } from '../../validation/formSchemas';
-import { PATHS } from '../../utils/constants';
 import { getHomePath, getRoleBasePath } from '../../utils/permissions';
 
 // Where to go after login: the protected page that redirected here (if it is in
@@ -79,12 +78,6 @@ export default function Login() {
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
-        <p className="text-center mt-md mb-0">
-          New company? <Link to={PATHS.COMPANY_REGISTER}>Register your company</Link>
-        </p>
-        <p className="text-center mt-md mb-0">
-          <Link to={PATHS.HOME}>&larr; Back to home</Link>
-        </p>
         <p className="text-muted text-center mt-md mb-0">
           Demo accounts (password Password@123): emp@emptrack.com, tl@emptrack.com, hr@emptrack.com,
           {' '}cmpadmin@emptrack.com, superadmin@emptrack.com, wanda.tech@emptrack.com, sam.support@emptrack.com

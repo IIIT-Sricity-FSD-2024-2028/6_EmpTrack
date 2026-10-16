@@ -135,8 +135,6 @@ const INITIAL_MOCK_DATA = {
         { transaction_id: "TXN-014", company_id: "C003", plan_id: "PLAN-BASIC", amount: 49, currency: "USD", billing_cycle: "MONTHLY", payment_date: "2026-07-15", payment_status: "FAILED", payment_method: "CARD", is_mock: false }
     ],
     invitations: [],
-    // Company self-registrations (see CompanyRegistrationService). Empty at boot.
-    company_registrations: [],
     ticket_categories: [
         "Account / Login", "Company Setup", "Employee Management", "Attendance", "Leave Management",
         "Recruitment", "Tasks", "Subscription", "Billing", "Technical Issue", "Other"
@@ -346,7 +344,6 @@ export class MockDataService {
     public getSubscriptionPlans() { return this.data.subscription_plans; }
     public getRevenueTransactions() { return this.data.revenue_transactions; }
     public getInvitations() { return this.data.invitations; }
-    public getCompanyRegistrations() { return this.data.company_registrations; }
     public getPlatformTickets() { return this.data.platform_tickets; }
     public getTicketCategories() { return this.data.ticket_categories; }
     public getActivityLogs() { return this.data.activity_logs; }

@@ -62,8 +62,6 @@ export const CALENDAR_ROLES = Object.freeze([
 export const PATHS = Object.freeze({
   HOME: '/',
   LOGIN: '/login',
-  COMPANY_REGISTER: '/company/register',
-  REGISTRATION_STATUS: '/company/registration-status',
   ACCEPT_INVITATION: '/accept-invitation',
   // Logged in, but the account's role has no portal (see routes.jsx).
   UNSUPPORTED_ROLE: '/unsupported-role',
@@ -73,8 +71,6 @@ export const PATHS = Object.freeze({
 export const STORAGE_KEYS = Object.freeze({
   AUTH: 'empTrackSessionV2',
   THEME: 'empTrackThemeV1',
-  // { reference, token } of this browser's company registration (see companyRegistrationService).
-  REGISTRATION: 'empTrackCompanyRegistrationV1',
 });
 
 export const THEMES = Object.freeze({

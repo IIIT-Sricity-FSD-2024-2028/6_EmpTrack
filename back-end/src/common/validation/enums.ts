@@ -17,9 +17,6 @@ export const ACCOUNT_STATUSES = ['ACTIVE', 'INACTIVE'] as const;
 export const COMPANY_STATUSES = ['ACTIVE', 'INACTIVE', 'SUSPENDED'] as const;
 export const PLAN_STATUSES = ['ACTIVE', 'INACTIVE'] as const;
 export const BILLING_CYCLES = ['MONTHLY', 'ANNUAL'] as const;
-export const BUSINESS_TYPES = ['PRIVATE_LIMITED', 'PUBLIC_LIMITED', 'LLP', 'PARTNERSHIP', 'SOLE_PROPRIETORSHIP', 'OTHER'] as const;
-/** Company self-registration lifecycle; only a Super Admin moves it past `pending`. */
-export const REGISTRATION_STATUSES = ['draft', 'pending', 'under_review', 'verified', 'rejected'] as const;
 
 /** Compared case-insensitively: the UIs send "Medium", seed data uses "HIGH". */
 export const PRIORITY_VALUES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
