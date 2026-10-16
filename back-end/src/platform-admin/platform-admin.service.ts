@@ -4,6 +4,7 @@ import { InvitationService } from '../invitation/invitation.service';
 import { CreatePlatformAdminDto, UpdatePlatformAdminDto, UpdatePlatformAdminStatusDto } from './dto/platform-admin.dto';
 import { hashPassword } from '../common/utils/password.util';
 import { applyAccountUpdate, emailTaken } from '../common/utils/account.util';
+import { randomUUID } from 'node:crypto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
@@ -62,11 +63,11 @@ export class PlatformAdminService {
       throw new BadRequestException('Password and confirmation do not match');
     }
 
-    const emp_id = 'PA-' + Date.now();
+    const emp_id = 'PA-' + randomUUID();
     const admin = {
       emp_id,
       emp_name: dto.name,
-      email: dto.email,
+      email: dto.email.trim().toLowerCase(),
       phone: dto.phone,
       password: hashPassword(dto.password),
       role: 'PLATFORM_ADMIN',
@@ -74,6 +75,7 @@ export class PlatformAdminService {
       date_of_joining: new Date().toISOString().split('T')[0],
       companyId: null,
     };
+    this.dataStore.saveEmployee(admin);
     this.dataStore.getEmployees().push(admin);
 
     this.dataStore.logActivity({
@@ -101,7 +103,9 @@ export class PlatformAdminService {
       const stillManaged = this.dataStore.getCompanies().some((c) => c.platform_admin_id === id && c.status !== 'SUSPENDED');
       if (stillManaged) throw new BadRequestException("Reassign this Platform Admin's companies before deactivating their account");
     }
-    admin.status = dto.status;
+    const updated = { ...admin, status: dto.status };
+    this.dataStore.saveEmployee(updated);
+    Object.assign(admin, updated);
     this.dataStore.logActivity({
       user_id: actor.emp_id,
       user_name: actor.emp_name,

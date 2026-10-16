@@ -138,6 +138,7 @@ export class PaymentService {
     company.last_payment_date = today;
     company.last_transaction_id = transaction_id;
     company.next_billing_date = addBillingCycle(today, plan.billing_cycle);
+    this.dataStore.saveCompany(company);
 
     this.dataStore.logActivity({
       user_id: employee.emp_id,

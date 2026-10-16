@@ -53,7 +53,7 @@ async function fakeFetch(url, init = {}) {
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
   const session = token && server.sessions.get(token);
   const valid = session && session.expiresAt > Date.now();
-  server.calls.push({ path, token });
+  server.calls.push({ path, token, body: init.body ? JSON.parse(init.body) : undefined });
 
   if (path === '/auth/login') {
     const { email, password } = JSON.parse(init.body);
@@ -317,6 +317,14 @@ describe('role-based redirect after login', () => {
     expect((await screen.findByRole('alert')).textContent).toMatch(/Invalid email or password/);
     expect(router.state.location.pathname).toBe(PATHS.LOGIN);
     expect(localStorage.getItem(STORAGE_KEYS.AUTH)).toBeNull();
+  });
+
+  it('normalizes a Company Admin email and opens the Company Admin dashboard', async () => {
+    const router = await renderApp([PATHS.LOGIN]);
+    submitLogin(`  ${COMPANY_ADMIN.email.toUpperCase()}  `);
+    expect(await screen.findByText('Company Admin dashboard')).toBeTruthy();
+    expect(router.state.location.pathname).toBe('/company-admin/dashboard');
+    expect(server.calls.find((call) => call.path === '/auth/login').body.email).toBe(COMPANY_ADMIN.email);
   });
 
   it('logs in the next user with their own role after a logout', async () => {

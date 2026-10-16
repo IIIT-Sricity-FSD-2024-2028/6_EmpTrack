@@ -21,7 +21,7 @@ const TOKEN_HEADER = 'x-registration-token';
 // Applicant endpoints. Applicants have no login yet, so these are @Public() and
 // authorised per registration by the access token returned from POST (sent back in
 // the X-Registration-Token header). Nothing here can change a registration's status
-// beyond draft/rejected -> pending.
+// beyond draft/rejected -> approved with an active Company Admin account.
 @ApiTags('Company Registration')
 @ApiHeader({ name: TOKEN_HEADER, required: false, description: 'Access token returned when the registration was started' })
 @Public()
@@ -61,7 +61,7 @@ export class CompanyRegistrationController {
     return this.service.uploadDocument(reference, token, docType, file);
   }
 
-  @ApiOperation({ summary: 'Step 3: provide the administrator account and submit for verification' })
+  @ApiOperation({ summary: 'Step 3: submit details and activate the Company Admin account' })
   @Post(':reference/submit')
   @HttpCode(HttpStatus.OK)
   submit(@Param('reference') reference: string, @Headers(TOKEN_HEADER) token: string, @Body() dto: SubmitRegistrationDto) {

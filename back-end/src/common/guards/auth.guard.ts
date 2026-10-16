@@ -41,6 +41,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Authentication required.');
     }
 
+    this.dataStore.refreshIdentityData();
     const empId = this.sessions.resolve(token);
     const employee = empId ? this.dataStore.getEmployees().find((e) => e.emp_id === empId) : null;
     if (!employee || (employee.status && employee.status !== 'ACTIVE')) {

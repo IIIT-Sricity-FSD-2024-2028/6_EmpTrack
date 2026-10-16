@@ -4,7 +4,7 @@ import { MockDataService } from '../../data/mock-data.service';
 /** Emails are unique across every account, ignoring case (login ignores case too). */
 export function emailTaken(dataStore: MockDataService, email: string, exceptEmpId?: string): boolean {
   const wanted = String(email).trim().toLowerCase();
-  return dataStore.getEmployees().some((e) => e.emp_id !== exceptEmpId && String(e.email).toLowerCase() === wanted);
+  return dataStore.getEmployees().some((e) => e.emp_id !== exceptEmpId && String(e.email).trim().toLowerCase() === wanted);
 }
 
 export function assertEmailAvailable(dataStore: MockDataService, email: string, exceptEmpId?: string) {
@@ -23,9 +23,12 @@ export function applyAccountUpdate(
   dto: { name?: string; email?: string; phone?: string; specialization?: string },
 ) {
   if (dto.email !== undefined && dto.email !== null) assertEmailAvailable(dataStore, dto.email, account.emp_id);
-  if (dto.name !== undefined && dto.name !== null) account.emp_name = dto.name;
-  if (dto.email !== undefined && dto.email !== null) account.email = dto.email;
-  if (dto.phone !== undefined && dto.phone !== null) account.phone = dto.phone;
-  if (dto.specialization !== undefined && dto.specialization !== null) account.specialization = dto.specialization;
+  const updated = { ...account };
+  if (dto.name !== undefined && dto.name !== null) updated.emp_name = dto.name;
+  if (dto.email !== undefined && dto.email !== null) updated.email = dto.email.trim().toLowerCase();
+  if (dto.phone !== undefined && dto.phone !== null) updated.phone = dto.phone;
+  if (dto.specialization !== undefined && dto.specialization !== null) updated.specialization = dto.specialization;
+  dataStore.saveEmployee(updated);
+  Object.assign(account, updated);
   return account;
 }

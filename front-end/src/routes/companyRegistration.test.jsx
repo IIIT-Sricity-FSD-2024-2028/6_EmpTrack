@@ -50,6 +50,28 @@ describe('company registration', () => {
     expect(window.location.pathname).toBe(PATHS.COMPANY_REGISTER);
   });
 
+  it('opens a fresh form from Get Started even when an old registration reference exists', async () => {
+    localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: 'REG-OLD', token: 'old-token' }));
+    await openApp(PATHS.HOME);
+    fireEvent.click(screen.getAllByRole('link', { name: /^Get Started/ })[0]);
+    expect(await screen.findByRole('heading', { name: 'Register your company' })).toBeTruthy();
+    expect(screen.getByLabelText(/Legal company name/).value).toBe('');
+    expect(service.getRegistration).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.REGISTRATION))).toEqual({ reference: 'REG-OLD', token: 'old-token' });
+  });
+
+  it('returns home and opens a fresh form again without changing the saved reference', async () => {
+    localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: 'REG-OLD', token: 'old-token' }));
+    await openApp(PATHS.HOME);
+    fireEvent.click(screen.getAllByRole('link', { name: /^Get Started/ })[0]);
+    fireEvent.click(screen.getByRole('link', { name: 'Cancel' }));
+    expect(await screen.findByRole('heading', { name: 'Smart Workforce Management for Growing Businesses' })).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('link', { name: /^Get Started/ })[0]);
+    expect(await screen.findByLabelText(/Legal company name/)).toBeTruthy();
+    expect(service.getRegistration).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.REGISTRATION)).reference).toBe('REG-OLD');
+  });
+
   it('links between login, registration and home', async () => {
     await openApp(PATHS.LOGIN);
     expect(screen.getByRole('link', { name: 'Register your company' }).getAttribute('href')).toBe(PATHS.COMPANY_REGISTER);
@@ -84,7 +106,7 @@ describe('company registration', () => {
   it('rejects disallowed files before uploading and blocks Continue until required documents exist', async () => {
     localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: REG.reference, token: 't' }));
     service.getRegistration.mockResolvedValue(REG);
-    await openApp(PATHS.COMPANY_REGISTER);
+    await openApp(`${PATHS.COMPANY_REGISTER}?resume=1`);
     const input = document.getElementById('rg-doc-incorporation');
     fireEvent.change(input, { target: { files: [new File(['x'], 'cert.exe', { type: 'application/octet-stream' })] } });
     expect(await screen.findByText(/file type not allowed/)).toBeTruthy();
@@ -112,7 +134,7 @@ describe('company registration', () => {
       documents: { incorporation: { label: 'Certificate', original_name: 'coi.pdf', size_bytes: 2048 } },
       missing_documents: [],
     });
-    await openApp(PATHS.COMPANY_REGISTER);
+    await openApp(`${PATHS.COMPANY_REGISTER}?resume=1`);
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
 
     const name = screen.getByLabelText(/Administrator full name/);
@@ -132,20 +154,59 @@ describe('company registration', () => {
       expect(document.getElementById(errorId).getAttribute('role')).toBe('alert');
     }
 
-    fireEvent.click(screen.getByRole('button', { name: 'Submit for verification' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit registration' }));
     expect(service.submitRegistration).not.toHaveBeenCalled();
     expect(name.value).toBe('administrator');
     expect(designation.value).toBe('@@');
   });
 
-  it('sends a submitted registration to the status page, which reflects the backend status', async () => {
+  it('submits registration, shows approval and provides a working login destination', async () => {
     localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: REG.reference, token: 't' }));
-    service.getRegistration.mockResolvedValue({ ...REG, status: 'pending', submitted_at: new Date().toISOString() });
-    await openApp(PATHS.COMPANY_REGISTER);
-    await act(async () => {});
+    const draft = {
+      ...REG,
+      documents: { incorporation: { label: 'Certificate', original_name: 'coi.pdf', size_bytes: 2048 } },
+      missing_documents: [],
+    };
+    const approved = {
+      ...draft,
+      status: 'verified',
+      submitted_at: new Date().toISOString(),
+      reviewed_at: new Date().toISOString(),
+      admin: { name: 'अनन्या शर्मा', email: 'admin@globex.com', designation: 'Co-Founder & CEO' },
+    };
+    service.getRegistration.mockResolvedValueOnce(draft).mockResolvedValueOnce(approved);
+    service.submitRegistration.mockResolvedValue(approved);
+    await openApp(`${PATHS.COMPANY_REGISTER}?resume=1`);
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    type(/Administrator full name/, 'अनन्या शर्मा');
+    type(/^Designation/, 'Co-Founder & CEO');
+    type(/Official work email/, 'admin@globex.com');
+    type(/^Password/, 'Valid@123');
+    type(/Confirm password/, 'Valid@123');
+    fireEvent.click(screen.getByLabelText(/I accept the Terms and Conditions/));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit registration' }));
+
+    expect(await screen.findByRole('link', { name: 'Go to Login' })).toBeTruthy();
     expect(window.location.pathname).toBe(PATHS.REGISTRATION_STATUS);
-    expect(screen.getByText('Your company registration has been submitted and is awaiting verification.')).toBeTruthy();
-    expect(screen.queryByRole('link', { name: 'Go to Login' })).toBeNull();
+    expect(service.submitRegistration).toHaveBeenCalledWith(expect.objectContaining({ admin_name: 'अनन्या शर्मा', designation: 'Co-Founder & CEO' }));
+    expect(await screen.findByText('Your company is approved and your Company Admin account is ready. You can sign in now.')).toBeTruthy();
+    expect(screen.getAllByText('Approved').length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: 'Go to Login' }).getAttribute('href')).toBe(PATHS.LOGIN);
+    expect(screen.queryByText(/cannot sign in until the review/i)).toBeNull();
+  });
+
+  it('refreshes the status page against the saved registration and displays the backend status', async () => {
+    localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: REG.reference, token: 't' }));
+    const approved = { ...REG, status: 'verified', reviewed_at: new Date().toISOString(), documents: {}, admin: null };
+    service.getRegistration.mockResolvedValue(approved);
+    await openApp(PATHS.REGISTRATION_STATUS);
+    expect((await screen.findAllByText('Approved')).length).toBeGreaterThan(0);
+    expect(service.getRegistration).toHaveBeenCalledTimes(1);
+    cleanup();
+    await openApp(PATHS.REGISTRATION_STATUS);
+    expect((await screen.findAllByText('Approved')).length).toBeGreaterThan(0);
+    expect(service.getRegistration).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.REGISTRATION))).toEqual({ reference: REG.reference, token: 't' });
   });
 
   it('shows the rejection reason with a resubmit option', async () => {
@@ -153,14 +214,14 @@ describe('company registration', () => {
     service.getRegistration.mockResolvedValue({ ...REG, status: 'rejected', rejection_reason: 'Certificate is unreadable.' });
     await openApp(PATHS.REGISTRATION_STATUS);
     expect(screen.getByText('Certificate is unreadable.')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Update and resubmit' }).getAttribute('href')).toBe(PATHS.COMPANY_REGISTER);
+    expect(screen.getByRole('link', { name: 'Update and resubmit' }).getAttribute('href')).toBe(`${PATHS.COMPANY_REGISTER}?resume=1`);
   });
 
-  it('forgets a registration the server no longer recognises', async () => {
+  it('keeps the saved reference if the server no longer recognises it', async () => {
     localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: 'REG-GONE', token: 't' }));
     service.getRegistration.mockRejectedValue(Object.assign(new Error('nope'), { status: 403 }));
     await openApp(PATHS.REGISTRATION_STATUS);
     expect(screen.getByText('No company registration was found in this browser.')).toBeTruthy();
-    expect(localStorage.getItem(STORAGE_KEYS.REGISTRATION)).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.REGISTRATION))).toEqual({ reference: 'REG-GONE', token: 't' });
   });
 });

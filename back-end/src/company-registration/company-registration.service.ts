@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  InternalServerErrorException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -119,6 +120,7 @@ export class CompanyRegistrationService {
   // ---- applicant side (authorised by the per-registration access token) ----
 
   create(dto: CompanyDetailsDto) {
+    this.dataStore.refreshIdentityData();
     const company = this.normalise(dto);
     this.assertNoDuplicateCompany(company, null);
     const token = randomBytes(32).toString('hex');
@@ -139,6 +141,7 @@ export class CompanyRegistrationService {
       history: [],
     };
     this.record(reg, 'Registration started', 'Applicant');
+    this.dataStore.saveCompanyRegistration(reg);
     this.dataStore.getCompanyRegistrations().push(reg);
     // The token is returned exactly once; only its hash is stored.
     return { registration: this.applicantView(reg), token };
@@ -153,8 +156,9 @@ export class CompanyRegistrationService {
     this.assertEditable(reg);
     const company = this.normalise(dto);
     this.assertNoDuplicateCompany(company, reg.reference);
-    reg.company = company;
-    reg.updated_at = now();
+    const updated = { ...reg, company, updated_at: now() };
+    this.dataStore.saveCompanyRegistration(updated);
+    Object.assign(reg, updated);
     return this.applicantView(reg);
   }
 
@@ -179,15 +183,23 @@ export class CompanyRegistrationService {
     const storedName = `${randomUUID()}${ext}`;
     fs.writeFileSync(path.join(this.docDir, storedName), file.buffer);
     const previous = reg.documents[docType];
-    reg.documents[docType] = {
+    const updated = structuredClone(reg);
+    updated.documents[docType] = {
       stored_name: storedName,
       original_name: path.basename(file.originalname).slice(0, 150),
       mime_type: rules.formats[ext],
       size_bytes: file.size,
       uploaded_at: now(),
     };
+    updated.updated_at = now();
+    try {
+      this.dataStore.saveCompanyRegistration(updated);
+      Object.assign(reg, updated);
+    } catch (error) {
+      this.removeFile(storedName);
+      throw error;
+    }
     if (previous) this.removeFile(previous.stored_name);
-    reg.updated_at = now();
     this.logger.info('Registration document stored', { reference, docType, sizeBytes: file.size });
     return this.applicantView(reg);
   }
@@ -202,33 +214,40 @@ export class CompanyRegistrationService {
     this.assertNoDuplicateCompany(reg.company, reg.reference);
     this.assertAdminEmailAvailable(dto.admin_email, reg.reference);
 
+    // Self-registration does not collect a plan or platform-admin assignment, so
+    // activate it on the existing default plan and first active platform admin.
+    const platformAdmin = this.dataStore.getEmployees().find((e) => e.role === 'PLATFORM_ADMIN' && e.status === 'ACTIVE');
+    const plans = this.dataStore.getSubscriptionPlans();
+    const plan = plans.find((p) => p.plan_id === 'PLAN-BASIC' && p.status === 'ACTIVE')
+      || plans.find((p) => p.status === 'ACTIVE');
+    if (!platformAdmin || !plan) {
+      throw new InternalServerErrorException('Company registration is temporarily unavailable. Please try again later.');
+    }
+
+    const beforeSubmit = structuredClone(reg);
     reg.admin = {
       name: dto.admin_name.trim(),
       email: dto.admin_email.trim().toLowerCase(),
       designation: dto.designation.trim(),
-      // Plaintext never leaves this function; the account itself is created on approval.
+      // Plaintext never leaves this function; activation uses the existing hash.
       password_hash: hashPassword(dto.password),
       terms_accepted_at: now(),
     };
-    const resubmission = reg.status === 'rejected';
-    reg.status = 'pending';
     reg.rejection_reason = null;
     reg.submitted_at = now();
-    reg.updated_at = now();
-    this.record(reg, resubmission ? 'Resubmitted for verification' : 'Submitted for verification', 'Applicant');
-    this.dataStore.logActivity({
-      user_id: reg.reference,
-      user_name: reg.company.legal_name,
-      role: 'APPLICANT',
-      action: resubmission ? 'Company registration resubmitted' : 'Company registration submitted',
-      details: `${reg.company.legal_name} submitted registration ${reg.reference} for verification.`,
-    });
+    try {
+      this.activateCompany(reg, plan, platformAdmin);
+    } catch (error) {
+      Object.assign(reg, beforeSubmit);
+      throw error;
+    }
     return this.applicantView(reg);
   }
 
   // ---- reviewer side (Super Admin session, enforced by the controller) ----
 
   list(status?: string) {
+    this.dataStore.refreshIdentityData();
     return this.dataStore
       .getCompanyRegistrations()
       .filter((r) => r.status !== 'draft' && (!status || r.status === status))
@@ -237,10 +256,12 @@ export class CompanyRegistrationService {
   }
 
   getForReview(reference: string) {
+    this.dataStore.refreshIdentityData();
     return this.reviewerView(this.findSubmitted(reference));
   }
 
   documentForReview(reference: string, docType: string) {
+    this.dataStore.refreshIdentityData();
     const doc = this.findSubmitted(reference).documents[docType];
     if (!doc) throw new NotFoundException('Document not found.');
     const filePath = path.join(this.docDir, doc.stored_name);
@@ -249,14 +270,19 @@ export class CompanyRegistrationService {
   }
 
   startReview(reference: string, actor: Actor) {
+    this.dataStore.refreshIdentityData();
     const reg = this.findSubmitted(reference);
     if (reg.status !== 'pending') throw new ConflictException('Only pending registrations can be moved to review.');
-    reg.status = 'under_review';
-    this.markReviewed(reg, actor, 'Review started');
+    const updated = structuredClone(reg);
+    updated.status = 'under_review';
+    this.markReviewed(updated, actor, 'Review started');
+    this.dataStore.saveCompanyRegistration(updated);
+    Object.assign(reg, updated);
     return this.reviewerView(reg);
   }
 
   approve(reference: string, dto: ApproveRegistrationDto, actor: Actor) {
+    this.dataStore.refreshIdentityData();
     const reg = this.findSubmitted(reference);
     if (!REVIEWABLE.includes(reg.status)) throw new ConflictException(`A ${reg.status} registration cannot be approved.`);
     const platformAdmin = this.dataStore.getEmployees().find((e) => e.emp_id === dto.platform_admin_id && e.role === 'PLATFORM_ADMIN');
@@ -269,59 +295,22 @@ export class CompanyRegistrationService {
     }
     this.assertNoDuplicateCompany(reg.company, reg.reference);
 
-    const c = reg.company;
-    const stamp = Date.now();
-    const company_id = `COMP-${stamp}`;
-    const created_date = now().split('T')[0];
-    this.dataStore.getCompanies().push({
-      company_id,
-      company_name: c.legal_name,
-      company_email: c.company_email,
-      phone: c.phone,
-      industry: null,
-      address: `${c.address}, ${c.state}, ${c.country}`,
-      status: 'ACTIVE',
-      subscription_plan_id: plan.plan_id,
-      platform_admin_id: platformAdmin.emp_id,
-      created_date,
-      business_type: c.business_type,
-      registration_number: c.registration_number,
-      gstin: c.gstin,
-      website: c.website,
-      registration_reference: reg.reference,
-    });
-    this.dataStore.getEmployees().push({
-      emp_id: `CA-${stamp}`,
-      emp_name: reg.admin.name,
-      email: reg.admin.email,
-      phone: c.phone,
-      password: reg.admin.password_hash,
-      role: 'COMPANY_ADMIN',
-      status: 'ACTIVE',
-      designation: reg.admin.designation,
-      date_of_joining: created_date,
-      companyId: company_id,
-    });
-
-    reg.status = 'verified';
-    reg.company_id = company_id;
-    this.markReviewed(reg, actor, 'Approved and company created');
-    this.dataStore.logActivity({
-      user_id: actor.emp_id, user_name: actor.emp_name, role: actor.role,
-      action: 'Company registration approved', company_id, company_name: c.legal_name,
-      details: `Verified ${reg.reference}; assigned ${platformAdmin.emp_name} on ${plan.name}.`,
-    });
+    this.activateCompany(reg, plan, platformAdmin, actor);
     return this.reviewerView(reg);
   }
 
   reject(reference: string, dto: RejectRegistrationDto, actor: Actor) {
+    this.dataStore.refreshIdentityData();
     const reg = this.findSubmitted(reference);
     if (!REVIEWABLE.includes(reg.status)) throw new ConflictException(`A ${reg.status} registration cannot be rejected.`);
-    reg.status = 'rejected';
-    reg.rejection_reason = dto.reason;
+    const updated = structuredClone(reg);
+    updated.status = 'rejected';
+    updated.rejection_reason = dto.reason;
     // The admin must re-enter a password on resubmission; drop the stored hash.
-    reg.admin = { ...reg.admin, password_hash: null };
-    this.markReviewed(reg, actor, 'Rejected', dto.reason);
+    updated.admin = { ...updated.admin, password_hash: null };
+    this.markReviewed(updated, actor, 'Rejected', dto.reason);
+    this.dataStore.saveCompanyRegistration(updated);
+    Object.assign(reg, updated);
     this.dataStore.logActivity({
       user_id: actor.emp_id, user_name: actor.emp_name, role: actor.role,
       action: 'Company registration rejected', company_name: reg.company.legal_name,
@@ -332,7 +321,85 @@ export class CompanyRegistrationService {
 
   // ---- helpers ----
 
+  private activateCompany(reg: any, plan: any, platformAdmin: any, reviewer?: Actor) {
+    const previousRegistration = structuredClone(reg);
+    const existingCompany = this.dataStore.getCompanies().find((c) => c.registration_reference === reg.reference);
+    const existingAdmin = this.dataStore.getEmployees().find((e) => e.registration_reference === reg.reference);
+    let company: any = null;
+    let admin: any = null;
+    if (existingCompany || existingAdmin) {
+      // A repeated activation may finish the status transition only when both
+      // related records already exist and point to each other. Partial state is
+      // surfaced instead of creating another company or administrator.
+      if (!existingCompany || !existingAdmin || existingAdmin.companyId !== existingCompany.company_id) {
+        throw new InternalServerErrorException('Registration activation is incomplete. Contact support before retrying.');
+      }
+      reg.company_id = existingCompany.company_id;
+    } else {
+      const c = reg.company;
+      const company_id = `COMP-${randomUUID()}`;
+      const created_date = now().split('T')[0];
+      company = {
+        company_id,
+        company_name: c.legal_name,
+        company_email: c.company_email,
+        phone: c.phone,
+        industry: null,
+        address: `${c.address}, ${c.state}, ${c.country}`,
+        status: 'ACTIVE',
+        subscription_plan_id: plan.plan_id,
+        platform_admin_id: platformAdmin.emp_id,
+        created_date,
+        business_type: c.business_type,
+        registration_number: c.registration_number,
+        gstin: c.gstin,
+        website: c.website,
+        registration_reference: reg.reference,
+      };
+      admin = {
+        emp_id: `CA-${randomUUID()}`,
+        emp_name: reg.admin.name,
+        email: reg.admin.email,
+        phone: c.phone,
+        password: reg.admin.password_hash,
+        role: 'COMPANY_ADMIN',
+        status: 'ACTIVE',
+        designation: reg.admin.designation,
+        date_of_joining: created_date,
+        companyId: company_id,
+        registration_reference: reg.reference,
+      };
+      reg.company_id = company_id;
+    }
+
+    reg.status = 'verified';
+    reg.rejection_reason = null;
+    this.markReviewed(reg, reviewer || { emp_id: reg.reference, emp_name: 'System', role: 'SYSTEM' },
+      reviewer ? 'Approved and company created' : 'Automatically approved; Company Admin activated');
+    try {
+      if (company && admin) this.dataStore.persistRegistrationActivation(reg, company, admin);
+      else this.dataStore.saveCompanyRegistration(reg);
+    } catch (error) {
+      Object.assign(reg, previousRegistration);
+      throw error;
+    }
+    if (company && admin) {
+      this.dataStore.getCompanies().push(company);
+      this.dataStore.getEmployees().push(admin);
+    }
+    this.dataStore.logActivity({
+      user_id: reviewer?.emp_id || reg.reference,
+      user_name: reviewer?.emp_name || 'System',
+      role: reviewer?.role || 'SYSTEM',
+      action: reviewer ? 'Company registration approved' : 'Company registration automatically approved',
+      company_id: reg.company_id,
+      company_name: reg.company.legal_name,
+      details: `Verified ${reg.reference}; assigned ${platformAdmin.emp_name} on ${plan.name}.`,
+    });
+  }
+
   private authorise(reference: string, token: string) {
+    this.dataStore.refreshIdentityData();
     const reg = this.dataStore.getCompanyRegistrations().find((r) => r.reference === reference);
     const given = typeof token === 'string' && token ? sha256(token) : null;
     // Same error for unknown reference and wrong token, compared in constant time. 403,

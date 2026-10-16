@@ -5,26 +5,23 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import usePageTitle from '../../hooks/usePageTitle';
-import { forgetRegistration, getRegistration, getSavedRegistration } from '../../services/companyRegistrationService';
+import { getRegistration, getSavedRegistration } from '../../services/companyRegistrationService';
 import { PATHS } from '../../utils/constants';
 import { formatBytes, RegistrationShell } from './CompanyRegister';
 
 export const REGISTRATION_STATUS_INFO = {
   draft: { label: 'Not submitted', badge: 'badge-not-started', message: 'Your registration has been started but not yet submitted for verification.' },
-  pending: { label: 'Pending', badge: 'badge-pending', message: 'Your company registration has been submitted and is awaiting verification.' },
-  under_review: { label: 'Under review', badge: 'badge-info', message: 'The EmpTrack verification team is reviewing your company details and documents.' },
-  verified: { label: 'Verified', badge: 'badge-success', message: 'Your company has been verified and your administrator account is active.' },
+  pending: { label: 'Submitted', badge: 'badge-pending', message: 'Your registration has been submitted.' },
+  under_review: { label: 'Submitted', badge: 'badge-info', message: 'Your registration has been submitted.' },
+  verified: { label: 'Approved', badge: 'badge-success', message: 'Your company is approved and your Company Admin account is ready. You can sign in now.' },
   rejected: { label: 'Rejected', badge: 'badge-danger', message: 'Your company registration was not approved.' },
 };
 
 const NEXT_STEPS = {
   draft: ['Finish uploading your documents and administrator details, then submit for verification.'],
-  pending: [
-    'A verification reviewer will check your registration details against the documents you uploaded.',
-    'You cannot sign in until the review is complete. Check this page for updates.',
-  ],
-  under_review: ['No action is needed right now. If something is missing, the reviewer will explain what to fix here.'],
-  verified: ['Sign in with the administrator email and password you chose during registration.', 'Then invite your HR team and employees from the Company Admin portal.'],
+  pending: ['Your registration has been submitted.'],
+  under_review: ['Your registration has been submitted.'],
+  verified: ['Your Company Admin account is active. Sign in with the email and password you chose during registration.', 'Then invite your HR team and employees from the Company Admin portal.'],
   rejected: ['Read the reason above, correct your details or documents, and submit again.'],
 };
 
@@ -40,10 +37,8 @@ export default function RegistrationStatus() {
     getRegistration()
       .then((r) => { setReg(r); setState('ready'); })
       .catch((err) => {
-        if (err.status === 403) {
-          forgetRegistration();
-          setState('none');
-        } else setState('error');
+        if (err.status === 403) setState('none');
+        else setState('error');
       });
   };
   useEffect(() => {
@@ -83,6 +78,7 @@ export default function RegistrationStatus() {
         <div><dt>Reference</dt><dd>{reg.reference}</dd></div>
         <div><dt>Status</dt><dd><span className={`badge ${info.badge}`}>{info.label}</span></dd></div>
         {reg.submitted_at && <div><dt>Submitted</dt><dd>{new Date(reg.submitted_at).toLocaleString()}</dd></div>}
+        {reg.status === 'verified' && reg.reviewed_at && <div><dt>Approved</dt><dd>{new Date(reg.reviewed_at).toLocaleString()}</dd></div>}
         {reg.admin && <div><dt>Administrator</dt><dd>{reg.admin.name} ({reg.admin.email})</dd></div>}
       </dl>
 
@@ -107,11 +103,11 @@ export default function RegistrationStatus() {
         <Link to={PATHS.HOME} className="btn btn-outline">Back to home</Link>
         {['pending', 'under_review'].includes(reg.status) && <Button variant="outline" onClick={load}>Refresh status</Button>}
         {['draft', 'rejected'].includes(reg.status) && (
-          <Link to={PATHS.COMPANY_REGISTER} className="btn btn-primary">{reg.status === 'rejected' ? 'Update and resubmit' : 'Continue registration'}</Link>
+          <Link to={`${PATHS.COMPANY_REGISTER}?resume=1`} className="btn btn-primary">{reg.status === 'rejected' ? 'Update and resubmit' : 'Continue registration'}</Link>
         )}
         {reg.status === 'verified' && (
           <>
-            <Button variant="outline" onClick={() => { forgetRegistration(); navigate(PATHS.COMPANY_REGISTER); }}>Register another company</Button>
+            <Button variant="outline" onClick={() => navigate(PATHS.COMPANY_REGISTER)}>Register another company</Button>
             <Link to={PATHS.LOGIN} className="btn btn-primary">Go to Login</Link>
           </>
         )}

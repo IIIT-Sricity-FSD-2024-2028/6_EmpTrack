@@ -47,8 +47,9 @@ export class InvitationService {
     const employee = this.dataStore.getEmployees().find((e) => e.emp_id === invitation.emp_id);
     if (!employee) throw new NotFoundException('The account linked to this invitation no longer exists');
 
-    employee.password = hashPassword(password);
-    employee.status = 'ACTIVE';
+    const activated = { ...employee, password: hashPassword(password), status: 'ACTIVE' };
+    this.dataStore.saveEmployee(activated);
+    Object.assign(employee, activated);
     invitation.status = 'ACCEPTED';
     invitation.accepted_date = new Date().toISOString();
 

@@ -10,6 +10,9 @@ import { HttpExceptionFilter } from './../src/common/filters/http-exception.filt
 import { createValidationPipe } from './../src/common/validation/validators';
 import { SessionService } from './../src/auth/session.service';
 import { MockDataService } from './../src/data/mock-data.service';
+import { useIsolatedWorkflowDb } from './helpers/isolatedWorkflowDb';
+
+useIsolatedWorkflowDb('emptrack-validation-');
 
 // Field-level validation of every endpoint that creates or updates data. Each
 // rejected request must answer 400 with the failing field in `errors`, and must

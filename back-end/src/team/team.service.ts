@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { MockDataService } from '../data/mock-data.service';
 import { CreateTeamDto, CreateTeamLeadDto } from './dto/team.dto';
 import { hashPassword } from '../common/utils/password.util';
+import { randomUUID } from 'node:crypto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
@@ -87,14 +88,14 @@ export class TeamService {
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Password and confirmation do not match');
     }
-    const existingEmail = this.dataStore.getEmployees().find((e) => String(e.email).toLowerCase() === dto.email.toLowerCase());
+    const existingEmail = this.dataStore.getEmployees().find((e) => String(e.email).trim().toLowerCase() === dto.email.trim().toLowerCase());
     if (existingEmail) throw new BadRequestException('An account with this email already exists');
 
-    const emp_id = 'TL-' + Date.now();
+    const emp_id = 'TL-' + randomUUID();
     const teamLead = {
       emp_id,
       emp_name: dto.name,
-      email: dto.email,
+      email: dto.email.trim().toLowerCase(),
       phone: dto.phone,
       password: hashPassword(dto.password),
       role: 'TEAMLEAD',
@@ -104,6 +105,7 @@ export class TeamService {
       team_id: team.team_id,
       companyId,
     };
+    this.dataStore.saveEmployee(teamLead);
     this.dataStore.getEmployees().push(teamLead);
     team.team_lead_id = emp_id;
 

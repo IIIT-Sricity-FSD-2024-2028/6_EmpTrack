@@ -71,4 +71,42 @@ describe('WorkflowPersistenceService', () => {
     reopened.onModuleDestroy();
     store = new WorkflowPersistenceService();
   });
+
+  it('migrates demo identities once and persists registrations, company admins, and sessions', () => {
+    const seedUser = { emp_id: 'DEMO-1', emp_name: 'Demo', email: 'demo@example.test', password: 'bcrypt-hash', role: 'EMPLOYEE', status: 'ACTIVE', companyId: null };
+    const seedCompany = { company_id: 'DEMO-C1', company_name: 'Demo Co', company_email: 'demo-co@example.test' };
+    expect(store.initializeIdentityData([seedUser], [seedCompany]).users).toHaveLength(1);
+    const registration = {
+      reference: 'REG-DURABLE', status: 'verified', token_hash: 'opaque-token-hash',
+      company: { legal_name: 'Durable Co', registration_number: 'R-1', company_email: 'durable@example.test' },
+      admin: { name: 'A User', email: 'admin@durable.example.test', password_hash: 'admin-bcrypt-hash' },
+    };
+    const company = { company_id: 'COMP-DURABLE', company_name: 'Durable Co', company_email: 'durable@example.test', registration_number: 'R-1', registration_reference: registration.reference };
+    const admin = { emp_id: 'CA-DURABLE', emp_name: 'A User', email: 'admin@durable.example.test', password: 'admin-bcrypt-hash', role: 'COMPANY_ADMIN', status: 'ACTIVE', companyId: company.company_id, registration_reference: registration.reference };
+    store.activateRegistration(registration, company, admin);
+    store.createSession('raw-session-token', admin.emp_id, Date.now() + 60_000);
+    store.onModuleDestroy();
+
+    const reopened = new WorkflowPersistenceService();
+    const identity = reopened.initializeIdentityData([seedUser], [seedCompany]);
+    expect(identity.users).toContainEqual(expect.objectContaining({ emp_id: admin.emp_id, password: 'admin-bcrypt-hash', role: 'COMPANY_ADMIN' }));
+    expect(identity.companies).toContainEqual(expect.objectContaining({ company_id: company.company_id }));
+    expect(reopened.getCompanyRegistration(registration.reference).status).toBe('verified');
+    expect(reopened.resolveSession('raw-session-token')).toBe(admin.emp_id);
+    expect(reopened.getUserByEmail(' ADMIN@DURABLE.EXAMPLE.TEST ')).toMatchObject({ companyId: company.company_id });
+    reopened.onModuleDestroy();
+    store = new WorkflowPersistenceService();
+  });
+
+  it('rolls back a company and registration when the durable account email conflicts', () => {
+    const user = { emp_id: 'EXISTING', emp_name: 'Existing', email: 'same@example.test', password: 'hash', role: 'COMPANY_ADMIN', status: 'ACTIVE', companyId: 'C1' };
+    store.initializeIdentityData([user], [{ company_id: 'C1', company_name: 'First', company_email: 'first@example.test' }]);
+    const registration = { reference: 'REG-ROLLBACK', status: 'verified', token_hash: 'hash', company: { legal_name: 'Second', company_email: 'second@example.test' }, admin: { email: 'same@example.test' } };
+    const company = { company_id: 'C2', company_name: 'Second', company_email: 'second@example.test', registration_reference: registration.reference };
+    const duplicateAdmin = { emp_id: 'DUPLICATE', emp_name: 'Duplicate', email: 'SAME@example.test', password: 'hash', role: 'COMPANY_ADMIN', status: 'ACTIVE', companyId: 'C2' };
+    expect(() => store.activateRegistration(registration, company, duplicateAdmin)).toThrow('already exists');
+    expect(store.getCompany('C2')).toBeNull();
+    expect(store.getCompanyRegistration(registration.reference)).toBeNull();
+    expect(store.getUserByEmail('same@example.test').emp_id).toBe('EXISTING');
+  });
 });

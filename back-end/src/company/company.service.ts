@@ -4,6 +4,7 @@ import { InvitationService } from '../invitation/invitation.service';
 import { CreateCompanyDto, UpdateCompanyDto, UpdateCompanyStatusDto, ReassignPlatformAdminDto, CreateCompanyAdminDto, UpdateCompanyAdminDto, UpdateCompanyAdminStatusDto } from './dto/company.dto';
 import { hashPassword } from '../common/utils/password.util';
 import { applyAccountUpdate, emailTaken } from '../common/utils/account.util';
+import { randomUUID } from 'node:crypto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 
@@ -67,12 +68,12 @@ export class CompanyService {
       throw new BadRequestException('Company Admin password and confirmation do not match');
     }
 
-    const company_id = 'COMP-' + Date.now();
+    const company_id = 'COMP-' + randomUUID();
     const created_date = new Date().toISOString().split('T')[0];
     const company = {
       company_id,
       company_name: dto.company_name,
-      company_email: dto.company_email,
+      company_email: dto.company_email.trim().toLowerCase(),
       phone: dto.phone,
       industry: dto.industry,
       address: dto.address,
@@ -81,13 +82,11 @@ export class CompanyService {
       platform_admin_id: dto.platform_admin_id,
       created_date,
     };
-    this.dataStore.getCompanies().push(company);
-
-    const admin_emp_id = 'CA-' + Date.now();
+    const admin_emp_id = 'CA-' + randomUUID();
     const companyAdminEmployee = {
       emp_id: admin_emp_id,
       emp_name: dto.admin_name,
-      email: dto.admin_email,
+      email: dto.admin_email.trim().toLowerCase(),
       phone: dto.admin_phone,
       password: hashPassword(dto.admin_password),
       role: 'COMPANY_ADMIN',
@@ -95,6 +94,8 @@ export class CompanyService {
       date_of_joining: created_date,
       companyId: company_id,
     };
+    this.dataStore.persistCompanyAndAdmin(company, companyAdminEmployee);
+    this.dataStore.getCompanies().push(company);
     this.dataStore.getEmployees().push(companyAdminEmployee);
 
     this.dataStore.logActivity({
@@ -125,9 +126,12 @@ export class CompanyService {
     if (dto.subscription_plan_id && !this.dataStore.getSubscriptionPlans().some((p) => p.plan_id === dto.subscription_plan_id)) {
       throw new BadRequestException('Selected subscription plan was not found');
     }
+    const updated = { ...company };
     Object.keys(dto).forEach((key) => {
-      if (dto[key] !== undefined) company[key] = dto[key];
+      if (dto[key] !== undefined) updated[key] = dto[key];
     });
+    this.dataStore.saveCompany(updated);
+    Object.assign(company, updated);
     return this.enrich(company);
   }
 
@@ -135,7 +139,9 @@ export class CompanyService {
     const company = this.dataStore.getCompanies().find((c) => c.company_id === id);
     if (!company) throw new NotFoundException('Company not found');
     const previousStatus = company.status;
-    company.status = dto.status;
+    const updated = { ...company, status: dto.status };
+    this.dataStore.saveCompany(updated);
+    Object.assign(company, updated);
 
     const actionLabel = dto.status === 'ACTIVE' ? 'Company activated' : dto.status === 'SUSPENDED' ? 'Company suspended' : 'Company deactivated';
     this.dataStore.logActivity({
@@ -158,7 +164,9 @@ export class CompanyService {
     if (platformAdmin.status !== 'ACTIVE') throw new BadRequestException('Selected Platform Admin is not active');
 
     const previousAdminId = company.platform_admin_id;
-    company.platform_admin_id = dto.platform_admin_id;
+    const updated = { ...company, platform_admin_id: dto.platform_admin_id };
+    this.dataStore.saveCompany(updated);
+    Object.assign(company, updated);
 
     this.dataStore.logActivity({
       user_id: actor.emp_id,
@@ -211,11 +219,11 @@ export class CompanyService {
     const existingEmail = emailTaken(this.dataStore, dto.email);
     if (existingEmail) throw new BadRequestException('An account with this email already exists');
 
-    const emp_id = 'CA-' + Date.now();
+    const emp_id = 'CA-' + randomUUID();
     const admin = {
       emp_id,
       emp_name: dto.name,
-      email: dto.email,
+      email: dto.email.trim().toLowerCase(),
       phone: dto.phone,
       password: hashPassword(dto.password),
       role: 'COMPANY_ADMIN',
@@ -223,6 +231,7 @@ export class CompanyService {
       date_of_joining: new Date().toISOString().split('T')[0],
       companyId,
     };
+    this.dataStore.saveEmployee(admin);
     this.dataStore.getEmployees().push(admin);
 
     this.dataStore.logActivity({
@@ -252,7 +261,9 @@ export class CompanyService {
     this.assertManagesCompany(company, actor);
     const admin = this.dataStore.getEmployees().find((e) => e.emp_id === adminId && e.companyId === companyId && e.role === 'COMPANY_ADMIN');
     if (!admin) throw new NotFoundException('Company Admin not found');
-    admin.status = dto.status;
+    const updated = { ...admin, status: dto.status };
+    this.dataStore.saveEmployee(updated);
+    Object.assign(admin, updated);
 
     this.dataStore.logActivity({
       user_id: actor.emp_id,

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { MockDataService } from '../data/mock-data.service';
 import { CreateTeamMemberDto, UpdateTeamMemberDto, UpdateTeamMemberStatusDto } from './dto/platform-team.dto';
 import { applyAccountUpdate, emailTaken } from '../common/utils/account.util';
+import { randomUUID } from 'node:crypto';
 
 type Actor = { emp_id: string; emp_name: string; role: string };
 type TeamRole = 'TECHNICAL_MEMBER' | 'SUPPORT_MEMBER';
@@ -45,9 +46,9 @@ export class PlatformTeamService {
 
     const prefix = teamRole === 'TECHNICAL_MEMBER' ? 'TT-' : 'ST-';
     const member = {
-      emp_id: prefix + Date.now(),
+      emp_id: prefix + randomUUID(),
       emp_name: dto.name,
-      email: dto.email,
+      email: dto.email.trim().toLowerCase(),
       phone: dto.phone,
       password: null,
       role: teamRole,
@@ -57,6 +58,7 @@ export class PlatformTeamService {
       platform_admin_id: actor.emp_id,
       specialization: dto.specialization || null,
     };
+    this.dataStore.saveEmployee(member);
     this.dataStore.getEmployees().push(member);
 
     this.dataStore.logActivity({
@@ -88,7 +90,9 @@ export class PlatformTeamService {
       if (stillAssigned) throw new BadRequestException('Reassign this team member\'s open tickets before deactivating their account');
     }
 
-    member.status = dto.status;
+    const updated = { ...member, status: dto.status };
+    this.dataStore.saveEmployee(updated);
+    Object.assign(member, updated);
     this.dataStore.logActivity({
       user_id: actor.emp_id,
       user_name: actor.emp_name,

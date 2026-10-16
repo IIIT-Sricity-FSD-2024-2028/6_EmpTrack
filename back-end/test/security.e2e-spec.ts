@@ -8,6 +8,9 @@ import { createValidationPipe } from './../src/common/validation/validators';
 import { SessionService } from './../src/auth/session.service';
 import { MockDataService } from './../src/data/mock-data.service';
 import { NotificationService } from './../src/notification/notification.service';
+import { useIsolatedWorkflowDb } from './helpers/isolatedWorkflowDb';
+
+useIsolatedWorkflowDb('emptrack-security-');
 
 // End-to-end checks for authentication, authorization/tenant isolation and the core
 // business rules (leave, attendance, tasks, issues, notifications, escalations).
@@ -355,13 +358,16 @@ describe('EmpTrack security and workflows (e2e)', () => {
 
     it('refuses a request when the employee has no active Team Lead, and saves nothing', async () => {
       const store = app.get(MockDataService);
-      store.getEmployees().push({ emp_id: 'EM950', emp_name: 'No Lead', email: 'nolead@emptrack.com', role: 'EMPLOYEE', status: 'ACTIVE', companyId: 'C001' } as any);
+      const noLead = { emp_id: 'EM950', emp_name: 'No Lead', email: 'nolead@emptrack.com', role: 'EMPLOYEE', status: 'ACTIVE', companyId: 'C001' } as any;
+      store.saveEmployee(noLead);
+      store.getEmployees().push(noLead);
       tokens.EM950 = app.get(SessionService).create('EM950').token;
       const before = store.getLeaves().length;
       const res = await apply('EM950', 'CASUAL', 230).expect(422);
       expect(res.body.message).toContain('no active Team Lead');
       // A manager_id that points at someone who is not a Team Lead is not used either.
       (store.getEmployees().find((e: any) => e.emp_id === 'EM950') as any).manager_id = 'HR001';
+      store.saveEmployee(store.getEmployees().find((e: any) => e.emp_id === 'EM950'));
       await apply('EM950', 'SICK', 230).expect(422);
       expect(store.getLeaves()).toHaveLength(before);
       // Emergency leave does not need a Team Lead.
@@ -373,6 +379,7 @@ describe('EmpTrack security and workflows (e2e)', () => {
       const hr = store.getEmployees().find((e: any) => e.emp_id === 'HR001')!;
       const before = store.getLeaves().length;
       hr.status = 'INACTIVE';
+      store.saveEmployee(hr);
       try {
         const res = await apply('EM002', 'EMERGENCY', 240).expect(422);
         expect(res.body.message).toContain('No active HR reviewer');
@@ -380,6 +387,7 @@ describe('EmpTrack security and workflows (e2e)', () => {
         await apply('EM002', 'CASUAL', 242).expect(201);
       } finally {
         hr.status = 'ACTIVE';
+        store.saveEmployee(hr);
       }
       expect(store.getLeaves()).toHaveLength(before + 1);
     });
@@ -583,7 +591,9 @@ describe('login for every role (e2e)', () => {
   it('refuses an account with no valid role', async () => {
     // In-memory copy only; the seed itself is untouched.
     const employee = app.get(MockDataService).getEmployees().find((e) => e.emp_id === 'EM002');
+    employee.status = 'ACTIVE';
     employee.role = 'MANAGER';
+    app.get(MockDataService).saveEmployee(employee);
     const res = await request(app.getHttpServer()).post('/auth/login').send({ email: 'jane@emptrack.com', password: PASSWORD }).expect(403);
     expect(res.body.message).toBe('This account has no valid role assigned. Contact your administrator.');
     expect(res.body.token).toBeUndefined();

@@ -38,7 +38,7 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      const user = await login(email.trim(), password);
+      const user = await login(email.trim().toLowerCase(), password);
       cancelReauthentication();
       navigate(destinationFor(user, location.state?.from), { replace: true });
     } catch (submitError) {

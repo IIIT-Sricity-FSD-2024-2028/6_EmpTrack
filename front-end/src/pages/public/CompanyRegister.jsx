@@ -1,8 +1,7 @@
 // Public company self-registration: Company Details -> Documents -> Administrator,
-// then the status page. Every step is saved by the backend; nothing here can mark a
-// company verified - only a Super Admin can (pages/super-admin/SaRegistrations.jsx).
+// then the status page. New visits start fresh; saved progress can be resumed explicitly.
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import BrandLogo from '../../components/common/BrandLogo';
 import Button from '../../components/common/Button';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
@@ -10,7 +9,6 @@ import Input from '../../components/common/Input';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
-  forgetRegistration,
   getRegistration,
   getSavedRegistration,
   startRegistration,
@@ -84,7 +82,11 @@ const fromCompany = (c) => Object.fromEntries(Object.keys(EMPTY_DETAILS).map((k)
 export default function CompanyRegister() {
   usePageTitle('Register your company');
   const navigate = useNavigate();
-  const [loadState, setLoadState] = useState(getSavedRegistration() ? 'loading' : 'ready');
+  const location = useLocation();
+  // Opening this public route starts a fresh registration. Existing progress is
+  // loaded only through the explicit Resume link below.
+  const resumeRequested = new URLSearchParams(location.search).get('resume') === '1';
+  const [loadState, setLoadState] = useState(resumeRequested && getSavedRegistration() ? 'loading' : 'ready');
   const [reg, setReg] = useState(null);
   const [step, setStep] = useState(0);
   const [details, setDetails] = useState(EMPTY_DETAILS);
@@ -107,15 +109,13 @@ export default function CompanyRegister() {
         setLoadState('ready');
       })
       .catch((err) => {
-        if (err.status === 403) {
-          forgetRegistration();
-          setLoadState('ready');
-        } else setLoadState('error');
+        if (err.status === 403) setLoadState('ready');
+        else setLoadState('error');
       });
   };
   useEffect(() => {
-    if (getSavedRegistration()) load();
-  }, []);
+    if (resumeRequested && getSavedRegistration()) load();
+  }, [resumeRequested]);
 
   if (reg && SUBMITTED.includes(reg.status)) return <Navigate to={PATHS.REGISTRATION_STATUS} replace />;
 
@@ -195,9 +195,15 @@ export default function CompanyRegister() {
   return (
     <RegistrationShell
       title="Register your company"
-      subtitle="Tell us about your business. Every company is verified by the EmpTrack team before its account is activated."
+      subtitle="Tell us about your business. Once you complete registration and upload the required documents, your company and administrator account are activated."
     >
       <Stepper step={step} />
+      {!resumeRequested && getSavedRegistration() && (
+        <p className="rg-legend">
+          Have an existing registration? <Link to={PATHS.REGISTRATION_STATUS}>View its status</Link> or{' '}
+          <Link to={`${PATHS.COMPANY_REGISTER}?resume=1`}>resume registration</Link>.
+        </p>
+      )}
       {reg?.status === 'rejected' && (
         <div className="rg-notice rg-notice-danger" role="status">
           <strong>Your previous submission was not approved.</strong>
@@ -245,7 +251,7 @@ export default function CompanyRegister() {
         <div>
           <p className="rg-legend">
             Upload clear copies of your registration documents. Accepted formats: PDF, JPG, PNG (max 5 MB; logo max 2 MB).
-            Documents are stored privately and are only visible to the EmpTrack verification team.
+            Documents are stored privately and are only available to the EmpTrack company onboarding team.
           </p>
           <ul className="rg-docs">
             {REGISTRATION_DOCUMENTS.map((doc) => {
@@ -295,7 +301,7 @@ export default function CompanyRegister() {
       {step === 2 && (
         <form onSubmit={submit} noValidate>
           <p className="rg-legend">
-            This person becomes the Company Administrator. The account can sign in only after your company has been verified.
+            This person becomes the Company Administrator. The company and administrator account are activated when you submit the completed registration.
           </p>
           <div className="rg-grid">
             <Input label="Administrator full name" value={admin.admin_name} onChange={setAdminField('admin_name')} maxLength={100} autoComplete="name" required {...av.field('admin_name')} />
@@ -314,7 +320,7 @@ export default function CompanyRegister() {
           <Alert>{error}</Alert>
           <div className="rg-actions">
             <Button variant="outline" onClick={() => { setError(''); setStep(1); }} disabled={busy}>Back</Button>
-            <Button type="submit" disabled={busy}>{busy ? 'Submitting...' : 'Submit for verification'}</Button>
+            <Button type="submit" disabled={busy}>{busy ? 'Submitting...' : 'Submit registration'}</Button>
           </div>
         </form>
       )}

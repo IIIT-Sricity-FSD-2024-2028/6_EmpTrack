@@ -4,6 +4,7 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { STRONG_PASSWORD_REGEX, hashPassword, comparePassword } from '../common/utils/password.util';
+import { randomUUID } from 'node:crypto';
 
 const COMPANY_SCOPED_ROLES = ['COMPANY_ADMIN', 'HR'];
 
@@ -95,14 +96,14 @@ export class EmployeeService {
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Password and confirmation do not match');
     }
-    const existingEmail = this.dataStore.getEmployees().find((e) => String(e.email).toLowerCase() === dto.email.toLowerCase());
+    const existingEmail = this.dataStore.getEmployees().find((e) => String(e.email).trim().toLowerCase() === dto.email.trim().toLowerCase());
     if (existingEmail) throw new BadRequestException('An account with this email already exists');
 
-    const emp_id = 'EM-' + Date.now();
+    const emp_id = 'EM-' + randomUUID();
     const employee = {
       emp_id,
       emp_name: dto.name,
-      email: dto.email,
+      email: dto.email.trim().toLowerCase(),
       phone: dto.phone,
       password: hashPassword(dto.password),
       role: 'EMPLOYEE',
@@ -113,6 +114,7 @@ export class EmployeeService {
       manager_id: team.team_lead_id,
       companyId,
     };
+    this.dataStore.saveEmployee(employee);
     this.dataStore.getEmployees().push(employee);
 
     this.dataStore.logActivity({
@@ -155,7 +157,9 @@ export class EmployeeService {
       throw new BadRequestException('Weak password. Use 8+ characters with uppercase, lowercase, a number, and a special character.');
     }
 
-    emp.password = hashPassword(dto.newPassword);
+    const updated = { ...emp, password: hashPassword(dto.newPassword) };
+    this.dataStore.saveEmployee(updated);
+    Object.assign(emp, updated);
 
     const { password, ...safeEmployee } = emp;
     return safeEmployee;
@@ -192,8 +196,9 @@ export class EmployeeService {
     if (updateData.emp_name !== undefined) updateData.emp_name = updateData.emp_name.trim();
     if (updateData.email !== undefined) {
       updateData.email = updateData.email.trim();
+      updateData.email = updateData.email.toLowerCase();
       const taken = this.dataStore.getEmployees().some(
-        (e) => e.emp_id !== id && String(e.email).toLowerCase() === updateData.email.toLowerCase(),
+        (e) => e.emp_id !== id && String(e.email).trim().toLowerCase() === updateData.email,
       );
       if (taken) throw new BadRequestException('An account with this email already exists');
     }

@@ -5,6 +5,7 @@ import { comparePassword } from '../common/utils/password.util';
 import { ROLE_VALUES } from '../common/validation/enums';
 import { FileLoggerService } from '../common/logger/file-logger.service';
 import { SessionService } from './session.service';
+import { WorkflowPersistenceService } from '../data/workflow-persistence.service';
 
 @Injectable()
 export class AuthService {
@@ -12,12 +13,12 @@ export class AuthService {
     private readonly dataStore: MockDataService,
     private readonly logger: FileLoggerService,
     private readonly sessions: SessionService,
+    private readonly persistence: WorkflowPersistenceService,
   ) {}
 
   login(dto: LoginDto, ip?: string, requestId?: string) {
-    const employee = this.dataStore
-      .getEmployees()
-      .find((e) => e.email.toLowerCase() === dto.email.toLowerCase());
+    const email = String(dto.email || '').trim().toLowerCase();
+    const employee = this.persistence.getUserByEmail(email);
 
     // Same generic message whether the email doesn't exist or the password is wrong,
     // so a caller can't use this endpoint to enumerate registered accounts.
@@ -81,7 +82,7 @@ export class AuthService {
   // (or the role inside it) that the server no longer accepts. AuthGuard has already
   // rejected missing/expired/revoked tokens and set x-actor-id from the session.
   me(empId: string) {
-    const employee = this.dataStore.getEmployees().find((e) => e.emp_id === empId);
+    const employee = this.persistence.getUserById(empId);
     if (!employee) throw new UnauthorizedException('Your session has expired. Please log in again.');
     const { password, ...safeUser } = employee;
     return { user: this.enrichScope(safeUser) };
@@ -108,11 +109,11 @@ export class AuthService {
   private enrichScope(user: any) {
     const scoped: any = { ...user };
     if (user.companyId) {
-      const company = this.dataStore.getCompanies().find((c) => c.company_id === user.companyId);
+      const company = this.persistence.getCompany(user.companyId);
       if (company) scoped.company_name = company.company_name;
     }
     if (user.platform_admin_id) {
-      const platformAdmin = this.dataStore.getEmployees().find((e) => e.emp_id === user.platform_admin_id);
+      const platformAdmin = this.persistence.getUserById(user.platform_admin_id);
       if (platformAdmin) scoped.platform_admin_name = platformAdmin.emp_name;
     }
     return scoped;

@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { hashPassword } from '../common/utils/password.util';
+import { WorkflowPersistenceService } from './workflow-persistence.service';
 
 // Relative-date helpers for the seed data. Ticket timelines are seeded relative to
 // "now" so demo dashboards (Resolved Today, the 7-day work progress chart, recent
@@ -298,13 +299,58 @@ const INITIAL_MOCK_DATA = {
 export class MockDataService {
     public data: any;
 
-    constructor() {
+    constructor(@Optional() private readonly persistence?: WorkflowPersistenceService) {
         this.data = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA));
         this.data.platform_tickets.forEach((t) => this.normalizeTicket(t));
         // Seed passwords are written in plain text above for readability, but nothing
         // ever sits in memory unhashed - hash them once at boot, same as any password
         // created at runtime.
         this.data.employee.forEach((e) => { if (e.password) e.password = hashPassword(e.password); });
+        if (this.persistence) {
+            const identity = this.persistence.initializeIdentityData(this.data.employee, this.data.companies);
+            this.replaceArray('employee', identity.users);
+            this.replaceArray('companies', identity.companies);
+            this.replaceArray('company_registrations', identity.registrations);
+        }
+    }
+
+    private replaceArray(name: string, records: any[]) {
+        this.data[name].splice(0, this.data[name].length, ...records);
+    }
+
+    /** Refresh shared identity records before authenticated requests on any API instance. */
+    public refreshIdentityData() {
+        if (!this.persistence) return;
+        this.replaceArray('employee', this.persistence.getUsers());
+        this.replaceArray('companies', this.persistence.getCompanies());
+        this.replaceArray('company_registrations', this.persistence.getCompanyRegistrations());
+    }
+
+    public saveEmployee(employee: any) {
+        if (employee.email) employee.email = String(employee.email).trim().toLowerCase();
+        this.persistence?.saveUser(employee);
+        return employee;
+    }
+
+    public saveCompany(company: any) {
+        if (company.company_email) company.company_email = String(company.company_email).trim().toLowerCase();
+        this.persistence?.saveCompany(company);
+        return company;
+    }
+
+    public saveCompanyRegistration(registration: any) {
+        this.persistence?.saveCompanyRegistration(registration);
+        return registration;
+    }
+
+    public persistCompanyAndAdmin(company: any, admin: any) {
+        if (admin.email) admin.email = String(admin.email).trim().toLowerCase();
+        this.persistence?.createCompanyAndAdmin(company, admin);
+    }
+
+    public persistRegistrationActivation(registration: any, company: any, admin: any) {
+        if (admin.email) admin.email = String(admin.email).trim().toLowerCase();
+        this.persistence?.activateRegistration(registration, company, admin);
     }
 
     // Guarantees every platform ticket carries the technical-workflow fields, so
@@ -370,6 +416,7 @@ export class MockDataService {
 
     public deleteEmployee(id: string) {
         const initialLength = this.data.employee.length;
+        this.persistence?.deleteUser(id);
         this.data.employee = this.data.employee.filter(e => e.emp_id !== id);
 
         // Cascade deletes
@@ -394,8 +441,10 @@ export class MockDataService {
     public updateEmployee(id: string, updateData: any) {
         const index = this.data.employee.findIndex(e => e.emp_id === id);
         if (index !== -1) {
-            this.data.employee[index] = { ...this.data.employee[index], ...updateData };
-            return this.data.employee[index];
+            const updated = { ...this.data.employee[index], ...updateData };
+            this.saveEmployee(updated);
+            this.data.employee[index] = updated;
+            return updated;
         }
         return null;
     }
