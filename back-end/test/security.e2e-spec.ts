@@ -7,6 +7,7 @@ import { HttpExceptionFilter } from './../src/common/filters/http-exception.filt
 import { createValidationPipe } from './../src/common/validation/validators';
 import { SessionService } from './../src/auth/session.service';
 import { MockDataService } from './../src/data/mock-data.service';
+import { NotificationService } from './../src/notification/notification.service';
 
 // End-to-end checks for authentication, authorization/tenant isolation and the core
 // business rules (leave, attendance, tasks, issues, notifications, escalations).
@@ -230,6 +231,179 @@ describe('EmpTrack security and workflows (e2e)', () => {
         .send({ leave_type: 'CASUAL', reason: 'Rest', start_date: dateKey(50), end_date: dateKey(50) }).expect(201);
       await http().patch(`/leaves/${res.body.leave_id}/status`).set(as('TL001')).send({ status: 'APPROVED' }).expect(403);
       await http().patch(`/leaves/${res.body.leave_id}/status`).set(as('HR001')).send({ status: 'APPROVED' }).expect(200);
+    });
+  });
+
+  describe('leave routing (Emergency -> HR, everything else -> Team Lead)', () => {
+    const ids: Record<string, string> = {};
+    const apply = (empId: string, leave_type: string, offset: number, extra: object = {}) =>
+      http().post('/leaves').set(as(empId)).send({ leave_type, reason: 'Routing check', start_date: dateKey(offset), end_date: dateKey(offset), ...extra });
+    const queue = async (empId: string) => (await http().get('/leaves/review-queue').set(as(empId)).expect(200)).body.map((l: any) => l.leave_id);
+    const notificationsOf = (empId: string) => app.get(MockDataService).getNotifications().filter((n: any) => n.employee_id === empId);
+
+    it('routes Emergency Leave to the HR queue and notifies HR, not the Team Lead', async () => {
+      const hrBefore = notificationsOf('HR001').length;
+      const tlBefore = notificationsOf('TL001').length;
+      const res = await apply('EM001', 'EMERGENCY', 200).expect(201);
+      expect(res.body).toMatchObject({ emp_id: 'EM001', leave_type: 'EMERGENCY', routed_to: 'HR', approver_id: null, status: 'PENDING' });
+      ids.emergency = res.body.leave_id;
+      expect(notificationsOf('HR001')).toHaveLength(hrBefore + 1);
+      expect(notificationsOf('HR001').at(-1).message).toContain('emergency leave');
+      expect(notificationsOf('TL001')).toHaveLength(tlBefore);
+      expect(notificationsOf('HR002').some((n: any) => n.message.includes(dateKey(200)))).toBe(false);
+    });
+
+    it.each([['CASUAL', 210], ['SICK', 212], ['UNPAID', 214]])('routes %s leave to the assigned Team Lead', async (leaveType: string, offset: number) => {
+      const tlBefore = notificationsOf('TL001').length;
+      const res = await apply('EM002', leaveType, offset).expect(201);
+      expect(res.body).toMatchObject({ leave_type: leaveType, routed_to: 'TEAMLEAD', approver_id: 'TL001', status: 'PENDING' });
+      ids[leaveType] = res.body.leave_id;
+      expect(notificationsOf('TL001')).toHaveLength(tlBefore + 1);
+    });
+
+    it('ignores a client-supplied destination, approver or applicant', async () => {
+      const toTl = await apply('EM001', 'EMERGENCY', 220, { routed_to: 'TEAMLEAD', approver_id: 'TL001', emp_id: 'EM002' }).expect(201);
+      expect(toTl.body).toMatchObject({ emp_id: 'EM001', routed_to: 'HR', approver_id: null });
+      const toHr = await apply('EM001', 'CASUAL', 222, { routed_to: 'HR', approver_id: 'HR001' }).expect(201);
+      expect(toHr.body).toMatchObject({ routed_to: 'TEAMLEAD', approver_id: 'TL001' });
+      ids.manipulatedEmergency = toTl.body.leave_id;
+      ids.manipulatedCasual = toHr.body.leave_id;
+      await apply('EM001', 'EMERGENCY', 224, { empId: 'EM002' }).expect(403);
+    });
+
+    it('rejects a repeated emergency submission for the same dates', () => apply('EM001', 'EMERGENCY', 200).expect(409));
+
+    it("puts emergency leaves only in HR's queue and ordinary ones only in the Team Lead's", async () => {
+      const hr = await queue('HR001');
+      const tl = await queue('TL001');
+      expect(hr).toEqual(expect.arrayContaining([ids.emergency, ids.manipulatedEmergency]));
+      expect(hr.some((id: string) => [ids.CASUAL, ids.SICK, ids.UNPAID, ids.manipulatedCasual].includes(id))).toBe(false);
+      expect(tl).toEqual(expect.arrayContaining([ids.CASUAL, ids.SICK, ids.UNPAID, ids.manipulatedCasual]));
+      expect(tl.includes(ids.emergency)).toBe(false);
+      // The other company's HR / Team Lead see none of these.
+      const other = [...(await queue('HR002')), ...(await queue('TL002'))];
+      expect(other.some((id: string) => Object.values(ids).includes(id))).toBe(false);
+    });
+
+    it('keeps the review queue away from employees and Company Admins', async () => {
+      await http().get('/leaves/review-queue').set(as('EM001')).expect(403);
+      await http().get('/leaves/review-queue').set(as('AD001')).expect(403);
+      await http().get('/leaves/review-queue').expect(401);
+    });
+
+    it('blocks the Team Lead (and Company Admin, other-company HR) from deciding an emergency leave', async () => {
+      const res = await http().patch(`/leaves/${ids.emergency}/status`).set(as('TL001')).send({ status: 'APPROVED' }).expect(403);
+      expect(res.body.message).toBe('Emergency leave requests can only be reviewed by HR.');
+      await http().patch(`/leaves/${ids.emergency}/status`).set(as('AD001')).send({ status: 'APPROVED' }).expect(403);
+      await http().patch(`/leaves/${ids.emergency}/status`).set(as('HR002')).send({ status: 'APPROVED' }).expect(403);
+    });
+
+    it('lets HR approve an emergency leave, and the employee sees the decision', async () => {
+      const before = notificationsOf('EM001').length;
+      const res = await http().patch(`/leaves/${ids.emergency}/status`).set(as('HR001')).send({ status: 'APPROVED' }).expect(200);
+      expect(res.body).toMatchObject({ status: 'APPROVED', approved_by: 'HR001', routed_to: 'HR' });
+      const mine = (await http().get('/leaves/user/EM001').set(as('EM001')).expect(200)).body;
+      expect(mine.find((l: any) => l.leave_id === ids.emergency).status).toBe('APPROVED');
+      expect(notificationsOf('EM001')).toHaveLength(before + 1);
+      expect(notificationsOf('EM001').at(-1).message).toContain('approved');
+      expect(await queue('HR001')).not.toContain(ids.emergency);
+    });
+
+    it('lets HR reject an emergency leave with a reason', async () => {
+      const res = await http().patch(`/leaves/${ids.manipulatedEmergency}/status`).set(as('HR001'))
+        .send({ status: 'REJECTED', reject_reason: 'Please call HR first.' }).expect(200);
+      expect(res.body).toMatchObject({ status: 'REJECTED', reject_reason: 'Please call HR first.' });
+      expect(notificationsOf('EM001').at(-1).message).toContain('Please call HR first.');
+    });
+
+    it('does not let a decided emergency leave be decided again', () =>
+      http().patch(`/leaves/${ids.emergency}/status`).set(as('HR001')).send({ status: 'REJECTED' }).expect(409));
+
+    it("blocks HR and other Team Leads from deciding a Team Lead's request", async () => {
+      const res = await http().patch(`/leaves/${ids.CASUAL}/status`).set(as('HR001')).send({ status: 'APPROVED' }).expect(403);
+      expect(res.body.message).toBe('Only the assigned Team Lead can review this leave request.');
+      await http().patch(`/leaves/${ids.CASUAL}/status`).set(as('TL002')).send({ status: 'APPROVED' }).expect(403);
+      await http().patch(`/leaves/${ids.CASUAL}/status`).set(as('EM001')).send({ status: 'APPROVED' }).expect(403);
+    });
+
+    it('lets the assigned Team Lead approve and reject ordinary leaves', async () => {
+      await http().patch(`/leaves/${ids.CASUAL}/status`).set(as('TL001')).send({ status: 'APPROVED' }).expect(200);
+      const res = await http().patch(`/leaves/${ids.SICK}/status`).set(as('TL001')).send({ status: 'REJECTED', reject_reason: 'Team at minimum cover.' }).expect(200);
+      expect(res.body).toMatchObject({ status: 'REJECTED', approved_by: 'TL001' });
+      const mine = (await http().get('/leaves/user/EM002').set(as('EM002')).expect(200)).body;
+      expect(mine.find((l: any) => l.leave_id === ids.CASUAL).status).toBe('APPROVED');
+      expect(mine.find((l: any) => l.leave_id === ids.SICK).status).toBe('REJECTED');
+      await http().patch(`/leaves/${ids.CASUAL}/status`).set(as('TL001')).send({ status: 'REJECTED' }).expect(409);
+    });
+
+    it('keeps seeded leave records routed to their Team Lead', async () => {
+      expect(await queue('TL001')).toContain('LR-015');
+      expect(await queue('HR001')).not.toContain('LR-015');
+    });
+
+    it('routes a record stored without routing fields from its type and applicant', async () => {
+      const leaves = app.get(MockDataService).getLeaves();
+      leaves.push(
+        { leave_id: 'LEGACY-1', emp_id: 'EM002', start_date: dateKey(300), end_date: dateKey(300), days: '1', leave_type: 'SICK', reason: 'Old', status: 'PENDING', applied_date: dateKey(0), approved_date: null, approved_by: null, reject_reason: null } as any,
+        { leave_id: 'LEGACY-2', emp_id: 'EM002', start_date: dateKey(302), end_date: dateKey(302), days: '1', leave_type: 'EMERGENCY', reason: 'Old', status: 'PENDING', applied_date: dateKey(0), approved_date: null, approved_by: null, reject_reason: null } as any,
+      );
+      await http().patch('/leaves/LEGACY-1/status').set(as('HR001')).send({ status: 'APPROVED' }).expect(403);
+      await http().patch('/leaves/LEGACY-1/status').set(as('TL001')).send({ status: 'APPROVED' }).expect(200);
+      await http().patch('/leaves/LEGACY-2/status').set(as('TL001')).send({ status: 'APPROVED' }).expect(403);
+      await http().patch('/leaves/LEGACY-2/status').set(as('HR001')).send({ status: 'APPROVED' }).expect(200);
+    });
+
+    it('refuses a request when the employee has no active Team Lead, and saves nothing', async () => {
+      const store = app.get(MockDataService);
+      store.getEmployees().push({ emp_id: 'EM950', emp_name: 'No Lead', email: 'nolead@emptrack.com', role: 'EMPLOYEE', status: 'ACTIVE', companyId: 'C001' } as any);
+      tokens.EM950 = app.get(SessionService).create('EM950').token;
+      const before = store.getLeaves().length;
+      const res = await apply('EM950', 'CASUAL', 230).expect(422);
+      expect(res.body.message).toContain('no active Team Lead');
+      // A manager_id that points at someone who is not a Team Lead is not used either.
+      (store.getEmployees().find((e: any) => e.emp_id === 'EM950') as any).manager_id = 'HR001';
+      await apply('EM950', 'SICK', 230).expect(422);
+      expect(store.getLeaves()).toHaveLength(before);
+      // Emergency leave does not need a Team Lead.
+      expect((await apply('EM950', 'EMERGENCY', 230).expect(201)).body.routed_to).toBe('HR');
+    });
+
+    it('refuses an emergency request when the company has no active HR, and saves nothing', async () => {
+      const store = app.get(MockDataService);
+      const hr = store.getEmployees().find((e: any) => e.emp_id === 'HR001')!;
+      const before = store.getLeaves().length;
+      hr.status = 'INACTIVE';
+      try {
+        const res = await apply('EM002', 'EMERGENCY', 240).expect(422);
+        expect(res.body.message).toContain('No active HR reviewer');
+        // Ordinary leave still goes to the Team Lead.
+        await apply('EM002', 'CASUAL', 242).expect(201);
+      } finally {
+        hr.status = 'ACTIVE';
+      }
+      expect(store.getLeaves()).toHaveLength(before + 1);
+    });
+
+    it('returns an error, not a success, when saving fails', async () => {
+      const leaves = app.get(MockDataService).getLeaves();
+      const before = leaves.length;
+      const push = jest.spyOn(leaves, 'push').mockImplementationOnce(() => { throw new Error('disk full'); });
+      try {
+        await apply('EM001', 'EMERGENCY', 250).expect(500);
+      } finally {
+        push.mockRestore();
+      }
+      expect(leaves).toHaveLength(before);
+    });
+
+    it('still confirms a saved request when the notification fails', async () => {
+      const spy = jest.spyOn(app.get(NotificationService), 'createNotification').mockImplementationOnce(() => { throw new Error('down'); });
+      try {
+        const res = await apply('EM001', 'EMERGENCY', 260).expect(201);
+        expect(app.get(MockDataService).getLeaves().some((l: any) => l.leave_id === res.body.leave_id)).toBe(true);
+      } finally {
+        spy.mockRestore();
+      }
     });
   });
 

@@ -27,7 +27,16 @@ export const isOpenIssue = (issue) => issue.status === 'Pending' || issue.status
 export const teamIssues = (members, issues) => issues.filter((i) => members.some((m) => m.emp_id === i.emp_id));
 
 export const leaveStatusBadge = (status) => ({ APPROVED: 'success', REJECTED: 'danger' })[status] || 'warning';
-export const LEAVE_TYPE_LABELS = { CASUAL: 'Vacation', SICK: 'Sick Leave', UNPAID: 'Personal Leave' };
+export const LEAVE_TYPE_LABELS = { CASUAL: 'Vacation', SICK: 'Sick Leave', UNPAID: 'Personal Leave', EMERGENCY: 'Emergency Leave' };
+
+/**
+ * True when a leave is waiting for this Team Lead's decision. Emergency leaves are
+ * routed to HR, so they never are (the backend rejects a Team Lead's decision on them).
+ * Records without routing fields (demo data) fall back to the leave type.
+ */
+export const awaitsTeamLead = (leave, teamLeadId) =>
+  leave.status === 'PENDING' &&
+  (leave.routed_to ? leave.routed_to === 'TEAMLEAD' && leave.approver_id === teamLeadId : leave.leave_type !== 'EMERGENCY');
 
 export const nameOf = (members, empId) => members.find((m) => m.emp_id === empId)?.emp_name ?? empId ?? '-';
 

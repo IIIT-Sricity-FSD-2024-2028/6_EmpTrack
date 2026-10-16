@@ -48,9 +48,9 @@ const INITIAL_MOCK_DATA = {
         { attendance_id: "A004", emp_id: "EM001", attendance_date: "2026-02-27", attendance_mode: "REMOTE", check_in_time: "09:00", check_out_time: "13:00", screen_time: 240, hours_spent: 4, remarks: "Below target", status: "ESCALATED" }
     ],
     leave_details: [
-        { leave_id: "LR-015", emp_id: "EM001", start_date: "2026-03-20", end_date: "2026-03-25", days: "6", leave_type: "CASUAL", reason: "Family vacation", status: "PENDING", applied_date: "2026-03-07", approved_date: null, approved_by: null, reject_reason: null },
-        { leave_id: "LR-012", emp_id: "EM001", start_date: "2026-03-10", end_date: "2026-03-10", days: "1", leave_type: "SICK", reason: "Fever and cold symptom management.", status: "APPROVED", applied_date: "2026-03-09", approved_date: "2026-03-09", approved_by: "TL001", reject_reason: null },
-        { leave_id: "LR-008", emp_id: "EM001", start_date: "2026-02-15", end_date: "2026-02-16", days: "2", leave_type: "UNPAID", reason: "Personal appointments", status: "REJECTED", applied_date: "2026-02-10", approved_date: "2026-02-11", approved_by: "TL001", reject_reason: "Insufficient notice period during critical delivery milestone." }
+        { leave_id: "LR-015", emp_id: "EM001", start_date: "2026-03-20", end_date: "2026-03-25", days: "6", leave_type: "CASUAL", reason: "Family vacation", routed_to: "TEAMLEAD", approver_id: "TL001", status: "PENDING", applied_date: "2026-03-07", approved_date: null, approved_by: null, reject_reason: null },
+        { leave_id: "LR-012", emp_id: "EM001", start_date: "2026-03-10", end_date: "2026-03-10", days: "1", leave_type: "SICK", reason: "Fever and cold symptom management.", routed_to: "TEAMLEAD", approver_id: "TL001", status: "APPROVED", applied_date: "2026-03-09", approved_date: "2026-03-09", approved_by: "TL001", reject_reason: null },
+        { leave_id: "LR-008", emp_id: "EM001", start_date: "2026-02-15", end_date: "2026-02-16", days: "2", leave_type: "UNPAID", reason: "Personal appointments", routed_to: "TEAMLEAD", approver_id: "TL001", status: "REJECTED", applied_date: "2026-02-10", approved_date: "2026-02-11", approved_by: "TL001", reject_reason: "Insufficient notice period during critical delivery milestone." }
     ],
     task: [
         { task_id: "TK001", task_title: "Create Frontend Layout", allocation_id: "W001", assigned_to: "EM001", task_description: "Design the base SPA layout", priority: "HIGH", deadline: "2026-03-30", status: "IN_PROGRESS", progress_percentage: 50, updated_date: "2026-03-28", warning_sent: false },

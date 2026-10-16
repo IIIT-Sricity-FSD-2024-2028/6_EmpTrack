@@ -140,6 +140,53 @@ describe('Leave request form', () => {
     expect(f.type.getAttribute('aria-required')).toBe('true');
     expect(f.reason.getAttribute('aria-required')).toBe('true');
   });
+
+  it('offers Emergency Leave alongside the existing leave types', async () => {
+    const f = await renderForm();
+    const options = [...f.type.querySelectorAll('option')].map((o) => [o.value, o.textContent]).filter(([v]) => v);
+    expect(options).toEqual([['CASUAL', 'Vacation'], ['SICK', 'Sick Leave'], ['UNPAID', 'Personal Leave'], ['EMERGENCY', 'Emergency Leave']]);
+  });
+
+  it('tells the employee who will review the selected leave type', async () => {
+    const f = await renderForm();
+    expect(screen.queryByRole('note')).toBeNull();
+    type(f.type, 'EMERGENCY');
+    expect(screen.getByRole('note').textContent).toContain('sent to HR for review');
+    for (const other of ['CASUAL', 'SICK', 'UNPAID']) {
+      type(f.type, other);
+      expect(screen.getByRole('note').textContent).toContain('sent to your Team Lead for review');
+    }
+  });
+
+  it('submits an emergency leave and reports where the backend routed it', async () => {
+    leaveApi.createLeave.mockResolvedValueOnce({ leave_id: 'L1', leave_type: 'EMERGENCY', routed_to: 'HR', status: 'PENDING' });
+    const f = await renderForm();
+    type(f.type, 'EMERGENCY');
+    type(f.start, day(3));
+    type(f.end, day(4));
+    type(f.reason, 'Family emergency');
+    fireEvent.click(f.submit);
+    expect(leaveApi.createLeave.mock.calls[0][0]).toMatchObject({ leave_type: 'EMERGENCY' });
+    // The client never sends a destination or approver - the backend picks them.
+    expect(leaveApi.createLeave.mock.calls[0][0]).not.toHaveProperty('routed_to');
+    expect(leaveApi.createLeave.mock.calls[0][0]).not.toHaveProperty('approver_id');
+    expect(await screen.findByText(/It has been sent to HR for review/)).toBeTruthy();
+    expect(f.type.value).toBe('');
+  });
+
+  it('shows no success message and keeps the form when the backend refuses the request', async () => {
+    leaveApi.createLeave.mockRejectedValueOnce(new ApiError('You have no active Team Lead assigned, so this request cannot be routed.', 422, { message: 'You have no active Team Lead assigned, so this request cannot be routed.' }));
+    const f = await renderForm();
+    type(f.type, 'CASUAL');
+    type(f.start, day(3));
+    type(f.end, day(3));
+    type(f.reason, 'Trip');
+    fireEvent.click(f.submit);
+    expect(await screen.findByText(/no active Team Lead assigned/)).toBeTruthy();
+    expect(screen.queryByText('Leave request submitted.')).toBeNull();
+    expect(f.reason.value).toBe('Trip');
+    expect(f.submit.disabled).toBe(false);
+  });
 });
 
 describe('Change password card', () => {

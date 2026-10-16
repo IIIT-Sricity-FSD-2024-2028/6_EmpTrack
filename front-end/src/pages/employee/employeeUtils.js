@@ -76,7 +76,13 @@ export const LEAVE_TYPES = {
   CASUAL: { label: 'Vacation', badge: 'vacation' },
   SICK: { label: 'Sick Leave', badge: 'sick-leave' },
   UNPAID: { label: 'Personal Leave', badge: 'personal' },
+  EMERGENCY: { label: 'Emergency Leave', badge: 'emergency' },
 };
+
+// Emergency leave is reviewed by HR, every other type by the employee's Team Lead.
+// The backend applies this rule itself; the form only uses it to tell the employee.
+export const EMERGENCY_LEAVE = 'EMERGENCY';
+export const leaveReviewer = (leaveType) => (leaveType === EMERGENCY_LEAVE ? 'HR' : 'your Team Lead');
 
 // The original pages assume 22 working days per month.
 export const WORKING_DAYS_PER_MONTH = 22;

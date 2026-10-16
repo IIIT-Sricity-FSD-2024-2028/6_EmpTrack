@@ -10,6 +10,7 @@ import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
 import * as hr from '../../services/hrService';
 import { HR_BASE, ROLE_NAMES, isOnLeave, isStaff, joinedThisMonth, shortDate, todayKey } from './hrUtils';
+import { LEAVE_TYPE_LABELS } from '../teamlead/tlUtils';
 import './styles/dashboard.css';
 
 function SummaryCard({ icon, iconStyle, trend, trendStyle, value, label }) {
@@ -41,15 +42,21 @@ export default function HrDashboard({ basePath = HR_BASE, showLeaveApprovals = t
 
   const load = useCallback(async () => {
     try {
-      const [employees, leaves] = await Promise.all([hr.getEmployees(), hr.getLeaves()]);
+      // The approval list is the backend's HR review queue (emergency leaves and Team
+      // Lead leaves); ordinary employee leaves are decided by their Team Lead.
+      const [employees, leaves, queue] = await Promise.all([
+        hr.getEmployees(),
+        hr.getLeaves(),
+        showLeaveApprovals ? hr.getLeaveReviewQueue() : [],
+      ]);
       const staff = employees.filter(isStaff);
       const attendance = await hr.getAttendanceFor(staff);
-      setData({ employees, staff, leaves, attendance });
+      setData({ employees, staff, leaves, queue, attendance });
       setError(false);
     } catch {
       setError(true);
     }
-  }, []);
+  }, [showLeaveApprovals]);
 
   useEffect(() => {
     load();
@@ -81,11 +88,14 @@ export default function HrDashboard({ basePath = HR_BASE, showLeaveApprovals = t
     return <div className="hr-dashboard-root"><div className="card" style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading dashboard...</div></div>;
   }
 
-  const { employees, staff, leaves, attendance } = data;
+  const { employees, staff, leaves, queue, attendance } = data;
   const today = todayKey();
   const presentIds = new Set(attendance.filter((a) => a.attendance_date === today).map((a) => a.emp_id));
   const presentPct = staff.length ? Math.round((presentIds.size / staff.length) * 100) : 0;
   const pending = leaves.filter((l) => l.status === 'PENDING');
+  // Emergency requests first, then oldest first.
+  const toReview = [...queue].sort((a, b) =>
+    (b.leave_type === 'EMERGENCY') - (a.leave_type === 'EMERGENCY') || String(a.applied_date).localeCompare(String(b.applied_date)));
   const teams = new Set(staff.map((e) => e.team_id).filter(Boolean));
   const newThisMonth = employees.filter((e) => joinedThisMonth(e)).length;
   const nameOf = (id) => employees.find((e) => e.emp_id === id)?.emp_name || id;
@@ -163,17 +173,23 @@ export default function HrDashboard({ basePath = HR_BASE, showLeaveApprovals = t
           <div className="card">
             <div style={{ padding: 20, fontWeight: 600, fontSize: 16, display: 'flex', justifyContent: 'space-between' }}>
               <span>Leave Approvals</span>
-              <span className="badge blue" id="pending-leaves-badge">{pending.length} Pending</span>
+              <span className="badge blue" id="pending-leaves-badge">{toReview.length} Pending</span>
             </div>
             <div className="list-wrapper" id="leavesContainer">
-              {pending.length === 0 && <div style={{ padding: '0 20px 20px', color: 'var(--text-muted)', fontSize: 13 }}>No leave requests waiting for approval.</div>}
-              {pending.map((l) => (
+              {toReview.length === 0 && <div style={{ padding: '0 20px 20px', color: 'var(--text-muted)', fontSize: 13 }}>No leave requests waiting for HR approval.</div>}
+              {toReview.map((l) => (
                 <div key={l.leave_id} className="list-item">
                   <div className="li-left">
                     <div className="li-details">
-                      <div className="li-name">{nameOf(l.emp_id)} <span className="badge blue" style={{ fontSize: 9, marginLeft: 4 }}>{l.days} day{Number(l.days) === 1 ? '' : 's'}</span></div>
+                      <div className="li-name">
+                        {nameOf(l.emp_id)} <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400 }}>({l.emp_id})</span>
+                        <span className="badge blue" style={{ fontSize: 9, marginLeft: 4 }}>{l.days} day{Number(l.days) === 1 ? '' : 's'}</span>
+                        {l.leave_type === 'EMERGENCY' && <span className="badge red" style={{ fontSize: 9, marginLeft: 4 }}><i className="ph-fill ph-siren"></i> Emergency</span>}
+                      </div>
                       <div className="li-sub"><i className="ph ph-calendar"></i> {shortDate(l.start_date)} - {shortDate(l.end_date)}</div>
-                      <div className="li-sub" style={{ fontWeight: 500, color: 'var(--hr-warning)' }}>{l.leave_type}</div>
+                      <div className="li-sub" style={{ fontWeight: 500, color: l.leave_type === 'EMERGENCY' ? 'var(--hr-danger)' : 'var(--hr-warning)' }}>{LEAVE_TYPE_LABELS[l.leave_type] || l.leave_type} &bull; {l.status.charAt(0) + l.status.slice(1).toLowerCase()}</div>
+                      <div className="li-sub" style={{ whiteSpace: 'normal' }}>{l.reason}</div>
+                      <div className="li-sub" style={{ fontSize: 10 }}>Submitted {shortDate(l.applied_date)}</div>
                     </div>
                   </div>
                   <div className="action-btns">

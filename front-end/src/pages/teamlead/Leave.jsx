@@ -10,7 +10,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { updateLeaveStatus } from '../../services/teamLeadService';
 import { formatDate, toTitleCase } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, StatCard, Tabs, tlPath, useTeamData, useToast } from './components/TeamLeadUI';
-import { LEAVE_TYPE_LABELS, leaveStatusBadge, nameOf, todayKey, unauthorizedAbsences } from './tlUtils';
+import { awaitsTeamLead, LEAVE_TYPE_LABELS, leaveStatusBadge, nameOf, todayKey, unauthorizedAbsences } from './tlUtils';
 import { rejectLeaveSchema } from '../../validation/formSchemas';
 import { validateForm } from '../../utils/validation';
 import './teamlead.css';
@@ -84,7 +84,7 @@ export default function Leave() {
   const columns = [
     { key: 'leave_id', header: 'Request', render: (l) => <span className="tl-muted">{l.leave_id}</span> },
     { key: 'emp', header: 'Employee', render: (l) => <Person name={nameOf(members, l.emp_id)} /> },
-    { key: 'type', header: 'Type', render: (l) => <Badge variant="vacation">{LEAVE_TYPE_LABELS[l.leave_type] || toTitleCase(l.leave_type)}</Badge> },
+    { key: 'type', header: 'Type', render: (l) => <Badge variant={l.leave_type === 'EMERGENCY' ? 'emergency' : 'vacation'}>{LEAVE_TYPE_LABELS[l.leave_type] || toTitleCase(l.leave_type)}</Badge> },
     { key: 'dates', header: 'Dates', render: (l) => dateRange(l.start_date, l.end_date) },
     { key: 'days', header: 'Days', render: (l) => <strong>{l.days ?? 1}</strong> },
     { key: 'reason', header: 'Reason', render: (l) => (
@@ -95,12 +95,14 @@ export default function Leave() {
     ) },
     { key: 'status', header: 'Status', render: (l) => <Badge variant={leaveStatusBadge(l.status)}>{toTitleCase(l.status)}</Badge> },
     ...(tab === 'PENDING'
-      ? [{ key: 'actions', header: 'Action', render: (l) => (
+      ? [{ key: 'actions', header: 'Action', render: (l) => (awaitsTeamLead(l, user.emp_id) ? (
           <div className="tl-actions">
             <Button variant="secondary" icon="ph-check-circle" className="tl-btn-sm" onClick={() => open(l, 'APPROVED')}>Approve</Button>
             <Button variant="danger" icon="ph-x-circle" className="tl-btn-sm" onClick={() => open(l, 'REJECTED')}>Reject</Button>
           </div>
-        ) }]
+        ) : (
+          <span className="tl-muted" title="Emergency leave requests are reviewed by HR">With HR</span>
+        )) }]
       : []),
   ];
 
@@ -109,7 +111,7 @@ export default function Leave() {
       <DemoNotice />
       <LoadState loading={!data} error={error} onRetry={reload}>
         <div className="tl-stats-grid">
-          <StatCard icon="ph-hourglass" tone="orange" label="Pending Requests" value={leaves.filter((l) => l.status === 'PENDING').length} />
+          <StatCard icon="ph-hourglass" tone="orange" label="Pending Requests" value={leaves.filter((l) => awaitsTeamLead(l, user.emp_id)).length} />
           <StatCard icon="ph-check-circle" tone="green" label="Approved" value={leaves.filter((l) => l.status === 'APPROVED').length} />
           <StatCard icon="ph-warning-octagon" tone="red" label="Unauthorized Absences" value={absences.length} />
           <StatCard icon="ph-users" label="Team Availability Today" value={`${availability}%`} />

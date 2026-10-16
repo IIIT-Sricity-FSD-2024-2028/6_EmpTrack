@@ -1,6 +1,7 @@
 // Self-check for the Team Lead rules. Run: node src/pages/teamlead/tlUtils.check.js
 import assert from 'node:assert/strict';
 import {
+  awaitsTeamLead,
   buildPerformance,
   isEscalated,
   matchesSearch,
@@ -62,5 +63,13 @@ assert.deepEqual(
 assert.equal(toCsv([{ a: 'x,y', b: 'say "hi"' }]), 'a,b\n"x,y","say ""hi"""');
 assert.equal(matchesSearch('john', 'T-1', 'John Doe'), true);
 assert.equal(matchesSearch('zzz', 'T-1', 'John Doe'), false);
+
+// Leave routing: emergency leaves wait for HR, ordinary ones for the assigned Team Lead only.
+assert.equal(awaitsTeamLead({ status: 'PENDING', leave_type: 'CASUAL', routed_to: 'TEAMLEAD', approver_id: 'TL001' }, 'TL001'), true);
+assert.equal(awaitsTeamLead({ status: 'PENDING', leave_type: 'CASUAL', routed_to: 'TEAMLEAD', approver_id: 'TL002' }, 'TL001'), false);
+assert.equal(awaitsTeamLead({ status: 'PENDING', leave_type: 'EMERGENCY', routed_to: 'HR', approver_id: null }, 'TL001'), false);
+assert.equal(awaitsTeamLead({ status: 'APPROVED', leave_type: 'SICK', routed_to: 'TEAMLEAD', approver_id: 'TL001' }, 'TL001'), false);
+assert.equal(awaitsTeamLead({ status: 'PENDING', leave_type: 'SICK' }, 'TL001'), true);
+assert.equal(awaitsTeamLead({ status: 'PENDING', leave_type: 'EMERGENCY' }, 'TL001'), false);
 
 console.log('tlUtils: all checks passed');

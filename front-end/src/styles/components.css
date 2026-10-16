@@ -469,11 +469,13 @@ tbody tr:hover {
 .badge-vacation { background-color: #E0E7FF; color: #4338CA; } /* Light purple/indigo */
 .badge-sick-leave { background-color: #DBEAFE; color: #1D4ED8; } /* Light blue */
 .badge-personal { background-color: #EDE9FE; color: #6D28D9; } /* Light violet */
+.badge-emergency { background-color: #FEE2E2; color: #B91C1C; } /* Light red */
 .badge-rejected { background-color: var(--status-danger-bg); color: var(--status-danger-fg); }
 
 [data-theme="dark"] .badge-vacation { background-color: rgba(99, 102, 241, 0.18); color: #A5B4FC; }
 [data-theme="dark"] .badge-sick-leave { background-color: rgba(59, 130, 246, 0.18); color: #93C5FD; }
 [data-theme="dark"] .badge-personal { background-color: rgba(139, 92, 246, 0.18); color: #C4B5FD; }
+[data-theme="dark"] .badge-emergency { background-color: rgba(239, 68, 68, 0.18); color: #FCA5A5; }
 .leave-reject-reason {
     color: var(--danger-color);
     font-size: 12px;

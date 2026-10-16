@@ -58,16 +58,25 @@ CREATE TABLE Leave_Details (
     emp_id VARCHAR(20) NOT NULL,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
-    leave_type ENUM('CASUAL','SICK','PAID','UNPAID') NOT NULL,
+    leave_type ENUM('CASUAL','SICK','PAID','UNPAID','EMERGENCY') NOT NULL,
     reason TEXT,
     status ENUM('PENDING','APPROVED','REJECTED','CANCELLED') NOT NULL,
     applied_date DATE NOT NULL,
     approved_date DATE,
     approved_by VARCHAR(20),
+    -- Reviewer, set by the server on submit: EMERGENCY -> 'HR' (company HR queue,
+    -- approver_id NULL); any other type -> 'TEAMLEAD' (approver_id = the applicant's Team Lead).
+    routed_to ENUM('HR','TEAMLEAD') NOT NULL,
+    approver_id VARCHAR(20),
 
     FOREIGN KEY (emp_id)
     REFERENCES Employee(emp_id)
     ON DELETE CASCADE
+    ON UPDATE CASCADE,
+
+    FOREIGN KEY (approver_id)
+    REFERENCES Employee(emp_id)
+    ON DELETE SET NULL
     ON UPDATE CASCADE,
 
     FOREIGN KEY (approved_by)

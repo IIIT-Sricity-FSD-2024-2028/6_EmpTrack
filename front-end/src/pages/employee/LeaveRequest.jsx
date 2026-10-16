@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Badge from '../../components/common/Badge';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import Table from '../../components/common/Table';
@@ -9,7 +9,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { createLeave, getLeavesForUser } from '../../services/leaveService';
 import { leaveRequestSchema } from '../../validation/formSchemas';
 import PortalHeading from './components/PortalHeading';
-import { LEAVE_TYPES, leaveBalance, leaveStatusBadge } from './employeeUtils';
+import { LEAVE_TYPES, leaveBalance, leaveReviewer, leaveStatusBadge } from './employeeUtils';
 
 const POLICY = [
   'Taking leave without Team Lead approval → escalation to HR',
@@ -65,6 +65,7 @@ const columns = [
     ),
   },
   { key: 'applied_date', header: 'Applied On', cellStyle: mutedSmall },
+  { key: 'routed_to', header: 'Sent To', cellStyle: mutedSmall, render: (l) => ({ HR: 'HR', TEAMLEAD: 'Team Lead' })[l.routed_to] || '-' },
   {
     key: 'status',
     header: 'Status',
@@ -91,7 +92,9 @@ export default function LeaveRequest() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(null); // the saved request, once the backend confirms it
+  // Blocks a second submit fired before the disabled button re-renders.
+  const inFlight = useRef(false);
   const validation = useFormValidation(leaveRequestSchema, form, { idPrefix: 'lv', serverFieldMap: SERVER_FIELDS });
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -100,11 +103,14 @@ export default function LeaveRequest() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
-    setSubmitted(false);
+    if (inFlight.current) return;
+    setSubmitted(null);
     if (!validation.validateAll()) return;
+    inFlight.current = true;
     setSubmitting(true);
+    let saved;
     try {
-      await createLeave({
+      saved = await createLeave({
         empId: user.emp_id,
         leave_type: form.type,
         days: String(days),
@@ -116,11 +122,12 @@ export default function LeaveRequest() {
       if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to submit the leave request.');
       return;
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
     setForm(EMPTY_FORM);
     validation.reset();
-    setSubmitted(true);
+    setSubmitted(saved || {});
     reload();
   };
 
@@ -173,6 +180,12 @@ export default function LeaveRequest() {
                   ))}
                 </select>
                 <FieldError {...validation.errorProps('type')} />
+                {form.type && (
+                  <div id="lv_type_route" role="note" style={{ ...mutedSmall, marginTop: 6 }}>
+                    <i className="ph ph-info" aria-hidden="true"></i>{' '}
+                    This request will be sent to {leaveReviewer(form.type)} for review.
+                  </div>
+                )}
               </div>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label" style={labelStyle} htmlFor="lv_days">Number of Days</label>
@@ -220,7 +233,7 @@ export default function LeaveRequest() {
             </div>
 
             {submitError && <div className="form-error field-error" role="alert" style={{ marginBottom: 12 }}><i className="ph ph-warning-circle" aria-hidden="true"></i><span>{submitError}</span></div>}
-            {submitted && <div role="status" style={{ color: 'var(--success-color, #059669)', marginBottom: 12, fontSize: 13 }}><i className="ph-fill ph-check-circle"></i> Leave request submitted.</div>}
+            {submitted && <div role="status" style={{ color: 'var(--success-color, #059669)', marginBottom: 12, fontSize: 13 }}><i className="ph-fill ph-check-circle"></i> Leave request submitted.{submitted.routed_to && <span> It has been sent to {submitted.routed_to === 'HR' ? 'HR' : 'your Team Lead'} for review.</span>}</div>}
             <button
               type="submit"
               className="btn btn-purple"

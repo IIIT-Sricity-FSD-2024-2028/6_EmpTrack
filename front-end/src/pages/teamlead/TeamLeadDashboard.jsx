@@ -8,7 +8,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { updateLeaveStatus } from '../../services/teamLeadService';
 import { formatDate, toTitleCase } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, Progress, StatCard, tlPath, useTeamData, useToast } from './components/TeamLeadUI';
-import { buildPerformance, escalationReason, isEscalated, isOverdue, LEAVE_TYPE_LABELS, nameOf, todayKey } from './tlUtils';
+import { awaitsTeamLead, buildPerformance, escalationReason, isEscalated, isOverdue, LEAVE_TYPE_LABELS, nameOf, todayKey } from './tlUtils';
 import './teamlead.css';
 
 export default function TeamLeadDashboard() {
@@ -23,7 +23,7 @@ export default function TeamLeadDashboard() {
   const today = todayKey();
   const open = tasks.filter((t) => t.status !== 'COMPLETED');
   const escalated = open.filter((t) => isEscalated(t));
-  const pending = (data?.leaves ?? []).filter((l) => l.status === 'PENDING');
+  const pending = (data?.leaves ?? []).filter((l) => awaitsTeamLead(l, user.emp_id));
   const performance = buildPerformance(members, tasks);
 
   const distribution = [

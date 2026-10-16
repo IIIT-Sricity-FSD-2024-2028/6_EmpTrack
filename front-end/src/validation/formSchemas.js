@@ -51,7 +51,7 @@ export const calendarEventSchema = {
 
 /** pages/employee/LeaveRequest.jsx -> POST /leaves */
 export const leaveRequestSchema = {
-  type: oneOf('Leave type', ['CASUAL', 'SICK', 'UNPAID'], { message: 'Select a leave type.' }),
+  type: oneOf('Leave type', ['CASUAL', 'SICK', 'UNPAID', 'EMERGENCY'], { message: 'Select a leave type.' }),
   start: date('Start date'),
   end: [date('End date'), notBefore('start', 'End date must be on or after the start date.')],
   reason: text('Reason', { min: 3, max: LIMITS.REASON_MAX, multiline: true }),

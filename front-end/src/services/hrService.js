@@ -10,6 +10,8 @@ export { getNotificationsForUser as getNotifications } from './notificationServi
 
 export const getEmployees = () => api.get('/employees');
 export const getLeaves = () => api.get('/leaves');
+/** Pending leaves routed to HR (emergency leaves, Team Lead leaves) in this HR user's company. */
+export const getLeaveReviewQueue = () => api.get('/leaves/review-queue');
 export const getIssues = () => api.get('/issues');
 export const getEscalations = () => api.get('/escalations');
 

@@ -1,6 +1,7 @@
 import { DateField, EnumField, IdField, LIMITS, NotBeforeField, TextField } from '../../common/validation/validators';
 
-export const LEAVE_TYPES = ['CASUAL', 'SICK', 'UNPAID'];
+export const EMERGENCY_LEAVE = 'EMERGENCY';
+export const LEAVE_TYPES = ['CASUAL', 'SICK', 'UNPAID', EMERGENCY_LEAVE];
 export const LEAVE_DECISIONS = ['APPROVED', 'REJECTED'];
 
 export class CreateLeaveDto {

@@ -19,6 +19,13 @@ export class LeaveController {
     return this.leaveService.getAllLeaves(actorId);
   }
 
+  @ApiOperation({ summary: 'Pending leaves the caller may decide (HR queue / Team Lead queue)' })
+  @Get('review-queue')
+  @Roles('HR', 'TEAMLEAD')
+  getReviewQueue(@Headers('x-actor-id') actorId: string) {
+    return this.leaveService.getReviewQueue(actorId);
+  }
+
   @Get('user/:empId')
   getLeavesForUser(@Param('empId') empId: string, @Headers('x-actor-id') actorId: string) {
     return this.leaveService.getLeavesForUser(empId, actorId);
