@@ -1072,7 +1072,8 @@ section.lp-final-cta { padding-top: 72px; padding-bottom: 72px; }
 
 .lp-final-cta h2 { font-size: clamp(28px, 4vw, 44px); font-weight: 800; line-height: 1.15; margin: 0 0 16px; letter-spacing: -0.02em; }
 .lp-final-cta p { font-size: 17px; line-height: 1.6; color: #fff; max-width: 560px; margin: 0 auto 28px; }
-.lp-final-cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.lp-final-cta-actions { display: flex; justify-content: center; }
+.lp-final-cta-actions .lp-btn { max-width: 100%; }
 .lp-final-cta .lp-btn-secondary { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.5); color: #fff; }
 .lp-final-cta .lp-btn-secondary:hover { background: rgba(255, 255, 255, 0.24); color: #fff; box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.35); }
 
@@ -1090,21 +1091,9 @@ html[data-theme="light"] .lp-final-cta .lp-btn-secondary:hover {
     box-shadow: 0 14px 34px -10px rgba(15, 23, 42, 0.25);
 }
 
-html[data-theme="light"] .lp-final-cta .lp-btn-ghost {
-    border-color: rgba(255, 255, 255, 0.45);
-}
-html[data-theme="light"] .lp-final-cta .lp-btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
 @media (max-width: 768px) {
     section.lp-faq { padding-bottom: 40px; }
     section.lp-final-cta { padding-top: 44px; padding-bottom: 44px; }
-}
-
-@media (max-width: 420px) {
-    .lp-final-cta-actions { flex-direction: column; align-items: stretch; }
-    .lp-final-cta-actions .lp-btn { width: 100%; }
 }
 
 /* ---------- Footer ---------- */
