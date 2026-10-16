@@ -9,3 +9,19 @@ export function getWorkLogsForUser(empId) {
 export function createWorkLog(logData) {
   return api.post('/worklogs', logData);
 }
+
+export function getActiveWorkSession() {
+  return api.get('/worklogs/timer/active');
+}
+
+export function startWorkSession(taskId) {
+  return api.post('/worklogs/timer/start', { task_id: taskId });
+}
+
+export function stopWorkSession(sessionId) {
+  return api.post(`/worklogs/timer/${encodeURIComponent(sessionId)}/stop`, {});
+}
+
+export function confirmWorkSession(sessionId, description) {
+  return api.post(`/worklogs/timer/${encodeURIComponent(sessionId)}/confirm`, { description });
+}

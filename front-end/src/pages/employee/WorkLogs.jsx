@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import Table from '../../components/common/Table';
+import Button from '../../components/common/Button';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
@@ -9,6 +10,8 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { getTasksForUser } from '../../services/taskService';
 import { createWorkLog, getWorkLogsForUser } from '../../services/worklogService';
 import { workLogSchema } from '../../validation/formSchemas';
+import useWorkTimer from './useWorkTimer';
+import WorkTimer, { formatElapsed } from './WorkTimer';
 
 const fieldStyle = { borderRadius: 'var(--radius-md)', padding: '12px 16px' };
 const labelStyle = { fontWeight: 'var(--font-medium)' };
@@ -32,8 +35,12 @@ const columns = [
     cellStyle: { minWidth: 150, whiteSpace: 'normal', lineHeight: 1.4 },
     render: (l) => l.task_title || 'Generic Task',
   },
-  { key: 'start_time', header: 'Start Time', cellStyle: mutedSmall, render: (l) => l.start_time.replace('T', ' ') },
-  { key: 'end_time', header: 'End Time', cellStyle: mutedSmall, render: (l) => l.end_time.replace('T', ' ') },
+  { key: 'start_time', header: 'Start Time', cellStyle: mutedSmall, render: (l) => new Date(l.start_time).toLocaleString() },
+  { key: 'end_time', header: 'End Time', cellStyle: mutedSmall, render: (l) => new Date(l.end_time).toLocaleString() },
+  {
+    key: 'duration', header: 'Duration',
+    render: (l) => formatElapsed(l.elapsed_ms ?? (Date.parse(l.end_time) - Date.parse(l.start_time))),
+  },
   {
     key: 'description',
     header: 'Description',
@@ -60,16 +67,12 @@ export default function WorkLogs() {
   );
   const { data: logs = [], error: logsError, reload: reloadLogs } = useFetch(() => getWorkLogsForUser(user.emp_id), [user.emp_id]);
 
-  if (taskError || logsError) {
-    const failure = taskError || logsError;
-    return <div className="card" role="alert">Failed to load work log data: {failure.message} <button type="button" onClick={() => { reloadTasks(); reloadLogs(); }}>Retry</button></div>;
-  }
-
   const emptyForm = { taskId: presetTaskId, start: '', end: '', description: '' };
   const [form, setForm] = useState(emptyForm);
   const [toastVisible, setToastVisible] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const timer = useWorkTimer(async () => { await Promise.all([reloadTasks(), reloadLogs()]); });
   const validation = useFormValidation(workLogSchema(tasks.map((t) => t.task_id)), form, {
     idPrefix: 'wl',
     serverFieldMap: { task_id: 'taskId', start_time: 'start', end_time: 'end', hours_spent: 'end' },
@@ -116,15 +119,28 @@ export default function WorkLogs() {
     reloadLogs();
   };
 
-  const totalHours = logs.reduce((sum, l) => sum + parseInt(l.hours_spent || 0, 10), 0);
+  const totalHours = logs.reduce((sum, l) => sum + Number(l.hours_spent || 0), 0);
   const metrics = [
     { label: 'Total Hours This Week', value: totalHours },
     { label: 'Total Logs this Month', value: logs.length },
     { label: 'Average Hours Per Day', value: (totalHours / (logs.length || 1)).toFixed(1) },
   ];
 
+  if (taskError || logsError) {
+    const failure = taskError || logsError;
+    return (
+      <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+        <WorkTimer timer={timer} tasks={tasks} />
+        <div className="card" role="alert">
+          Failed to load work log data: {failure.message} <button type="button" onClick={() => { reloadTasks(); reloadLogs(); }}>Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 32, paddingBottom: 40 }}>
+      <WorkTimer timer={timer} tasks={tasks} showEmptyState />
       {/* SECTION 1: LOG WORK ACTIVITY */}
       <div className="card" style={{ padding: 24 }}>
         <h3 style={{ margin: '0 0 24px 0', fontSize: 'var(--text-lg)', borderBottom: '1px solid var(--border-light)', paddingBottom: 16 }}>
@@ -133,13 +149,26 @@ export default function WorkLogs() {
         <form onSubmit={handleSubmit} noValidate>
           <div style={rowGrid}>
             <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label" style={labelStyle} htmlFor="wl_task_id">Task ID<RequiredMark /></label>
-              <select className="form-control" style={fieldStyle} aria-required="true" value={form.taskId} onChange={update('taskId')} {...validation.input('taskId', 'wl_task_id')}>
-                <option value="" disabled>Select assigned task</option>
-                {tasks.map((t) => (
-                  <option key={t.task_id} value={t.task_id}>#{t.task_id} - {t.task_title}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', alignItems: 'end', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 240px' }}>
+                  <label className="form-label" style={labelStyle} htmlFor="wl_task_id">Task ID<RequiredMark /></label>
+                  <select className="form-control" style={fieldStyle} aria-required="true" value={form.taskId} onChange={update('taskId')} {...validation.input('taskId', 'wl_task_id')}>
+                    <option value="" disabled>Select assigned task</option>
+                    {tasks.map((t) => (
+                      <option key={t.task_id} value={t.task_id}>#{t.task_id} - {t.task_title}</option>
+                    ))}
+                  </select>
+                </div>
+                {!timer.session && (
+                  <Button
+                    variant="purple"
+                    icon="ph-play-circle"
+                    disabled={!form.taskId || timer.loading || timer.busy || Boolean(timer.error)}
+                    onClick={() => timer.start(form.taskId)}
+                    aria-label="Start timer for selected task"
+                  >Start Timer</Button>
+                )}
+              </div>
               <FieldError {...validation.errorProps('taskId')} />
             </div>
             <div className="form-group" style={{ margin: 0 }}>

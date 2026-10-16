@@ -5,7 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-/** Durable store for issue, escalation, task, and work-log workflows. Other demo features remain in MockDataService. */
+/** Durable store for issue, escalation, task, work-log, and work-session workflows. Other demo features remain in MockDataService. */
 @Injectable()
 export class WorkflowPersistenceService implements OnModuleDestroy {
   private readonly db: DatabaseSync;
@@ -62,6 +62,23 @@ export class WorkflowPersistenceService implements OnModuleDestroy {
       CREATE UNIQUE INDEX IF NOT EXISTS workflow_work_logs_submission_idx
         ON workflow_work_logs(employee_id, task_id, start_time, end_time);
       CREATE INDEX IF NOT EXISTS workflow_work_logs_employee_idx ON workflow_work_logs(employee_id);
+      CREATE TABLE IF NOT EXISTS workflow_work_sessions (
+        session_id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        task_title TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        stop_time TEXT,
+        elapsed_ms INTEGER,
+        status TEXT NOT NULL CHECK (status IN ('ACTIVE', 'STOPPED', 'SAVED')),
+        description TEXT,
+        worklog_id TEXT UNIQUE REFERENCES workflow_work_logs(worklog_id),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS workflow_work_sessions_open_employee_uq
+        ON workflow_work_sessions(employee_id) WHERE status IN ('ACTIVE', 'STOPPED');
+      CREATE INDEX IF NOT EXISTS workflow_work_sessions_employee_idx ON workflow_work_sessions(employee_id, created_at);
       CREATE TABLE IF NOT EXISTS identity_users (
         user_id TEXT PRIMARY KEY,
         email_key TEXT NOT NULL UNIQUE,
@@ -109,6 +126,7 @@ export class WorkflowPersistenceService implements OnModuleDestroy {
     const columns = this.db.prepare('PRAGMA table_info(workflow_escalations)').all() as Array<{ name: string }>;
     if (!columns.some((column) => column.name === 'issue_id')) this.db.exec('ALTER TABLE workflow_escalations ADD COLUMN issue_id TEXT');
     this.db.exec('CREATE INDEX IF NOT EXISTS workflow_escalations_issue_idx ON workflow_escalations(issue_id)');
+    this.db.prepare('INSERT OR IGNORE INTO workflow_migrations(version) VALUES (7)').run();
   }
 
   private emailKey(value: unknown) { return String(value || '').trim().toLowerCase(); }
@@ -492,6 +510,86 @@ export class WorkflowPersistenceService implements OnModuleDestroy {
       this.db.prepare('INSERT INTO workflow_work_logs(worklog_id, employee_id, task_id, start_time, end_time, record_json) VALUES (?, ?, ?, ?, ?, ?)')
         .run(log.worklog_id, log.emp_id, log.task_id, log.start_time, log.end_time, JSON.stringify(log));
       this.db.exec('COMMIT');
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
+  getOpenWorkSession(employeeId: string) {
+    return this.db.prepare(`SELECT * FROM workflow_work_sessions
+      WHERE employee_id = ? AND status IN ('ACTIVE', 'STOPPED') ORDER BY created_at DESC LIMIT 1`).get(employeeId) as any || null;
+  }
+
+  getWorkSession(employeeId: string, sessionId: string) {
+    return this.db.prepare('SELECT * FROM workflow_work_sessions WHERE employee_id = ? AND session_id = ?')
+      .get(employeeId, sessionId) as any || null;
+  }
+
+  startWorkSession(session: any) {
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      if (this.getOpenWorkSession(session.employee_id)) {
+        throw new ConflictException('You already have a work session active or awaiting a description.');
+      }
+      this.db.prepare(`INSERT INTO workflow_work_sessions
+        (session_id, employee_id, task_id, task_title, start_time, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 'ACTIVE', ?, ?)`).run(session.session_id, session.employee_id, session.task_id,
+        session.task_title, session.start_time, session.created_at, session.updated_at);
+      this.db.exec('COMMIT');
+      return this.getOpenWorkSession(session.employee_id);
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
+  stopWorkSession(employeeId: string, sessionId: string, stopTime: string) {
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const session = this.db.prepare('SELECT * FROM workflow_work_sessions WHERE session_id = ?').get(sessionId) as any;
+      if (!session || session.employee_id !== employeeId) throw new ConflictException('Work session was not found.');
+      if (session.status === 'STOPPED') {
+        this.db.exec('COMMIT');
+        return session;
+      }
+      if (session.status !== 'ACTIVE') throw new ConflictException('This work session has already been saved.');
+      const elapsed = Date.parse(stopTime) - Date.parse(session.start_time);
+      if (!Number.isFinite(elapsed) || elapsed <= 0) throw new ConflictException('Stop time must be after start time.');
+      this.db.prepare(`UPDATE workflow_work_sessions SET stop_time = ?, elapsed_ms = ?, status = 'STOPPED', updated_at = ?
+        WHERE session_id = ? AND status = 'ACTIVE'`).run(stopTime, Math.floor(elapsed), stopTime, sessionId);
+      this.db.exec('COMMIT');
+      return this.db.prepare('SELECT * FROM workflow_work_sessions WHERE session_id = ?').get(sessionId) as any;
+    } catch (error) {
+      this.db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
+  saveStoppedWorkSession(employeeId: string, sessionId: string, description: string, worklog: any) {
+    this.db.exec('BEGIN IMMEDIATE');
+    try {
+      const session = this.db.prepare('SELECT * FROM workflow_work_sessions WHERE session_id = ?').get(sessionId) as any;
+      if (!session || session.employee_id !== employeeId) throw new ConflictException('Work session was not found.');
+      if (session.status === 'SAVED') {
+        const existing = this.db.prepare('SELECT record_json FROM workflow_work_logs WHERE worklog_id = ?').get(session.worklog_id) as any;
+        this.db.exec('COMMIT');
+        return existing ? JSON.parse(existing.record_json) : null;
+      }
+      if (session.status !== 'STOPPED' || !session.stop_time || !Number.isFinite(Number(session.elapsed_ms))) {
+        throw new ConflictException('Stop the work session before saving its description.');
+      }
+      const duplicate = this.db.prepare(`SELECT record_json FROM workflow_work_logs
+        WHERE employee_id = ? AND task_id = ? AND start_time = ? AND end_time = ?`).get(employeeId, session.task_id,
+        session.start_time, session.stop_time) as any;
+      if (duplicate) throw new ConflictException('A work log already exists for this work session.');
+      this.db.prepare(`INSERT INTO workflow_work_logs(worklog_id, employee_id, task_id, start_time, end_time, record_json)
+        VALUES (?, ?, ?, ?, ?, ?)`).run(worklog.worklog_id, employeeId, session.task_id, session.start_time,
+        session.stop_time, JSON.stringify(worklog));
+      this.db.prepare(`UPDATE workflow_work_sessions SET status = 'SAVED', description = ?, worklog_id = ?, updated_at = ?
+        WHERE session_id = ? AND status = 'STOPPED'`).run(description, worklog.worklog_id, worklog.updated_at, sessionId);
+      this.db.exec('COMMIT');
+      return worklog;
     } catch (error) {
       this.db.exec('ROLLBACK');
       throw error;

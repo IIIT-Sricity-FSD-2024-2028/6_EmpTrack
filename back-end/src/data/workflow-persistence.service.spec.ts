@@ -72,6 +72,34 @@ describe('WorkflowPersistenceService', () => {
     store = new WorkflowPersistenceService();
   });
 
+  it('atomically persists and recovers active, stopped, and confirmed work timer sessions', () => {
+    const started = {
+      session_id: 'WS-PERSIST', employee_id: 'EM001', task_id: 'TK001', task_title: 'Timer task',
+      start_time: '2026-10-17T09:00:00.000Z', created_at: '2026-10-17T09:00:00.000Z', updated_at: '2026-10-17T09:00:00.000Z',
+    };
+    store.startWorkSession(started);
+    expect(() => store.startWorkSession({ ...started, session_id: 'WS-DUPLICATE', task_id: 'TK002' })).toThrow('already have a work session');
+    expect(store.getOpenWorkSession('EM001').status).toBe('ACTIVE');
+    const stopped = store.stopWorkSession('EM001', started.session_id, '2026-10-17T10:15:00.000Z');
+    expect(stopped).toMatchObject({ status: 'STOPPED', elapsed_ms: 75 * 60 * 1000 });
+    store.onModuleDestroy();
+
+    const reopened = new WorkflowPersistenceService();
+    expect(reopened.getOpenWorkSession('EM001')).toMatchObject({ session_id: started.session_id, status: 'STOPPED' });
+    const log = {
+      worklog_id: 'WL-TIMER-PERSIST', emp_id: 'EM001', task_id: 'TK001', task_title: 'Timer task',
+      start_time: started.start_time, end_time: stopped.stop_time, elapsed_ms: stopped.elapsed_ms,
+      hours_spent: 1.25, description: 'Implemented and tested this task timer.', log_date: '2026-10-17',
+      updated_at: stopped.stop_time,
+    };
+    expect(reopened.saveStoppedWorkSession('EM001', started.session_id, log.description, log)).toEqual(log);
+    expect(reopened.saveStoppedWorkSession('EM001', started.session_id, log.description, null)).toEqual(log);
+    expect(reopened.getWorkLogsForEmployee('EM001')).toEqual([log]);
+    expect(reopened.getOpenWorkSession('EM001')).toBeNull();
+    reopened.onModuleDestroy();
+    store = new WorkflowPersistenceService();
+  });
+
   it('migrates demo identities once and persists registrations, company admins, and sessions', () => {
     const seedUser = { emp_id: 'DEMO-1', emp_name: 'Demo', email: 'demo@example.test', password: 'bcrypt-hash', role: 'EMPLOYEE', status: 'ACTIVE', companyId: null };
     const seedCompany = { company_id: 'DEMO-C1', company_name: 'Demo Co', company_email: 'demo-co@example.test' };

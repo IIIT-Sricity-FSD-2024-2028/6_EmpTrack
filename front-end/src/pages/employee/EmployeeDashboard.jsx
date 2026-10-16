@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
+import useWorkTimer from './useWorkTimer';
+import WorkTimer from './WorkTimer';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
@@ -25,28 +27,42 @@ function StatCard({ value, label, icon, tone }) {
   );
 }
 
-function TaskSummaryCard({ task }) {
+function TaskSummaryCard({ task, timer }) {
   const done = task.progress_percentage === 100;
   const badge = task.status === 'COMPLETED' ? 'success' : task.status === 'IN_PROGRESS' ? 'info' : 'warning';
 
+  const isTracked = timer.session?.task_id === task.task_id && timer.session.status === 'ACTIVE';
+
   return (
-    <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 'var(--spacing-md)', background: 'var(--bg-main)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontWeight: 'var(--font-bold)', letterSpacing: '0.5px' }}>
-          #{task.task_id}
-        </span>
-        <Badge variant={badge} style={{ fontSize: 10 }}>{task.status.replace('_', ' ')}</Badge>
-      </div>
-      <h4 style={{ margin: '0 0 16px 0', fontSize: 'var(--text-sm)', lineHeight: 1.4, color: 'var(--text-main)' }}>{task.task_title}</h4>
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Progress</span>
-          <span style={{ fontSize: 10, fontWeight: 'var(--font-bold)', color: done ? 'var(--secondary-color)' : 'var(--text-main)' }}>
-            {task.progress_percentage}%
+    <div>
+      <Link to={`${empPath('update-task')}?id=${encodeURIComponent(task.task_id)}`} className="dashboard-task-card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontWeight: 'var(--font-bold)', letterSpacing: '0.5px' }}>
+            #{task.task_id}
           </span>
+          <Badge variant={badge} style={{ fontSize: 10 }}>{task.status.replace('_', ' ')}</Badge>
         </div>
-        <ProgressBar value={task.progress_percentage} color={done ? 'var(--secondary-color)' : 'var(--primary-color)'} />
-      </div>
+        <h4 style={{ margin: '0 0 16px 0', fontSize: 'var(--text-sm)', lineHeight: 1.4, color: 'var(--text-main)' }}>{task.task_title}</h4>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Progress</span>
+            <span style={{ fontSize: 10, fontWeight: 'var(--font-bold)', color: done ? 'var(--secondary-color)' : 'var(--text-main)' }}>
+              {task.progress_percentage}%
+            </span>
+          </div>
+          <ProgressBar value={task.progress_percentage} color={done ? 'var(--secondary-color)' : 'var(--primary-color)'} />
+        </div>
+      </Link>
+      {isTracked ? (
+        <span role="status" className="dashboard-task-timer-status">Tracking this task</span>
+      ) : (
+        <button
+          type="button"
+          className="btn btn-purple dashboard-task-timer-action"
+          disabled={timer.loading || timer.busy || Boolean(timer.session) || task.status === 'COMPLETED'}
+          onClick={() => timer.start(task.task_id)}
+        >Start Timer</button>
+      )}
     </div>
   );
 }
@@ -54,6 +70,7 @@ function TaskSummaryCard({ task }) {
 export default function EmployeeDashboard() {
   usePageTitle('Dashboard');
   const { user } = useAuth();
+  const timer = useWorkTimer();
 
   const { data, error, loading, reload } = useFetch(async () => {
     const [tasks, attendance, leaves] = await Promise.all([
@@ -107,6 +124,8 @@ export default function EmployeeDashboard() {
         ))}
       </div>
 
+      <WorkTimer timer={timer} tasks={data?.tasks ?? []} />
+
       {/* Assigned Tasks Summary */}
       <div className="card dashboard-tasks-section">
         <div className="card-header">
@@ -117,7 +136,7 @@ export default function EmployeeDashboard() {
           {tasks.length === 0 ? (
             <div style={{ color: 'var(--text-muted)', textAlign: 'center', width: '100%', padding: 20 }}>No recent tasks.</div>
           ) : (
-            tasks.slice(0, 4).map((task) => <TaskSummaryCard key={task.task_id} task={task} />)
+            tasks.slice(0, 4).map((task) => <TaskSummaryCard key={task.task_id} task={task} timer={timer} />)
           )}
         </div>
       </div>

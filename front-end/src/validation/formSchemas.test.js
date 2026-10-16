@@ -42,6 +42,10 @@ const FORMS = [
     ['taskId', { taskId: '' }], ['start', { start: 'yesterday' }], ['end', { end: '2026-03-28T08:00' }],
     ['end', { end: '2026-03-28T09:30' }], ['end', { end: '2026-03-29T10:00' }], ['description', { description: 'abc' }],
   ]],
+  ['Work timer summary', s.workSessionDescriptionSchema, { description: 'Implemented the requested task.' }, [
+    ['description', { description: '' }], ['description', { description: '   ' }], ['description', { description: 'tiny' }],
+    ['description', { description: LONG(1001) }],
+  ]],
   ['Team Lead task (create)', s.teamLeadTaskSchema(['EM001'], { isNew: true }), { assigned_to: 'EM001', task_title: 'Write docs', est_hours: '4', deadline: todayKey(), priority: 'Medium', task_description: '' }, [
     ['assigned_to', { assigned_to: 'EM999' }], ['task_title', { task_title: 'ab' }], ['est_hours', { est_hours: '0' }],
     ['est_hours', { est_hours: '1001' }], ['est_hours', { est_hours: '4.25' }], ['deadline', { deadline: day(-1) }], ['priority', { priority: 'P1' }],

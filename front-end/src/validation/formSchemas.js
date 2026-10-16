@@ -103,6 +103,11 @@ export const workLogSchema = (taskIds) => ({
   description: text('Work description', { min: 5, max: LIMITS.COMMENT_MAX, multiline: true }),
 });
 
+/** work timer stop -> confirm its automatically calculated work log */
+export const workSessionDescriptionSchema = {
+  description: text('Work description', { min: 5, max: LIMITS.COMMENT_MAX }),
+};
+
 // ---- Team Lead portal --------------------------------------------------------
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];

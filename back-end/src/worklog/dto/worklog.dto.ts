@@ -1,5 +1,15 @@
 import { DateTimeField, IdField, LIMITS, NotBeforeField, NumberField, TextField } from '../../common/validation/validators';
 
+export class StartWorkSessionDto {
+  @IdField('Task')
+  task_id: string;
+}
+
+export class ConfirmWorkSessionDto {
+  @TextField('Description', { min: 5, max: LIMITS.COMMENT_MAX, multiline: true })
+  description: string;
+}
+
 export class CreateWorkLogDto {
   // Optional and only accepted when it matches the caller (see WorkLogService).
   @IdField('Employee ID', { optional: true })

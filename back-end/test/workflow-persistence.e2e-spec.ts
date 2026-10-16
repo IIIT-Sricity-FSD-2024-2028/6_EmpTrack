@@ -9,6 +9,7 @@ import { AppModule } from '../src/app.module';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { createValidationPipe } from '../src/common/validation/validators';
 import { SessionService } from '../src/auth/session.service';
+import { WorkLogService } from '../src/worklog/worklog.service';
 
 describe('Issue and escalation persisted API lifecycle', () => {
   let app: INestApplication<App>;
@@ -197,5 +198,58 @@ describe('Issue and escalation persisted API lifecycle', () => {
       .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId, status: 'COMPLETED', progress_percentage: 100, est_hours: 8 })));
     await http().get('/worklogs/user/EM001').set(employeeAuth).expect(200)
       .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ worklog_id: worklogId, task_id: taskId })));
+  });
+
+  it('tracks, stops, recovers, and confirms one server-timed work session across restart', async () => {
+    const http = () => request(app.getHttpServer());
+    let worklogs = app.get(WorkLogService) as any;
+    let clock = new Date('2026-10-17T09:00:00.000Z');
+    worklogs.now = () => new Date(clock);
+
+    const startAttempts = await Promise.all([
+      http().post('/worklogs/timer/start').set(employeeAuth).send({ task_id: 'TK001', emp_id: 'EM002', start_time: '2000-01-01T00:00:00Z' }),
+      http().post('/worklogs/timer/start').set(employeeAuth).send({ task_id: 'TK001' }),
+    ]);
+    expect(startAttempts.map((response) => response.status).sort()).toEqual([201, 409]);
+    const started = startAttempts.find((response) => response.status === 201)!;
+    expect(started.body).toMatchObject({ employee_id: 'EM001', task_id: 'TK001', status: 'ACTIVE', start_time: clock.toISOString() });
+    await http().get('/worklogs/timer/active').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toMatchObject({ session_id: started.body.session_id, status: 'ACTIVE' }));
+    await http().post('/worklogs/timer/start').set(employeeAuth).send({ task_id: 'TK001' }).expect(409);
+    await http().post('/worklogs/timer/start').set(employeeAuth).send({ task_id: 'TK002' }).expect(403);
+    await http().post('/worklogs/timer/start').set(employeeAuth).send({ task_id: 'bad id' }).expect(400);
+    await http().get('/worklogs/timer/active').set(teamLeadAuth).expect(403);
+
+    await app.close();
+    await start();
+    worklogs = app.get(WorkLogService) as any;
+    worklogs.now = () => new Date(clock);
+    await http().get('/worklogs/timer/active').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toMatchObject({ session_id: started.body.session_id, status: 'ACTIVE' }));
+    await http().post('/worklogs/timer/start').set(employeeAuth).send({ task_id: 'TK001' }).expect(409);
+
+    clock = new Date(clock.getTime() + 105 * 60 * 1000);
+    const stopped = await http().post(`/worklogs/timer/${started.body.session_id}/stop`).set(employeeAuth).send({ stop_time: '2099-01-01T00:00:00Z' }).expect(201);
+    expect(stopped.body).toMatchObject({ status: 'STOPPED', stop_time: clock.toISOString(), elapsed_ms: 105 * 60 * 1000 });
+    await app.close();
+    await start();
+
+    await http().get('/worklogs/timer/active').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toMatchObject({ session_id: started.body.session_id, status: 'STOPPED', elapsed_ms: 105 * 60 * 1000 }));
+    await http().post(`/worklogs/timer/${started.body.session_id}/confirm`).set(employeeAuth).send({ description: '' }).expect(400);
+    const saved = await http().post(`/worklogs/timer/${started.body.session_id}/confirm`).set(employeeAuth)
+      .send({ description: 'Implemented and verified the durable task timer.' }).expect(201);
+    expect(saved.body).toMatchObject({
+      emp_id: 'EM001', task_id: 'TK001', hours_spent: 1.75, elapsed_ms: 105 * 60 * 1000,
+      description: 'Implemented and verified the durable task timer.',
+    });
+    await http().post(`/worklogs/timer/${started.body.session_id}/confirm`).set(employeeAuth)
+      .send({ description: 'Retry after a lost response.' }).expect(201)
+      .expect(({ body }) => expect(body.worklog_id).toBe(saved.body.worklog_id));
+    await http().get('/worklogs/user/EM001').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body.filter((log) => log.worklog_id === saved.body.worklog_id)).toHaveLength(1));
+    await http().get('/tasks/user/EM001').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: 'TK001', status: 'IN_PROGRESS', progress_percentage: 50 })));
+    await http().get('/worklogs/user/EM001').set({ Authorization: `Bearer ${app.get(SessionService).create('EM003').token}` }).expect(403);
   });
 });

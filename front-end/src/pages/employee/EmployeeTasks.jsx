@@ -7,6 +7,8 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { getTasksForUser, IS_TASK_DEMO } from '../../services/taskService';
 import { readStorage } from '../../utils/helpers';
 import { empPath, taskBadge } from './employeeUtils';
+import useWorkTimer from './useWorkTimer';
+import WorkTimer from './WorkTimer';
 
 const linkStyle = { color: '#3B82F6', fontWeight: 'var(--font-semibold)', textDecoration: 'none' };
 const actionStyle = { fontSize: 11, textDecoration: 'none', display: 'inline-block', textAlign: 'center' };
@@ -82,16 +84,39 @@ export default function EmployeeTasks() {
     async () => [...(await getTasksForUser(user.emp_id)), ...(IS_TASK_DEMO ? legacyAssignedTasks() : [])],
     [user.emp_id],
   );
+  const timer = useWorkTimer();
 
   if (loading) return <div className="card" role="status">Loading assigned tasks...</div>;
-  if (error) return <div className="card" role="alert">Failed to load assigned tasks: {error.message}</div>;
+  if (error) return <><WorkTimer timer={timer} tasks={[]} /><div className="card" role="alert">Failed to load assigned tasks: {error.message}</div></>;
+  const taskColumns = columns.map((column) => column.key !== 'actions' ? column : ({
+    ...column,
+    render: (task) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
+        <Link to={`${empPath('update-task')}?id=${task.task_id}`} className="btn btn-orange" style={actionStyle}>Update</Link>
+        {timer.session?.task_id === task.task_id && timer.session.status === 'ACTIVE'
+          ? <span role="status">Tracking</span>
+          : <button
+            type="button" className="btn btn-purple"
+            disabled={timer.loading || timer.busy || Boolean(timer.session) || task.status === 'COMPLETED'}
+            onClick={() => timer.start(task.task_id)}
+            style={{ ...actionStyle, padding: '6px 16px' }}
+          >Start Work</button>}
+        <Link to={`${empPath('work-logs')}?id=${task.task_id}`} className="btn btn-purple" style={{ ...actionStyle, padding: '6px 16px' }}>
+          Work on Task
+        </Link>
+      </div>
+    ),
+  }));
   return (
-    <Table
-      card
-      columns={columns}
-      data={tasks}
-      rowKey={(t, i) => `${t.task_id}-${i}`}
-      emptyMessage="No tasks currently assigned."
-    />
+    <>
+      <WorkTimer timer={timer} tasks={tasks} />
+      <Table
+        card
+        columns={taskColumns}
+        data={tasks}
+        rowKey={(t, i) => `${t.task_id}-${i}`}
+        emptyMessage="No tasks currently assigned."
+      />
+    </>
   );
 }
