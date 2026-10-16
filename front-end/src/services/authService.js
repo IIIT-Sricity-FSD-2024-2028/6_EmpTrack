@@ -13,10 +13,10 @@ import api from './api';
 // the same credentials reach the same role with or without the API.
 // Password for all: "Password@123".
 const MOCK_USERS = [
-  { emp_id: 'EM001', emp_name: 'John Doe (EMP)', email: 'emp@emp.com', role: ROLES.EMPLOYEE },
-  { emp_id: 'HR001', emp_name: 'HR Manager', email: 'hr@emp.com', role: ROLES.HR },
-  { emp_id: 'AD001', emp_name: 'Kiran', email: 'cmpadmin@emp.com', role: ROLES.COMPANY_ADMIN },
-  { emp_id: 'TL001', emp_name: 'Rinku Singh (TL)', email: 'tl@emp.com', role: ROLES.TEAM_LEAD },
+  { emp_id: 'EM001', emp_name: 'John Doe (EMP)', email: 'emp@emptrack.com', role: ROLES.EMPLOYEE },
+  { emp_id: 'HR001', emp_name: 'HR Manager', email: 'hr@emptrack.com', role: ROLES.HR },
+  { emp_id: 'AD001', emp_name: 'Kiran', email: 'cmpadmin@emptrack.com', role: ROLES.COMPANY_ADMIN },
+  { emp_id: 'TL001', emp_name: 'Rinku Singh (TL)', email: 'tl@emptrack.com', role: ROLES.TEAM_LEAD },
   { emp_id: 'PA001', emp_name: 'Ravi Kumar', email: 'ravi.platform@emptrack.com', role: ROLES.PLATFORM_ADMIN },
   { emp_id: 'ST001', emp_name: 'Sam Wilson', email: 'sam.support@emptrack.com', role: ROLES.SUPPORT_MEMBER },
   { emp_id: 'TT001', emp_name: 'Wanda Maximoff', email: 'wanda.tech@emptrack.com', role: ROLES.TECHNICAL_MEMBER },

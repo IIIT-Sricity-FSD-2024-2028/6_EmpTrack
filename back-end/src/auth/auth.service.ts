@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { MockDataService } from '../data/mock-data.service';
 import { LoginDto } from './dto/login.dto';
 import { comparePassword } from '../common/utils/password.util';
+import { ROLE_VALUES } from '../common/validation/enums';
 import { FileLoggerService } from '../common/logger/file-logger.service';
 import { SessionService } from './session.service';
 
@@ -44,6 +45,21 @@ export class AuthService {
         status: 'WARNING',
       });
       throw new UnauthorizedException('This account is not active. Contact your administrator.');
+    }
+    // A session for an account with no recognised role could pass AuthGuard but no
+    // RolesGuard, and the frontend has no portal to send it to - refuse it up front.
+    if (!(ROLE_VALUES as readonly string[]).includes(employee.role)) {
+      this.logger.warn('Login rejected - no valid role', { email: dto.email, role: employee.role, ip, requestId });
+      this.dataStore.logActivity({
+        user_id: employee.emp_id,
+        user_name: employee.emp_name,
+        role: employee.role || 'UNKNOWN',
+        action: 'Login rejected (no valid role)',
+        company_id: employee.companyId || null,
+        details: `Login attempt on an account without a valid role.`,
+        status: 'WARNING',
+      });
+      throw new ForbiddenException('This account has no valid role assigned. Contact your administrator.');
     }
 
     this.logger.info('Login succeeded', { userId: employee.emp_id, role: employee.role, ip, requestId });

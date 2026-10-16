@@ -79,7 +79,8 @@ export default function Login() {
           </Button>
         </form>
         <p className="text-muted text-center mt-md mb-0">
-          Demo accounts (password Password@123): emp@emp.com, tl@emp.com, hr@emp.com
+          Demo accounts (password Password@123): emp@emptrack.com, tl@emptrack.com, hr@emptrack.com,
+          {' '}cmpadmin@emptrack.com, superadmin@emptrack.com, wanda.tech@emptrack.com, sam.support@emptrack.com
         </p>
       </section>
     </main>

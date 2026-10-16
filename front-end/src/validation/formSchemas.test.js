@@ -14,7 +14,7 @@ const account = { name: "Śrīnivās O'Neil", email: 'meera@example.com', phone:
 
 // [form, schema, valid values, [[field, patch], ...]]
 const FORMS = [
-  ['Login', s.loginSchema, { email: 'emp@emp.com', password: 'x' }, [
+  ['Login', s.loginSchema, { email: 'emp@emptrack.com', password: 'x' }, [
     ['email', { email: '' }], ['email', { email: 'emp@' }], ['password', { password: '' }],
   ]],
   ['Change password', s.changePasswordSchema, { current: 'Old@1234', next: STRONG, confirm: STRONG }, [
@@ -76,7 +76,7 @@ const FORMS = [
     ['name', { name: 'J0hn' }], ['email', { email: 'x@' }], ['phone', { phone: 'abcdefghij' }], ['password', { password: 'password', confirmPassword: 'password' }],
     ['confirmPassword', { confirmPassword: 'Other@123' }], ['department_id', { department_id: 'Space' }], ['team_id', { team_id: '' }],
   ]],
-  ['Edit employee', s.editEmployeeSchema(['Engineering']), { emp_name: 'Jane Smith', email: 'jane@emp.com', phone: '4445556666', department_id: 'Engineering', status: 'ACTIVE' }, [
+  ['Edit employee', s.editEmployeeSchema(['Engineering']), { emp_name: 'Jane Smith', email: 'jane@emptrack.com', phone: '4445556666', department_id: 'Engineering', status: 'ACTIVE' }, [
     ['emp_name', { emp_name: '' }], ['status', { status: 'GOD_MODE' }], ['phone', { phone: '1' }],
   ]],
   ['Raise company ticket', s.raiseCompanyTicketSchema, { priority: 'MEDIUM', category: '', title: 'Payroll export', description: 'Export fails with a timeout.' }, [

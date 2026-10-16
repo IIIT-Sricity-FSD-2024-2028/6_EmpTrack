@@ -6,6 +6,7 @@ import { AppModule } from './../src/app.module';
 import { HttpExceptionFilter } from './../src/common/filters/http-exception.filter';
 import { createValidationPipe } from './../src/common/validation/validators';
 import { SessionService } from './../src/auth/session.service';
+import { MockDataService } from './../src/data/mock-data.service';
 
 // End-to-end checks for authentication, authorization/tenant isolation and the core
 // business rules (leave, attendance, tasks, issues, notifications, escalations).
@@ -64,7 +65,7 @@ describe('EmpTrack security and workflows (e2e)', () => {
       http().get('/employees/EM001').set({ Authorization: 'Bearer not-a-real-token' }).expect(401));
 
     it('rejects a wrong password with a generic message', async () => {
-      const res = await http().post('/auth/login').send({ email: 'emp@emp.com', password: 'Wrong@1234' }).expect(401);
+      const res = await http().post('/auth/login').send({ email: 'emp@emptrack.com', password: 'Wrong@1234' }).expect(401);
       expect(res.body.message).toBe('Invalid email or password.');
     });
 
@@ -72,7 +73,7 @@ describe('EmpTrack security and workflows (e2e)', () => {
       http().post('/auth/login').send({ email: 'karthik.platform@emptrack.com', password: PASSWORD }).expect(401));
 
     it('issues a working token on login, never returns the password, and revokes it on logout', async () => {
-      const res = await http().post('/auth/login').send({ email: 'EMP@emp.com', password: PASSWORD }).expect(200);
+      const res = await http().post('/auth/login').send({ email: 'EMP@emptrack.com', password: PASSWORD }).expect(200);
       expect(res.body.token).toEqual(expect.any(String));
       expect(res.body.expiresAt).toBeGreaterThan(Date.now());
       expect(res.body.user.password).toBeUndefined();
@@ -163,8 +164,8 @@ describe('EmpTrack security and workflows (e2e)', () => {
     it('actually changes the password (regression: it always failed before)', async () => {
       await http().patch('/employees/EM003/password').set(as('EM003'))
         .send({ currentPassword: PASSWORD, newPassword: 'Changed@123', confirmPassword: 'Changed@123' }).expect(200);
-      await http().post('/auth/login').send({ email: 'emp3@emp.com', password: 'Changed@123' }).expect(200);
-      await http().post('/auth/login').send({ email: 'emp3@emp.com', password: PASSWORD }).expect(401);
+      await http().post('/auth/login').send({ email: 'emp3@emptrack.com', password: 'Changed@123' }).expect(200);
+      await http().post('/auth/login').send({ email: 'emp3@emptrack.com', password: PASSWORD }).expect(401);
     });
   });
 
@@ -366,11 +367,52 @@ describe('login throttling (e2e)', () => {
   it('throttles repeated login attempts', async () => {
     const statuses: number[] = [];
     for (let i = 0; i < 12; i++) {
-      const res = await request(app.getHttpServer()).post('/auth/login').send({ email: 'emp@emp.com', password: 'Wrong@1234' });
+      const res = await request(app.getHttpServer()).post('/auth/login').send({ email: 'emp@emptrack.com', password: 'Wrong@1234' });
       statuses.push(res.status);
     }
     expect(statuses.slice(0, 10).every((s) => s === 401)).toBe(true);
     expect(statuses[11]).toBe(429);
+    const blocked = await request(app.getHttpServer()).post('/auth/login').send({ email: 'emp@emptrack.com', password: PASSWORD });
+    expect(blocked.body.message).toBe('Too many requests. Please wait a minute and try again.');
+  });
+});
+
+// One login per role (8 of the 10-per-minute login allowance) on a fresh app, so the
+// real endpoint - not SessionService - is what hands out each role.
+describe('login for every role (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeAll(async () => {
+    app = await createApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it.each([
+    ['superadmin@emptrack.com', 'SUPER_ADMIN'],
+    ['ravi.platform@emptrack.com', 'PLATFORM_ADMIN'],
+    ['sam.support@emptrack.com', 'SUPPORT_MEMBER'],
+    ['wanda.tech@emptrack.com', 'TECHNICAL_MEMBER'],
+    ['cmpadmin@emptrack.com', 'COMPANY_ADMIN'],
+    ['hr@emptrack.com', 'HR'],
+    ['tl@emptrack.com', 'TEAMLEAD'],
+  ])('logs %s in as %s', async (email, role) => {
+    const res = await request(app.getHttpServer()).post('/auth/login').send({ email, password: PASSWORD }).expect(200);
+    expect(res.body.user.role).toBe(role);
+    expect(res.body.user.password).toBeUndefined();
+    const me = await request(app.getHttpServer()).get('/auth/me').set({ Authorization: `Bearer ${res.body.token}` }).expect(200);
+    expect(me.body.user.role).toBe(role);
+  });
+
+  it('refuses an account with no valid role', async () => {
+    // In-memory copy only; the seed itself is untouched.
+    const employee = app.get(MockDataService).getEmployees().find((e) => e.emp_id === 'EM002');
+    employee.role = 'MANAGER';
+    const res = await request(app.getHttpServer()).post('/auth/login').send({ email: 'jane@emptrack.com', password: PASSWORD }).expect(403);
+    expect(res.body.message).toBe('This account has no valid role assigned. Contact your administrator.');
+    expect(res.body.token).toBeUndefined();
   });
 });
 

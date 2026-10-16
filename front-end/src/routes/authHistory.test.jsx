@@ -18,9 +18,9 @@ vi.mock('../config/config', () => ({
   default: { appName: 'EmpTrack', apiUrl: 'http://api.test', useMockAuth: false, sessionDuration: 8 * 60 * 60 * 1000 },
 }));
 
-const EMPLOYEE = { emp_id: 'EM001', emp_name: 'John Doe', email: 'emp@emp.com', role: ROLES.EMPLOYEE };
-const TEAM_LEAD = { emp_id: 'TL001', emp_name: 'Rinku Singh', email: 'tl@emp.com', role: ROLES.TEAM_LEAD };
-const HR = { emp_id: 'HR001', emp_name: 'HR Manager', email: 'hr@emp.com', role: ROLES.HR };
+const EMPLOYEE = { emp_id: 'EM001', emp_name: 'John Doe', email: 'emp@emptrack.com', role: ROLES.EMPLOYEE };
+const TEAM_LEAD = { emp_id: 'TL001', emp_name: 'Rinku Singh', email: 'tl@emptrack.com', role: ROLES.TEAM_LEAD };
+const HR = { emp_id: 'HR001', emp_name: 'HR Manager', email: 'hr@emptrack.com', role: ROLES.HR };
 const USERS = [EMPLOYEE, TEAM_LEAD, HR];
 const PASSWORD = 'Password@123';
 

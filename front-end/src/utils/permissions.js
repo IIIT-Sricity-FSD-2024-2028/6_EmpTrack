@@ -21,7 +21,10 @@ export function getRoleBasePath(role) {
   return segment ? `/${segment}` : PATHS.HOME;
 }
 
-/** Where a user lands after login. */
+/**
+ * Where a logged-in user lands. A role with no portal goes to a fallback page -
+ * sending it to /login would bounce straight back here and render nothing.
+ */
 export function getHomePath(role) {
-  return isValidRole(role) ? `${getRoleBasePath(role)}/dashboard` : PATHS.LOGIN;
+  return isValidRole(role) ? `${getRoleBasePath(role)}/dashboard` : PATHS.UNSUPPORTED_ROLE;
 }

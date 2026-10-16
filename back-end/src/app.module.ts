@@ -49,14 +49,19 @@ function noStore(_req: Request, res: Response, next: NextFunction) {
 @Module({
   imports: [
     LoggerModule,
-    ThrottlerModule.forRoot([
-      {
-        // Baseline: 100 requests/minute per IP across the API. Tighter limits are
-        // applied per-route with @Throttle (see AuthController's login endpoint).
-        ttl: 60_000,
-        limit: 100,
-      },
-    ]),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          // Baseline: 100 requests/minute per IP across the API. Tighter limits are
+          // applied per-route with @Throttle (see AuthController's login endpoint).
+          ttl: 60_000,
+          limit: 100,
+        },
+      ],
+      // Shown as-is on the login form; the default ("ThrottlerException: Too Many
+      // Requests") reads like a broken account.
+      errorMessage: 'Too many requests. Please wait a minute and try again.',
+    }),
     DataModule,
     AuthModule,
     EmployeeModule,

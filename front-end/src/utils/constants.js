@@ -63,6 +63,8 @@ export const PATHS = Object.freeze({
   HOME: '/',
   LOGIN: '/login',
   ACCEPT_INVITATION: '/accept-invitation',
+  // Logged in, but the account's role has no portal (see routes.jsx).
+  UNSUPPORTED_ROLE: '/unsupported-role',
 });
 
 // Same keys as the original front-end.

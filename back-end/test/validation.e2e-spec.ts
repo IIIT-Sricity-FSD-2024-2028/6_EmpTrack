@@ -50,7 +50,7 @@ beforeAll(async () => {
   const team = await http().post('/teams').set(as('AD001')).send({ team_name: 'Validation Team' }).expect(201);
   teamId = team.body.team_id ?? team.body.team?.team_id;
   await http().post(`/teams/${teamId}/lead`).set(as('AD001'))
-    .send({ name: 'Kavya Rao', email: `kavya.${Date.now()}@emp.com`, phone: '9876501234', password: STRONG, confirmPassword: STRONG }).expect(201);
+    .send({ name: 'Kavya Rao', email: `kavya.${Date.now()}@emptrack.com`, phone: '9876501234', password: STRONG, confirmPassword: STRONG }).expect(201);
   const issues = await http().get('/technical-member/issues').set(as('TT001')).expect(200);
   const list = Array.isArray(issues.body) ? issues.body : issues.body.data || issues.body.issues || [];
   tmIssue = list.find((i: any) => ['OPEN', 'IN_PROGRESS'].includes(i.status))?.ticket_id;
@@ -93,7 +93,7 @@ const company = () => ({
 });
 const employee = () => ({
   name: 'Ananya Iyer',
-  email: `ananya.${Date.now()}@emp.com`,
+  email: `ananya.${Date.now()}@emptrack.com`,
   phone: '9876543210',
   password: STRONG,
   confirmPassword: STRONG,
@@ -120,8 +120,8 @@ describe('field validation (each case: 400, field named, nothing changed)', () =
   const cases: [string, Method, string, string, object, string][] = [
     // auth
     ['login: malformed email', 'post', '/auth/login', 'EM001', { email: 'emp@', password: 'x' }, 'email'],
-    ['login: email with spaces', 'post', '/auth/login', 'EM001', { email: 'emp @emp.com', password: 'x' }, 'email'],
-    ['login: missing password', 'post', '/auth/login', 'EM001', { email: 'emp@emp.com' }, 'password'],
+    ['login: email with spaces', 'post', '/auth/login', 'EM001', { email: 'emp @emptrack.com', password: 'x' }, 'email'],
+    ['login: missing password', 'post', '/auth/login', 'EM001', { email: 'emp@emptrack.com' }, 'password'],
     // attendance
     ['check-in: unknown mode', 'post', '/attendance/check-in', 'EM002', { mode: 'MOON' }, 'mode'],
     // calendar
@@ -266,9 +266,9 @@ describe('business rules and references (400, nothing changed)', () => {
   it('rejects a task deadline in the past', () => rejected('post', '/tasks', 'TL001', { ...task(), deadline: dateKey(-1) }));
 
   it('rejects an email already used by another account, ignoring case', async () => {
-    await rejected('post', '/platform-admins', 'SA001', { ...account(), email: 'EMP@emp.com' });
+    await rejected('post', '/platform-admins', 'SA001', { ...account(), email: 'EMP@emptrack.com' });
     await rejected('patch', '/platform-admins/PA002', 'SA001', { email: 'Ravi.Platform@emptrack.com' });
-    await rejected('patch', '/companies/C001/admins/AD001', 'SA001', { email: 'hr@emp.com' });
+    await rejected('patch', '/companies/C001/admins/AD001', 'SA001', { email: 'hr@emptrack.com' });
   });
 
   it('rejects a ticket category that is not configured', () =>

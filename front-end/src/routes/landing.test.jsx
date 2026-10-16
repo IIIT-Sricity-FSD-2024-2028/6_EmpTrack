@@ -65,7 +65,7 @@ describe('landing page', () => {
     await openApp(PATHS.HOME);
     fireEvent.click(screen.getAllByRole('link', { name: 'Login' })[0]);
     await loginHeading();
-    fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'tl@emp.com' } });
+    fireEvent.change(screen.getByLabelText(/Email/), { target: { value: 'tl@emptrack.com' } });
     fireEvent.change(screen.getByLabelText(/Password/), { target: { value: 'Password@123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await act(async () => {});

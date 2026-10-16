@@ -17,6 +17,7 @@ import employeeRoutes from '../pages/employee/employeeRoutes';
 import hrRoutes from '../pages/hr/hrRoutes';
 import Landing from '../pages/public/Landing';
 import Login from '../pages/public/Login';
+import UnsupportedRole from '../pages/public/UnsupportedRole';
 import platformAdminRoutes from '../pages/platform-admin/platformAdminRoutes';
 import superAdminRoutes from '../pages/super-admin/superAdminRoutes';
 import supportMemberRoutes from '../pages/support-member/supportMemberRoutes';
@@ -31,6 +32,8 @@ import RoleRoute from './RoleRoute';
 const publicRoutes = [
   { path: PATHS.HOME, element: <Landing /> },
   { path: PATHS.LOGIN, element: <Login /> },
+  // Handles its own auth checks: logged-out users go to /login, valid roles to their dashboard.
+  { path: PATHS.UNSUPPORTED_ROLE, element: <UnsupportedRole /> },
 ];
 
 // ---- Role portals (login + matching role required, rendered inside Layout) ----
