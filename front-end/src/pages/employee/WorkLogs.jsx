@@ -54,11 +54,16 @@ export default function WorkLogs() {
   const [searchParams] = useSearchParams();
   const presetTaskId = searchParams.get('id') || '';
 
-  const { data: tasks = [] } = useFetch(
+  const { data: tasks = [], error: taskError, reload: reloadTasks } = useFetch(
     async () => (await getTasksForUser(user.emp_id)).filter((t) => t.status !== 'COMPLETED'),
     [user.emp_id],
   );
-  const { data: logs = [], reload: reloadLogs } = useFetch(() => getWorkLogsForUser(user.emp_id), [user.emp_id]);
+  const { data: logs = [], error: logsError, reload: reloadLogs } = useFetch(() => getWorkLogsForUser(user.emp_id), [user.emp_id]);
+
+  if (taskError || logsError) {
+    const failure = taskError || logsError;
+    return <div className="card" role="alert">Failed to load work log data: {failure.message} <button type="button" onClick={() => { reloadTasks(); reloadLogs(); }}>Retry</button></div>;
+  }
 
   const emptyForm = { taskId: presetTaskId, start: '', end: '', description: '' };
   const [form, setForm] = useState(emptyForm);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import FieldError, { RequiredMark } from '../../components/common/FieldError';
+import FieldError from '../../components/common/FieldError';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
@@ -20,18 +20,16 @@ export default function UpdateTask() {
   const [searchParams] = useSearchParams();
   const taskId = searchParams.get('id');
 
-  const { data: task, loading } = useFetch(
+  const { data: task, loading, error } = useFetch(
     async () => (await getTasksForUser(user.emp_id)).find((t) => t.task_id === taskId) ?? null,
     [user.emp_id, taskId],
   );
 
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('NOT_STARTED');
-  const [hoursSpent, setHoursSpent] = useState('');
-  const [notes, setNotes] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const validation = useFormValidation(updateTaskSchema, { progress: String(progress), status, hoursSpent, notes }, {
+  const validation = useFormValidation(updateTaskSchema, { progress: String(progress), status }, {
     idPrefix: 'task',
     serverFieldMap: { progress_percentage: 'progress' },
   });
@@ -68,10 +66,12 @@ export default function UpdateTask() {
     <>
       <BackHeading to={empPath('tasks')} gap={10} as="h2">Update Task Progress</BackHeading>
 
+      {loading && <div className="card" role="status" style={{ textAlign: 'center', padding: 40 }}>Loading task...</div>}
+
       {!loading && !task && (
         <div className="card">
-          <div style={{ textAlign: 'center', padding: 40 }}>
-            Task Not Found. <Link to={empPath('tasks')}>Return</Link>
+          <div role={error ? 'alert' : undefined} style={{ textAlign: 'center', padding: 40 }}>
+            {error ? `Failed to load task: ${error.message}` : 'Task Not Found.'} <Link to={empPath('tasks')}>Return</Link>
           </div>
         </div>
       )}
@@ -80,9 +80,12 @@ export default function UpdateTask() {
         <div className="card" style={{ maxWidth: 800, margin: '0 auto', borderRadius: 12, padding: 32 }}>
           {/* Task Info Section */}
           <div style={{ marginBottom: 32, paddingBottom: 24, borderBottom: '1px solid var(--border-light)' }}>
-            <p style={{ fontSize: 'var(--text-md)', color: 'var(--text-main)', lineHeight: 1.5, marginBottom: 16 }}>
-              {task.task_description}
-            </p>
+            <h3 style={{ margin: '0 0 12px' }}>{task.task_title}</h3>
+            <p style={{ fontSize: 'var(--text-md)', color: 'var(--text-main)', lineHeight: 1.5, marginBottom: 16 }}>{task.task_description}</p>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16, color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
+              <span>Assigned to: {user.emp_name}</span><span>Priority: {task.priority}</span><span>Deadline: {task.deadline}</span><span>Status: {task.status.replaceAll('_', ' ')}</span>
+            </div>
+            {task.status !== 'COMPLETED' && <Link to={`${empPath('work-logs')}?id=${encodeURIComponent(task.task_id)}`} className="btn btn-purple">Log Work for This Task</Link>}
             <div
               style={{
                 display: 'inline-block',
@@ -97,7 +100,7 @@ export default function UpdateTask() {
               <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-main)' }}>Task ID:</span> {task.task_id}{' '}
               <span style={{ margin: '0 10px', color: 'var(--border-color)' }}>|</span>{' '}
               <span style={{ fontWeight: 'var(--font-semibold)', color: 'var(--text-main)' }}>Estimated Hours:</span>{' '}
-              {task.est_hours || 40}h
+              {task.est_hours || '-'}h
             </div>
           </div>
 
@@ -119,6 +122,7 @@ export default function UpdateTask() {
                   min="0"
                   max="100"
                   value={progress}
+                  disabled={submitting}
                   onChange={handleSlider}
                   aria-label="Task progress"
                   {...validation.input('progress', 'task_progress')}
@@ -157,52 +161,18 @@ export default function UpdateTask() {
               </div>
             </div>
 
-            {/* Inputs Section */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 32 }}>
-              <div className="form-group" style={{ margin: 0 }}>
-                <label className="form-label" htmlFor="hours_spent">Hours Spent (Today)<RequiredMark /></label>
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="e.g. 4"
-                  min="0.5"
-                  max="24"
-                  step="0.5"
-                  inputMode="decimal"
-                  style={fieldStyle}
-                  aria-required="true"
-                  value={hoursSpent}
-                  onChange={(e) => setHoursSpent(e.target.value)}
-                  {...validation.input('hoursSpent', 'hours_spent')}
-                />
-                <FieldError {...validation.errorProps('hoursSpent')} />
-              </div>
+            {/* Status is an explicit part of the PATCH contract; 100% requires completion. */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24, marginBottom: 32 }}>
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label" htmlFor="status_input">Status</label>
-                <select className="form-control" style={fieldStyle} value={status} onChange={(e) => setStatus(e.target.value)} {...validation.input('status', 'status_input')}>
+                <select className="form-control" style={fieldStyle} value={status} disabled={submitting} onChange={(e) => setStatus(e.target.value)} {...validation.input('status', 'status_input')}>
                   <option value="NOT_STARTED">Not Started</option>
                   <option value="IN_PROGRESS">In Progress</option>
+                  <option value="BLOCKED">Blocked</option>
                   <option value="COMPLETED">Completed</option>
                 </select>
                 <FieldError {...validation.errorProps('status')} />
               </div>
-            </div>
-
-            {/* Notes Section */}
-            <div className="form-group" style={{ marginBottom: 32 }}>
-              <label className="form-label" htmlFor="update_notes">Update Notes (Optional)</label>
-              <textarea
-                id="update_notes"
-                className="form-control"
-                rows={4}
-                placeholder="Describe what you've accomplished, any blockers, or next steps"
-                style={{ borderRadius: 'var(--radius-md)', padding: 16, resize: 'vertical' }}
-                maxLength={1000}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                {...validation.input('notes', 'update_notes')}
-              ></textarea>
-              <FieldError {...validation.errorProps('notes')} />
             </div>
 
             {/* Actions */}

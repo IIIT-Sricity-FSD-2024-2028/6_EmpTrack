@@ -4,7 +4,7 @@ import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getTasksForUser } from '../../services/taskService';
+import { getTasksForUser, IS_TASK_DEMO } from '../../services/taskService';
 import { readStorage } from '../../utils/helpers';
 import { empPath, taskBadge } from './employeeUtils';
 
@@ -78,11 +78,13 @@ const columns = [
 export default function EmployeeTasks() {
   usePageTitle('Work on Assigned Tasks');
   const { user } = useAuth();
-  const { data: tasks = [] } = useFetch(
-    async () => [...(await getTasksForUser(user.emp_id).catch(() => [])), ...legacyAssignedTasks()],
+  const { data: tasks = [], loading, error } = useFetch(
+    async () => [...(await getTasksForUser(user.emp_id)), ...(IS_TASK_DEMO ? legacyAssignedTasks() : [])],
     [user.emp_id],
   );
 
+  if (loading) return <div className="card" role="status">Loading assigned tasks...</div>;
+  if (error) return <div className="card" role="alert">Failed to load assigned tasks: {error.message}</div>;
   return (
     <Table
       card

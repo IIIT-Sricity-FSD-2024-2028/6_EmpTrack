@@ -128,7 +128,7 @@ export async function reassignTask(taskId, empId) {
 }
 
 export async function deleteTask(taskId) {
-  if (!IS_DEMO) throw new Error('The backend has no endpoint for deleting tasks yet.');
+  if (!IS_DEMO) return api.delete(`/tasks/${taskId}`);
   demoWrite((db) => {
     db.tasks = db.tasks.filter((t) => t.task_id !== taskId);
   });

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Patch, Body, UseGuards, Query, Headers } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, Delete, Body, UseGuards, Query, Headers } from '@nestjs/common';
 import { ApiTags, ApiHeader, ApiOperation } from '@nestjs/swagger';
 import { TaskService } from './task.service';
 import { CreateTaskDto, UpdateTaskDto } from './dto/task.dto';
@@ -47,5 +47,11 @@ export class TaskController {
     @Headers('x-actor-id') actorId: string,
   ) {
     return this.taskService.updateTask(taskId, updateDto, actorId);
+  }
+
+  @Delete(':id')
+  @Roles('TEAMLEAD', 'COMPANY_ADMIN')
+  deleteTask(@Param('id') taskId: string, @Headers('x-actor-id') actorId: string) {
+    return this.taskService.deleteTask(taskId, actorId);
   }
 }

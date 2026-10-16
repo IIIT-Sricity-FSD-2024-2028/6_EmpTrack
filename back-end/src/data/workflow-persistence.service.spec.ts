@@ -50,4 +50,25 @@ describe('WorkflowPersistenceService', () => {
     store.createEscalation(escalation);
     expect(() => store.createEscalation({ ...escalation, escalation_id: 'ESC-DUP-2' })).toThrow('already exists');
   });
+
+  it('persists task updates and work logs across database reopen, rejecting duplicates safely', () => {
+    const task = { task_id: 'TK-PERSIST', assigned_to: 'EM001', status: 'NOT_STARTED', progress_percentage: 0 };
+    const log = {
+      worklog_id: 'WL-PERSIST', emp_id: 'EM001', task_id: task.task_id,
+      start_time: '2026-10-16T09:00:00.000Z', end_time: '2026-10-16T11:00:00.000Z',
+      hours_spent: 2, description: 'Persisted task work.',
+    };
+    store.createTask(task);
+    store.saveTask({ ...task, status: 'COMPLETED', progress_percentage: 100 });
+    store.createWorkLog(log);
+    expect(() => store.createWorkLog({ ...log, worklog_id: 'WL-DUPLICATE' })).toThrow('already exists');
+    expect(() => store.deleteTask(task.task_id)).toThrow('logged work');
+    store.onModuleDestroy();
+
+    const reopened = new WorkflowPersistenceService();
+    expect(reopened.getTask(task.task_id)).toMatchObject({ status: 'COMPLETED', progress_percentage: 100 });
+    expect(reopened.getWorkLogsForEmployee('EM001')).toContainEqual(log);
+    reopened.onModuleDestroy();
+    store = new WorkflowPersistenceService();
+  });
 });

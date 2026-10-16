@@ -20,6 +20,8 @@ describe('Issue and escalation persisted API lifecycle', () => {
   let hrAuth: { Authorization: string };
   let issueId: string;
   let escalationId: string;
+  let taskId: string;
+  let worklogId: string;
 
   const start = async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({ imports: [AppModule] }).compile();
@@ -119,5 +121,74 @@ describe('Issue and escalation persisted API lifecycle', () => {
       .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ issue_id: issueId, status: 'Resolved' })));
     await http().get('/escalations').set(hrAuth).expect(200)
       .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ escalation_id: escalationId, issue_id: issueId })));
+  });
+
+  it('creates, assigns, updates, logs, completes, scopes, and persists a task through HTTP', async () => {
+    const http = () => request(app.getHttpServer());
+    const deadline = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+    await http().post('/tasks').set(teamLeadAuth).send({
+      assigned_to: 'EM003', task_title: 'Unauthorized assignment', task_description: 'This assignment must be rejected.',
+      est_hours: 6, deadline, priority: 'High',
+    }).expect(403);
+    const createBody = {
+      assigned_to: 'EM001', task_title: 'Persisted lifecycle task', task_description: 'Verify task creation through completion.',
+      est_hours: 6, deadline, priority: 'High', client_request_id: 'task-lifecycle-e2e-001',
+    };
+    const created = await http().post('/tasks').set(teamLeadAuth).send(createBody).expect(201);
+    taskId = created.body.task_id;
+    await http().post('/tasks').set(teamLeadAuth).send(createBody).expect(201)
+      .expect(({ body }) => expect(body.task_id).toBe(taskId));
+    await http().post('/tasks').set(teamLeadAuth).send({ ...createBody, task_title: 'Different task, reused key' }).expect(400);
+    await http().post('/tasks').set(teamLeadAuth).send({ ...createBody, priority: 'URGENT', client_request_id: 'task-invalid-priority' }).expect(400);
+    await http().post('/tasks').set(teamLeadAuth).send({ ...createBody, est_hours: -1, client_request_id: 'task-invalid-hours' }).expect(400);
+    expect(created.body).toMatchObject({ assigned_to: 'EM001', status: 'NOT_STARTED', progress_percentage: 0 });
+
+    await http().get('/tasks/user/EM001').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId })));
+    await http().get('/tasks/user/EM001').set({ Authorization: `Bearer ${app.get(SessionService).create('EM002').token}` }).expect(403);
+    await http().patch(`/tasks/${taskId}`).set({ Authorization: `Bearer ${app.get(SessionService).create('EM002').token}` })
+      .send({ status: 'IN_PROGRESS', progress_percentage: 20 }).expect(403);
+    await http().patch(`/tasks/${taskId}`).set(teamLeadAuth).send({ assigned_to: 'EM003' }).expect(200)
+      .expect(({ body }) => expect(body.assigned_to).toBe('EM001'));
+
+    await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'IN_PROGRESS', progress_percentage: 25 }).expect(200);
+    await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'IN_PROGRESS', progress_percentage: 101 }).expect(400);
+    await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'IN_PROGRESS', progress_percentage: 100 }).expect(400);
+
+    const day = new Date().toISOString().slice(0, 10);
+    const workLog = {
+      task_id: taskId, task_title: 'Client supplied title is ignored', hours_spent: 2,
+      start_time: `${day}T09:00:00.000Z`, end_time: `${day}T11:00:00.000Z`,
+      description: 'Implemented and verified the task lifecycle integration.',
+    };
+    const logged = await http().post('/worklogs').set(employeeAuth).send(workLog).expect(201);
+    worklogId = logged.body.worklog_id;
+    expect(logged.body.task_title).toBe('Persisted lifecycle task');
+    await http().post('/worklogs').set(employeeAuth).send(workLog).expect(409);
+    await http().post('/worklogs').set({ Authorization: `Bearer ${app.get(SessionService).create('EM002').token}` }).send(workLog).expect(403);
+    await http().post('/worklogs').set(employeeAuth).send({ ...workLog, task_id: 'UNKNOWN-TASK' }).expect(400);
+    await http().post('/worklogs').set(employeeAuth).send({ ...workLog, hours_spent: 1 }).expect(400);
+    await http().get('/worklogs/user/EM001').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ worklog_id: worklogId, task_id: taskId })));
+
+    await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'COMPLETED', progress_percentage: 100 }).expect(200)
+      .expect(({ body }) => expect(body).toMatchObject({ status: 'COMPLETED', progress_percentage: 100 }));
+    await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'COMPLETED' }).expect(200)
+      .expect(({ body }) => expect(body).toMatchObject({ status: 'COMPLETED', progress_percentage: 100 }));
+    await http().post('/worklogs').set(employeeAuth).send({ ...workLog, start_time: `${day}T12:00:00.000Z`, end_time: `${day}T14:00:00.000Z` }).expect(400);
+    await http().get('/tasks').query({ managerId: 'TL001' }).set(teamLeadAuth).expect(200)
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId, status: 'COMPLETED' })));
+    await http().delete(`/tasks/${taskId}`).set(employeeAuth).expect(403);
+    await http().delete(`/tasks/${taskId}`).set(teamLeadAuth).expect(409);
+  });
+
+  it('retains task progress and work logs after restarting the Nest application', async () => {
+    await app.close();
+    await start();
+    const http = () => request(app.getHttpServer());
+    await http().get('/tasks/user/EM001').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId, status: 'COMPLETED', progress_percentage: 100 })));
+    await http().get('/worklogs/user/EM001').set(employeeAuth).expect(200)
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ worklog_id: worklogId, task_id: taskId })));
   });
 });

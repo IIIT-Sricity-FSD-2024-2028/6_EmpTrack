@@ -332,9 +332,11 @@ export class MockDataService {
     public getAttendance() { return this.data.attendance; }
     public getLeaves() { return this.data.leave_details; }
     public getTasks() { return this.data.task; }
+    public setTasks(tasks: any[]) { this.data.task = tasks; }
     public getEscalations() { return this.data.escalation; }
     public getIssues() { return this.data.issue; }
     public getWorkLogs() { return this.data.work_logs; }
+    public setWorkLogs(workLogs: any[]) { this.data.work_logs = workLogs; }
     public getNotifications() { return this.data.notifications; }
     public getHolidays() { return this.data.holidays; }
     public getCompanyEvents() { return this.data.company_events; }

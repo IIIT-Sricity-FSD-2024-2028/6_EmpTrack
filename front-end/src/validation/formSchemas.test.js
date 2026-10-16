@@ -34,10 +34,9 @@ const FORMS = [
     ['title', { title: LONG(151) }], ['description', { description: 'short' }], ['attachments', { attachments: [file('virus.exe')] }],
     ['attachments', { attachments: [file('big.png', 11 * 1024 * 1024)] }],
   ]],
-  ['Update task', s.updateTaskSchema, { progress: '50', status: 'IN_PROGRESS', hoursSpent: '4', notes: '' }, [
+  ['Update task', s.updateTaskSchema, { progress: '50', status: 'IN_PROGRESS' }, [
     ['progress', { progress: '101' }], ['status', { status: 'DONE' }], ['status', { status: 'NOT_STARTED' }],
-    ['status', { progress: '100', status: 'IN_PROGRESS' }], ['hoursSpent', { hoursSpent: '' }], ['hoursSpent', { hoursSpent: '25' }],
-    ['hoursSpent', { hoursSpent: 'four' }], ['notes', { notes: LONG(1001) }],
+    ['status', { progress: '100', status: 'IN_PROGRESS' }],
   ]],
   ['Work log', s.workLogSchema(['TK001']), { taskId: 'TK001', start: '2026-03-28T09:00', end: '2026-03-28T11:00', description: 'Built the header.' }, [
     ['taskId', { taskId: '' }], ['start', { start: 'yesterday' }], ['end', { end: '2026-03-28T08:00' }],

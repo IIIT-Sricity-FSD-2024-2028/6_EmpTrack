@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -15,6 +15,7 @@ import { matchesSearch, nameOf, TASK_STATUSES, taskStatusBadge, taskStatusLabel,
 import './teamlead.css';
 
 const EMPTY_TASK = { assigned_to: '', task_title: '', task_description: '', est_hours: '', deadline: '', priority: 'Medium' };
+const newRequestKey = () => globalThis.crypto?.randomUUID?.() || `task-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 
 /** Fields shared by the create form and the edit modal. */
@@ -60,6 +61,7 @@ export default function Tasks() {
   const [toast, showToast] = useToast();
 
   const [form, setForm] = useState(EMPTY_TASK);
+  const createRequestKey = useRef(newRequestKey());
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(null); // task being edited (form values)
   const [deleting, setDeleting] = useState(null);
@@ -102,8 +104,9 @@ export default function Tasks() {
     e.preventDefault();
     if (!createValidation.validateAll()) return;
     setSaving(true);
-    if (await run(() => createTask(toPayload(form)), `Task assigned to ${nameOf(members, form.assigned_to)}`, createValidation)) {
+    if (await run(() => createTask({ ...toPayload(form), client_request_id: createRequestKey.current }), `Task assigned to ${nameOf(members, form.assigned_to)}`, createValidation)) {
       setForm(EMPTY_TASK);
+      createRequestKey.current = newRequestKey();
       createValidation.reset();
     }
     setSaving(false);
@@ -129,6 +132,7 @@ export default function Tasks() {
       deadline: t.deadline || '',
       priority: t.priority || 'Medium',
       status: t.status,
+      progress_percentage: t.progress_percentage ?? 0,
     });
   };
 
@@ -148,6 +152,7 @@ export default function Tasks() {
         className="form-control"
         aria-label={`Status of ${t.task_id}`}
         value={t.status}
+        disabled={saving}
         onChange={(e) => run(() => updateTask(t.task_id, { status: e.target.value }), `${t.task_id} marked ${taskStatusLabel(e.target.value)}`)}
         style={{ minWidth: 130 }}
       >

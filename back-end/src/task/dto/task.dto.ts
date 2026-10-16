@@ -6,6 +6,9 @@ export const TASK_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 export const MAX_EST_HOURS = 1000;
 
 export class CreateTaskDto {
+  @IdField('Client request', { optional: true })
+  client_request_id?: string;
+
   @TextField('Task title', { min: 3, max: LIMITS.TITLE_MAX })
   task_title: string;
 

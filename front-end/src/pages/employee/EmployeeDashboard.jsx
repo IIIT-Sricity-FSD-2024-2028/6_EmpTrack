@@ -55,7 +55,7 @@ export default function EmployeeDashboard() {
   usePageTitle('Dashboard');
   const { user } = useAuth();
 
-  const { data } = useFetch(async () => {
+  const { data, error, loading, reload } = useFetch(async () => {
     const [tasks, attendance, leaves] = await Promise.all([
       getTasksForUser(user.emp_id),
       getAttendanceForUser(user.emp_id),
@@ -63,6 +63,9 @@ export default function EmployeeDashboard() {
     ]);
     return { tasks, attendance, leaves };
   }, [user.emp_id]);
+
+  if (loading) return <div className="card" role="status">Loading your dashboard...</div>;
+  if (error) return <div className="card" role="alert">Failed to load your dashboard: {error.message} <button type="button" onClick={reload}>Retry</button></div>;
 
   const tasks = data?.tasks ?? [];
   const attendance = data?.attendance ?? [];

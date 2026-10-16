@@ -79,8 +79,6 @@ export const updateTaskSchema = {
     (status, v) => (status === 'NOT_STARTED' && Number(v.progress) > 0 ? 'A task with progress cannot be "Not Started".' : ''),
     (status, v) => (Number(v.progress) === 100 && status !== 'COMPLETED' ? 'Set the status to Completed at 100% progress.' : ''),
   ],
-  hoursSpent: number('Hours spent', { min: 0.5, max: 24, maxDecimals: 2 }),
-  notes: text('Update notes', { required: false, max: LIMITS.COMMENT_MAX, multiline: true }),
 };
 
 /** Whole hours between two datetime-local values (the Work Logs page records whole hours). */
@@ -117,7 +115,11 @@ export const teamLeadTaskSchema = (memberIds, { isNew }) => ({
   est_hours: number('Estimated hours', { min: 0.5, max: 1000, maxDecimals: 1 }),
   deadline: date('Deadline', { notPast: isNew }),
   priority: priority(),
-  ...(isNew ? {} : { status: oneOf('Status', ['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED']) }),
+  ...(isNew ? {} : { status: [
+    oneOf('Status', ['NOT_STARTED', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED']),
+    (status, values) => (status === 'NOT_STARTED' && Number(values.progress_percentage || 0) > 0 ? 'A task with progress cannot be "Not Started".' : ''),
+    (status, values) => (Number(values.progress_percentage) === 100 && status !== 'COMPLETED' ? 'Set the status to Completed at 100% progress.' : ''),
+  ] }),
   task_description: text('Description', { required: false, max: LIMITS.DESCRIPTION_MAX, multiline: true }),
 });
 

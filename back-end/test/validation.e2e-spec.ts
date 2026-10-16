@@ -30,12 +30,17 @@ const snapshot = () => JSON.stringify(store.data);
 // Set up in beforeAll: a team that can take employees, and an open issue owned by TT001.
 let teamId = '';
 let tmIssue = '';
+let workflowDbDir = '';
+let previousWorkflowDb: string | undefined;
 // Placeholders keep the case table (built before beforeAll) pointing at those records.
 const tm = (action: string) => `/technical-member/issues/${tmIssue || '{TM}'}/${action}`;
 const resolve = (text: string) => text.replace(/\{TM\}/g, tmIssue).replace(/\{TEAM\}/g, teamId);
 
 beforeAll(async () => {
   process.env.UPLOAD_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'emptrack-uploads-'));
+  workflowDbDir = fs.mkdtempSync(path.join(os.tmpdir(), 'emptrack-validation-workflow-'));
+  previousWorkflowDb = process.env.EMPTRACK_WORKFLOW_DB;
+  process.env.EMPTRACK_WORKFLOW_DB = path.join(workflowDbDir, 'workflow.sqlite');
   const moduleFixture: TestingModule = await Test.createTestingModule({ imports: [AppModule] }).compile();
   app = moduleFixture.createNestApplication<INestApplication<App>>();
   app.useGlobalPipes(createValidationPipe());
@@ -59,6 +64,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await app.close();
+  if (previousWorkflowDb === undefined) delete process.env.EMPTRACK_WORKFLOW_DB;
+  else process.env.EMPTRACK_WORKFLOW_DB = previousWorkflowDb;
+  fs.rmSync(workflowDbDir, { recursive: true, force: true });
 });
 
 type Method = 'post' | 'patch';
@@ -348,9 +356,10 @@ describe('valid input and boundary values are accepted', () => {
 
   it('accepts progress 0 and 100 and a 24-hour work log', async () => {
     await http().patch('/tasks/TK001').set(as('EM001')).send({ progress_percentage: 0 }).expect(200);
-    await http().patch('/tasks/TK001').set(as('EM001')).send({ progress_percentage: 100 }).expect(200);
+    await http().patch('/tasks/TK001').set(as('EM001')).send({ status: 'IN_PROGRESS', progress_percentage: 100 }).expect(400);
     await http().post('/worklogs').set(as('EM001'))
       .send({ ...worklog(), start_time: `${dateKey(-3)}T00:00`, end_time: `${dateKey(-2)}T00:00`, hours_spent: 24 }).expect(201);
+    await http().patch('/tasks/TK001').set(as('EM001')).send({ status: 'COMPLETED', progress_percentage: 100 }).expect(200);
   });
 
   it('stores a profile edit under emp_name (fixes name edits being lost)', async () => {

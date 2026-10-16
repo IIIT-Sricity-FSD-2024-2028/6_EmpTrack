@@ -3,19 +3,16 @@
 // localStorage ('empTrack_local_tasks') and merged into the results.
 import { readStorage, writeStorage } from '../utils/helpers';
 import api from './api';
+import config from '../config/config';
 
 const LOCAL_TASKS_KEY = 'empTrack_local_tasks';
+export const IS_TASK_DEMO = !config.apiUrl;
 
 export async function getTasksForUser(empId) {
-  let serverTasks = [];
-  try {
-    serverTasks = await api.get(`/tasks/user/${empId}`);
-  } catch {
-    // Fall back to locally stored tasks only.
-  }
+  if (!IS_TASK_DEMO) return api.get(`/tasks/user/${empId}`);
   const localTasks = readStorage(LOCAL_TASKS_KEY, []);
   const userLocal = localTasks.filter((t) => t.assigned_to === empId || t.employee_name === empId);
-  return [...serverTasks, ...userLocal];
+  return userLocal;
 }
 
 /** PATCH /tasks/:id with { status, progress_percentage? }. */
@@ -23,12 +20,7 @@ export async function updateTaskStatus(taskId, status, percentage) {
   const body = { status };
   if (percentage !== undefined) body.progress_percentage = percentage;
 
-  let serverError = null;
-  try {
-    await api.patch(`/tasks/${taskId}`, body);
-  } catch (error) {
-    serverError = error;
-  }
+  if (!IS_TASK_DEMO) return api.patch(`/tasks/${taskId}`, body);
 
   const localTasks = readStorage(LOCAL_TASKS_KEY, []);
   const localIndex = localTasks.findIndex((t) => t.task_id === taskId);
@@ -38,6 +30,5 @@ export async function updateTaskStatus(taskId, status, percentage) {
     return localTasks[localIndex];
   }
 
-  if (serverError) throw serverError;
-  return true;
+  throw new Error('Task was not found in demo storage.');
 }
