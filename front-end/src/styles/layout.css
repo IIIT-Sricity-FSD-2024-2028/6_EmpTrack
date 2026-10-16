@@ -42,10 +42,6 @@
     letter-spacing: -0.5px;
 }
 
-.sidebar-logo i {
-    color: var(--primary-color);
-}
-
 .sidebar-nav {
     flex: 1;
     padding: var(--spacing-lg) 0;

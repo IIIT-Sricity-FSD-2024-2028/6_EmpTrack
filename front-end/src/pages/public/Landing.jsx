@@ -5,11 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, Bell, Briefcase, Building2, CalendarCheck, CalendarX, ChartBar, ChartLine, ChevronDown,
-  CircleCheckBig, CircleDollarSign, GraduationCap, Info, Layers, LayoutDashboard, ListChecks, LockKeyhole,
+  CircleCheckBig, CircleDollarSign, GraduationCap, Info, Layers, ListChecks, LockKeyhole,
   Menu, Moon, Plug2, Rocket, ShieldCheck, Sparkles, Store, Sun, Target, Timer, TrendingUp, UserPlus, Users,
   Wand, Zap,
 } from 'lucide-react';
 import useTheme from '../../hooks/useTheme';
+import BrandLogo from '../../components/common/BrandLogo';
 import { PATHS } from '../../utils/constants';
 import './landing.css';
 
@@ -92,15 +93,6 @@ const FAQS = [
 
 const delay = (ms) => ({ '--delay': `${ms}ms` });
 
-function Logo() {
-  return (
-    <a href="#top" className="lp-logo">
-      <span className="lp-logo-badge"><LayoutDashboard aria-hidden="true" /></span>
-      EmpTrack
-    </a>
-  );
-}
-
 // Icon + title + text card, used by four sections with different card classes.
 function Cards({ items, className, badge = 'lp-icon-badge sm outline', step = 60 }) {
   return items.map(([Icon, title, text, soon], i) => (
@@ -169,7 +161,7 @@ export default function Landing() {
 
       <header className={`lp-header${isScrolled ? ' is-scrolled' : ''}${menuOpen ? ' is-open' : ''}`}>
         <div className="lp-header-inner">
-          <Logo />
+          <BrandLogo href="#top" className="lp-logo" />
           <nav className="lp-nav" aria-label="Primary">
             {SECTIONS.map(([href, label]) => <a key={href} href={href}>{label}</a>)}
           </nav>
@@ -393,7 +385,7 @@ export default function Landing() {
         <div className="lp-container">
           <div className="lp-footer-grid">
             <div className="lp-footer-brand">
-              <Logo />
+              <BrandLogo href="#top" className="lp-logo" />
               <p>
                 A workforce and HR management platform built to bring employee management, attendance, leave, and task
                 tracking into one connected system.

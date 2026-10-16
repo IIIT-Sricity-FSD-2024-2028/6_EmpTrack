@@ -1,0 +1,30 @@
+.brand-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-main);
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.brand-logo-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--brand-gradient);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: var(--brand-shadow);
+    flex: 0 0 auto;
+}
+
+.brand-logo-badge .lucide {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.25;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
+import BrandLogo from '../../components/common/BrandLogo';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
 import useFormValidation from '../../hooks/useFormValidation';
@@ -50,10 +51,7 @@ export default function Login() {
   return (
     <main className="auth-wrapper">
       <section className="auth-container" aria-labelledby="login-title">
-        <div className="auth-logo">
-          <i className="ph ph-users-three" aria-hidden="true"></i>
-          EmpTrack
-        </div>
+        <BrandLogo to={PATHS.HOME} className="auth-logo" />
         <h1 id="login-title" className="auth-title">Sign in to your account</h1>
         <form onSubmit={handleSubmit} noValidate>
           <Input

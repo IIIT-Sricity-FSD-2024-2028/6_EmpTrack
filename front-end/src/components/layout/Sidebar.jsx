@@ -1,10 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import config from '../../config/config';
 import { getNavItems } from '../../config/navigation';
 import useAuth from '../../hooks/useAuth';
 import { PATHS, ROLE_LABELS } from '../../utils/constants';
 import { cx } from '../../utils/helpers';
-import { getRoleBasePath } from '../../utils/permissions';
+import { getHomePath, getRoleBasePath } from '../../utils/permissions';
+import BrandLogo from '../common/BrandLogo';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, role, logout } = useAuth();
@@ -26,9 +26,7 @@ export default function Sidebar({ isOpen, onClose }) {
       <div className={cx('sidebar-overlay', isOpen && 'is-visible')} onClick={onClose} />
       <aside className={cx('sidebar', isOpen && 'is-open')}>
         <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <i className="ph-fill ph-check-circle"></i> {config.appName}
-          </div>
+          <BrandLogo to={getHomePath(role)} className="sidebar-logo" onClick={onClose} />
         </div>
 
         <nav className="sidebar-nav">

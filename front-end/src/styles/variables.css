@@ -8,6 +8,8 @@
     --primary-dark: #1E40AF; /* landing --lp-purple-dark (light) */
     --primary-light: #DBEAFE;
     --primary-gradient: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    --brand-gradient: linear-gradient(135deg, #2563EB 0%, #38BDF8 100%);
+    --brand-shadow: 0 14px 34px -12px rgba(37, 99, 235, 0.28);
 
     --brand-secondary: #1E40AF; /* Blue brand accent - distinct from success green below */
     --accent-color: #38BDF8; /* landing --lp-cyan (light) */
@@ -117,6 +119,8 @@
     --primary-hover: #8B5CF6;
     --primary-dark: #5B21B6; /* landing --lp-purple-dark (dark) */
     --primary-light: rgba(124, 58, 237, 0.18);
+    --brand-gradient: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
+    --brand-shadow: 0 14px 34px -10px rgba(124, 58, 237, 0.45);
 
     --brand-secondary: #06B6D4; /* landing --lp-cyan (dark) */
     --accent-color: #06B6D4;

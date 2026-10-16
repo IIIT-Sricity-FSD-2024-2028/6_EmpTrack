@@ -19,7 +19,7 @@
     --lp-warning-bg: rgba(245, 158, 11, 0.14);
     --lp-danger: #EF4444;
 
-    --lp-gradient-brand: linear-gradient(135deg, var(--lp-purple) 0%, var(--lp-cyan) 100%);
+    --lp-gradient-brand: var(--brand-gradient);
     --lp-gradient-brand-soft: linear-gradient(135deg, rgba(124, 58, 237, 0.14) 0%, rgba(6, 182, 212, 0.14) 100%);
     --lp-gradient-text: linear-gradient(135deg, #C4B5FD 0%, #67E8F9 100%);
 
@@ -37,7 +37,7 @@
     --lp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
     --lp-shadow-md: 0 12px 28px -8px rgba(0, 0, 0, 0.45);
     --lp-shadow-lg: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
-    --lp-shadow-glow: 0 14px 34px -10px rgba(124, 58, 237, 0.45);
+    --lp-shadow-glow: var(--brand-shadow);
     --lp-shadow-glow-cyan: 0 14px 34px -10px rgba(6, 182, 212, 0.35);
 
     --lp-radius-sm: 12px;
@@ -62,7 +62,7 @@ html[data-theme="light"] {
     --lp-cyan: #38BDF8;
     --lp-cyan-light: #1E40AF;
 
-    --lp-gradient-brand: linear-gradient(135deg, #2563EB 0%, #38BDF8 100%);
+    --lp-gradient-brand: var(--brand-gradient);
     --lp-gradient-brand-soft: linear-gradient(135deg, rgba(37, 99, 235, 0.10) 0%, rgba(56, 189, 248, 0.10) 100%);
     --lp-gradient-text: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%);
 
@@ -82,7 +82,7 @@ html[data-theme="light"] {
     --lp-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
     --lp-shadow-md: 0 12px 28px -10px rgba(15, 23, 42, 0.12);
     --lp-shadow-lg: 0 24px 48px -18px rgba(15, 23, 42, 0.16);
-    --lp-shadow-glow: 0 14px 34px -12px rgba(37, 99, 235, 0.28);
+    --lp-shadow-glow: var(--brand-shadow);
     --lp-shadow-glow-cyan: 0 14px 34px -12px rgba(56, 189, 248, 0.25);
 }
 
@@ -394,31 +394,7 @@ html[data-theme="light"] .lp-header.is-scrolled {
 
 .lp-header.is-scrolled .lp-header-inner { padding-top: 12px; padding-bottom: 12px; }
 
-.lp-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    text-decoration: none;
-    color: var(--lp-text);
-    flex-shrink: 0;
-}
-
-.lp-logo-badge {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    background: var(--lp-gradient-brand);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    box-shadow: var(--lp-shadow-glow);
-}
-
-.lp-logo-badge .lucide { width: 18px; height: 18px; stroke-width: 2.25; }
+.lp-logo { color: var(--lp-text); }
 
 .lp-nav {
     display: flex;

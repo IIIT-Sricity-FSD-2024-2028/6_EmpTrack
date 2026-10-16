@@ -19,16 +19,6 @@
     margin: 0 auto;
 }
 
-.rg-logo {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    color: var(--primary-color);
-    font-size: var(--text-xl);
-    font-weight: var(--font-bold);
-    text-decoration: none;
-}
-
 .rg-nav {
     display: flex;
     align-items: center;

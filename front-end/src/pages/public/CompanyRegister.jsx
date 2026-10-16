@@ -3,6 +3,7 @@
 // company verified - only a Super Admin can (pages/super-admin/SaRegistrations.jsx).
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import BrandLogo from '../../components/common/BrandLogo';
 import Button from '../../components/common/Button';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import Input from '../../components/common/Input';
@@ -44,7 +45,7 @@ export function RegistrationShell({ title, subtitle, children }) {
   return (
     <div className="rg-page">
       <header className="rg-header">
-        <Link to={PATHS.HOME} className="rg-logo"><i className="ph ph-users-three" aria-hidden="true"></i> EmpTrack</Link>
+        <BrandLogo to={PATHS.HOME} className="rg-logo" />
         <nav className="rg-nav" aria-label="Primary">
           <Link to={PATHS.HOME}>Home</Link>
           <Link to={PATHS.LOGIN} className="btn btn-outline">Login</Link>
