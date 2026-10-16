@@ -41,6 +41,9 @@ export class UpdateTaskDto {
   @NumberField('Progress', { min: 0, max: 100, integer: true, optional: 'partial' })
   progress_percentage?: number;
 
+  @NumericField('Estimated hours', { min: 0.5, max: MAX_EST_HOURS, optional: 'partial' })
+  est_hours?: string | number;
+
   @TextField('Task title', { min: 3, max: LIMITS.TITLE_MAX, optional: 'partial' })
   task_title?: string;
 

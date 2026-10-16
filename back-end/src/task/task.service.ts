@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException,
 import { randomUUID } from 'node:crypto';
 import { MockDataService } from '../data/mock-data.service';
 import { WorkflowPersistenceService } from '../data/workflow-persistence.service';
-import { CreateTaskDto, UpdateTaskDto, TASK_PRIORITIES } from './dto/task.dto';
+import { CreateTaskDto, UpdateTaskDto, MAX_EST_HOURS, TASK_PRIORITIES } from './dto/task.dto';
 import { accessibleEmployeeIds, assertCanAccessEmployee, canAccessEmployee, getActor, isDateKey, todayKey } from '../common/utils/access-scope.util';
 
 // Fields an assignee may change on their own task; managers may change everything in
@@ -113,6 +113,13 @@ export class TaskService {
       }
     }
     if (changes.priority !== undefined) assertPriority(changes.priority);
+    if (changes.est_hours !== undefined) {
+      const estimate = Number(changes.est_hours);
+      if (!Number.isFinite(estimate) || estimate < 0.5 || estimate > MAX_EST_HOURS) {
+        throw new BadRequestException(`est_hours must be a finite number between 0.5 and ${MAX_EST_HOURS}.`);
+      }
+      changes.est_hours = estimate;
+    }
     if (changes.deadline !== undefined && !isDateKey(changes.deadline)) {
       throw new BadRequestException('deadline must be a valid date in YYYY-MM-DD format.');
     }

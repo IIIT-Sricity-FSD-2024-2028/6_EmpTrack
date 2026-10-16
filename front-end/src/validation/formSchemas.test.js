@@ -48,6 +48,8 @@ const FORMS = [
   ]],
   ['Team Lead task (edit)', s.teamLeadTaskSchema(['EM001'], { isNew: false }), { assigned_to: 'EM001', task_title: 'Write docs', est_hours: '4', deadline: day(-30), priority: 'HIGH', status: 'BLOCKED', task_description: '' }, [
     ['status', { status: 'DONE' }], ['task_description', { task_description: LONG(2001) }],
+    ['est_hours', { est_hours: '' }], ['est_hours', { est_hours: '0' }], ['est_hours', { est_hours: '-1' }],
+    ['est_hours', { est_hours: 'abc' }], ['est_hours', { est_hours: '1001' }],
   ]],
   ['Assign issue', s.assignIssueSchema(['ISS-1'], ['T1'], { assigneeRequired: true }), { issueId: 'ISS-1', type: 'Hardware', teamId: 'T1', assignee: 'EM001', priority: 'High', deadline: todayKey(), notes: 'Please replace the fan.' }, [
     ['issueId', { issueId: '' }], ['teamId', { teamId: 'T9' }], ['assignee', { assignee: '' }], ['deadline', { deadline: day(-1) }],

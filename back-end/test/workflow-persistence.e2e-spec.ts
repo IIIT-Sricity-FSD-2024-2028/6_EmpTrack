@@ -151,6 +151,13 @@ describe('Issue and escalation persisted API lifecycle', () => {
     await http().patch(`/tasks/${taskId}`).set(teamLeadAuth).send({ assigned_to: 'EM003' }).expect(200)
       .expect(({ body }) => expect(body.assigned_to).toBe('EM001'));
 
+    await http().patch(`/tasks/${taskId}`).set(teamLeadAuth).send({ est_hours: 8 }).expect(200)
+      .expect(({ body }) => expect(body).toMatchObject({ est_hours: 8, assigned_to: 'EM001', status: 'NOT_STARTED', progress_percentage: 0 }));
+    await http().patch(`/tasks/${taskId}`).set(teamLeadAuth).send({ est_hours: 0 }).expect(400);
+    await http().patch(`/tasks/${taskId}`).set(teamLeadAuth).send({ est_hours: -1 }).expect(400);
+    await http().patch(`/tasks/${taskId}`).set(teamLeadAuth).send({ est_hours: 'not-a-number' }).expect(400);
+    await http().patch(`/tasks/${taskId}`).set(teamLeadAuth).send({ est_hours: 1001 }).expect(400);
+
     await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'IN_PROGRESS', progress_percentage: 25 }).expect(200);
     await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'IN_PROGRESS', progress_percentage: 101 }).expect(400);
     await http().patch(`/tasks/${taskId}`).set(employeeAuth).send({ status: 'IN_PROGRESS', progress_percentage: 100 }).expect(400);
@@ -177,7 +184,7 @@ describe('Issue and escalation persisted API lifecycle', () => {
       .expect(({ body }) => expect(body).toMatchObject({ status: 'COMPLETED', progress_percentage: 100 }));
     await http().post('/worklogs').set(employeeAuth).send({ ...workLog, start_time: `${day}T12:00:00.000Z`, end_time: `${day}T14:00:00.000Z` }).expect(400);
     await http().get('/tasks').query({ managerId: 'TL001' }).set(teamLeadAuth).expect(200)
-      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId, status: 'COMPLETED' })));
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId, status: 'COMPLETED', est_hours: 8 })));
     await http().delete(`/tasks/${taskId}`).set(employeeAuth).expect(403);
     await http().delete(`/tasks/${taskId}`).set(teamLeadAuth).expect(409);
   });
@@ -187,7 +194,7 @@ describe('Issue and escalation persisted API lifecycle', () => {
     await start();
     const http = () => request(app.getHttpServer());
     await http().get('/tasks/user/EM001').set(employeeAuth).expect(200)
-      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId, status: 'COMPLETED', progress_percentage: 100 })));
+      .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ task_id: taskId, status: 'COMPLETED', progress_percentage: 100, est_hours: 8 })));
     await http().get('/worklogs/user/EM001').set(employeeAuth).expect(200)
       .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ worklog_id: worklogId, task_id: taskId })));
   });

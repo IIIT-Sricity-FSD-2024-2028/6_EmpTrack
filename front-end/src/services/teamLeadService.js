@@ -106,9 +106,9 @@ export async function createTask(taskData) {
 
 // Fields the backend's UpdateTaskDto accepts; its ValidationPipe (whitelist)
 // silently drops anything else, so we never send what it would ignore.
-const TASK_UPDATE_FIELDS = ['status', 'progress_percentage', 'task_title', 'priority', 'deadline', 'task_description'];
+const TASK_UPDATE_FIELDS = ['status', 'task_title', 'priority', 'deadline', 'task_description', 'est_hours'];
 
-/** False when a backend is configured: it cannot change a task's assignee or estimate. */
+/** Assignees cannot be changed after task creation; estimates are editable. */
 export const CAN_EDIT_ASSIGNMENT = IS_DEMO;
 
 export async function updateTask(taskId, changes) {

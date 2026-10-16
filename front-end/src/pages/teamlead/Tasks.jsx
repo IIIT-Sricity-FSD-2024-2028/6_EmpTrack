@@ -7,7 +7,7 @@ import SearchBar from '../../components/common/SearchBar';
 import Table from '../../components/common/Table';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { CAN_EDIT_ASSIGNMENT, createTask, deleteTask, updateTask } from '../../services/teamLeadService';
+import { createTask, deleteTask, updateTask } from '../../services/teamLeadService';
 import { formatDate } from '../../utils/helpers';
 import { teamLeadTaskSchema } from '../../validation/formSchemas';
 import { DemoNotice, LoadState, StatCard, useTeamData, useToast } from './components/TeamLeadUI';
@@ -20,8 +20,8 @@ const newRequestKey = () => globalThis.crypto?.randomUUID?.() || `task-${Date.no
 
 /** Fields shared by the create form and the edit modal. */
 function TaskFields({ values, validation, members, onChange, withStatus, idPrefix }) {
-  // The backend cannot change the assignee or estimate of an existing task.
-  const locked = (name) => withStatus && !CAN_EDIT_ASSIGNMENT && (name === 'assigned_to' || name === 'est_hours');
+  // Task assignees remain fixed after creation; managers may update the estimate.
+  const locked = (name) => withStatus && name === 'assigned_to';
   const field = (name) => ({
     ...validation.field(name, `${idPrefix}-${name}`),
     required: name !== 'task_description' && !locked(name),
@@ -64,6 +64,7 @@ export default function Tasks() {
   const createRequestKey = useRef(newRequestKey());
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(null); // task being edited (form values)
+  const [editingOriginal, setEditingOriginal] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('ACTIVE');
@@ -116,14 +117,30 @@ export default function Tasks() {
     e.preventDefault();
     if (!editValidation.validateAll()) return;
     setSaving(true);
-    const { task_id, ...changes } = editing;
-    if (await run(() => updateTask(task_id, toPayload(changes)), 'Task updated', editValidation)) setEditing(null);
+    const { task_id, task_title, task_description, est_hours, deadline, priority, status } = editing;
+    const changes = Object.fromEntries(
+      Object.entries({ task_title, task_description, est_hours, deadline, priority, status })
+        .filter(([name, value]) => String(value ?? '') !== String(editingOriginal?.[name] ?? '')),
+    );
+    if (!Object.keys(changes).length) {
+      setEditing(null);
+      setEditingOriginal(null);
+    } else {
+      const payload = { ...changes };
+      if ('task_title' in payload) payload.task_title = payload.task_title.trim();
+      if ('task_description' in payload) payload.task_description = payload.task_description.trim();
+      if ('est_hours' in payload) payload.est_hours = Number(payload.est_hours);
+      if (await run(() => updateTask(task_id, payload), 'Task updated', editValidation)) {
+        setEditing(null);
+        setEditingOriginal(null);
+      }
+    }
     setSaving(false);
   };
 
   const openEdit = (t) => {
     editValidation.reset();
-    setEditing({
+    const values = {
       task_id: t.task_id,
       assigned_to: t.assigned_to,
       task_title: t.task_title,
@@ -133,7 +150,9 @@ export default function Tasks() {
       priority: t.priority || 'Medium',
       status: t.status,
       progress_percentage: t.progress_percentage ?? 0,
-    });
+    };
+    setEditing(values);
+    setEditingOriginal(values);
   };
 
   const columns = [
@@ -212,12 +231,12 @@ export default function Tasks() {
 
       <Modal
         isOpen={Boolean(editing)}
-        onClose={() => setEditing(null)}
+        onClose={() => { setEditing(null); setEditingOriginal(null); }}
         title={`Edit Task ${editing?.task_id ?? ''}`}
         maxWidth={640}
         footer={
           <>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setEditing(null); setEditingOriginal(null); }}>Cancel</Button>
             <Button type="submit" form="edit-task-form" disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
           </>
         }
