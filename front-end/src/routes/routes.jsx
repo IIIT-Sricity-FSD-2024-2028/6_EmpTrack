@@ -15,8 +15,10 @@ import Layout from '../components/layout/Layout';
 import companyAdminRoutes from '../pages/company-admin/companyAdminRoutes';
 import employeeRoutes from '../pages/employee/employeeRoutes';
 import hrRoutes from '../pages/hr/hrRoutes';
+import CompanyRegister from '../pages/public/CompanyRegister';
 import Landing from '../pages/public/Landing';
 import Login from '../pages/public/Login';
+import RegistrationStatus from '../pages/public/RegistrationStatus';
 import UnsupportedRole from '../pages/public/UnsupportedRole';
 import platformAdminRoutes from '../pages/platform-admin/platformAdminRoutes';
 import superAdminRoutes from '../pages/super-admin/superAdminRoutes';
@@ -32,6 +34,8 @@ import RoleRoute from './RoleRoute';
 const publicRoutes = [
   { path: PATHS.HOME, element: <Landing /> },
   { path: PATHS.LOGIN, element: <Login /> },
+  { path: PATHS.COMPANY_REGISTER, element: <CompanyRegister /> },
+  { path: PATHS.REGISTRATION_STATUS, element: <RegistrationStatus /> },
   // Handles its own auth checks: logged-out users go to /login, valid roles to their dashboard.
   { path: PATHS.UNSUPPORTED_ROLE, element: <UnsupportedRole /> },
 ];

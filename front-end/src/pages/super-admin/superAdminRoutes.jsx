@@ -9,6 +9,7 @@ import SaEscalations from './SaEscalations';
 import SaNotifications from './SaNotifications';
 import SaPlatformAdmins from './SaPlatformAdmins';
 import SaProfile from './SaProfile';
+import SaRegistrations from './SaRegistrations';
 import SaRevenue from './SaRevenue';
 import SaSettings from './SaSettings';
 import SaSubscriptions from './SaSubscriptions';
@@ -17,6 +18,7 @@ const superAdminRoutes = [
   { index: true, element: <Navigate to="dashboard" replace /> },
   { path: 'dashboard', element: <SaDashboard /> },
   { path: 'companies', element: <SaCompanies /> },
+  { path: 'registrations', element: <SaRegistrations /> },
   { path: 'platform-admins', element: <SaPlatformAdmins /> },
   { path: 'subscriptions', element: <SaSubscriptions /> },
   { path: 'revenue', element: <SaRevenue /> },

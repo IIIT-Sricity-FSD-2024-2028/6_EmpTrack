@@ -29,6 +29,7 @@ import { PlatformDashboardModule } from './platform-dashboard/platform-dashboard
 import { SupportMemberModule } from './support-member/support-member.module';
 import { TechnicalMemberModule } from './technical-member/technical-member.module';
 import { UploadModule } from './upload/upload.module';
+import { CompanyRegistrationModule } from './company-registration/company-registration.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggerModule } from './common/logger/logger.module';
@@ -89,7 +90,8 @@ function noStore(_req: Request, res: Response, next: NextFunction) {
     PlatformDashboardModule,
     SupportMemberModule,
     TechnicalMemberModule,
-    UploadModule
+    UploadModule,
+    CompanyRegistrationModule,
   ],
   controllers: [AppController],
   providers: [
