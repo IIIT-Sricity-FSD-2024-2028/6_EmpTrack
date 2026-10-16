@@ -55,7 +55,7 @@ export default function HrAttendance() {
   useEffect(() => {
     (async () => {
       try {
-        const [employees, leaves] = await Promise.all([hr.getEmployees(), hr.getLeaves().catch(() => [])]);
+        const [employees, leaves] = await Promise.all([hr.getEmployees(), hr.getLeaves()]);
         const staff = employees.filter(isStaff);
         setData({ staff, leaves, attendance: await hr.getAttendanceFor(staff) });
       } catch {

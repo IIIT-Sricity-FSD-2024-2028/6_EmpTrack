@@ -47,7 +47,7 @@ export default function HrProfile({ title = 'My Profile', roleLabel = 'HR Manage
 
   useEffect(() => {
     if (!showStats) return;
-    Promise.all([hr.getEmployees(), hr.getEscalations().catch(() => []), hr.getLeaves().catch(() => [])])
+    Promise.all([hr.getEmployees(), hr.getEscalations(), hr.getLeaves()])
       .then(([employees, escalations, leaves]) => setStats({
         openCases: escalations.filter((e) => e.status === 'OPEN').length,
         teamLeads: employees.filter((e) => e.role === 'TEAMLEAD').length,

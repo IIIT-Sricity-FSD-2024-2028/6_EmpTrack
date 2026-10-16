@@ -16,6 +16,7 @@ const STATUS_STYLE = {
   Resolved: { background: 'var(--color-low-bg)', color: 'var(--color-low)' },
 };
 const statusLabel = (s) => (s === 'OPEN' ? 'Pending' : s ? s.charAt(0) + s.slice(1).toLowerCase() : '-');
+const csvCell = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
 
 /** Team Lead escalations are sent as "title: description". */
 function splitReason(reason = '') {
@@ -86,7 +87,16 @@ export default function HrEscalations() {
   const report = async (esc) => {
     try {
       const res = await hr.generateEscalationReport(esc.escalation_id);
-      showToast(res?.message || 'Report generated successfully');
+      if (!res?.report) throw new Error('The report could not be generated.');
+      const rows = Object.entries(res.report);
+      const csv = rows.map(([key, value]) => `${csvCell(key)},${csvCell(value)}`).join('\r\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `escalation-${esc.escalation_id}.csv`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      showToast('Escalation report downloaded.');
     } catch (e) {
       showToast(e.message || 'Failed to generate report.', 'error');
     }
@@ -297,7 +307,7 @@ export default function HrEscalations() {
                   >
                     <i className="ph ph-prohibit"></i> {current.statusText === 'Pending' ? 'Reject Escalation' : `Already ${current.statusText}`}
                   </button>
-                  <button type="button" className="btn btn-outline" id="btn-gen-report" onClick={() => report(current)}><i className="ph ph-file-pdf"></i> Generate Report</button>
+                  <button type="button" className="btn btn-outline" id="btn-gen-report" onClick={() => report(current)}><i className="ph ph-download-simple"></i> Download CSV Report</button>
                 </div>
                 <div className="card">
                   <h3 style={{ marginTop: 0 }}>Escalation Summary</h3>

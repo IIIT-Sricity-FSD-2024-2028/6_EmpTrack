@@ -138,7 +138,7 @@ export default function HrReports() {
     let cancelled = false;
     (async () => {
       try {
-        const [employees, issues, leaves] = await Promise.all([hr.getEmployees(), hr.getIssues().catch(() => []), hr.getLeaves().catch(() => [])]);
+        const [employees, issues, leaves] = await Promise.all([hr.getEmployees(), hr.getIssues(), hr.getLeaves()]);
         const staff = employees.filter(isStaff);
         const [attendance, tasks] = await Promise.all([hr.getAttendanceFor(staff), hr.getTasksFor(staff)]);
         const r = computeReport({ employees, attendance, tasks, issues, leaves });

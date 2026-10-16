@@ -27,7 +27,7 @@ export default function HrEmployeeManagement() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    Promise.all([hr.getEmployees(), hr.getLeaves().catch(() => [])])
+    Promise.all([hr.getEmployees(), hr.getLeaves()])
       .then(([list, leaveList]) => {
         setEmployees(list.filter((e) => e.emp_id !== user.emp_id));
         setLeaves(leaveList);
@@ -50,7 +50,7 @@ export default function HrEmployeeManagement() {
   const set = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
 
   let rows;
-  if (error) rows = <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--emp-danger, #EF4444)' }}>Failed to load employees.</td></tr>;
+  if (error) rows = <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--emp-danger, #EF4444)' }}>Failed to load employee directory and leave status.</td></tr>;
   else if (!employees) rows = <tr className="loader-row"><td colSpan={6}><div className="spinner"></div><div>Loading directory...</div></td></tr>;
   else if (visible.length === 0) rows = <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>No employees found matching your criteria.</td></tr>;
   else {

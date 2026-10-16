@@ -75,7 +75,27 @@ export class EscalationService {
   }
 
   generateEscalationReport(id: string, actorId: string) {
-    this.findScoped(id, actorId);
-    return { success: true, message: `Report generated successfully for escalation ${id}.` };
+    const escalation = this.findScoped(id, actorId);
+    const employee = this.dataStore.getEmployees().find((item) => item.emp_id === escalation.reference_id);
+    const issue = escalation.issue_id ? this.persistence.getIssue(escalation.issue_id) : null;
+    return {
+      success: true,
+      message: `Report generated successfully for escalation ${id}.`,
+      report: {
+        escalation_id: escalation.escalation_id,
+        status: escalation.status,
+        category: escalation.reference_type,
+        reference_id: escalation.reference_id,
+        employee_name: employee?.emp_name || '',
+        issue_id: escalation.issue_id || '',
+        issue_title: issue?.title || '',
+        issue_status: issue?.status || '',
+        escalated_from: escalation.escalated_from,
+        escalated_to: escalation.escalated_to,
+        escalation_date: escalation.escalation_date,
+        escalation_reason: escalation.escalation_reason,
+        priority: escalation.priority || '',
+      },
+    };
   }
 }

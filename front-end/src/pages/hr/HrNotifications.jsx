@@ -16,13 +16,14 @@ export default function HrNotifications() {
   const { user } = useAuth();
   const [toast, showToast] = useSaToast();
   const [notifications, setNotifications] = useState(null);
+  const [loadError, setLoadError] = useState(false);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     getNotifications(user.emp_id)
       .then((list) => setNotifications(list.map((n, i) => ({ ...n, key: n.id ?? i, read: false, dismissed: false }))))
-      .catch(() => setNotifications([]));
+      .catch(() => setLoadError(true));
   }, [user.emp_id]);
 
   const update = (key, changes) => setNotifications((list) => list.map((n) => (n.key === key ? { ...n, ...changes } : n)));
@@ -65,7 +66,8 @@ export default function HrNotifications() {
         </div>
 
         <div className="notif-list" id="hr-notif-list">
-          {notifications === null && <div className="empty-state" style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>Loading notifications...</div>}
+          {notifications === null && !loadError && <div className="empty-state" style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>Loading notifications...</div>}
+          {loadError && <div className="empty-state" role="alert" style={{ padding: 48, textAlign: 'center', color: 'var(--danger-color)' }}>Failed to load notifications. Refresh the page to try again.</div>}
           {notifications !== null && visible.length === 0 && (
             <div className="empty-state" style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>
               <i className="ph ph-bell" style={{ fontSize: 28, display: 'block', marginBottom: 8 }}></i>No notifications yet.

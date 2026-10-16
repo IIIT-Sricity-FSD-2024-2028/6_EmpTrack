@@ -78,7 +78,7 @@ export async function getTeams() {
 export async function getTeamTasks(tlId) {
   if (IS_DEMO) return demoDb().tasks;
   const [tasks, members] = await Promise.all([api.get('/tasks', { params: { managerId: tlId } }), getTeamMembers()]);
-  const logs = (await Promise.all(members.map((m) => getWorkLogsForUser(m.emp_id).catch(() => [])))).flat();
+  const logs = (await Promise.all(members.map((m) => getWorkLogsForUser(m.emp_id)))).flat();
   return tasks.map((t) => ({
     ...t,
     hours_worked: logs.filter((l) => l.task_id === t.task_id).reduce((sum, l) => sum + Number(l.hours_spent || 0), 0),
@@ -151,7 +151,7 @@ export async function updateLeaveStatus(leaveId, status, approverId, rejectReaso
 // ---- attendance ----
 export async function getTeamAttendance(members) {
   if (IS_DEMO) return demoDb().attendance;
-  const lists = await Promise.all(members.map((m) => getAttendanceForUser(m.emp_id).catch(() => [])));
+  const lists = await Promise.all(members.map((m) => getAttendanceForUser(m.emp_id)));
   return lists.flatMap((list, i) => list.map((a) => ({ emp_id: members[i].emp_id, ...a })));
 }
 

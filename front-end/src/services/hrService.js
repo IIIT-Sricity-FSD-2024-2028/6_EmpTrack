@@ -27,13 +27,13 @@ export const generateEscalationReport = (id) => api.post(`/escalations/${id}/rep
 
 /** Tasks assigned to any of the given employees (GET /tasks is team-lead scoped). */
 export async function getTasksFor(employees) {
-  const lists = await Promise.all(employees.map((e) => api.get(`/tasks/user/${e.emp_id}`).catch(() => [])));
+  const lists = await Promise.all(employees.map((e) => api.get(`/tasks/user/${e.emp_id}`)));
   return lists.flat();
 }
 
 /** Attendance records for many employees, each tagged with emp_id. */
 export async function getAttendanceFor(employees) {
-  const lists = await Promise.all(employees.map((e) => getAttendanceForUser(e.emp_id).catch(() => [])));
+  const lists = await Promise.all(employees.map((e) => getAttendanceForUser(e.emp_id)));
   return lists.flatMap((list, i) => list.map((a) => ({ ...a, emp_id: a.emp_id || employees[i].emp_id })));
 }
 

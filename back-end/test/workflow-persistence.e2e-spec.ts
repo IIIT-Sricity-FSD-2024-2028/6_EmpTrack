@@ -87,6 +87,17 @@ describe('Issue and escalation persisted API lifecycle', () => {
     await http().get('/escalations/mine').set(teamLeadAuth).expect(200)
       .expect(({ body }) => expect(body).toContainEqual(expect.objectContaining({ escalation_id: escalationId })));
     await http().get('/escalations/mine').set(employeeAuth).expect(403);
+    await http().post(`/escalations/${escalationId}/report`).set(employeeAuth).expect(403);
+    await http().post(`/escalations/${escalationId}/report`).set(hrAuth).expect(201)
+      .expect(({ body }) => {
+        expect(body.report).toEqual(expect.objectContaining({
+          escalation_id: escalationId,
+          employee_name: 'John Doe (EMP)',
+          issue_id: issueId,
+          issue_title: issueBody.title,
+          escalation_reason: 'HR assistance is required to move this blocked issue forward.',
+        }));
+      });
     await http().patch(`/escalations/${escalationId}/reject`).set(teamLeadAuth).expect(403);
     await http().patch(`/escalations/${escalationId}/reject`).set(hrAuth).expect(200);
     await http().get('/escalations').set(hrAuth).expect(200)
