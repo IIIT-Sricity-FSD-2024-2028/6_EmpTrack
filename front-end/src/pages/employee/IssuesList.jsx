@@ -56,7 +56,8 @@ const columns = [
 export default function IssuesList() {
   usePageTitle('Issue Reporting');
   const { user } = useAuth();
-  const { data: issues = [] } = useFetch(() => getIssuesForUser(user.emp_id), [user.emp_id]);
+  const { data: issueData, loading, error } = useFetch(() => getIssuesForUser(user.emp_id), [user.emp_id]);
+  const issues = issueData || [];
 
   const metrics = [
     { label: 'Total Issues', value: issues.length, color: 'var(--text-main)' },
@@ -81,7 +82,9 @@ export default function IssuesList() {
         </Link>
       </div>
 
-      <Table
+      {loading ? <div className="card" role="status" style={{ padding: 24 }}>Loading your issues...</div> : error ? (
+        <div className="card" role="alert" style={{ padding: 24, color: 'var(--danger-color)' }}>Could not load your issues. Please refresh and try again.</div>
+      ) : <Table
         title="Issue Status"
         headerStyle={{ padding: 20 }}
         style={{ marginBottom: 'var(--spacing-xl)' }}
@@ -89,7 +92,7 @@ export default function IssuesList() {
         data={issues}
         rowKey="issue_id"
         emptyMessage="No issues recorded."
-      />
+      />}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--spacing-lg)' }}>
         {metrics.map((m) => (

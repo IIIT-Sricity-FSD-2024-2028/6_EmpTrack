@@ -16,7 +16,7 @@ import './teamlead.css';
 
 const hrLink = (issue) =>
   `${tlPath('escalate-to-hr')}?employee=${issue.emp_id}&title=${encodeURIComponent(`${issue.issue_id}: ${issue.title}`)}` +
-  `&category=${issue.type === 'Interpersonal' ? 'Conflict' : 'Other'}`;
+  `&category=${issue.type === 'Interpersonal' ? 'Conflict' : 'Other'}&issue=${encodeURIComponent(issue.issue_id)}`;
 
 export default function EmployeeRaisedIssues() {
   usePageTitle('Employee Raised Issues');

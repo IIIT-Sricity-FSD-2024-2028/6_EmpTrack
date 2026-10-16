@@ -174,7 +174,7 @@ export default function HrEscalations() {
                         <td style={{ fontWeight: 500 }}>{e.title}</td>
                         <td>{e.raisedBy}</td>
                         <td>{e.reference_type}</td>
-                        <td>{e.subject}</td>
+                        <td>{e.subject}{e.issue_id && <div style={{ fontSize: 11, color: 'var(--esc-muted)' }}>Issue {e.issue_id}</div>}</td>
                         <td><Badge status={e.statusText} /></td>
                         <td>{shortDate(e.escalation_date)}</td>
                         <td>
@@ -252,6 +252,7 @@ export default function HrEscalations() {
                       <strong>{current.raisedBy}</strong> <span style={{ fontSize: 11, color: 'var(--esc-muted)' }}>{shortDate(current.escalation_date)}</span>
                     </div>
                     <div style={{ fontSize: 14 }}>{current.escalation_reason}</div>
+                  {current.issue_id && <div style={{ fontSize: 13, marginTop: 8 }}><strong>Linked issue:</strong> {current.issue_id}</div>}
                   </div>
                 </div>
               </div>

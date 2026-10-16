@@ -177,17 +177,21 @@ export async function sendNotification(empId, message, type = 'warning') {
 }
 
 // ---- HR escalations ----
-/** Records the escalation with the backend (when available) and in the local history. */
+/** Persists the escalation first and keeps a local history copy for the Team Lead view. */
 export async function escalateToHr(escalation, actorId) {
   const record = { id: `HR-ESC-${Date.now().toString().slice(-6)}`, status: 'Pending', date: today(), ...escalation };
   if (!IS_DEMO) {
-    await api.post('/escalations', {
+    const saved = await api.post('/escalations', {
       reference_type: escalation.category,
       reference_id: escalation.relatedEmployeeId || record.id,
+      issue_id: escalation.issueId || undefined,
       escalated_from: actorId,
       escalated_to: 'HR',
       escalation_reason: `${escalation.title}: ${escalation.description}`,
     });
+    record.id = saved.escalation_id;
+    record.status = saved.status;
+    record.date = saved.escalation_date;
   }
   return localWrite((data) => {
     data.escalations.unshift(record);
@@ -196,6 +200,22 @@ export async function escalateToHr(escalation, actorId) {
 }
 
 export async function getHrEscalations() {
+  if (!IS_DEMO) {
+    const saved = await api.get('/escalations/mine');
+    return saved.map((e) => {
+      const colon = e.escalation_reason.indexOf(': ');
+      return {
+        id: e.escalation_id,
+        title: colon > 0 ? e.escalation_reason.slice(0, colon) : e.escalation_reason,
+        category: e.reference_type,
+        priority: e.priority || 'Medium',
+        relatedEmployee: e.reference_id,
+        date: e.escalation_date,
+        status: e.status,
+        issue_id: e.issue_id || null,
+      };
+    });
+  }
   return local().escalations;
 }
 

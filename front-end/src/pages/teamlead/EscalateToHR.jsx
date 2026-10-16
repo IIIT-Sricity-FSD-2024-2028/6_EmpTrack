@@ -77,11 +77,12 @@ export default function EscalateToHR() {
       const record = await escalateToHr(
         {
           category: form.category,
+          issueId: params.get('issue') || null,
           priority: form.priority,
           title: form.title.trim(),
           description: form.description.trim(),
           personal: form.personal,
-          relatedEmployeeId: form.personal ? null : form.employee || null,
+          relatedEmployeeId: form.personal ? user.emp_id : form.employee || null,
           relatedEmployee: form.personal || !form.employee ? 'N/A' : nameOf(members, form.employee),
         },
         user.emp_id,

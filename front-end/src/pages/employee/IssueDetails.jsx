@@ -1,4 +1,4 @@
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import useAuth from '../../hooks/useAuth';
 import useFetch from '../../hooks/useFetch';
@@ -26,24 +26,19 @@ const cardTitle = { margin: '0 0 16px 0', fontSize: 'var(--text-lg)' };
 export default function IssueDetails() {
   usePageTitle('Issue Details');
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const issueId = searchParams.get('id');
 
-  const { data: issue, loading } = useFetch(
+  const { data: issue, loading, error } = useFetch(
     async () => (await getIssuesForUser(user.emp_id)).find((i) => i.issue_id === issueId) ?? null,
     [user.emp_id, issueId],
   );
 
-  // The original page only confirms and returns to the list (no close endpoint is called).
-  const handleClose = () => {
-    window.alert('Issue is closed');
-    navigate(empPath('issues-list'));
-  };
-
   const heading = <BackHeading to={empPath('issues-list')}>Issue Details</BackHeading>;
 
   if (loading) return heading;
+
+  if (error) return <>{heading}<div className="card" role="alert" style={{ padding: 24 }}>Could not load this issue. Please return to your issue list and try again.</div></>;
 
   if (!issue) {
     return (
@@ -155,16 +150,6 @@ export default function IssueDetails() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-xl)' }}>
-        <button
-          type="button"
-          className="btn btn-purple"
-          onClick={handleClose}
-          style={{ flex: 1, padding: 16, fontSize: 'var(--text-md)', fontWeight: 'bold', backgroundColor: 'var(--text-main)' }}
-        >
-          Close Issue
-        </button>
-      </div>
     </>
   );
 }

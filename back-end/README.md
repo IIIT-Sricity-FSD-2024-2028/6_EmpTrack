@@ -27,6 +27,10 @@
 
 ## Project setup
 
+The backend requires Node.js 22.5 or newer. The issue and escalation workflow uses the built-in `node:sqlite` module and stores data in `data/workflow.sqlite` by default. Set `EMPTRACK_WORKFLOW_DB` to an absolute path to select another file. Back up this SQLite file with the application data.
+
+`migrations/001_workflow_sqlite.sql` documents the workflow schema. Startup applies the same idempotent schema migration and imports existing issue/escalation demo fixtures only once. Other application features continue to use the existing mock data service.
+
 ```bash
 $ npm install
 ```

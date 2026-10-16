@@ -12,9 +12,16 @@ import { Roles } from '../common/decorators/roles.decorator';
 export class EscalationController {
   constructor(private readonly escalationService: EscalationService) {}
 
+  @ApiOperation({ summary: 'Get escalations created by the authenticated Team Lead' })
+  @Get('mine')
+  @Roles('TEAMLEAD')
+  getMine(@Headers('x-actor-id') actorId: string) {
+    return this.escalationService.getEscalationsForActor(actorId);
+  }
+
   @ApiOperation({ summary: 'Get all escalations' })
   @Get()
-  @Roles('HR', 'COMPANY_ADMIN')
+  @Roles('HR')
   getAllEscalations(@Headers('x-actor-id') actorId: string) {
     return this.escalationService.getAllEscalations(actorId);
   }
@@ -25,13 +32,13 @@ export class EscalationController {
   }
 
   @Patch(':id/reject')
-  @Roles('HR', 'COMPANY_ADMIN')
+  @Roles('HR')
   rejectEscalation(@Param('id') id: string, @Headers('x-actor-id') actorId: string) {
     return this.escalationService.rejectEscalation(id, actorId);
   }
 
   @Post(':id/report')
-  @Roles('HR', 'COMPANY_ADMIN')
+  @Roles('HR')
   generateReport(@Param('id') id: string, @Headers('x-actor-id') actorId: string) {
     return this.escalationService.generateEscalationReport(id, actorId);
   }
