@@ -10,14 +10,14 @@ import { PATHS } from '../utils/constants';
  * re-checked; the backend independently rejects requests without a valid token.
  */
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, isVerifying } = useAuth();
+  const { isAuthenticated, isVerifying, reauthenticationRequired } = useAuth();
   const location = useLocation();
 
   // Don't show protected content until a restored session is confirmed by the
   // backend (see AuthContext); this only happens once, on page load.
   if (isVerifying) return null;
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || reauthenticationRequired) {
     return <Navigate to={PATHS.LOGIN} replace state={{ from: location }} />;
   }
   return children ?? <Outlet />;

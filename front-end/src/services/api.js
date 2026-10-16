@@ -45,7 +45,10 @@ async function request(method, path, { body, params, headers, signal, responseTy
   }
 
   const isFormData = body instanceof FormData;
-  const token = sessionToken();
+  // Login is intentionally anonymous, even when a previous session is still
+  // stored. A bad password must not be treated as expiry of that session.
+  const isLoginRequest = path === '/auth/login';
+  const token = isLoginRequest ? null : sessionToken();
 
   const response = await fetch(buildUrl(path, params), {
     method,
@@ -63,7 +66,7 @@ async function request(method, path, { body, params, headers, signal, responseTy
   if (responseType === 'blob' && response.ok) return response.blob();
   const data = contentType.includes('application/json') ? await response.json() : await response.text();
 
-  if (response.status === 401 && token) {
+  if (response.status === 401 && token && !isLoginRequest) {
     writeStorage(STORAGE_KEYS.AUTH, null);
     window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
   }

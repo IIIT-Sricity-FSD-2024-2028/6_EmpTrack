@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
@@ -16,18 +16,19 @@ function destinationFor(user, from) {
 }
 
 export default function Login() {
-  const { user, isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, requireReauthentication, cancelReauthentication } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [startedAuthenticated] = useState(() => isAuthenticated);
   const validation = useFormValidation(loginSchema, { email, password }, { idPrefix: 'login' });
 
-  if (isAuthenticated) {
-    return <Navigate to={destinationFor(user, location.state?.from)} replace />;
-  }
+  useEffect(() => {
+    if (startedAuthenticated) requireReauthentication();
+  }, [startedAuthenticated, requireReauthentication]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -37,6 +38,7 @@ export default function Login() {
 
     try {
       const user = await login(email.trim(), password);
+      cancelReauthentication();
       navigate(destinationFor(user, location.state?.from), { replace: true });
     } catch (submitError) {
       if (!validation.setServerErrors(submitError)) setError(submitError.message || 'Unable to sign in.');
@@ -83,7 +85,7 @@ export default function Login() {
           New company? <Link to={PATHS.COMPANY_REGISTER}>Register your company</Link>
         </p>
         <p className="text-center mt-md mb-0">
-          <Link to={PATHS.HOME}>&larr; Back to home</Link>
+          <Link to={PATHS.HOME} onClick={cancelReauthentication}>&larr; Back to home</Link>
         </p>
         <p className="text-muted text-center mt-md mb-0">
           Demo accounts (password Password@123): emp@emptrack.com, tl@emptrack.com, hr@emptrack.com,

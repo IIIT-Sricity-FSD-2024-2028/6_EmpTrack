@@ -70,8 +70,8 @@ describe('role-based routing', () => {
     expect(window.location.pathname).toBe(getHomePath(ROLES.SUPER_ADMIN));
   });
 
-  it.each(['/login', '/employee/dashboard', '/super-admin/dashboard'])(
-    'shows the fallback page with a logout button for an unknown role (from %s)',
+  it.each(['/employee/dashboard', '/super-admin/dashboard'])(
+    'shows the fallback page with a logout button for an unknown role on a protected URL (from %s)',
     async (start) => {
       storeSession({ emp_id: 'X1', emp_name: 'Mystery User', role: 'MANAGER' });
       await openApp(start);
@@ -85,6 +85,13 @@ describe('role-based routing', () => {
       expect(localStorage.getItem(STORAGE_KEYS.AUTH)).toBeNull();
     },
   );
+
+  it('keeps Login visible for an existing session with an unsupported role', async () => {
+    storeSession({ emp_id: 'X1', emp_name: 'Mystery User', role: 'MANAGER' });
+    await openApp(PATHS.LOGIN);
+    expect(window.location.pathname).toBe(PATHS.LOGIN);
+    expect(screen.getByRole('heading', { name: 'Sign in to your account' })).toBeTruthy();
+  });
 
   it('sends a logged-out visitor on the fallback page to /login', async () => {
     await openApp(PATHS.UNSUPPORTED_ROLE);

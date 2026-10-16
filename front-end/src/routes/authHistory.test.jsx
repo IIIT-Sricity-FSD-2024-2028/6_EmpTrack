@@ -21,7 +21,22 @@ vi.mock('../config/config', () => ({
 const EMPLOYEE = { emp_id: 'EM001', emp_name: 'John Doe', email: 'emp@emptrack.com', role: ROLES.EMPLOYEE };
 const TEAM_LEAD = { emp_id: 'TL001', emp_name: 'Rinku Singh', email: 'tl@emptrack.com', role: ROLES.TEAM_LEAD };
 const HR = { emp_id: 'HR001', emp_name: 'HR Manager', email: 'hr@emptrack.com', role: ROLES.HR };
-const USERS = [EMPLOYEE, TEAM_LEAD, HR];
+const COMPANY_ADMIN = { emp_id: 'AD001', emp_name: 'Kiran', email: 'cmpadmin@emptrack.com', role: ROLES.COMPANY_ADMIN };
+const PLATFORM_ADMIN = { emp_id: 'PA001', emp_name: 'Ravi Kumar', email: 'ravi.platform@emptrack.com', role: ROLES.PLATFORM_ADMIN };
+const SUPPORT_MEMBER = { emp_id: 'ST001', emp_name: 'Sam Wilson', email: 'sam.support@emptrack.com', role: ROLES.SUPPORT_MEMBER };
+const TECHNICAL_MEMBER = { emp_id: 'TT001', emp_name: 'Wanda Maximoff', email: 'wanda.tech@emptrack.com', role: ROLES.TECHNICAL_MEMBER };
+const SUPER_ADMIN = { emp_id: 'SA001', emp_name: 'Alex Morgan', email: 'superadmin@emptrack.com', role: ROLES.SUPER_ADMIN };
+const USERS = [EMPLOYEE, TEAM_LEAD, HR, COMPANY_ADMIN, PLATFORM_ADMIN, SUPPORT_MEMBER, TECHNICAL_MEMBER, SUPER_ADMIN];
+const DASHBOARD_LABELS = {
+  [ROLES.EMPLOYEE]: 'Employee',
+  [ROLES.TEAM_LEAD]: 'Team Lead',
+  [ROLES.HR]: 'HR',
+  [ROLES.COMPANY_ADMIN]: 'Company Admin',
+  [ROLES.PLATFORM_ADMIN]: 'Platform Admin',
+  [ROLES.SUPPORT_MEMBER]: 'Support Member',
+  [ROLES.TECHNICAL_MEMBER]: 'Technical Member',
+  [ROLES.SUPER_ADMIN]: 'Super Admin',
+};
 const PASSWORD = 'Password@123';
 
 // ---- Fake backend --------------------------------------------------------
@@ -85,7 +100,7 @@ function makeRouter(initialEntries = [PATHS.LOGIN]) {
           </AuthProvider>
         ),
         children: [
-          { path: PATHS.HOME, element: <Navigate to={PATHS.LOGIN} replace /> },
+          { path: PATHS.HOME, element: <div><h1>Public home</h1><Link to={PATHS.LOGIN}>Login</Link></div> },
           { path: PATHS.LOGIN, element: <Login /> },
           {
             path: '/employee',
@@ -101,21 +116,18 @@ function makeRouter(initialEntries = [PATHS.LOGIN]) {
               { path: 'tasks', element: <h1>Employee tasks</h1> },
             ],
           },
-          ...[
-            ['/hr', ROLES.HR, 'HR dashboard'],
-            ['/teamlead', ROLES.TEAM_LEAD, 'Team Lead dashboard'],
-          ].map(([path, role, title]) => ({
-            path,
+          ...USERS.filter((user) => user.role !== ROLES.EMPLOYEE).map((user) => ({
+            path: `/${user.role === ROLES.TEAM_LEAD ? 'teamlead' : user.role.toLowerCase().replaceAll('_', '-')}`,
             element: (
               <ProtectedRoute>
-                <RoleRoute allowedRoles={[role]}>
+                <RoleRoute allowedRoles={[user.role]}>
                   <Outlet />
                 </RoleRoute>
               </ProtectedRoute>
             ),
             children: [
-              { index: true, element: <h1>{title}</h1> },
-              { path: 'dashboard', element: <h1>{title}</h1> },
+              { index: true, element: <h1>{DASHBOARD_LABELS[user.role]} dashboard</h1> },
+              { path: 'dashboard', element: <h1>{DASHBOARD_LABELS[user.role]} dashboard</h1> },
             ],
           })),
         ],
@@ -135,7 +147,7 @@ async function renderApp(initialEntries) {
 
 const go = (router, delta) => act(() => router.navigate(delta));
 const onLoginPage = () => screen.findByRole('heading', { name: 'Sign in to your account' });
-const protectedContent = () => screen.queryByText(/Employee (dashboard|tasks)|HR dashboard|Team Lead dashboard/);
+const protectedContent = () => screen.queryByText(/dashboard|Employee tasks/);
 
 function submitLogin(email = EMPLOYEE.email, password = PASSWORD) {
   fireEvent.change(screen.getByLabelText(/Email/), { target: { value: email } });
@@ -178,11 +190,14 @@ describe('while logged in', () => {
     expect(screen.getByText('Employee tasks')).toBeTruthy();
   });
 
-  it('sends a logged-in user who goes Back to /login straight back to their dashboard', async () => {
+  it('keeps the login form visible for an authenticated user who visits /login', async () => {
     const router = await renderApp([PATHS.LOGIN]);
     await logIn();
     await act(() => router.navigate(PATHS.LOGIN));
-    expect(await screen.findByText('Employee dashboard')).toBeTruthy();
+    await onLoginPage();
+    expect(router.state.location.pathname).toBe(PATHS.LOGIN);
+    expect(screen.queryByText('Employee dashboard')).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)).user.role).toBe(ROLES.EMPLOYEE);
   });
 
   it('redirects to the role home when the URL belongs to another role', async () => {
@@ -217,11 +232,11 @@ describe('protected URLs without a session', () => {
 });
 
 describe('role-based redirect after login', () => {
-  const cases = [
-    [EMPLOYEE, '/employee/dashboard', 'Employee dashboard'],
-    [TEAM_LEAD, '/teamlead/dashboard', 'Team Lead dashboard'],
-    [HR, '/hr/dashboard', 'HR dashboard'],
-  ];
+  const cases = USERS.map((user) => [
+    user,
+    `/${user.role === ROLES.TEAM_LEAD ? 'teamlead' : user.role.toLowerCase().replaceAll('_', '-')}/dashboard`,
+    `${DASHBOARD_LABELS[user.role]} dashboard`,
+  ]);
 
   it('starts with an empty form instead of prefilled Employee credentials', async () => {
     await renderApp([PATHS.LOGIN]);
@@ -241,6 +256,48 @@ describe('role-based redirect after login', () => {
     const reloaded = await renderApp([home]);
     expect(await screen.findByText(title)).toBeTruthy();
     expect(reloaded.state.location.pathname).toBe(home);
+  });
+
+  it.each(cases)('%s can visit Home, open Login, and reauthenticate before returning to their dashboard', async (user, home, title) => {
+    const router = await renderApp([PATHS.LOGIN]);
+    submitLogin(user.email);
+    expect(await screen.findByText(title)).toBeTruthy();
+    const previousToken = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)).token;
+
+    await act(() => router.navigate(PATHS.HOME));
+    expect(screen.getByText('Public home')).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)).token).toBe(previousToken);
+    fireEvent.click(screen.getByRole('link', { name: 'Login' }));
+    await onLoginPage();
+    expect(router.state.location.pathname).toBe(PATHS.LOGIN);
+    expect(server.calls.filter((call) => call.path === '/auth/login')).toHaveLength(1);
+
+    submitLogin(user.email, 'Wrong@123');
+    expect((await screen.findByRole('alert')).textContent).toMatch(/Invalid email or password/);
+    expect(router.state.location.pathname).toBe(PATHS.LOGIN);
+    expect(server.calls.filter((call) => call.path === '/auth/login').at(-1).token).toBeNull();
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)).token).toBe(previousToken);
+
+    await act(() => router.navigate(home));
+    await onLoginPage();
+    expect(router.state.location.pathname).toBe(PATHS.LOGIN);
+
+    submitLogin(user.email);
+    expect(await screen.findByText(title)).toBeTruthy();
+    expect(router.state.location.pathname).toBe(home);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)).token).not.toBe(previousToken);
+  });
+
+  it('cancels the reauthentication challenge when the user returns to Home', async () => {
+    const router = await renderApp([PATHS.LOGIN]);
+    await logIn();
+    await act(() => router.navigate(PATHS.LOGIN));
+    await onLoginPage();
+
+    fireEvent.click(screen.getByRole('link', { name: /back to home/i }));
+    expect(screen.getByText('Public home')).toBeTruthy();
+    await act(() => router.navigate('/employee/dashboard'));
+    expect(await screen.findByText('Employee dashboard')).toBeTruthy();
   });
 
   it.each(cases)("keeps %o out of other roles' portals", async (user, home, title) => {

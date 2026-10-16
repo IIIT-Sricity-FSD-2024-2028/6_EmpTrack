@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
   // A token restored from storage is checked with the backend (GET /auth/me)
   // before any protected page renders - it may have been revoked or lost.
   const [isVerifying, setIsVerifying] = useState(() => Boolean(session?.token) && !config.useMockAuth);
+  const [reauthenticationRequired, setReauthenticationRequired] = useState(false);
 
   // Re-reads the stored session (getStoredSession also drops expired ones).
   // localStorage is shared by every tab, and every API call sends whatever token
@@ -42,10 +43,14 @@ export function AuthProvider({ children }) {
     return newSession.user;
   }, []);
 
+  const requireReauthentication = useCallback(() => setReauthenticationRequired(true), []);
+  const cancelReauthentication = useCallback(() => setReauthenticationRequired(false), []);
+
   const logout = useCallback(async () => {
     await authService.logout();
     resetState();
     setSession(null);
+    setReauthenticationRequired(false);
   }, []);
 
   // The API client already cleared storage; drop the in-memory session too so
@@ -54,6 +59,7 @@ export function AuthProvider({ children }) {
     const onExpired = () => {
       resetState();
       setSession(null);
+      setReauthenticationRequired(false);
     };
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
@@ -119,11 +125,14 @@ export function AuthProvider({ children }) {
       role: user?.role ?? null,
       isAuthenticated: Boolean(user),
       isVerifying,
+      reauthenticationRequired,
       login,
       logout,
+      requireReauthentication,
+      cancelReauthentication,
       hasRole: (allowedRoles) => roleAllowed(user?.role, allowedRoles),
     }),
-    [user, isVerifying, login, logout],
+    [user, isVerifying, reauthenticationRequired, login, logout, requireReauthentication, cancelReauthentication],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
