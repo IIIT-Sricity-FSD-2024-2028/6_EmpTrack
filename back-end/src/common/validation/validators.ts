@@ -47,6 +47,7 @@ export const PASSWORD_MESSAGE =
 // spaces, and the punctuation real names use: apostrophes, hyphens, dots. Parentheses
 // are accepted because existing accounts carry role tags such as "Rinku Singh (TL)".
 export const PERSON_NAME_REGEX = /^[\p{L}\p{M}][\p{L}\p{M}\s.'’()-]*$/u;
+export const DESIGNATION_REGEX = /^(?=.*\p{L})[\p{L}\p{M}\d\s&.'’-]+$/u;
 // C0 control characters and DEL. Multi-line fields still allow tab/newline/CR.
 const SINGLE_LINE_CONTROL = /[\u0000-\u001F\u007F]/;
 const MULTI_LINE_CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
@@ -138,6 +139,21 @@ export function PersonNameField(label = 'Name', { optional = false }: { optional
   return applyDecorators(
     TextField(label, { min: 2, max: LIMITS.NAME_MAX, optional }),
     Matches(PERSON_NAME_REGEX, { message: `${label} may contain only letters, spaces, apostrophes, hyphens and dots.` }),
+  );
+}
+
+export function AdministratorNameField(label = 'Administrator full name') {
+  return applyDecorators(
+    TextField(label, { min: 2, max: LIMITS.NAME_MAX }),
+    Matches(PERSON_NAME_REGEX, { message: `${label} may contain only letters, spaces, apostrophes, hyphens and dots.` }),
+    custom('notAdministratorPlaceholder', (v) => typeof v !== 'string' || v.trim().toLowerCase() !== 'administrator', `${label} must be a person's name.`),
+  );
+}
+
+export function DesignationField(label = 'Designation') {
+  return applyDecorators(
+    TextField(label, { min: 2, max: 80 }),
+    Matches(DESIGNATION_REGEX, { message: `${label} must contain letters and may include spaces, hyphens, ampersands, apostrophes and periods.` }),
   );
 }
 

@@ -6,6 +6,7 @@ import {
   LIMITS,
   date,
   dateTime,
+  designation,
   differsFrom,
   email,
   file,
@@ -16,6 +17,7 @@ import {
   oneOf,
   passwordInput,
   personName,
+  registrationAdminName,
   phone,
   strongPassword,
   text,
@@ -456,9 +458,9 @@ export const companyDetailsSchema = {
 
 /** Step 3 -> POST /company-registrations/:ref/submit */
 export const registrationAdminSchema = {
-  admin_name: personName('Administrator full name'),
+  admin_name: registrationAdminName('Administrator full name'),
   admin_email: email('Official work email'),
-  designation: text('Designation', { min: 2, max: 80 }),
+  designation: designation('Designation', { min: 2, max: 80 }),
   password: strongPassword('Password'),
   confirm_password: [passwordInput('Password confirmation'), matches('password', 'Passwords do not match.')],
   accept_terms: (value) => (value === true ? '' : 'You must accept the Terms and Conditions and Privacy Policy.'),

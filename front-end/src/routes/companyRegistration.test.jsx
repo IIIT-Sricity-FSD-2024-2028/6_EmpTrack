@@ -105,6 +105,39 @@ describe('company registration', () => {
     expect(screen.getByLabelText(/Administrator full name/)).toBeTruthy();
   });
 
+  it('shows accessible administrator name and designation errors and preserves invalid values', async () => {
+    localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: REG.reference, token: 't' }));
+    service.getRegistration.mockResolvedValue({
+      ...REG,
+      documents: { incorporation: { label: 'Certificate', original_name: 'coi.pdf', size_bytes: 2048 } },
+      missing_documents: [],
+    });
+    await openApp(PATHS.COMPANY_REGISTER);
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+
+    const name = screen.getByLabelText(/Administrator full name/);
+    const designation = screen.getByLabelText(/^Designation/);
+    type(/Administrator full name/, 'administrator');
+    fireEvent.blur(name);
+    type(/^Designation/, '@@');
+    fireEvent.blur(designation);
+
+    expect(await screen.findByText("Administrator full name must be a person's name.")).toBeTruthy();
+    expect(screen.getByText(/Designation must contain letters/)).toBeTruthy();
+    expect(name.getAttribute('aria-invalid')).toBe('true');
+    expect(designation.getAttribute('aria-invalid')).toBe('true');
+    for (const field of [name, designation]) {
+      const errorId = field.getAttribute('aria-describedby');
+      expect(errorId).toBeTruthy();
+      expect(document.getElementById(errorId).getAttribute('role')).toBe('alert');
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: 'Submit for verification' }));
+    expect(service.submitRegistration).not.toHaveBeenCalled();
+    expect(name.value).toBe('administrator');
+    expect(designation.value).toBe('@@');
+  });
+
   it('sends a submitted registration to the status page, which reflects the backend status', async () => {
     localStorage.setItem(STORAGE_KEYS.REGISTRATION, JSON.stringify({ reference: REG.reference, token: 't' }));
     service.getRegistration.mockResolvedValue({ ...REG, status: 'pending', submitted_at: new Date().toISOString() });

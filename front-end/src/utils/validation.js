@@ -24,6 +24,7 @@ const PASSWORD_MESSAGE = `Password must be ${PASSWORD_HINT.charAt(0).toLowerCase
 
 // Letters of any script, combining marks, spaces and . ' ’ ( ) - (same as the backend).
 export const PERSON_NAME = /^[\p{L}\p{M}][\p{L}\p{M}\s.'’()-]*$/u;
+const DESIGNATION_TEXT = /^(?=.*\p{L})[\p{L}\p{M}\d\s&.'’-]+$/u;
 // Deliberately simple: one @, something on both sides, a dot in the domain, no spaces.
 // The backend's validator is stricter; this only catches obvious mistakes early.
 export const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -76,6 +77,18 @@ export function text(label, { min = 1, max = LIMITS.SHORT_TEXT_MAX, required = t
 export function personName(label = 'Name', { required = true } = {}) {
   const base = text(label, { min: 2, max: LIMITS.NAME_MAX, required });
   return (value) => base(value) || (isBlank(value) || PERSON_NAME.test(str(value).trim()) ? '' : `${label} may contain only letters, spaces, apostrophes, hyphens and dots.`);
+}
+
+/** Registration admin name adds a targeted check for the role placeholder shown in the UI bug report. */
+export function registrationAdminName(label = 'Administrator full name') {
+  const base = personName(label);
+  return (value) => base(value) || (str(value).trim().toLowerCase() === 'administrator' ? `${label} must be a person's name.` : '');
+}
+
+/** A designation needs a letter, but may contain common title punctuation and digits alongside words. */
+export function designation(label = 'Designation', { min = 2, max = 80 } = {}) {
+  const base = text(label, { min, max });
+  return (value) => base(value) || (DESIGNATION_TEXT.test(str(value).trim()) ? '' : `${label} must contain letters and may include spaces, hyphens, ampersands, apostrophes and periods.`);
 }
 
 export function email(label = 'Email', { required = true } = {}) {

@@ -159,8 +159,23 @@ describe('Company registration (e2e)', () => {
       expect(taken.body.errors.admin_email).toBeDefined();
     });
 
+    it('rejects malformed administrator names and designations through the API', async () => {
+      for (const admin_name of ['', '   ', '12345', '@@@', '!!!', '###', 'administrator', 'A'.repeat(101)]) {
+        const res = await http().post(`/company-registrations/${ref}/submit`).set(tok())
+          .send({ ...ADMIN, admin_name }).expect(400);
+        expect(res.body.errors.admin_name).toBeDefined();
+      }
+
+      for (const designation of ['', '   ', '@@', '!!!', '###', '12345', 'A', 'A'.repeat(81)]) {
+        const res = await http().post(`/company-registrations/${ref}/submit`).set(tok())
+          .send({ ...ADMIN, designation }).expect(400);
+        expect(res.body.errors.designation).toBeDefined();
+      }
+    });
+
     it('submits for verification without creating a login', async () => {
-      const res = await http().post(`/company-registrations/${ref}/submit`).set(tok()).send(ADMIN).expect(200);
+      const res = await http().post(`/company-registrations/${ref}/submit`).set(tok())
+        .send({ ...ADMIN, admin_name: '\u0905\u0928\u0928\u094d\u092f\u093e \u0936\u0930\u094d\u092e\u093e', designation: 'Co-Founder & CEO' }).expect(200);
       expect(res.body.status).toBe('pending');
       expect(JSON.stringify(res.body)).not.toMatch(/password|token_hash/);
       await http().post('/auth/login').send({ email: ADMIN.admin_email, password: ADMIN.password }).expect(401);

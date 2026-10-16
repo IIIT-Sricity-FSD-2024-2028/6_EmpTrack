@@ -159,7 +159,8 @@ const FORMS = [
   ['Company registration admin', s.registrationAdminSchema, {
     admin_name: 'Priya Nair', admin_email: 'priya@globex.com', designation: 'Director', password: STRONG, confirm_password: STRONG, accept_terms: true,
   }, [
-    ['admin_name', { admin_name: '1234' }], ['admin_email', { admin_email: 'x' }], ['designation', { designation: '' }],
+    ['admin_name', { admin_name: '1234' }], ['admin_name', { admin_name: 'administrator' }], ['admin_email', { admin_email: 'x' }],
+    ['designation', { designation: '' }], ['designation', { designation: '@@' }], ['designation', { designation: '1234' }],
     ['password', { password: 'weakpass', confirm_password: 'weakpass' }], ['confirm_password', { confirm_password: 'Other@123' }], ['accept_terms', { accept_terms: false }],
   ]],
   ['Approve registration', s.approveRegistrationSchema(['PLAN-PRO'], ['PA001']), { platform_admin_id: 'PA001', subscription_plan_id: 'PLAN-PRO' }, [
@@ -167,6 +168,24 @@ const FORMS = [
   ]],
   ['Reject registration', s.rejectRegistrationSchema, { reason: 'The certificate is unreadable.' }, [['reason', { reason: 'bad' }]]],
 ];
+
+describe('company registration administrator name and designation rules', () => {
+  it.each(['Li', 'Anne-Marie', "O'Connor", '\u0905\u0928\u0928\u094d\u092f\u093e \u0936\u0930\u094d\u092e\u093e', '\u674e\u96f7', 'A'.repeat(100)])('accepts valid administrator name %s', (admin_name) => {
+    expect(validateForm(s.registrationAdminSchema, { admin_name, designation: 'Director' })).not.toHaveProperty('admin_name');
+  });
+
+  it.each(['', '   ', '12345', '@@@', '!!!', '###', 'administrator', 'A'.repeat(101)])('rejects invalid administrator name %s', (admin_name) => {
+    expect(validateForm(s.registrationAdminSchema, { admin_name, designation: 'Director' })).toHaveProperty('admin_name');
+  });
+
+  it.each(['HR', 'HR Manager', 'Company Administrator', 'Chief Executive Officer', 'Co-Founder', 'Director', 'R&D Manager', "People Officer's Manager", 'Sr. HR Manager', 'Level 2 Manager', 'A'.repeat(80)])('accepts valid designation %s', (designation) => {
+    expect(validateForm(s.registrationAdminSchema, { admin_name: 'Anne-Marie', designation })).not.toHaveProperty('designation');
+  });
+
+  it.each(['', '   ', '@@', '!!!', '###', '12345', 'A', 'A'.repeat(81)])('rejects invalid designation %s', (designation) => {
+    expect(validateForm(s.registrationAdminSchema, { admin_name: 'Anne-Marie', designation })).toHaveProperty('designation');
+  });
+});
 
 describe.each(FORMS)('%s form', (_name, schema, valid, invalid) => {
   it('accepts a valid submission', () => {

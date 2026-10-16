@@ -1,12 +1,13 @@
 import { Equals, IsUrl, ValidateIf } from 'class-validator';
 import {
+  AdministratorNameField,
   BooleanField,
+  DesignationField,
   EmailField,
   EnumField,
   IdField,
   LIMITS,
   PasswordInputField,
-  PersonNameField,
   PhoneField,
   StrongPasswordField,
   TextField,
@@ -35,9 +36,9 @@ export class CompanyDetailsDto {
 
 /** Step 3 - the Company Admin account, created only when a reviewer approves. */
 export class SubmitRegistrationDto {
-  @PersonNameField('Administrator full name') admin_name: string;
+  @AdministratorNameField('Administrator full name') admin_name: string;
   @EmailField('Official work email') admin_email: string;
-  @TextField('Designation', { min: 2, max: 80 }) designation: string;
+  @DesignationField('Designation') designation: string;
   @StrongPasswordField('Password') password: string;
   // Compared with password in CompanyRegistrationService.
   @PasswordInputField('Password confirmation') confirm_password: string;
