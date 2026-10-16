@@ -39,7 +39,7 @@ function sessionToken() {
   return readStorage(STORAGE_KEYS.AUTH)?.token || null;
 }
 
-async function request(method, path, { body, params, headers, signal } = {}) {
+async function request(method, path, { body, params, headers, signal, responseType } = {}) {
   if (!config.apiUrl) {
     throw new ApiError('VITE_API_URL is not configured.', 0);
   }
@@ -60,6 +60,7 @@ async function request(method, path, { body, params, headers, signal } = {}) {
   });
 
   const contentType = response.headers.get('content-type') || '';
+  if (responseType === 'blob' && response.ok) return response.blob();
   const data = contentType.includes('application/json') ? await response.json() : await response.text();
 
   if (response.status === 401 && token) {

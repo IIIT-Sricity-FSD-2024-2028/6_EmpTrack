@@ -144,6 +144,29 @@ const FORMS = [
     ['pendingFile', { pendingFile: null }], ['pendingFile', { pendingFile: file('shot.svg') }], ['pendingFile', { pendingFile: file('big.png', 6 * 1024 * 1024) }],
     ['attachKind', { attachKind: 'VIDEO' }],
   ]],
+  ['Company registration details', s.companyDetailsSchema, {
+    legal_name: 'Globex Pvt Ltd', business_type: 'PRIVATE_LIMITED', registration_number: 'U72200KA2015PTC123456', gstin: '29AAGCB7383J1Z4',
+    company_email: 'a@globex.com', phone: '9876543210', address: '12 MG Road, Bengaluru', country: 'India', state: 'Karnataka', website: '',
+  }, [
+    ['legal_name', { legal_name: 'G' }], ['business_type', { business_type: 'TRUST' }], ['registration_number', { registration_number: '' }],
+    ['registration_number', { registration_number: 'AAB-1234' }], ['registration_number', { business_type: 'LLP', registration_number: 'U72200KA2015PTC123456' }],
+    ['gstin', { gstin: '29AAGCB7383J1' }], ['gstin', { country: 'Singapore', registration_number: '' }], ['company_email', { company_email: 'nope' }],
+    ['phone', { phone: '12' }], ['address', { address: 'short' }], ['state', { state: '' }], ['website', { website: 'globex.com' }],
+  ]],
+  ['Company registration details (no CIN needed)', s.companyDetailsSchema, {
+    legal_name: 'Ravi Stores', business_type: 'SOLE_PROPRIETORSHIP', registration_number: '', gstin: '',
+    company_email: 'r@stores.com', phone: '9876543210', address: '1 Market Street, Pune', country: 'India', state: 'Maharashtra', website: 'https://stores.com',
+  }, [['country', { country: '' }]]],
+  ['Company registration admin', s.registrationAdminSchema, {
+    admin_name: 'Priya Nair', admin_email: 'priya@globex.com', designation: 'Director', password: STRONG, confirm_password: STRONG, accept_terms: true,
+  }, [
+    ['admin_name', { admin_name: '1234' }], ['admin_email', { admin_email: 'x' }], ['designation', { designation: '' }],
+    ['password', { password: 'weakpass', confirm_password: 'weakpass' }], ['confirm_password', { confirm_password: 'Other@123' }], ['accept_terms', { accept_terms: false }],
+  ]],
+  ['Approve registration', s.approveRegistrationSchema(['PLAN-PRO'], ['PA001']), { platform_admin_id: 'PA001', subscription_plan_id: 'PLAN-PRO' }, [
+    ['platform_admin_id', { platform_admin_id: 'PA999' }], ['subscription_plan_id', { subscription_plan_id: '' }],
+  ]],
+  ['Reject registration', s.rejectRegistrationSchema, { reason: 'The certificate is unreadable.' }, [['reason', { reason: 'bad' }]]],
 ];
 
 describe.each(FORMS)('%s form', (_name, schema, valid, invalid) => {

@@ -401,3 +401,79 @@ export const technicalIssueSchema = ({ currentStatus }) => ({
   attachKind: oneOf('Attachment type', ['SCREENSHOT', 'LOG', 'OTHER']),
   pendingFile: file('Attachment', { extensions: TECHNICAL_ATTACHMENT_EXTENSIONS, maxBytes: 5 * MB, required: true }),
 });
+
+// ---- Company self-registration --------------------------------------------
+
+export const BUSINESS_TYPES = [
+  ['PRIVATE_LIMITED', 'Private Limited'],
+  ['PUBLIC_LIMITED', 'Public Limited'],
+  ['LLP', 'Limited Liability Partnership (LLP)'],
+  ['PARTNERSHIP', 'Partnership'],
+  ['SOLE_PROPRIETORSHIP', 'Sole Proprietorship'],
+  ['OTHER', 'Other'],
+];
+export const isIndia = (country) => /^(india|in|bharat)$/i.test(String(country || '').trim());
+const CIN = /^[LU]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$/;
+const LLPIN = /^[A-Z]{3}-\d{4}$/;
+const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+const upper = (v) => String(v || '').trim().toUpperCase();
+
+/** Which identifier (if any) a business needs - mirrors identifierErrors() on the backend. */
+export function registrationNumberKind({ country, business_type: type }) {
+  if (!isIndia(country)) return null;
+  if (type === 'PRIVATE_LIMITED' || type === 'PUBLIC_LIMITED') return 'CIN';
+  if (type === 'LLP') return 'LLPIN';
+  return null;
+}
+
+/** pages/public/CompanyRegister.jsx step 1 -> POST/PATCH /company-registrations. Format checks only; the server also verifies the GSTIN check digit. */
+export const companyDetailsSchema = {
+  legal_name: text('Legal company name', { min: 2, max: 150 }),
+  business_type: oneOf('Business type', BUSINESS_TYPES.map(([v]) => v)),
+  registration_number: (value, values) => {
+    const kind = registrationNumberKind(values);
+    const v = upper(value);
+    if (!v) return kind ? `${kind} is required for this business type in India.` : '';
+    if (kind === 'CIN' && !CIN.test(v)) return 'CIN must be 21 characters, e.g. U72200KA2015PTC123456.';
+    if (kind === 'LLPIN' && !LLPIN.test(v)) return 'LLPIN must look like AAB-1234.';
+    return v.length > 50 ? 'Registration number must be at most 50 characters.' : '';
+  },
+  gstin: (value, values) => {
+    const v = upper(value);
+    if (!v) return '';
+    if (!isIndia(values.country)) return 'GSTIN applies only to businesses registered in India.';
+    return GSTIN.test(v) ? '' : 'GSTIN must be 15 characters, e.g. 29ABCDE1234F1Z5.';
+  },
+  company_email: email('Official business email'),
+  phone: phone('Business phone number'),
+  address: text('Registered office address', { min: 10, max: LIMITS.ADDRESS_MAX, multiline: true }),
+  country: text('Country', { min: 2, max: 60 }),
+  state: text('State', { min: 2, max: 60 }),
+  website: (value) => (!String(value || '').trim() || /^https?:\/\/[^\s.]+\.[^\s]+$/i.test(String(value).trim()) ? '' : 'Company website must be a full URL starting with http:// or https://.'),
+};
+
+/** Step 3 -> POST /company-registrations/:ref/submit */
+export const registrationAdminSchema = {
+  admin_name: personName('Administrator full name'),
+  admin_email: email('Official work email'),
+  designation: text('Designation', { min: 2, max: 80 }),
+  password: strongPassword('Password'),
+  confirm_password: [passwordInput('Password confirmation'), matches('password', 'Passwords do not match.')],
+  accept_terms: (value) => (value === true ? '' : 'You must accept the Terms and Conditions and Privacy Policy.'),
+};
+
+/** Verification documents (step 2). The server re-checks type by content, and size. */
+export const REGISTRATION_DOCUMENTS = [
+  { type: 'incorporation', label: 'Certificate of Incorporation / registration document', extensions: ['.pdf', '.jpg', '.jpeg', '.png'], maxBytes: 5 * MB },
+  { type: 'gst', label: 'GST registration certificate', extensions: ['.pdf', '.jpg', '.jpeg', '.png'], maxBytes: 5 * MB },
+  { type: 'other', label: 'Other supporting document', extensions: ['.pdf', '.jpg', '.jpeg', '.png'], maxBytes: 5 * MB },
+  { type: 'logo', label: 'Company logo', extensions: ['.jpg', '.jpeg', '.png'], maxBytes: 2 * MB },
+];
+export const registrationDocumentRule = ({ label, extensions, maxBytes }) => file(label, { extensions, maxBytes, required: true });
+
+/** Super Admin review actions -> POST /registration-reviews/:ref/approve | reject */
+export const approveRegistrationSchema = (planIds, platformAdminIds) => ({
+  platform_admin_id: oneOf('Platform Admin', platformAdminIds),
+  subscription_plan_id: oneOf('Subscription plan', planIds),
+});
+export const rejectRegistrationSchema = { reason: text('Rejection reason', { min: 10, max: LIMITS.REASON_MAX, multiline: true }) };

@@ -66,6 +66,7 @@ const navigation = {
   [ROLES.SUPER_ADMIN]: [
     { label: 'Dashboard', path: 'dashboard', icon: 'ph-squares-four' },
     { label: 'Companies', path: 'companies', icon: 'ph-buildings' },
+    { label: 'Registrations', path: 'registrations', icon: 'ph-seal-check' },
     { label: 'Platform Admins', path: 'platform-admins', icon: 'ph-shield-star' },
     { label: 'Subscriptions', path: 'subscriptions', icon: 'ph-credit-card' },
     { label: 'Revenue', path: 'revenue', icon: 'ph-currency-circle-dollar' },
