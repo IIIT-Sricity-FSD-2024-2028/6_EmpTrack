@@ -369,13 +369,15 @@ export default function Landing() {
 
         <section className="lp-final-cta" aria-labelledby="cta-heading">
           <div className="lp-container">
-            <h2 id="cta-heading" className="lp-reveal">Transform the Way You Manage Your Workforce</h2>
-            <p className="lp-reveal" style={delay(60)}>
-              Set up EmpTrack for your organization and bring attendance, tasks, and reporting into one place.
-            </p>
-            <div className="lp-final-cta-actions lp-reveal" style={delay(120)}>
-              <Link to={PATHS.COMPANY_REGISTER} className="lp-btn lp-btn-secondary lp-btn-lg">Get Started</Link>
-              <a href="mailto:info@emptrack.com" className="lp-btn lp-btn-ghost lp-btn-lg">Schedule Demo</a>
+            <div className="lp-final-cta-content">
+              <h2 id="cta-heading" className="lp-reveal">Transform the Way You Manage Your Workforce</h2>
+              <p className="lp-reveal" style={delay(60)}>
+                Set up EmpTrack for your organization and bring attendance, tasks, and reporting into one place.
+              </p>
+              <div className="lp-final-cta-actions lp-reveal" style={delay(120)}>
+                <Link to={PATHS.COMPANY_REGISTER} className="lp-btn lp-btn-secondary lp-btn-lg">Get Started</Link>
+                <a href="mailto:info@emptrack.com" className="lp-btn lp-btn-ghost lp-btn-lg">Schedule Demo</a>
+              </div>
             </div>
           </div>
         </section>
