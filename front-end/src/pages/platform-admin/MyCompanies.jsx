@@ -129,7 +129,6 @@ export default function MyCompanies() {
     <PortalShell portal="pa" title="My Companies" demo={IS_DEMO}>
       <SectionHeader
         title="Companies Assigned To Me"
-        action={<button type="button" className="btn btn-primary" onClick={() => openCreate()}><i className="ph ph-user-plus"></i> Create Company Admin</button>}
       />
 
       <div className="card filter-bar">
