@@ -56,6 +56,7 @@ export default function SaActivity() {
     ));
   }
 
+  
   return (
     <>
       <SaPageTitle tabTitle="EmpTrack - Activity" title="Activity" portal={SA_PORTAL} />
