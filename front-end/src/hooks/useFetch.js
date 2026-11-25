@@ -11,7 +11,7 @@ export default function useFetch(loader, deps = []) {
 
   // `deps` decide when the loader is considered new (like useEffect deps).
   const load = useCallback(loader, deps);
-
+    
   const reload = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }));
     try {

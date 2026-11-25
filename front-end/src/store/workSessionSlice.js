@@ -1,5 +1,6 @@
 // The employee's single work timer (GET/POST /worklogs/timer/*). One value, not
 // a list, so a plain slice: `session` is always the record the backend last returned.
+
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { workSessionRepository as repo } from '../services/repositories';
 import { sessionThunk } from './entitySlice';
@@ -56,3 +57,5 @@ const slice = createSlice({
 });
 
 export default slice.reducer;
+
+
