@@ -12,11 +12,13 @@ vi.mock('../services/platformAdminService', () => ({
   getTeam: vi.fn(), createTeamMember: vi.fn(), updateTeamMember: vi.fn(), updateTeamMemberStatus: vi.fn(),
   getTickets: vi.fn(), getTicket: vi.fn(), assignTicket: vi.fn(), resolveTicket: vi.fn(), verifyTechnicalIssue: vi.fn(),
   getNotifications: vi.fn(),
+
 }));
 
 afterEach(() => {
   vi.resetAllMocks();
   localStorage.clear();
+
 });
 
 const q = (store, slice, op, arg) => store.getState()[slice].queries[queryKey(op, arg)];
@@ -38,7 +40,9 @@ describe('dashboard and workload', () => {
     pa.getDashboardSummary.mockRejectedValueOnce(fail('Forbidden', { status: 403 }));
     await store.dispatch(platformOverviewEntity.thunks.fetchDashboardSummary());
     expect(q(store, 'platformOverview', 'fetchDashboardSummary')).toMatchObject({ status: 'failed', value: null, error: { status: 403 } });
+
   });
+
 });
 
 describe('companies', () => {
@@ -57,6 +61,7 @@ describe('companies', () => {
     expect(pa.createCompanyAdmin).toHaveBeenLastCalledWith('C001', { email: 'a@b.c' });
     expect(q(store, 'companies', 'fetchMine').stale).toBe(true);
   });
+
 });
 
 describe('payments', () => {
@@ -71,6 +76,7 @@ describe('payments', () => {
     expect(q(store, 'payments', 'fetchForPlatformAdmin').ids).toEqual(['TXN-1', 'TXN-2']);
     expect(q(store, 'payments', 'fetchForPlatformAdmin', { status: 'FAILED' }).ids).toEqual(['TXN-2']);
   });
+
 });
 
 describe('support / technical team members', () => {
@@ -115,7 +121,9 @@ describe('tickets', () => {
     expect(result.payload).toMatchObject({ message: 'Not submitted for verification', status: 409 });
     expect(store.getState().tickets.entities['TIX-2'].status).toBe('PENDING_VERIFICATION');
   });
+  
 });
+
 
 describe('notifications and session boundaries', () => {
   it('loads platform notifications into the shared slice', async () => {
@@ -137,4 +145,5 @@ describe('notifications and session boundaries', () => {
     const state = store.getState();
     expect([state.companies.ids, state.tickets.ids, state.payments.ids]).toEqual([[], [], []]);
   });
+
 });

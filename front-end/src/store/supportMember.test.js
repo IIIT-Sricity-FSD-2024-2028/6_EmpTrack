@@ -17,6 +17,7 @@ vi.mock('../services/platformAdminService', () => ({ getNotifications: vi.fn() }
 afterEach(() => {
   vi.resetAllMocks();
   localStorage.clear();
+  
 });
 
 const q = (store, slice, op, arg) => store.getState()[slice].queries[queryKey(op, arg)];
@@ -42,6 +43,7 @@ describe('ticket queues and lookups', () => {
     expect(q(store, 'tickets', 'fetchSupportQueue', UNASSIGNED).ids).toEqual(['TIX-4']);
     expect(q(store, 'tickets', 'fetchSupportQueue', MINE).ids).toEqual([]);
     expect(q(store, 'platformOverview', 'fetchSupportStats').value).toEqual({ open: 1, mine: 0 });
+
   });
 
   it('keeps string lists (categories) as a value instead of normalizing them', async () => {
@@ -50,6 +52,7 @@ describe('ticket queues and lookups', () => {
     await store.dispatch(ticketsEntity.thunks.fetchSupportCategories());
     expect(q(store, 'tickets', 'fetchSupportCategories').value).toEqual(['Billing', 'Attendance']);
     expect(store.getState().tickets.ids).toEqual([]);
+
   });
 
   it('loads the limited company summary and the linked technical ticket', async () => {
@@ -60,7 +63,9 @@ describe('ticket queues and lookups', () => {
     await store.dispatch(ticketsEntity.thunks.fetchLinkedTechnical('TIX-20'));
     expect(store.getState().companies.entities.C001.employee_count).toBe(12);
     expect(store.getState().tickets.entities['TIX-20'].status).toBe('OPEN');
+
   });
+
 });
 
 describe('ticket workflow', () => {
@@ -73,6 +78,7 @@ describe('ticket workflow', () => {
     expect(q(store, 'tickets', 'fetchSupportQueue', UNASSIGNED).stale).toBe(true);
     expect(q(store, 'tickets', 'fetchSupportQueue', MINE).stale).toBe(true);
     expect(q(store, 'platformOverview', 'fetchSupportStats').stale).toBe(true);
+
   });
 
   it('a refused claim (already taken) leaves the ticket unassigned and nothing refetches', async () => {
@@ -82,6 +88,7 @@ describe('ticket workflow', () => {
     expect(result.payload).toMatchObject({ message: 'Ticket is already assigned', status: 409 });
     expect(store.getState().tickets.entities['TIX-4'].assigned_to).toBeNull();
     expect(q(store, 'tickets', 'fetchSupportQueue', UNASSIGNED).stale).toBeFalsy();
+
   });
 
   it('shows a reply only once the backend returns it; a rejected reply keeps the thread', async () => {
@@ -96,6 +103,7 @@ describe('ticket workflow', () => {
     await store.dispatch(ticketsEntity.thunks.supportComment({ id: 'TIX-4', message: 'On it' }));
     expect(sm.addMessage).toHaveBeenLastCalledWith('TIX-4', 'On it');
     expect(store.getState().tickets.entities['TIX-4'].comments).toEqual([reply]);
+
   });
 
   it('resolves and escalates from the returned ticket', async () => {
@@ -110,6 +118,7 @@ describe('ticket workflow', () => {
     expect(sm.escalateToTechnicalTeam).toHaveBeenCalledWith('TIX-4', 'Needs a fix');
     expect(store.getState().tickets.entities['TIX-4'].linked_technical_ticket_id).toBe('TIX-21');
   });
+
 });
 
 describe('notifications and session cleanup', () => {
@@ -119,6 +128,7 @@ describe('notifications and session cleanup', () => {
     const store = makeStore();
     await store.dispatch(notificationsEntity.thunks.fetchForPlatform('ST001'));
     expect(store.getState().notifications.entities.N9.message).toBe('TIX-4 assigned to you');
+
   });
 
   it('drops tickets, company summaries and stats when the Support Member logs out', async () => {
@@ -130,5 +140,7 @@ describe('notifications and session cleanup', () => {
     const s = store.getState();
     expect([s.tickets.ids, s.companies.ids]).toEqual([[], []]);
     expect(s.platformOverview.queries).toEqual({});
+
   });
+
 });
