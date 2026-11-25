@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -7,7 +8,7 @@ import Modal from '../../components/common/Modal';
 import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { updateLeaveStatus } from '../../services/teamLeadService';
+import { leavesEntity } from '../../store/entities';
 import { formatDate, toTitleCase } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, StatCard, Tabs, tlPath, useTeamData, useToast } from './components/TeamLeadUI';
 import { awaitsTeamLead, LEAVE_TYPE_LABELS, leaveStatusBadge, nameOf, todayKey, unauthorizedAbsences } from './tlUtils';
@@ -33,6 +34,7 @@ const dateRange = (start, end) => (start === end ? formatDate(start) : `${format
 
 export default function Leave() {
   usePageTitle('Leave Management');
+  const dispatch = useDispatch();
   const { user } = useAuth();
   const { data, error, reload } = useTeamData({ tasks: false, attendance: true, leaves: true });
   const [tab, setTab] = useState('PENDING');
@@ -68,10 +70,11 @@ export default function Leave() {
     setReasonError('');
     setSaving(true);
     try {
-      await updateLeaveStatus(action.leave.leave_id, action.status, user.emp_id, rejecting ? reason.trim() : undefined);
+      await dispatch(leavesEntity.thunks.updateTeamStatus({
+        leaveId: action.leave.leave_id, status: action.status, approverId: user.emp_id, rejectReason: rejecting ? reason.trim() : undefined,
+      })).unwrap();
       showToast(`Leave ${rejecting ? 'rejected' : 'approved'} for ${nameOf(members, action.leave.emp_id)}`);
       setAction(null);
-      await reload();
     } catch (err) {
       const serverReason = err.fieldErrors?.reject_reason?.[0];
       if (serverReason) setReasonError(serverReason);

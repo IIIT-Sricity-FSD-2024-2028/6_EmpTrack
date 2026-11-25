@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import StoreProvider from '../../store/StoreProvider';
+import { MemoryRouter as Router } from 'react-router-dom';
+
+const MemoryRouter = ({ children, ...props }) => <StoreProvider><Router {...props}>{children}</Router></StoreProvider>;
 import WorkLogs from './WorkLogs';
 import { getTasksForUser } from '../../services/taskService';
 import { confirmWorkSession, createWorkLog, getActiveWorkSession, getWorkLogsForUser, startWorkSession, stopWorkSession } from '../../services/worklogService';

@@ -3,19 +3,18 @@
 // scripts. Same workflow for both; technical issues add the Verify & Close /
 // Send Back for Rework step for work a Technical Member submitted.
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import FieldError from '../../../components/common/FieldError';
 import Modal from '../../../components/common/Modal';
 import { formatDate, formatPlatformStatus, platformTicketBadge, priorityBadge } from '../../../components/platform/format';
 import { ClearButton, DetailItem, FilterSelect, modalClass, PortalShell, SectionHeader, ShellTable, useToast } from '../../../components/platform/ShellUI';
 import { CommentList, ConfirmDialog } from '../../../components/platform/TicketParts';
-import useFetch from '../../../hooks/useFetch';
 import useFormValidation from '../../../hooks/useFormValidation';
 import { platformTicketActionSchema } from '../../../validation/formSchemas';
-import {
-  addTicketComment, assignTicket, escalateTicket, getTeam, getTicket, getTickets, IS_DEMO, reassignTicket,
-  rejectTechnicalIssueVerification, resolveTicket, verifyTechnicalIssue,
-} from '../../../services/platformAdminService';
+import { IS_DEMO } from '../../../services/platformAdminService';
+import { employeesEntity, ticketsEntity } from '../../../store/entities';
+import { useEntityQuery } from '../../../store/entitySlice';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All Status' },
@@ -52,12 +51,16 @@ export default function PlatformTicketsPage({ type, title }) {
   const text = TEXT[type];
   const [status, setStatus] = useState('all');
   const [priority, setPriority] = useState('all');
-  const { data: tickets, loading, error, reload } = useFetch(() => getTickets(type, { status, priority }), [type, status, priority]);
+  const { data: tickets, loading, error, reload } = useEntityQuery(ticketsEntity, 'fetchAll', { type, filters: { status, priority } });
   // Active members of the matching team, with their workload, for the assignee picker.
-  const { data: members, reload: reloadMembers } = useFetch(() => getTeam(text.team, { status: 'ACTIVE' }).catch(() => []), [type]);
+  // A failed member load just leaves the assignee picker empty, as before.
+  const { data: members, reload: reloadMembers } = useEntityQuery(employeesEntity, 'fetchPlatformTeam', { role: text.team, filters: { status: 'ACTIVE' } });
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [ticket, setTicket] = useState(null); // ticket shown in the detail modal
+  const dispatch = useDispatch();
+  // Only the id is UI state; the ticket record itself is read from the tickets slice.
+  const [ticketId, setTicketId] = useState(null); // ticket shown in the detail modal
+  const ticket = useSelector((s) => (ticketId ? s.tickets.entities[ticketId] ?? null : null));
   const [assignee, setAssignee] = useState('');
   const [showReason, setShowReason] = useState(false);
   const [reason, setReason] = useState('');
@@ -68,7 +71,7 @@ export default function PlatformTicketsPage({ type, title }) {
   const [toast, showToast] = useToast();
 
   const openDetail = (t) => {
-    setTicket(t);
+    setTicketId(t.ticket_id);
     setAssignee(t.assigned_to || '');
     setShowReason(false);
     setReason('');
@@ -102,11 +105,11 @@ export default function PlatformTicketsPage({ type, title }) {
   const run = async (action, success, after) => {
     setBusy(true);
     try {
-      await action();
+      await dispatch(action()).unwrap(); // the slice stores the ticket the backend returns
       showToast(success);
       after?.();
-      const updated = await getTicket(type, ticket.ticket_id);
-      setTicket(updated);
+      // A query thunk resolves to the backend response itself (here: the ticket).
+      const updated = await dispatch(ticketsEntity.thunks.fetchById({ type, id: ticket.ticket_id })).unwrap();
       setAssignee(updated.assigned_to || '');
       reload();
       reloadMembers();
@@ -121,13 +124,13 @@ export default function PlatformTicketsPage({ type, title }) {
 
   const handleAssign = () => {
     if (!validation.validateFields(['assignee'])) return undefined;
-    return run(() => assignTicket(type, ticket.ticket_id, assigneeValue), `${text.Noun} assigned successfully.`);
+    return run(() => ticketsEntity.thunks.assign({ type, id: ticket.ticket_id, assignedTo: assigneeValue }), `${text.Noun} assigned successfully.`);
   };
 
   const handleReassign = () => {
     if (!showReason) return setShowReason(true);
     if (!validation.validateFields(['assignee', 'reason'])) return undefined;
-    return run(() => reassignTicket(type, ticket.ticket_id, assigneeValue, reason.trim()), `${text.Noun} reassigned successfully.`, () => {
+    return run(() => ticketsEntity.thunks.reassign({ type, id: ticket.ticket_id, assignedTo: assigneeValue, reason: reason.trim() }), `${text.Noun} reassigned successfully.`, () => {
       setShowReason(false);
       setReason('');
       validation.untouch(['reason']);
@@ -136,7 +139,7 @@ export default function PlatformTicketsPage({ type, title }) {
 
   const handleComment = () => {
     if (!validation.validateFields(['comment'])) return undefined;
-    return run(() => addTicketComment(type, ticket.ticket_id, comment.trim()), 'Comment added.', () => {
+    return run(() => ticketsEntity.thunks.comment({ type, id: ticket.ticket_id, message: comment.trim() }), 'Comment added.', () => {
       setComment('');
       validation.untouch(['comment']);
     });
@@ -151,19 +154,19 @@ export default function PlatformTicketsPage({ type, title }) {
   const confirmations = {
     resolve: {
       title: `Resolve ${text.Noun}`, message: `Mark this ${text.noun} as resolved?`, label: 'Resolve', variant: 'secondary',
-      action: () => resolveTicket(type, ticket.ticket_id, comment.trim() || undefined), success: `${text.Noun} resolved successfully.`, after: () => setComment(''),
+      action: () => ticketsEntity.thunks.resolve({ type, id: ticket.ticket_id, notes: comment.trim() || undefined }), success: `${text.Noun} resolved successfully.`, after: () => setComment(''),
     },
     escalate: {
       title: 'Escalate to Super Admin', message: `Escalate this ${text.noun} to the Super Admin?`, label: 'Escalate', variant: 'danger',
-      action: () => escalateTicket(type, ticket.ticket_id, comment.trim() || undefined), success: `${text.Noun} escalated to the Super Admin.`, after: () => setComment(''),
+      action: () => ticketsEntity.thunks.escalate({ type, id: ticket.ticket_id, note: comment.trim() || undefined }), success: `${text.Noun} escalated to the Super Admin.`, after: () => setComment(''),
     },
     verify: {
       title: 'Verify & Close', message: 'Verify this resolution and close the issue?', label: 'Verify & Close', variant: 'secondary',
-      action: () => verifyTechnicalIssue(ticket.ticket_id, verifyNote.trim() || undefined), success: 'Issue verified and closed.', after: () => setVerifyNote(''),
+      action: () => ticketsEntity.thunks.verify({ id: ticket.ticket_id, note: verifyNote.trim() || undefined }), success: 'Issue verified and closed.', after: () => setVerifyNote(''),
     },
     reject: {
       title: 'Send Back for Rework', message: 'Send this issue back to the Technical Member for rework?', label: 'Send Back', variant: 'danger',
-      action: () => rejectTechnicalIssueVerification(ticket.ticket_id, verifyNote.trim()), success: 'Sent back for rework.', after: () => setVerifyNote(''),
+      action: () => ticketsEntity.thunks.rejectVerification({ id: ticket.ticket_id, reason: verifyNote.trim() }), success: 'Sent back for rework.', after: () => setVerifyNote(''),
     },
   };
   const confirm = pending && confirmations[pending];
@@ -216,11 +219,11 @@ export default function PlatformTicketsPage({ type, title }) {
 
       <Modal
         isOpen={Boolean(ticket)}
-        onClose={() => setTicket(null)}
+        onClose={() => setTicketId(null)}
         title={ticket ? `${ticket.ticket_id} - ${ticket.title}` : ''}
         maxWidth="640px"
         className={modalClass('pa')}
-        footer={<button type="button" className="btn btn-outline" onClick={() => setTicket(null)}>Close</button>}
+        footer={<button type="button" className="btn btn-outline" onClick={() => setTicketId(null)}>Close</button>}
       >
         {ticket && (
           <>

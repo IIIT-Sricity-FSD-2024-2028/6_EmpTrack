@@ -1,5 +1,6 @@
 // Converted from front-end/super_admin/companies.html + js/views/super_admin/companies.js
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import SaFilterBar from '../../components/sa-common/SaFilterBar';
 import SaModal from '../../components/sa-common/SaModal';
@@ -8,8 +9,9 @@ import SaPagination from '../../components/sa-common/SaPagination';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useFormValidation from '../../hooks/useFormValidation';
-import * as sa from '../../services/superAdminService';
-import { companyStatusBadgeClass, formatDate, paginate } from '../../utils/saCommon';
+import { companiesEntity, employeesEntity, platformOverviewEntity, subscriptionsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { companyStatusBadgeClass, formatDate, paginate, loadStateOf } from '../../utils/saCommon';
 import { PASSWORD_HINT } from '../../utils/validation';
 import { createCompanyAdminSchema, createCompanySchema, editCompanySchema, reassignPlatformAdminSchema } from '../../validation/formSchemas';
 import { SA_BASE, SA_PORTAL } from './saConstants';
@@ -35,54 +37,42 @@ function AdminOptions({ admins }) {
   return admins.map((a) => <option key={a.emp_id} value={a.emp_id}>{a.emp_name} ({a.assigned_company_count} companies)</option>);
 }
 
+const ACTIVE = { status: 'ACTIVE' };
+
 export default function SaCompanies() {
   const [toast, showToast] = useSaToast();
-  const [companies, setCompanies] = useState([]);
-  const [loadState, setLoadState] = useState('loading');
-  const [plans, setPlans] = useState([]);
-  const [activeAdmins, setActiveAdmins] = useState([]);
-  const [hasActiveAdmin, setHasActiveAdmin] = useState(true);
+  const dispatch = useDispatch();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ search: '', status: 'all' });
 
   const [modal, setModal] = useState(null); // 'create' | 'createCa' | 'edit' | 'view' | 'reassign' | 'status'
+  // Every company, for the Company Admin form, loaded while it is open: null loading | 'error' | []
+  const caQuery = useEntityQuery(companiesEntity, 'fetchAll', undefined, { skip: modal !== 'createCa' });
+  const caCompanies = caQuery.error ? 'error' : caQuery.data ?? null;
   const [selected, setSelected] = useState(null);
   const [pendingStatus, setPendingStatus] = useState(null);
   const [error, setError] = useState('');
-  const [caCompanies, setCaCompanies] = useState(null);
   const [reassignTo, setReassignTo] = useState('');
   const createForm = useFormState(EMPTY_CREATE);
   const editForm = useFormState({});
   const caForm = useFormState(EMPTY_CA);
 
-  const loadLookups = useCallback(async () => {
-    const [planList, adminList, activeCount] = await Promise.all([
-      sa.getSubscriptionPlans(),
-      sa.getPlatformAdmins({ status: 'ACTIVE' }),
-      sa.getActivePlatformAdminCount(),
-    ]);
-    setPlans(planList);
-    setActiveAdmins(adminList);
-    setHasActiveAdmin(activeCount.count > 0);
-  }, []);
-
-  const loadCompanies = useCallback(async () => {
-    setLoadState('loading');
-    try {
-      setCompanies(await sa.getCompanies(filters));
-      setLoadState('ready');
-    } catch {
-      setLoadState('error');
-    }
-  }, [filters]);
-
+  // Lookups shared with the Subscriptions / Platform Admins pages (same slices).
+  const plansQuery = useEntityQuery(subscriptionsEntity, 'fetchAll');
+  const adminsQuery = useEntityQuery(employeesEntity, 'fetchPlatformAdmins', ACTIVE);
+  const countQuery = useEntityQuery(platformOverviewEntity, 'fetchActivePlatformAdminCount');
+  const plans = plansQuery.data ?? [];
+  const activeAdmins = adminsQuery.data ?? [];
+  const hasActiveAdmin = countQuery.data ? countQuery.data.count > 0 : true;
+  const lookupsFailed = Boolean(plansQuery.error || adminsQuery.error || countQuery.error);
+  const reloadLookups = () => Promise.all([plansQuery.reload(), adminsQuery.reload(), countQuery.reload()]);
   useEffect(() => {
-    loadLookups().catch(() => showToast('Failed to load platform admins / plans.', 'error'));
-  }, [loadLookups, showToast]);
+    if (lookupsFailed) showToast('Failed to load platform admins / plans.', 'error');
+  }, [lookupsFailed, showToast]);
 
-  useEffect(() => {
-    loadCompanies();
-  }, [loadCompanies]);
+  const companiesQuery = useEntityQuery(companiesEntity, 'fetchAll', filters);
+  const companies = companiesQuery.data ?? [];
+  const loadState = loadStateOf(companiesQuery);
 
   const activePlanIds = plans.filter((p) => p.status === 'ACTIVE').map((p) => p.plan_id);
   const adminIds = activeAdmins.map((a) => a.emp_id);
@@ -124,15 +114,9 @@ export default function SaCompanies() {
     open('status', c);
   };
 
-  const openCreateCa = async () => {
+  const openCreateCa = () => {
     caForm.reset(EMPTY_CA);
-    setCaCompanies(null);
     open('createCa');
-    try {
-      setCaCompanies(await sa.getCompanies());
-    } catch {
-      setCaCompanies('error');
-    }
   };
 
   const submitCreate = async () => {
@@ -140,10 +124,10 @@ export default function SaCompanies() {
     if (!cv.validateAll()) return;
     const data = Object.fromEntries(Object.entries(createForm.values).map(([k, v]) => [k, typeof v === 'string' && !k.includes('password') ? v.trim() : v]));
     try {
-      await sa.createCompany(data);
+      await dispatch(companiesEntity.thunks.create(data)).unwrap(); // company lists refetch
       showToast('Company created successfully. Company Admin can log in immediately.');
       close();
-      await Promise.all([loadLookups(), loadCompanies()]);
+      reloadLookups();
     } catch (e) {
       if (!cv.setServerErrors(e)) setError(e.message || 'Failed to create company.');
     }
@@ -154,10 +138,9 @@ export default function SaCompanies() {
     if (!ev.validateAll()) return;
     const data = Object.fromEntries(Object.entries(editForm.values).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]));
     try {
-      await sa.updateCompany(selected.company_id, data);
+      await dispatch(companiesEntity.thunks.update({ id: selected.company_id, data })).unwrap();
       showToast('Company updated successfully.');
       close();
-      await loadCompanies();
     } catch (e) {
       if (!ev.setServerErrors(e)) setError(e.message || 'Failed to update company.');
     }
@@ -166,10 +149,10 @@ export default function SaCompanies() {
   const submitReassign = async () => {
     if (!rv.validateAll()) return;
     try {
-      await sa.reassignCompanyPlatformAdmin(selected.company_id, reassignTo);
+      await dispatch(companiesEntity.thunks.reassign({ id: selected.company_id, platformAdminId: reassignTo })).unwrap();
       showToast('Platform Admin reassigned successfully.');
       close();
-      await Promise.all([loadLookups(), loadCompanies()]);
+      reloadLookups();
     } catch (e) {
       if (!rv.setServerErrors(e)) showToast(e.message || 'Failed to reassign.', 'error');
     }
@@ -177,10 +160,9 @@ export default function SaCompanies() {
 
   const submitStatus = async () => {
     try {
-      await sa.updateCompanyStatus(pendingStatus.id, pendingStatus.newStatus);
+      await dispatch(companiesEntity.thunks.updateStatus({ id: pendingStatus.id, status: pendingStatus.newStatus })).unwrap();
       showToast('Company status updated successfully.');
       close();
-      await loadCompanies();
     } catch (e) {
       showToast(e.message || 'Failed to update status.', 'error');
     }
@@ -192,10 +174,9 @@ export default function SaCompanies() {
     const { companyId, ...rest } = caForm.values;
     const data = { ...rest, name: rest.name.trim(), email: rest.email.trim(), phone: rest.phone.trim() };
     try {
-      await sa.createCompanyAdmin(companyId, data);
+      await dispatch(companiesEntity.thunks.createAdminAsSuperAdmin({ companyId, data })).unwrap(); // lists refetch
       showToast('Company Admin created successfully. They can log in immediately.');
       close();
-      await loadCompanies();
     } catch (e) {
       if (!cav.setServerErrors(e)) setError(e.message || 'Failed to create Company Admin.');
     }

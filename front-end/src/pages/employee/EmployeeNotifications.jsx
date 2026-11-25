@@ -3,7 +3,8 @@ import EmptyState from '../../components/common/EmptyState';
 import NotificationItem from '../../components/notifications/NotificationItem';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getNotificationsForUser } from '../../services/notificationService';
+import { notificationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { cx } from '../../utils/helpers';
 import PortalHeading from './components/PortalHeading';
 import './styles/notifications.css';
@@ -16,17 +17,16 @@ const FILTERS = [
 export default function EmployeeNotifications() {
   usePageTitle('Notifications');
   const { user } = useAuth();
-  // Read / dismissed state is kept for this visit only, as in the original page.
-  const [notifications, setNotifications] = useState([]);
+  // Records come from the notifications slice (shared with the header bell).
+  // Read / dismissed are UI flags kept for this visit only, as in the original
+  // page - the backend has no endpoint to store them.
+  const { data: records = [] } = useEntityQuery(notificationsEntity, 'fetchForUser', user.emp_id);
+  const [readIds, setReadIds] = useState(() => new Set());
+  const [allRead, setAllRead] = useState(false);
+  const notifications = records.map((n) => ({ ...n, read: allRead || readIds.has(n.id) }));
   const [dismissed, setDismissed] = useState(() => new Set());
   const [filter, setFilter] = useState('all');
   const [toastVisible, setToastVisible] = useState(false);
-
-  useEffect(() => {
-    getNotificationsForUser(user.emp_id)
-      .then((list) => setNotifications(list.map((n) => ({ ...n, read: false }))))
-      .catch(() => setNotifications([]));
-  }, [user.emp_id]);
 
   useEffect(() => {
     if (!toastVisible) return undefined;
@@ -38,11 +38,11 @@ export default function EmployeeNotifications() {
   const visible = active.filter((n) => filter !== 'unread' || !n.read);
   const unreadCount = active.filter((n) => !n.read).length;
 
-  const markRead = (target) => setNotifications((list) => list.map((n) => (n.id === target.id ? { ...n, read: true } : n)));
+  const markRead = (target) => setReadIds((set) => new Set(set).add(target.id));
   const dismiss = (target) => setDismissed((set) => new Set(set).add(target.id));
 
   const markAllRead = () => {
-    setNotifications((list) => list.map((n) => ({ ...n, read: true })));
+    setAllRead(true);
     setToastVisible(true);
   };
 

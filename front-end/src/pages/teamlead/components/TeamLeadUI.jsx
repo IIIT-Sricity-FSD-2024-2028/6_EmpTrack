@@ -1,21 +1,15 @@
 // Small building blocks shared by the Team Lead pages. Styles: ../teamlead.css
 // plus the original .tl-* classes in styles/views.css.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Button from '../../../components/common/Button';
 import EmptyState from '../../../components/common/EmptyState';
 import { ROLES } from '../../../utils/constants';
 import { cx, getInitials } from '../../../utils/helpers';
 import { getRoleBasePath } from '../../../utils/permissions';
 import useAuth from '../../../hooks/useAuth';
-import useFetch from '../../../hooks/useFetch';
-import {
-  getIssues,
-  getTeamAttendance,
-  getTeamLeaves,
-  getTeamMembers,
-  getTeamTasks,
-  IS_DEMO,
-} from '../../../services/teamLeadService';
+import { IS_DEMO } from '../../../services/teamLeadService';
+import { attendanceEntity, employeesEntity, issuesEntity, leavesEntity, tasksEntity } from '../../../store/entities';
+import { useEntityQuery } from '../../../store/entitySlice';
 
 /** Absolute URL of a team lead page: tlPath('tasks') -> /teamlead/tasks */
 export const tlPath = (page) => `${getRoleBasePath(ROLES.TEAM_LEAD)}/${page}`;
@@ -27,16 +21,32 @@ export const tlPath = (page) => `${getRoleBasePath(ROLES.TEAM_LEAD)}/${page}`;
  */
 export function useTeamData({ tasks = true, attendance = false, leaves = false, issues = false } = {}) {
   const { user } = useAuth();
-  return useFetch(async () => {
-    const members = await getTeamMembers();
-    const [t, a, l, i] = await Promise.all([
-      tasks ? getTeamTasks(user.emp_id) : [],
-      attendance ? getTeamAttendance(members) : [],
-      leaves ? getTeamLeaves(members.map((m) => m.emp_id)) : [],
-      issues ? getIssues() : [],
-    ]);
-    return { members, tasks: t, attendance: a, leaves: l, issues: i };
-  }, [user.emp_id, tasks, attendance, leaves, issues]);
+  // Every collection lives in its shared entity slice (the same records the
+  // employee/HR pages read); this only picks the team-scoped queries.
+  const m = useEntityQuery(employeesEntity, 'fetchTeam');
+  const ids = useMemo(() => (m.data ?? []).map((x) => x.emp_id), [m.data]);
+  const t = useEntityQuery(tasksEntity, 'fetchForTeam', user.emp_id, { skip: !tasks });
+  const a = useEntityQuery(attendanceEntity, 'fetchForTeam', ids, { skip: !m.data || !attendance });
+  const l = useEntityQuery(leavesEntity, 'fetchForTeam', ids, { skip: !m.data || !leaves });
+  const i = useEntityQuery(issuesEntity, 'fetchForTeam', undefined, { skip: !issues });
+
+  const wanted = [m, tasks && t, attendance && a, leaves && l, issues && i].filter(Boolean);
+  const error = wanted.find((q) => q.error)?.error ?? null;
+  const ready = wanted.every((q) => q.data);
+  const data = useMemo(
+    () => (ready ? {
+      members: m.data,
+      tasks: tasks ? t.data : [],
+      attendance: attendance ? a.data : [],
+      leaves: leaves ? l.data : [],
+      issues: issues ? i.data : [],
+    } : undefined),
+    [ready, m.data, t.data, a.data, l.data, i.data, tasks, attendance, leaves, issues],
+  );
+  const reload = async () => {
+    await Promise.all(wanted.map((q) => q.reload()));
+  };
+  return { data, loading: !ready && !error, error, reload };
 }
 
 /** tone: blue | orange | red | green (the original .icon-* classes) */
@@ -99,7 +109,7 @@ export function Tabs({ tabs, active, onChange }) {
   );
 }
 
-/** Loading / error wrapper for useFetch results. */
+/** Loading / error wrapper for data hooks (useTeamData, useEntityQuery). */
 export function LoadState({ loading, error, onRetry, children }) {
   if (error) {
     return (

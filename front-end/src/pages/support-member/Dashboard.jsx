@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BarChart, DoughnutChart } from '../../components/platform/Charts';
 import { isClosedStatus } from '../../components/platform/format';
 import { DetailItem, ErrorState, PortalShell, SectionHeader, StatCard } from '../../components/platform/ShellUI';
-import useFetch from '../../hooks/useFetch';
-import { getStats, getTickets, IS_DEMO } from '../../services/supportMemberService';
+import { IS_DEMO } from '../../services/supportMemberService';
+import { platformOverviewEntity, ticketsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import SupportTicketTable from './components/SupportTicketTable';
 import useSupportBoard from './components/useSupportBoard';
 
@@ -26,17 +27,17 @@ const topByPriority = (tickets) => (tickets ?? [])
   .sort((a, b) => (RANK[a.priority] ?? 4) - (RANK[b.priority] ?? 4))
   .slice(0, 6);
 
+const UNASSIGNED = { assignedTo: 'unassigned', status: 'all' };
+const MINE = { assignedTo: 'me', status: 'all' };
+
 export default function Dashboard() {
   const navigate = useNavigate();
-  const stats = useFetch(getStats, []);
+  const stats = useEntityQuery(platformOverviewEntity, 'fetchSupportStats');
   // Two clearly-scoped lists: the shared queue of unclaimed work and my own workload.
-  const unassigned = useFetch(() => getTickets({ assignedTo: 'unassigned', status: 'all' }), []);
-  const mine = useFetch(() => getTickets({ assignedTo: 'me', status: 'all' }), []);
-  const board = useSupportBoard(() => {
-    stats.reload();
-    unassigned.reload();
-    mine.reload();
-  });
+  const unassigned = useEntityQuery(ticketsEntity, 'fetchSupportQueue', UNASSIGNED);
+  const mine = useEntityQuery(ticketsEntity, 'fetchSupportQueue', MINE);
+  // Ticket actions refetch both queues and the stats through Redux.
+  const board = useSupportBoard();
 
   const s = stats.data;
   const priorityData = Object.keys(s?.by_priority || {}).map((label) => ({ label, value: s.by_priority[label], color: PRIORITY_COLORS[label] || '#7C3AED' }));

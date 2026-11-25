@@ -1,8 +1,9 @@
 // Converted from front-end/company_admin/notifications.html + js/views/company_admin/notifications.js
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getNotifications } from '../../services/companyAdminService';
+import { notificationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDateTime } from '../../utils/saCommon';
 import './styles/notifications.css';
 
@@ -12,13 +13,11 @@ const TYPE_COLOR = { error: 'var(--danger-color)', warning: 'var(--warning-color
 export default function CaNotifications() {
   usePageTitle('Company Admin Notifications');
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState(null);
-
-  useEffect(() => {
-    getNotifications(user.emp_id)
-      .then((list) => setNotifications(list.map((n) => ({ ...n, read: false }))))
-      .catch(() => setNotifications([]));
-  }, [user.emp_id]);
+  // Records come from the shared notifications slice; "read" is a per-visit UI flag
+  // (the backend has no read state). A failed load shows the empty list, as before.
+  const { data, error } = useEntityQuery(notificationsEntity, 'fetchForUser', user.emp_id);
+  const [allRead, setAllRead] = useState(false);
+  const notifications = data ? data.map((n) => ({ ...n, read: allRead })) : error ? [] : null;
 
   return (
     <>
@@ -27,7 +26,7 @@ export default function CaNotifications() {
           <h2 style={{ margin: '0 0 4px 0' }}>Notifications</h2>
           <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Stay updated with the latest alerts.</div>
         </div>
-        <button type="button" className="btn btn-outline" id="btn-mark-all" onClick={() => setNotifications((list) => (list || []).map((n) => ({ ...n, read: true })))}>Mark All as Read</button>
+        <button type="button" className="btn btn-outline" id="btn-mark-all" onClick={() => setAllRead(true)}>Mark All as Read</button>
       </div>
 
       <div className="notifications-container" id="ca-notif-list">

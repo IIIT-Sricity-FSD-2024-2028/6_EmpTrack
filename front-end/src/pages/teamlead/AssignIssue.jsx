@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getTeams, updateIssue } from '../../services/teamLeadService';
+import { issuesEntity, teamsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDate } from '../../utils/helpers';
 import { assignIssueSchema } from '../../validation/formSchemas';
 import { DemoNotice, LoadState, tlPath, useTeamData } from './components/TeamLeadUI';
@@ -25,10 +26,11 @@ const TIPS = [
 
 export default function AssignIssue() {
   usePageTitle('Assign Issue');
+  const dispatch = useDispatch();
   const { user } = useAuth();
   const [params] = useSearchParams();
   const { data, error, reload } = useTeamData({ tasks: false, issues: true });
-  const { data: teams = [] } = useFetch(getTeams, []);
+  const { data: teams = [] } = useEntityQuery(teamsEntity, 'fetchForTeamLead');
   const [form, setForm] = useState({ issueId: params.get('id') || '', type: '', teamId: '', assignee: '', priority: '', deadline: '', notes: '' });
   const [status, setStatus] = useState(null); // { type: 'success'|'error', message }
   const [saving, setSaving] = useState(false);
@@ -70,7 +72,8 @@ export default function AssignIssue() {
     setSaving(true);
     const assignedTo = isMyTeam ? (values.assignee === user.emp_id ? user.emp_name : nameOf(members, values.assignee)) : team.team_name;
     try {
-      await updateIssue(values.issueId, {
+      // The issues slice stores the record the backend returns.
+      await dispatch(issuesEntity.thunks.updateForTeam({ issueId: values.issueId, changes: {
         type: values.type,
         assigned_to: assignedTo,
         assigned_team: team.team_name,
@@ -78,9 +81,8 @@ export default function AssignIssue() {
         deadline: values.deadline,
         assignment_notes: values.notes.trim(),
         status: 'In Progress',
-      });
+      } })).unwrap();
       setStatus({ type: 'success', message: `${values.issueId} assigned to ${assignedTo}.` });
-      await reload();
     } catch (err) {
       if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Failed to assign the issue.' });
     } finally {

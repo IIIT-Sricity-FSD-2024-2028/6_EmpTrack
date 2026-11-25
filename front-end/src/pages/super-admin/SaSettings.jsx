@@ -1,12 +1,14 @@
 // Converted from front-end/super_admin/settings.html + js/views/super_admin/settings.js
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import { Field } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useFormValidation from '../../hooks/useFormValidation';
 import { platformSettingsSchemas } from '../../validation/formSchemas';
-import * as sa from '../../services/superAdminService';
+import { platformSettingsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { SA_BASE, SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
 import './styles/settings.css';
@@ -49,17 +51,21 @@ function Toggle({ id, title, desc, checked, onChange }) {
 
 export default function SaSettings() {
   const [toast, showToast] = useSaToast();
+  const dispatch = useDispatch();
+  const { data: settings, error: loadError } = useEntityQuery(platformSettingsEntity, 'fetch');
+  // Role permissions are shown straight from the backend's settings (refetched after each save).
+  const permissions = settings?.role_permissions || {};
+  // The form is a local draft, seeded once from the loaded settings.
   const [form, setForm] = useState(() => toForm({}));
-  const [permissions, setPermissions] = useState({});
-
+  const seeded = useRef(false);
   useEffect(() => {
-    sa.getPlatformSettings()
-      .then((s) => {
-        setForm(toForm(s));
-        setPermissions(s.role_permissions || {});
-      })
-      .catch(() => showToast('Failed to load platform settings.', 'error'));
-  }, [showToast]);
+    if (!settings || seeded.current) return;
+    seeded.current = true;
+    setForm(toForm(settings));
+  }, [settings]);
+  useEffect(() => {
+    if (loadError) showToast('Failed to load platform settings.', 'error');
+  }, [loadError, showToast]);
 
   const platformValidation = useFormValidation(platformSettingsSchemas.platform, form, { idPrefix: 'st-platform', serverFieldMap: {} });
   const securityValidation = useFormValidation(platformSettingsSchemas.security, form, {
@@ -82,8 +88,7 @@ export default function SaSettings() {
 
   const save = async (data, success, validation) => {
     try {
-      const updated = await sa.updatePlatformSettings(data);
-      if (updated?.role_permissions) setPermissions(updated.role_permissions);
+      await dispatch(platformSettingsEntity.thunks.update(data)).unwrap();
       showToast(success);
     } catch (e) {
       if (!validation?.setServerErrors(e)) showToast(e.message || 'Failed to save.', 'error');

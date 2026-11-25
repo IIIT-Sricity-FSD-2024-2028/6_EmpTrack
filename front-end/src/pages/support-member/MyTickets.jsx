@@ -9,9 +9,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { paginate } from '../../components/platform/format';
 import { ClearButton, FilterSelect, Pagination, PortalShell, SearchInput, SectionHeader, useDebounced } from '../../components/platform/ShellUI';
-import useFetch from '../../hooks/useFetch';
 import { cx } from '../../utils/helpers';
-import { getCategories, getTickets, IS_DEMO } from '../../services/supportMemberService';
+import { IS_DEMO } from '../../services/supportMemberService';
+import { ticketsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import SupportTicketTable from './components/SupportTicketTable';
 import useSupportBoard from './components/useSupportBoard';
 
@@ -63,7 +64,8 @@ function matchesDate(ticket, filter) {
 
 export default function MyTickets() {
   const [params, setParams] = useSearchParams();
-  const { data: categories } = useFetch(() => getCategories().catch(() => []), []);
+  // A failed category lookup leaves only "all", as before.
+  const { data: categories } = useEntityQuery(ticketsEntity, 'fetchSupportCategories');
 
   // Unknown values in the URL fall back to "all", like the original readFiltersFromUrl.
   const unassigned = (params.get('assignment') || '').toLowerCase() === 'unassigned';
@@ -91,11 +93,10 @@ export default function MyTickets() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  const { data: tickets, loading, error, reload } = useFetch(
-    () => getTickets({ assignedTo: unassigned ? 'unassigned' : 'me', status, priority, category, search: query }),
-    [unassigned, status, priority, category, query],
-  );
-  const board = useSupportBoard(reload);
+  const { data: tickets, loading, error } = useEntityQuery(ticketsEntity, 'fetchSupportQueue', {
+    assignedTo: unassigned ? 'unassigned' : 'me', status, priority, category, search: query,
+  });
+  const board = useSupportBoard();
 
   const filtered = useMemo(() => (tickets ?? []).filter((t) => matchesDate(t, date)), [tickets, date]);
   const pager = paginate(filtered, page, PAGE_SIZE);

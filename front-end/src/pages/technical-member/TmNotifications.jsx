@@ -1,8 +1,8 @@
 // Converted from front-end/technical_member/notifications.html + js/views/technical_member/notifications.js
-import { useEffect, useState } from 'react';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import useAuth from '../../hooks/useAuth';
-import { getNotificationsForUser } from '../../services/notificationService';
+import { notificationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDateTime } from '../../utils/saCommon';
 import { TM_PORTAL } from './tmConstants';
 import './styles/_shared.css';
@@ -16,13 +16,8 @@ function typeIcon(type) {
 export default function TmNotifications() {
   const { user } = useAuth();
   // The original list stayed empty until the request finished.
-  const [state, setState] = useState({ status: 'loading', list: [] });
-
-  useEffect(() => {
-    getNotificationsForUser(user.emp_id)
-      .then((list) => setState({ status: 'ready', list: list || [] }))
-      .catch(() => setState({ status: 'error', list: [] }));
-  }, [user.emp_id]);
+  const query = useEntityQuery(notificationsEntity, 'fetchForUser', user.emp_id);
+  const state = { status: query.error ? 'error' : query.data ? 'ready' : 'loading', list: query.data ?? [] };
 
   let content = null;
   if (state.status === 'error') {

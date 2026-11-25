@@ -1,9 +1,9 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getIssuesForUser } from '../../services/issueService';
+import { issuesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import BackHeading from './components/BackHeading';
 import ProgressBar from './components/ProgressBar';
 import { empPath, issuePriorityBadge, issueStatusBadge } from './employeeUtils';
@@ -29,10 +29,8 @@ export default function IssueDetails() {
   const [searchParams] = useSearchParams();
   const issueId = searchParams.get('id');
 
-  const { data: issue, loading, error } = useFetch(
-    async () => (await getIssuesForUser(user.emp_id)).find((i) => i.issue_id === issueId) ?? null,
-    [user.emp_id, issueId],
-  );
+  const { data: issues, loading, error } = useEntityQuery(issuesEntity, 'fetchForUser', user.emp_id);
+  const issue = issues?.find((i) => i.issue_id === issueId) ?? null;
 
   const heading = <BackHeading to={empPath('issues-list')}>Issue Details</BackHeading>;
 

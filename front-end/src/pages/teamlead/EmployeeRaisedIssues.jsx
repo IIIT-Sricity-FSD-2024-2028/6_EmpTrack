@@ -6,9 +6,9 @@ import EmptyState from '../../components/common/EmptyState';
 import Modal from '../../components/common/Modal';
 import SearchBar from '../../components/common/SearchBar';
 import Table from '../../components/common/Table';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getHrEscalations } from '../../services/teamLeadService';
+import { escalationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDate } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, Progress, StatCard, Tabs, tlPath, useTeamData } from './components/TeamLeadUI';
 import { escalationReason, isEscalated, issueStatusBadge, matchesSearch, nameOf, priorityBadge, teamIssues } from './tlUtils';
@@ -23,7 +23,7 @@ export default function EmployeeRaisedIssues() {
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') || 'issues';
   const { data, error, reload } = useTeamData({ issues: true });
-  const { data: hrEscalations = [] } = useFetch(getHrEscalations, []);
+  const { data: hrEscalations = [] } = useEntityQuery(escalationsEntity, 'fetchMine');
   const [search, setSearch] = useState('');
   const [details, setDetails] = useState(null);
 

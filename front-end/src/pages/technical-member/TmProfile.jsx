@@ -1,20 +1,19 @@
 // Converted from front-end/technical_member/profile.html + js/views/technical_member/profile.js
-import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import PasswordCard from '../../components/sa-common/PasswordCard';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useAuth from '../../hooks/useAuth';
-import * as tm from '../../services/technicalMemberService';
+import { employeesEntity, platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import './styles/_shared.css';
 
 export default function TmProfile() {
   const { user } = useAuth();
   const [toast, showToast] = useSaToast();
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    tm.getTechnicalMemberStats().then(setStats).catch(() => setStats(null));
-  }, []);
+  const dispatch = useDispatch();
+  // A failed stats load shows '-' for each figure, as before.
+  const { data: stats = null } = useEntityQuery(platformOverviewEntity, 'fetchTechnicalStats');
 
   const stat = (key) => (stats ? stats[key] : '-');
 
@@ -53,7 +52,9 @@ export default function TmProfile() {
           </div>
 
           <PasswordCard
-            onSubmit={(current, next, confirm) => tm.updateUserPassword(user.emp_id, current, next, confirm)}
+            onSubmit={(currentPassword, newPassword, confirmPassword) => dispatch(employeesEntity.thunks.updatePassword({
+              empId: user.emp_id, currentPassword, newPassword, confirmPassword,
+            })).unwrap()}
             onSuccess={() => showToast('Password updated successfully.')}
           />
         </div>

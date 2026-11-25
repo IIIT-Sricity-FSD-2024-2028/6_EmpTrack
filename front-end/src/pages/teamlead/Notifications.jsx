@@ -2,9 +2,9 @@ import { useState } from 'react';
 import EmptyState from '../../components/common/EmptyState';
 import NotificationItem from '../../components/notifications/NotificationItem';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getNotifications } from '../../services/teamLeadService';
+import { notificationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { DemoNotice, LoadState, Tabs, useToast } from './components/TeamLeadUI';
 import './teamlead.css';
 
@@ -16,7 +16,7 @@ const FILTERS = [
 export default function Notifications() {
   usePageTitle('Notifications');
   const { user } = useAuth();
-  const { data, error, reload } = useFetch(() => getNotifications(user.emp_id), [user.emp_id]);
+  const { data, error, reload } = useEntityQuery(notificationsEntity, 'fetchForTeamLead', user.emp_id);
   // Read / dismissed state lasts for this visit, as in the original page (the API has no read flag).
   const [readIds, setReadIds] = useState(() => new Set());
   const [dismissed, setDismissed] = useState(() => new Set());

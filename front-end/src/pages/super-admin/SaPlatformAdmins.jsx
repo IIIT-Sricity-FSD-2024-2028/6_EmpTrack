@@ -1,13 +1,15 @@
 // Converted from front-end/super_admin/platform-admins.html + js/views/super_admin/platform-admins.js
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import SaFilterBar from '../../components/sa-common/SaFilterBar';
 import SaModal from '../../components/sa-common/SaModal';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import SaPagination from '../../components/sa-common/SaPagination';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
-import * as sa from '../../services/superAdminService';
-import { companyStatusBadgeClass, formatDate, formatDateTime, paginate } from '../../utils/saCommon';
+import { activityLogsEntity, employeesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { companyStatusBadgeClass, formatDate, formatDateTime, paginate, loadStateOf } from '../../utils/saCommon';
 import useFormValidation from '../../hooks/useFormValidation';
 import { PASSWORD_HINT } from '../../utils/validation';
 import { createPlatformAdminSchema, editPlatformAdminSchema } from '../../validation/formSchemas';
@@ -27,32 +29,20 @@ function statusBadgeClass(status) {
 
 export default function SaPlatformAdmins() {
   const [toast, showToast] = useSaToast();
-  const [admins, setAdmins] = useState([]);
-  const [loadState, setLoadState] = useState('loading');
+  const dispatch = useDispatch();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ search: '', status: 'all' });
 
   const [modal, setModal] = useState(null); // 'create' | 'edit' | 'companies' | 'activity' | 'status'
   const [selected, setSelected] = useState(null);
   const [pendingStatus, setPendingStatus] = useState(null);
-  const [activity, setActivity] = useState(null); // null loading | 'error' | []
   const [error, setError] = useState('');
   const createForm = useFormState(EMPTY_CREATE);
   const editForm = useFormState({});
 
-  const loadAdmins = useCallback(async () => {
-    setLoadState('loading');
-    try {
-      setAdmins(await sa.getPlatformAdmins(filters));
-      setLoadState('ready');
-    } catch {
-      setLoadState('error');
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    loadAdmins();
-  }, [loadAdmins]);
+  const adminsQuery = useEntityQuery(employeesEntity, 'fetchPlatformAdmins', filters);
+  const admins = adminsQuery.data ?? [];
+  const loadState = loadStateOf(adminsQuery);
 
   const close = () => setModal(null);
   const cv = useFormValidation(createPlatformAdminSchema, createForm.values, { idPrefix: 'cp' });
@@ -66,15 +56,10 @@ export default function SaPlatformAdmins() {
     setModal(name);
   };
 
-  const openActivity = async (a) => {
-    setActivity(null);
-    open('activity', a);
-    try {
-      setActivity(await sa.getPlatformAdminActivity(a.emp_id));
-    } catch {
-      setActivity('error');
-    }
-  };
+  // The selected admin's activity, loaded while that modal is open: null loading | 'error' | []
+  const activityQuery = useEntityQuery(activityLogsEntity, 'fetchForPlatformAdmin', selected?.emp_id, { skip: modal !== 'activity' || !selected });
+  const activity = activityQuery.error ? 'error' : activityQuery.data ?? null;
+  const openActivity = (a) => open('activity', a);
 
   const submitCreate = async () => {
     setError('');
@@ -82,10 +67,9 @@ export default function SaPlatformAdmins() {
     const { values } = createForm;
     const data = { ...values, name: values.name.trim(), email: values.email.trim(), phone: values.phone.trim() };
     try {
-      await sa.createPlatformAdmin(data);
+      await dispatch(employeesEntity.thunks.createPlatformAdmin(data)).unwrap(); // the list refetches
       showToast('Platform Admin created successfully. They can log in immediately.');
       close();
-      await loadAdmins();
     } catch (e) {
       if (!cv.setServerErrors(e)) setError(e.message || 'Failed to create Platform Admin.');
     }
@@ -99,10 +83,9 @@ export default function SaPlatformAdmins() {
     // A blank phone leaves the stored number unchanged.
     if (!data.phone) delete data.phone;
     try {
-      await sa.updatePlatformAdmin(selected.emp_id, data);
+      await dispatch(employeesEntity.thunks.updatePlatformAdmin({ id: selected.emp_id, data })).unwrap();
       showToast('Platform Admin updated successfully.');
       close();
-      await loadAdmins();
     } catch (e) {
       if (!ev.setServerErrors(e)) setError(e.message || 'Failed to update.');
     }
@@ -110,10 +93,9 @@ export default function SaPlatformAdmins() {
 
   const submitStatus = async () => {
     try {
-      await sa.updatePlatformAdminStatus(pendingStatus.id, pendingStatus.newStatus);
+      await dispatch(employeesEntity.thunks.updatePlatformAdminStatus({ id: pendingStatus.id, status: pendingStatus.newStatus })).unwrap();
       showToast('Platform Admin status updated successfully.');
       close();
-      await loadAdmins();
     } catch (e) {
       showToast(e.message || 'Failed to update status.', 'error');
     }

@@ -1,5 +1,6 @@
 // Converted from front-end/super_admin/escalations.html + js/views/super_admin/escalations.js
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import SaModal from '../../components/sa-common/SaModal';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
@@ -7,8 +8,9 @@ import FieldError from '../../components/common/FieldError';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useFormValidation from '../../hooks/useFormValidation';
 import { createEscalationSchema, escalationCommentSchema } from '../../validation/formSchemas';
-import * as sa from '../../services/superAdminService';
-import { formatDate, formatDateTime } from '../../utils/saCommon';
+import { companiesEntity, criticalEscalationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { formatDate, formatDateTime, loadStateOf } from '../../utils/saCommon';
 import { SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
 import './styles/escalations.css';
@@ -29,6 +31,7 @@ const priorityBadgeClass = (priority) => `badge-priority-${(priority || 'low').t
 const statusLabel = (status) => (status || '').replace('_', ' ');
 
 function EscalationDetail({ esc, onChanged, showToast }) {
+  const dispatch = useDispatch();
   const [priority, setPriority] = useState(esc.priority);
   const [team, setTeam] = useState(esc.assigned_team && esc.assigned_team !== 'Unassigned' ? esc.assigned_team : 'Unassigned');
   const [comment, setComment] = useState('');
@@ -36,7 +39,8 @@ function EscalationDetail({ esc, onChanged, showToast }) {
 
   const act = async (run, success, failure, { clearComment } = {}) => {
     try {
-      await run();
+      // The slice stores the escalation the backend returns; lists refetch.
+      await dispatch(run()).unwrap();
       if (success) showToast(success);
       if (clearComment) {
         setComment('');
@@ -78,17 +82,17 @@ function EscalationDetail({ esc, onChanged, showToast }) {
         </Field>
       </div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-        <button type="button" className="btn btn-outline" id="btn-save-priority" onClick={() => act(() => sa.updateCriticalEscalationPriority(esc.issue_id, priority), 'Priority updated successfully.', 'Failed to update priority.')}>Save Priority</button>
-        <button type="button" className="btn btn-outline" id="btn-save-assign" onClick={() => act(() => sa.assignCriticalEscalation(esc.issue_id, team), 'Escalation assigned successfully.', 'Failed to assign.')}>Save Assignment</button>
+        <button type="button" className="btn btn-outline" id="btn-save-priority" onClick={() => act(() => criticalEscalationsEntity.thunks.updatePriority({ id: esc.issue_id, priority: priority }), 'Priority updated successfully.', 'Failed to update priority.')}>Save Priority</button>
+        <button type="button" className="btn btn-outline" id="btn-save-assign" onClick={() => act(() => criticalEscalationsEntity.thunks.assign({ id: esc.issue_id, team: team }), 'Escalation assigned successfully.', 'Failed to assign.')}>Save Assignment</button>
         <button
           type="button" className="btn btn-secondary" id="btn-resolve"
-          onClick={withNote(() => window.confirm('Mark this escalation as resolved?') && act(() => sa.resolveCriticalEscalation(esc.issue_id, note()), 'Escalation resolved successfully.', 'Failed to resolve.', { clearComment: true }))}
+          onClick={withNote(() => window.confirm('Mark this escalation as resolved?') && act(() => criticalEscalationsEntity.thunks.resolve({ id: esc.issue_id, notes: note() }), 'Escalation resolved successfully.', 'Failed to resolve.', { clearComment: true }))}
         >
           Resolve
         </button>
         <button
           type="button" className="btn btn-danger" id="btn-escalate"
-          onClick={withNote(() => window.confirm('Escalate this issue further with Critical priority?') && act(() => sa.escalateCriticalEscalation(esc.issue_id, note()), 'Escalation raised to Critical priority.', 'Failed to escalate.', { clearComment: true }))}
+          onClick={withNote(() => window.confirm('Escalate this issue further with Critical priority?') && act(() => criticalEscalationsEntity.thunks.escalate({ id: esc.issue_id, note: note() }), 'Escalation raised to Critical priority.', 'Failed to escalate.', { clearComment: true }))}
         >
           Escalate Further
         </button>
@@ -114,7 +118,7 @@ function EscalationDetail({ esc, onChanged, showToast }) {
       </div>
       <button
         type="button" className="btn btn-outline" id="btn-add-comment"
-        onClick={() => commentValidation.validateFields(['comment']) && act(() => sa.addCriticalEscalationComment(esc.issue_id, comment.trim()), null, 'Failed to add comment.', { clearComment: true })}
+        onClick={() => commentValidation.validateFields(['comment']) && act(() => criticalEscalationsEntity.thunks.comment({ id: esc.issue_id, message: comment.trim() }), null, 'Failed to add comment.', { clearComment: true })}
       >
         <i className="ph ph-chat-circle-text"></i> Add Comment
       </button>
@@ -124,53 +128,41 @@ function EscalationDetail({ esc, onChanged, showToast }) {
 
 export default function SaEscalations() {
   const [toast, showToast] = useSaToast();
-  const [escalations, setEscalations] = useState([]);
-  const [loadState, setLoadState] = useState('loading');
+  const dispatch = useDispatch();
   const [filters, setFilters] = useState({ status: 'all', priority: 'all' });
+  const listQuery = useEntityQuery(criticalEscalationsEntity, 'fetchAll', filters);
+  const escalations = listQuery.data ?? [];
+  const loadState = loadStateOf(listQuery);
   const [modal, setModal] = useState(null); // 'create' | 'detail'
   const [detailId, setDetailId] = useState(null);
   const [detailVersion, setDetailVersion] = useState(0);
-  const [companies, setCompanies] = useState(null); // null loading | 'error' | []
+  // Companies for the create form, loaded while it is open: null loading | 'error' | []
+  const companiesQuery = useEntityQuery(companiesEntity, 'fetchAll', undefined, { skip: modal !== 'create' });
+  const companies = companiesQuery.error ? 'error' : companiesQuery.data ?? null;
   const [error, setError] = useState('');
   const createForm = useFormState(EMPTY_CREATE);
   const createValidation = useFormValidation(createEscalationSchema(Array.isArray(companies) ? companies.map((c) => c.company_id) : []), createForm.values, { idPrefix: 'ce' });
 
-  const loadEscalations = useCallback(async () => {
-    setLoadState('loading');
-    try {
-      setEscalations(await sa.getCriticalEscalations(filters));
-      setLoadState('ready');
-    } catch {
-      setLoadState('error');
-    }
-  }, [filters]);
-
+  // Default the create form to the first company once the list is in.
+  const firstCompanyId = Array.isArray(companies) ? companies[0]?.company_id || '' : '';
   useEffect(() => {
-    loadEscalations();
-  }, [loadEscalations]);
+    if (modal === 'create' && firstCompanyId && !createForm.values.company_id) {
+      createForm.setValues((v) => ({ ...v, company_id: firstCompanyId }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modal, firstCompanyId]);
 
   const close = () => setModal(null);
   const setFilter = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
 
-  const refreshDetail = async (id) => {
-    const updated = await sa.getCriticalEscalationById(id);
-    setEscalations((list) => list.map((x) => (x.issue_id === id ? updated : x)));
-    setDetailVersion((v) => v + 1);
-  };
+  // The updated record is already in Redux; remount the detail so its drafts reset.
+  const refreshDetail = () => setDetailVersion((v) => v + 1);
 
-  const openCreate = async () => {
+  const openCreate = () => {
     createForm.reset();
     createValidation.reset();
     setError('');
-    setCompanies(null);
     setModal('create');
-    try {
-      const list = await sa.getCompanies();
-      setCompanies(list);
-      createForm.setValues((v) => ({ ...v, company_id: list[0]?.company_id || '' }));
-    } catch {
-      setCompanies('error');
-    }
   };
 
   const submitCreate = async () => {
@@ -178,16 +170,16 @@ export default function SaEscalations() {
     if (!createValidation.validateAll()) return;
     const data = { ...createForm.values, description: createForm.values.description.trim() };
     try {
-      await sa.createCriticalEscalation(data);
+      await dispatch(criticalEscalationsEntity.thunks.create(data)).unwrap(); // lists refetch
       showToast('Escalation raised successfully.');
       close();
-      await loadEscalations();
     } catch (e) {
       setError(e.message || 'Failed to raise escalation.');
     }
   };
 
-  const detail = escalations.find((x) => x.issue_id === detailId);
+  // Read from the slice, so an escalation that a refetch drops from the filtered list stays open.
+  const detail = useSelector((st) => (detailId ? st.criticalEscalations.entities[detailId] : undefined));
 
   let rows;
   if (loadState === 'loading') rows = <StateRow colSpan={COLS} kind="loading">Loading escalations...</StateRow>;

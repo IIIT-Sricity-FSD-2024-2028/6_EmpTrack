@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import Badge from '../../components/common/Badge';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { createLeave, getLeavesForUser } from '../../services/leaveService';
+import { leavesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { leaveRequestSchema } from '../../validation/formSchemas';
 import PortalHeading from './components/PortalHeading';
 import { LEAVE_TYPES, leaveBalance, leaveReviewer, leaveStatusBadge } from './employeeUtils';
@@ -85,13 +86,14 @@ function countDays(start, end) {
 export default function LeaveRequest() {
   usePageTitle('Leave Request');
   const { user } = useAuth();
-  const { data: leaves = [], error: leavesError, loading: leavesLoading, reload } = useFetch(() => getLeavesForUser(user.emp_id), [user.emp_id]);
+  const dispatch = useDispatch();
+  const { data: leaves = [], error: leavesError, loading: leavesLoading } = useEntityQuery(leavesEntity, 'fetchForUser', user.emp_id);
   // Until the records load (or if they fail) the counts are unknown - show '-' rather
   // than figures that look real.
   const balance = leavesLoading || leavesError ? null : leaveBalance(leaves);
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitError, setSubmitError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const submitting = useSelector((s) => s.leaves.mutations.create?.status === 'loading');
   const [submitted, setSubmitted] = useState(null); // the saved request, once the backend confirms it
   // Blocks a second submit fired before the disabled button re-renders.
   const inFlight = useRef(false);
@@ -107,28 +109,25 @@ export default function LeaveRequest() {
     setSubmitted(null);
     if (!validation.validateAll()) return;
     inFlight.current = true;
-    setSubmitting(true);
     let saved;
     try {
-      saved = await createLeave({
+      saved = await dispatch(leavesEntity.thunks.create({
         empId: user.emp_id,
         leave_type: form.type,
         days: String(days),
         start_date: form.start,
         end_date: form.end,
         reason: form.reason.trim(),
-      });
+      })).unwrap();
     } catch (err) {
       if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to submit the leave request.');
       return;
     } finally {
       inFlight.current = false;
-      setSubmitting(false);
     }
     setForm(EMPTY_FORM);
     validation.reset();
-    setSubmitted(saved || {});
-    reload();
+    setSubmitted(saved || {}); // the leave list refetches (create marks it stale)
   };
 
   return (

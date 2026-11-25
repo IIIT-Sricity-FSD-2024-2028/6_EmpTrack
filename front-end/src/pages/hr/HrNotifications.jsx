@@ -1,10 +1,11 @@
 // Converted from front-end/hr/notifications.html + js/views/hr/notifications.js.
 // Read / dismissed state is per visit, as in the original (the backend has no endpoint for it).
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getNotifications } from '../../services/hrService';
+import { notificationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDateTime } from '../../utils/saCommon';
 import './styles/notifications.css';
 
@@ -15,18 +16,24 @@ export default function HrNotifications() {
   usePageTitle('Notifications');
   const { user } = useAuth();
   const [toast, showToast] = useSaToast();
-  const [notifications, setNotifications] = useState(null);
-  const [loadError, setLoadError] = useState(false);
+  // Records come from the shared notifications slice (the header bell reads the same
+  // copy). Read / dismissed are per-visit UI flags, as before: the backend has no
+  // endpoint to store them.
+  const { data: records, error: loadError } = useEntityQuery(notificationsEntity, 'fetchForUser', user.emp_id);
+  const [readKeys, setReadKeys] = useState(() => new Set());
+  const [dismissedKeys, setDismissedKeys] = useState(() => new Set());
+  const [allRead, setAllRead] = useState(false);
+  const notifications = records
+    ? records.map((n, i) => {
+      const key = n.id ?? i;
+      return { ...n, key, read: allRead || readKeys.has(key), dismissed: dismissedKeys.has(key) };
+    })
+    : null;
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    getNotifications(user.emp_id)
-      .then((list) => setNotifications(list.map((n, i) => ({ ...n, key: n.id ?? i, read: false, dismissed: false }))))
-      .catch(() => setLoadError(true));
-  }, [user.emp_id]);
-
-  const update = (key, changes) => setNotifications((list) => list.map((n) => (n.key === key ? { ...n, ...changes } : n)));
+  const markRead = (key) => setReadKeys((s) => new Set(s).add(key));
+  const dismiss = (key) => setDismissedKeys((s) => new Set(s).add(key));
   const live = (notifications || []).filter((n) => !n.dismissed);
   const term = search.toLowerCase();
   const visible = live.filter((n) => (filter !== 'unread' || !n.read) && (!term || n.message.toLowerCase().includes(term)));
@@ -59,7 +66,7 @@ export default function HrNotifications() {
           </div>
           <button
             type="button" className="btn-read-all" id="btn-mark-all"
-            onClick={() => { setNotifications((list) => (list || []).map((n) => ({ ...n, read: true }))); showToast('All notifications marked as read!'); }}
+            onClick={() => { setAllRead(true); showToast('All notifications marked as read!'); }}
           >
             <i className="ph ph-check-double"></i> Mark All as Read
           </button>
@@ -87,8 +94,8 @@ export default function HrNotifications() {
                   </div>
                 </div>
                 <div className="ni-actions">
-                  <button type="button" className="ni-action-btn btn-done" title="Mark as Done/Read" aria-label="Mark as read" onClick={() => update(n.key, { read: true })}><i className="ph ph-check"></i></button>
-                  <button type="button" className="ni-action-btn btn-del" title="Dismiss" aria-label="Dismiss" onClick={() => update(n.key, { dismissed: true })}><i className="ph ph-x"></i></button>
+                  <button type="button" className="ni-action-btn btn-done" title="Mark as Done/Read" aria-label="Mark as read" onClick={() => markRead(n.key)}><i className="ph ph-check"></i></button>
+                  <button type="button" className="ni-action-btn btn-del" title="Dismiss" aria-label="Dismiss" onClick={() => dismiss(n.key)}><i className="ph ph-x"></i></button>
                 </div>
               </div>
             );

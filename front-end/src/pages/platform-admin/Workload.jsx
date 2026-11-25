@@ -1,8 +1,9 @@
 // Converted from front-end/platform_admin/workload.html + js/views/platform_admin/workload.js
 import { accountStatusBadge } from '../../components/platform/format';
 import { PortalShell, SectionHeader, ShellTable } from '../../components/platform/ShellUI';
-import useFetch from '../../hooks/useFetch';
-import { getTeamWorkload, IS_DEMO } from '../../services/platformAdminService';
+import { IS_DEMO } from '../../services/platformAdminService';
+import { platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 
 const COLUMNS = [
   { key: 'member', header: 'Member', render: (m) => <div className="cell-primary"><span className="cell-name">{m.emp_name}</span><span className="cell-sub">{m.specialization || ''}</span></div> },
@@ -31,7 +32,7 @@ function WorkloadTable({ title, icon, members, loading, error }) {
 }
 
 export default function Workload() {
-  const { data, loading, error } = useFetch(getTeamWorkload, []);
+  const { data, loading, error } = useEntityQuery(platformOverviewEntity, 'fetchTeamWorkload');
   return (
     <PortalShell portal="pa" title="Team Workload" demo={IS_DEMO}>
       <WorkloadTable title="Technical Team Workload" icon="ph-hard-drives" members={data?.technical} loading={loading} error={error} />

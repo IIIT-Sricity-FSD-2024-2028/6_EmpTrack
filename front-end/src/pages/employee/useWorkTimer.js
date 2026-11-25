@@ -1,78 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  confirmWorkSession,
-  getActiveWorkSession,
-  startWorkSession,
-  stopWorkSession,
-} from '../../services/worklogService';
+import { useCallback, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { confirmSession, fetchActiveSession, startSession, stopSession } from '../../store/workSessionSlice';
 
+/** The employee's work timer, read from the Redux workSession slice. Actions resolve to true on backend success. */
 export default function useWorkTimer(onSaved) {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const dispatch = useDispatch();
+  const { session, loading, busy, error, message } = useSelector((s) => s.workSession);
   const onSavedRef = useRef(onSaved);
   onSavedRef.current = onSaved;
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      setSession(await getActiveWorkSession());
-    } catch (err) {
-      setError(err.message || 'Could not load your active work session.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  const refresh = useCallback(() => dispatch(fetchActiveSession()), [dispatch]);
   useEffect(() => { refresh(); }, [refresh]);
 
-  const start = async (taskId) => {
-    setBusy(true);
-    setError('');
-    setMessage('');
-    try {
-      setSession(await startWorkSession(taskId));
-      setMessage('Work timer started.');
-      return true;
-    } catch (err) {
-      setError(err.message || 'Could not start the work timer.');
-      return false;
-    } finally { setBusy(false); }
-  };
-
-  const stop = async () => {
-    if (!session) return false;
-    setBusy(true);
-    setError('');
-    setMessage('');
-    try {
-      setSession(await stopWorkSession(session.session_id));
-      setMessage('Timer stopped. Add a short summary to save this work log.');
-      return true;
-    } catch (err) {
-      setError(err.message || 'Could not stop the work timer.');
-      return false;
-    } finally { setBusy(false); }
-  };
-
+  const ok = (action) => !action.error;
+  const start = async (taskId) => ok(await dispatch(startSession(taskId)));
+  const stop = async () => Boolean(session) && ok(await dispatch(stopSession(session.session_id)));
   const confirm = async (description) => {
     if (!session) return false;
-    setBusy(true);
-    setError('');
-    setMessage('');
-    try {
-      await confirmWorkSession(session.session_id, description);
-      setSession(null);
-      setMessage('Work log saved.');
-      await onSavedRef.current?.();
-      return true;
-    } catch (err) {
-      setError(err.message || 'Could not save the work log.');
-      return false;
-    } finally { setBusy(false); }
+    if (!ok(await dispatch(confirmSession({ sessionId: session.session_id, description })))) return false;
+    await onSavedRef.current?.();
+    return true;
   };
 
   return { session, loading, busy, error, message, start, stop, confirm, refresh };

@@ -2,9 +2,10 @@ import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getTasksForUser, IS_TASK_DEMO } from '../../services/taskService';
+import { IS_TASK_DEMO } from '../../services/taskService';
+import { tasksEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { readStorage } from '../../utils/helpers';
 import { empPath, taskBadge } from './employeeUtils';
 import useWorkTimer from './useWorkTimer';
@@ -80,10 +81,9 @@ const columns = [
 export default function EmployeeTasks() {
   usePageTitle('Work on Assigned Tasks');
   const { user } = useAuth();
-  const { data: tasks = [], loading, error } = useFetch(
-    async () => [...(await getTasksForUser(user.emp_id)), ...(IS_TASK_DEMO ? legacyAssignedTasks() : [])],
-    [user.emp_id],
-  );
+  const { data: assigned = [], loading, error } = useEntityQuery(tasksEntity, 'fetchForUser', user.emp_id);
+  // Demo mode only (no VITE_API_URL): also show tasks the original Team Lead page left in localStorage.
+  const tasks = IS_TASK_DEMO ? [...assigned, ...legacyAssignedTasks()] : assigned;
   const timer = useWorkTimer();
 
   if (loading) return <div className="card" role="status">Loading assigned tasks...</div>;

@@ -18,7 +18,8 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const handleLogout = async () => {
     await logout();
-    navigate(PATHS.HOME);
+    // Same as ExitGuard: land on /login without leaving a protected entry behind.
+    navigate(PATHS.LOGIN, { replace: true });
   };
 
   return (

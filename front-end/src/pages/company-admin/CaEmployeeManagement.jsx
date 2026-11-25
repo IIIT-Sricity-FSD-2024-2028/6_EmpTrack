@@ -1,5 +1,6 @@
 // Converted from front-end/company_admin/employee-management.html + js/views/company_admin/employee-management.js
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import SaModal from '../../components/sa-common/SaModal';
@@ -7,7 +8,8 @@ import { FormError, useFormState } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import * as ca from '../../services/companyAdminService';
+import { employeesEntity, teamsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { departmentsOf, joinedThisMonth } from '../hr/hrUtils';
 import { addEmployeeSchema, createTeamSchema, editEmployeeSchema, newAccountSchema } from '../../validation/formSchemas';
 import { DEPARTMENTS } from './caConstants';
@@ -31,8 +33,10 @@ function Labeled({ label, htmlFor, required, error, children }) {
 export default function CaEmployeeManagement() {
   usePageTitle('Employee Management');
   const [toast, showToast] = useSaToast();
-  const [employees, setEmployees] = useState(null);
-  const [teams, setTeams] = useState([]);
+  const dispatch = useDispatch();
+  const { data: allEmployees, error: employeesError } = useEntityQuery(employeesEntity, 'fetchAll');
+  const employees = allEmployees?.filter((e) => e.role === 'EMPLOYEE') ?? (employeesError ? [] : null);
+  const { data: teams = [], error: teamsError } = useEntityQuery(teamsEntity, 'fetchAll');
   const [filters, setFilters] = useState({ search: '', dept: 'all', status: 'all' });
   const [editing, setEditing] = useState(null); // { emp_id, ...draft }
   const [modal, setModal] = useState(null); // 'team' | 'lead'
@@ -47,28 +51,9 @@ export default function CaEmployeeManagement() {
   const teamValidation = useFormValidation(createTeamSchema, { team_name: teamName }, { idPrefix: 'ct' });
   const leadValidation = useFormValidation(newAccountSchema, leadForm.values, { idPrefix: 'al' });
 
-  const loadTeams = useCallback(async () => {
-    try {
-      setTeams(await ca.getTeams());
-    } catch {
-      setTeams([]);
-      showToast('Failed to load teams.', 'error');
-    }
-  }, [showToast]);
-
-  const loadEmployees = useCallback(async () => {
-    try {
-      setEmployees((await ca.getEmployees()).filter((e) => e.role === 'EMPLOYEE'));
-    } catch {
-      setEmployees([]);
-      showToast('Failed to load employees.', 'error');
-    }
-  }, [showToast]);
-
-  useEffect(() => {
-    loadTeams();
-    loadEmployees();
-  }, [loadTeams, loadEmployees]);
+  // Failed loads keep any records already in Redux and show a toast, as before.
+  useEffect(() => { if (teamsError) showToast('Failed to load teams.', 'error'); }, [teamsError, showToast]);
+  useEffect(() => { if (employeesError) showToast('Failed to load employees.', 'error'); }, [employeesError, showToast]);
 
   useEffect(() => {
     if (!addSuccess) return undefined;
@@ -88,10 +73,9 @@ export default function CaEmployeeManagement() {
     if (!teamValidation.validateAll()) return;
     setSaving(true);
     try {
-      await ca.createTeam({ team_name: teamName.trim() });
+      await dispatch(teamsEntity.thunks.create({ team_name: teamName.trim() })).unwrap();
       showToast('Team created successfully.');
       setModal(null);
-      await loadTeams();
     } catch (e) {
       if (!teamValidation.setServerErrors(e)) setModalError(e.message || 'Failed to create team.');
     } finally {
@@ -106,10 +90,9 @@ export default function CaEmployeeManagement() {
     const data = { ...v, name: v.name.trim(), email: v.email.trim(), phone: v.phone.trim() };
     setSaving(true);
     try {
-      await ca.createTeamLead(leadTeam.team_id, data);
+      await dispatch(teamsEntity.thunks.assignLead({ teamId: leadTeam.team_id, data })).unwrap();
       showToast('Team Lead assigned successfully.');
       setModal(null);
-      await loadTeams();
     } catch (e) {
       if (!leadValidation.setServerErrors(e)) setModalError(e.message || 'Failed to assign Team Lead.');
     } finally {
@@ -126,8 +109,8 @@ export default function CaEmployeeManagement() {
     const data = { ...v, name: v.name.trim(), email: v.email.trim(), phone: v.phone.trim() };
     setSaving(true);
     try {
-      await ca.createEmployee(data);
-      await Promise.all([loadEmployees(), loadTeams()]);
+      // Employees and team counts refetch once the backend confirms.
+      await dispatch(employeesEntity.thunks.create(data)).unwrap();
       empForm.reset();
       empValidation.reset();
       setAddSuccess(true);
@@ -143,10 +126,12 @@ export default function CaEmployeeManagement() {
     if (!editValidation.validateAll()) return;
     const { emp_id, ...draft } = editing;
     try {
-      await ca.updateEmployee(emp_id, { ...draft, emp_name: draft.emp_name.trim(), email: draft.email.trim(), phone: draft.phone.trim() });
+      await dispatch(employeesEntity.thunks.update({
+        empId: emp_id,
+        data: { ...draft, emp_name: draft.emp_name.trim(), email: draft.email.trim(), phone: draft.phone.trim() },
+      })).unwrap();
       showToast('Employee updated successfully.');
       setEditing(null);
-      await loadEmployees();
     } catch (e) {
       if (!editValidation.setServerErrors(e)) showToast(e.message || 'Failed to update employee.', 'error');
     }
@@ -155,9 +140,9 @@ export default function CaEmployeeManagement() {
   const remove = async (emp) => {
     if (!window.confirm(`Are you sure you want to delete employee ${emp.emp_id}?`)) return;
     try {
-      await ca.deleteEmployee(emp.emp_id);
+      // Removed from Redux only after the backend confirms the delete.
+      await dispatch(employeesEntity.thunks.remove(emp.emp_id)).unwrap();
       showToast('Employee deleted successfully.');
-      await Promise.all([loadEmployees(), loadTeams()]);
     } catch (e) {
       showToast(e.message || 'Failed to delete employee.', 'error');
     }

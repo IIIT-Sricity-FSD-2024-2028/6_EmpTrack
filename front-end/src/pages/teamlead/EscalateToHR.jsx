@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -6,18 +7,16 @@ import EmptyState from '../../components/common/EmptyState';
 import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
 import FieldError from '../../components/common/FieldError';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import {
   clearEscalationDraft,
-  escalateToHr,
   getEscalationDraft,
-  getHrEscalations,
-  getTeamMembers,
   IS_DEMO,
   saveEscalationDraft,
 } from '../../services/teamLeadService';
+import { employeesEntity, escalationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { cx, formatDate } from '../../utils/helpers';
 import { tlPath, useToast } from './components/TeamLeadUI';
 import { nameOf, priorityBadge } from './tlUtils';
@@ -42,10 +41,11 @@ const PRIORITIES = [
 
 export default function EscalateToHR() {
   usePageTitle('Escalate to HR');
+  const dispatch = useDispatch();
   const { user } = useAuth();
   const [params] = useSearchParams();
-  const { data: members = [] } = useFetch(getTeamMembers, []);
-  const { data: recent = [], reload: reloadRecent } = useFetch(getHrEscalations, []);
+  const { data: members = [] } = useEntityQuery(employeesEntity, 'fetchTeam');
+  const { data: recent = [] } = useEntityQuery(escalationsEntity, 'fetchMine');
   const [draft, setDraft] = useState(getEscalationDraft);
   const [form, setForm] = useState({
     category: CATEGORIES.some(([c]) => c === params.get('category')) ? params.get('category') : '',
@@ -74,8 +74,8 @@ export default function EscalateToHR() {
 
     setSaving(true);
     try {
-      const record = await escalateToHr(
-        {
+      const record = await dispatch(escalationsEntity.thunks.escalateToHr({
+        escalation: {
           category: form.category,
           issueId: params.get('issue') || null,
           priority: form.priority,
@@ -85,14 +85,13 @@ export default function EscalateToHR() {
           relatedEmployeeId: form.personal ? user.emp_id : form.employee || null,
           relatedEmployee: form.personal || !form.employee ? 'N/A' : nameOf(members, form.employee),
         },
-        user.emp_id,
-      );
+        actorId: user.emp_id,
+      })).unwrap();
       setStatus({ type: 'success', message: `${record.id} sent to HR.` });
       setForm({ category: '', priority: '', employee: '', personal: false, title: '', description: '' });
       validation.reset();
       clearEscalationDraft();
-      setDraft(null);
-      reloadRecent();
+      setDraft(null); // recent escalations refetch (create marks them stale)
     } catch (err) {
       if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Could not submit the escalation.' });
     } finally {

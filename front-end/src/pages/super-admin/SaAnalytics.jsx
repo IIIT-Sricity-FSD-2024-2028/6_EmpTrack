@@ -1,5 +1,5 @@
 // Converted from front-end/super_admin/analytics.html + js/views/super_admin/analytics.js
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import SaChartCard from '../../components/sa-common/SaChartCard';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
@@ -7,8 +7,9 @@ import useSaToast from '../../components/sa-common/useSaToast';
 import FieldError from '../../components/common/FieldError';
 import useFormValidation from '../../hooks/useFormValidation';
 import { dateRangeSchema } from '../../validation/formSchemas';
-import * as sa from '../../services/superAdminService';
-import { chartTheme, loadChartJs } from '../../utils/saCommon';
+import useSaCharts from '../../components/sa-common/useSaCharts';
+import { platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { SA_PORTAL, commonChartOptions } from './saConstants';
 import './styles/_shared.css';
 import './styles/analytics.css';
@@ -25,67 +26,46 @@ function rangeParams({ range, from, to }) {
   return { range };
 }
 
-async function buildCharts({ range, from, to }, onChart) {
-  await loadChartJs();
-  const { textColor, gridColor } = chartTheme();
-  const common = commonChartOptions(textColor, gridColor);
-  const line = (rows, label, color, fill) => ({
-    type: 'line',
-    data: { labels: rows.map((b) => b.period), datasets: [{ label, data: rows.map((b) => b.total), borderColor: color, backgroundColor: fill, borderWidth: 2, fill: true, tension: 0.4 }] },
-    options: common,
-  });
-  const jobs = {
-    company: async () => line(await sa.getCompanyGrowth(range, from, to), 'Total Companies (= Active Subscriptions)', '#2563EB', 'rgba(37,99,235,0.1)'),
-    employee: async () => line(await sa.getEmployeeGrowth(range, from, to), 'Total Employees', '#22C55E', 'rgba(34,197,94,0.1)'),
-    usage: async () => {
-      const usage = await sa.getPlatformActivitySummary(range, from, to);
-      return {
-        type: 'bar',
-        data: { labels: usage.by_action.map((a) => a.action), datasets: [{ label: 'Actions', data: usage.by_action.map((a) => a.count), backgroundColor: '#3B82F6', borderRadius: 4 }] },
-        options: { ...common, indexAxis: 'y' },
-      };
-    },
-  };
-  await Promise.all(Object.entries(jobs).map(async ([key, job]) => {
-    try {
-      onChart(key, await job());
-    } catch {
-      onChart(key, null);
-    }
-  }));
-}
+const line = (rows, label, color, fill, { textColor, gridColor }) => ({
+  type: 'line',
+  data: { labels: rows.map((b) => b.period), datasets: [{ label, data: rows.map((b) => b.total), borderColor: color, backgroundColor: fill, borderWidth: 2, fill: true, tension: 0.4 }] },
+  options: commonChartOptions(textColor, gridColor),
+});
+
+// Backend data -> Chart.js config (data comes from the platformOverview slice).
+const BUILDERS = {
+  company: (rows, t) => line(rows, 'Total Companies (= Active Subscriptions)', '#2563EB', 'rgba(37,99,235,0.1)', t),
+  employee: (rows, t) => line(rows, 'Total Employees', '#22C55E', 'rgba(34,197,94,0.1)', t),
+  usage: (usage, { textColor, gridColor }) => ({
+    type: 'bar',
+    data: { labels: usage.by_action.map((a) => a.action), datasets: [{ label: 'Actions', data: usage.by_action.map((a) => a.count), backgroundColor: '#3B82F6', borderRadius: 4 }] },
+    options: { ...commonChartOptions(textColor, gridColor), indexAxis: 'y' },
+  }),
+};
 
 export default function SaAnalytics() {
   const [toast, showToast] = useSaToast();
   const [form, setForm] = useState({ range: '6m', from: '', to: '' });
-  const [stats, setStats] = useState(null); // null loading | 'error' | [defs]
-  const [charts, setCharts] = useState({});
-
-  const apply = useCallback(async (selection) => {
-    const params = rangeParams(selection);
-    setCharts({});
-    buildCharts(params, (key, config) => setCharts((c) => ({ ...c, [key]: config })))
-      .catch(() => showToast('Some charts failed to load.', 'error'));
-    try {
-      const [overview, usage] = await Promise.all([
-        sa.getAnalyticsOverview(),
-        sa.getPlatformActivitySummary(params.range, params.from, params.to),
-      ]);
-      setStats([
-        { key: 'total_companies', label: 'Total Registered Companies', icon: 'ph-buildings', tone: 'primary', value: overview.total_companies },
-        { key: 'active_companies', label: 'Active Companies', icon: 'ph-check-circle', tone: 'success', value: overview.active_companies },
-        { key: 'total_employees', label: 'Total Employees', icon: 'ph-users-three', tone: 'info', value: overview.total_employees },
-        { key: 'active_subscriptions', label: 'Active Subscriptions', icon: 'ph-credit-card', tone: 'purple', value: overview.active_subscriptions },
-        { key: 'total_actions', label: 'Platform Actions (range)', icon: 'ph-activity', tone: 'warning', value: usage.total_actions },
-      ]);
-    } catch {
-      setStats('error');
-    }
-  }, [showToast]);
-
-  useEffect(() => {
-    apply({ range: '6m' });
-  }, [apply]);
+  // The applied range (UI state); every chart and stat below is a Redux query keyed by it.
+  const [params, setParams] = useState(() => rangeParams({ range: '6m' }));
+  const overviewQuery = useEntityQuery(platformOverviewEntity, 'fetchAnalyticsOverview');
+  const usageQuery = useEntityQuery(platformOverviewEntity, 'fetchPlatformActivity', params);
+  const charts = useSaCharts({
+    company: useEntityQuery(platformOverviewEntity, 'fetchCompanyGrowth', params),
+    employee: useEntityQuery(platformOverviewEntity, 'fetchEmployeeGrowth', params),
+    usage: usageQuery,
+  }, BUILDERS, () => showToast('Some charts failed to load.', 'error'));
+  const overview = overviewQuery.data;
+  const usage = usageQuery.data;
+  // null loading | 'error' | [defs]
+  const stats = overviewQuery.error || usageQuery.error ? 'error' : overview && usage ? [
+    { key: 'total_companies', label: 'Total Registered Companies', icon: 'ph-buildings', tone: 'primary', value: overview.total_companies },
+    { key: 'active_companies', label: 'Active Companies', icon: 'ph-check-circle', tone: 'success', value: overview.active_companies },
+    { key: 'total_employees', label: 'Total Employees', icon: 'ph-users-three', tone: 'info', value: overview.total_employees },
+    { key: 'active_subscriptions', label: 'Active Subscriptions', icon: 'ph-credit-card', tone: 'purple', value: overview.active_subscriptions },
+    { key: 'total_actions', label: 'Platform Actions (range)', icon: 'ph-activity', tone: 'warning', value: usage.total_actions },
+  ] : null;
+  const apply = (selection) => setParams(rangeParams(selection));
 
   const isCustom = form.range === 'custom';
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));

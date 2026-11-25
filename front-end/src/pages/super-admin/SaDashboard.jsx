@@ -1,11 +1,12 @@
 // Converted from front-end/super_admin/dashboard.html + js/views/super_admin/dashboard.js
-import { useEffect, useState } from 'react';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import SaChartCard from '../../components/sa-common/SaChartCard';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import useSaToast from '../../components/sa-common/useSaToast';
-import * as sa from '../../services/superAdminService';
-import { chartTheme, formatCurrency, loadChartJs } from '../../utils/saCommon';
+import useSaCharts from '../../components/sa-common/useSaCharts';
+import { platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { formatCurrency } from '../../utils/saCommon';
 import { SA_PORTAL, commonChartOptions } from './saConstants';
 import './styles/_shared.css';
 import './styles/dashboard.css';
@@ -30,68 +31,44 @@ const CHARTS = [
   { key: 'activity', title: 'Platform Activity (Last 30 Days)', icon: 'ph-activity', color: 'var(--sa-info)', wide: true },
 ];
 
-// Each chart loads independently; a failed one just loses its skeleton (as in the original).
-async function buildCharts(onChart) {
-  await loadChartJs();
-  const { textColor, gridColor } = chartTheme();
-  const common = commonChartOptions(textColor, gridColor);
-  const line = (rows, label, color, fill) => ({
-    type: 'line',
-    data: { labels: rows.map((b) => b.period), datasets: [{ label, data: rows.map((b) => b.total), borderColor: color, backgroundColor: fill, borderWidth: 2, fill: true, tension: 0.4 }] },
-    options: common,
-  });
+const line = (rows, label, color, fill, { textColor, gridColor }) => ({
+  type: 'line',
+  data: { labels: rows.map((b) => b.period), datasets: [{ label, data: rows.map((b) => b.total), borderColor: color, backgroundColor: fill, borderWidth: 2, fill: true, tension: 0.4 }] },
+  options: commonChartOptions(textColor, gridColor),
+});
 
-  const jobs = {
-    companyGrowth: async () => line(await sa.getCompanyGrowth('6m'), 'Total Companies', '#2563EB', 'rgba(37,99,235,0.1)'),
-    employeeGrowth: async () => line(await sa.getEmployeeGrowth('6m'), 'Total Employees', '#22C55E', 'rgba(34,197,94,0.1)'),
-    subDist: async () => {
-      const rows = await sa.getSubscriptionDistribution();
-      return {
-        type: 'doughnut',
-        data: { labels: rows.map((p) => p.plan_name), datasets: [{ data: rows.map((p) => p.company_count), backgroundColor: ['#2563EB', '#7C3AED', '#F97316', '#22C55E'], borderWidth: 1 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 16 } } } },
-      };
-    },
-    revenue: async () => {
-      const rows = await sa.getRevenueByPlan();
-      return { type: 'bar', data: { labels: rows.map((p) => p.plan_name), datasets: [{ label: 'Revenue', data: rows.map((p) => p.revenue), backgroundColor: '#F97316', borderRadius: 4 }] }, options: common };
-    },
-    activity: async () => {
-      const summary = await sa.getPlatformActivitySummary('30d');
-      return {
-        type: 'bar',
-        data: { labels: summary.by_action.map((a) => a.action), datasets: [{ label: 'Actions', data: summary.by_action.map((a) => a.count), backgroundColor: '#3B82F6', borderRadius: 4 }] },
-        options: { ...common, indexAxis: 'y' },
-      };
-    },
-  };
+const SIX_MONTHS = { range: '6m' };
+const LAST_30_DAYS = { range: '30d' };
 
-  await Promise.all(Object.entries(jobs).map(async ([key, job]) => {
-    try {
-      onChart(key, await job());
-    } catch {
-      onChart(key, null);
-    }
-  }));
-}
+// Backend data -> Chart.js config (data comes from the platformOverview slice).
+const BUILDERS = {
+  companyGrowth: (rows, t) => line(rows, 'Total Companies', '#2563EB', 'rgba(37,99,235,0.1)', t),
+  employeeGrowth: (rows, t) => line(rows, 'Total Employees', '#22C55E', 'rgba(34,197,94,0.1)', t),
+  subDist: (rows, { textColor }) => ({
+    type: 'doughnut',
+    data: { labels: rows.map((p) => p.plan_name), datasets: [{ data: rows.map((p) => p.company_count), backgroundColor: ['#2563EB', '#7C3AED', '#F97316', '#22C55E'], borderWidth: 1 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, padding: 16 } } } },
+  }),
+  revenue: (rows, { textColor, gridColor }) => ({ type: 'bar', data: { labels: rows.map((p) => p.plan_name), datasets: [{ label: 'Revenue', data: rows.map((p) => p.revenue), backgroundColor: '#F97316', borderRadius: 4 }] }, options: commonChartOptions(textColor, gridColor) }),
+  activity: (summary, { textColor, gridColor }) => ({
+    type: 'bar',
+    data: { labels: summary.by_action.map((a) => a.action), datasets: [{ label: 'Actions', data: summary.by_action.map((a) => a.count), backgroundColor: '#3B82F6', borderRadius: 4 }] },
+    options: { ...commonChartOptions(textColor, gridColor), indexAxis: 'y' },
+  }),
+};
 
 export default function SaDashboard() {
   const [toast, showToast] = useSaToast();
-  const [overview, setOverview] = useState(null);
-  const [statsError, setStatsError] = useState(false);
-  const [charts, setCharts] = useState({});
-
-  useEffect(() => {
-    let cancelled = false;
-    sa.getAnalyticsOverview()
-      .then((data) => !cancelled && setOverview(data))
-      .catch(() => !cancelled && setStatsError(true));
-    buildCharts((key, config) => !cancelled && setCharts((c) => ({ ...c, [key]: config })))
-      .catch(() => !cancelled && showToast('Some charts failed to load.', 'error'));
-    return () => {
-      cancelled = true;
-    };
-  }, [showToast]);
+  const overviewQuery = useEntityQuery(platformOverviewEntity, 'fetchAnalyticsOverview');
+  const overview = overviewQuery.data ?? null;
+  const statsError = Boolean(overviewQuery.error);
+  const charts = useSaCharts({
+    companyGrowth: useEntityQuery(platformOverviewEntity, 'fetchCompanyGrowth', SIX_MONTHS),
+    employeeGrowth: useEntityQuery(platformOverviewEntity, 'fetchEmployeeGrowth', SIX_MONTHS),
+    subDist: useEntityQuery(platformOverviewEntity, 'fetchSubscriptionDistribution'),
+    revenue: useEntityQuery(platformOverviewEntity, 'fetchRevenueByPlan'),
+    activity: useEntityQuery(platformOverviewEntity, 'fetchPlatformActivity', LAST_30_DAYS),
+  }, BUILDERS, () => showToast('Some charts failed to load.', 'error'));
 
   return (
     <>

@@ -3,11 +3,13 @@
 // this lists the real escalations sent to HR (GET /escalations) and uses the
 // backend's Reject (PATCH /escalations/:id/reject) and Report (POST /escalations/:id/report)
 // actions. Same three views: queue -> details -> action center.
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import useSaToast from '../../components/sa-common/useSaToast';
 import usePageTitle from '../../hooks/usePageTitle';
-import * as hr from '../../services/hrService';
-import { ROLE_NAMES, isStaff, shortDate } from './hrUtils';
+import { escalationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { ROLE_NAMES, shortDate, useStaffAttendance } from './hrUtils';
 import './styles/escalations.css';
 
 const STATUS_STYLE = {
@@ -40,25 +42,20 @@ function StatCard({ icon, style, value, label }) {
 export default function HrEscalations() {
   usePageTitle('Escalations');
   const [toast, showToast] = useSaToast();
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(false);
+  const dispatch = useDispatch();
+  // Escalations sent to HR, plus the employees and staff attendance shown beside them.
+  const escalationsQuery = useEntityQuery(escalationsEntity, 'fetchAll');
+  const { employees, attendance } = useStaffAttendance();
+  const error = Boolean(escalationsQuery.error || employees.error || attendance.error);
+  const data = useMemo(
+    () => (escalationsQuery.data && employees.data && attendance.data
+      ? { escalations: [...escalationsQuery.data].reverse(), employees: employees.data, attendance: attendance.data }
+      : null),
+    [escalationsQuery.data, employees.data, attendance.data],
+  );
   const [view, setView] = useState({ name: 'dashboard', id: null });
   const [filter, setFilter] = useState('all');
   const [busy, setBusy] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      const [escalations, employees] = await Promise.all([hr.getEscalations(), hr.getEmployees()]);
-      const attendance = await hr.getAttendanceFor(employees.filter(isStaff));
-      setData({ escalations: [...escalations].reverse(), employees, attendance });
-    } catch {
-      setError(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const employee = (id) => data?.employees.find((e) => e.emp_id === id);
   const nameOf = (id) => employee(id)?.emp_name || id || '-';
@@ -73,9 +70,10 @@ export default function HrEscalations() {
   const reject = async (esc) => {
     setBusy(true);
     try {
-      const res = await hr.rejectEscalation(esc.escalation_id);
+      // The backend replies { success, message } (no record), so the reject marks the
+      // escalation list stale and it is re-read from the backend automatically.
+      const res = await dispatch(escalationsEntity.thunks.reject(esc.escalation_id)).unwrap();
       showToast(res?.message || 'Escalation rejected.');
-      await load();
       setView({ name: 'dashboard', id: null });
     } catch (e) {
       showToast(e.message || 'Error rejecting escalation', 'error');
@@ -86,7 +84,8 @@ export default function HrEscalations() {
 
   const report = async (esc) => {
     try {
-      const res = await hr.generateEscalationReport(esc.escalation_id);
+      // The report is exported as a CSV file, not kept in Redux.
+      const res = await dispatch(escalationsEntity.thunks.generateReport(esc.escalation_id)).unwrap();
       if (!res?.report) throw new Error('The report could not be generated.');
       const rows = Object.entries(res.report);
       const csv = rows.map(([key, value]) => `${csvCell(key)},${csvCell(value)}`).join('\r\n');

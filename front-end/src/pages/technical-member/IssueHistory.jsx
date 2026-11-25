@@ -1,11 +1,12 @@
 // Converted from front-end/technical_member/issue-history.html + js/views/technical_member/issue-history.js
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import SaPagination from '../../components/sa-common/SaPagination';
 import useSaToast from '../../components/sa-common/useSaToast';
-import * as tm from '../../services/technicalMemberService';
+import { ticketsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { cx } from '../../utils/helpers';
-import { paginate } from '../../utils/saCommon';
+import { paginate, loadStateOf } from '../../utils/saCommon';
 import IssueRows, { IssueTableHead } from './components/IssueRows';
 import useIssueDetail from './components/useIssueDetail';
 import { TM_PORTAL } from './tmConstants';
@@ -27,28 +28,18 @@ function applyQuickFilter(issues, quickFilter) {
   return issues;
 }
 
+const HISTORY = { scope: 'history' };
+
 export default function IssueHistory() {
   const [toast, showToast] = useSaToast();
-  const [issues, setIssues] = useState([]);
-  const [status, setStatus] = useState('loading');
+  const issuesQuery = useEntityQuery(ticketsEntity, 'fetchTechnicalAssigned', HISTORY);
+  const issues = issuesQuery.data ?? [];
+  const status = loadStateOf(issuesQuery);
   const [page, setPage] = useState(1);
   const [quickFilter, setQuickFilter] = useState('all');
 
-  const loadIssues = useCallback(async () => {
-    setStatus('loading');
-    try {
-      setIssues(await tm.getMyTechnicalIssues({ scope: 'history' }));
-      setStatus('ready');
-    } catch {
-      setStatus('error');
-    }
-  }, []);
-
-  useEffect(() => {
-    loadIssues();
-  }, [loadIssues]);
-
-  const { openIssue, issueModal } = useIssueDetail({ onChanged: loadIssues, showToast });
+  // Issue actions refetch this list through Redux.
+  const { openIssue, issueModal } = useIssueDetail({ showToast });
 
   const filtered = applyQuickFilter(issues, quickFilter);
   const { pageItems, page: safePage, totalPages, total } = paginate(filtered, page, PAGE_SIZE);

@@ -1,16 +1,18 @@
 // Converted from front-end/platform_admin/my-companies.html + js/views/platform_admin/my-companies.js
 import { useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { accountStatusBadge, formatDate, paginate } from '../../components/platform/format';
 import {
   ClearButton, DetailItem, FilterSelect, modalClass, Pagination, PortalShell, SearchInput, SectionHeader, ShellTable, useDebounced, useToast,
 } from '../../components/platform/ShellUI';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import { PASSWORD_HINT } from '../../utils/validation';
 import { createCompanyAdminSchema } from '../../validation/formSchemas';
-import { createCompanyAdmin, getMyCompanies, IS_DEMO } from '../../services/platformAdminService';
+import { IS_DEMO } from '../../services/platformAdminService';
+import { companiesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 
 const PAGE_SIZE = 8;
 const STATUS_OPTIONS = [
@@ -44,7 +46,8 @@ function CompanyDetails({ company }) {
 }
 
 export default function MyCompanies() {
-  const { data: companies, loading, error, reload } = useFetch(getMyCompanies, []);
+  const dispatch = useDispatch();
+  const { data: companies, loading, error } = useEntityQuery(companiesEntity, 'fetchMine');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
@@ -87,12 +90,12 @@ export default function MyCompanies() {
     setSaving(true);
     try {
       const { companyId, ...payload } = data;
-      await createCompanyAdmin(companyId, payload);
+      // Companies refetch (admin counts) once the backend confirms.
+      await dispatch(companiesEntity.thunks.createAdmin({ companyId, data: payload })).unwrap();
       showToast(IS_DEMO
         ? 'Company Admin created in demo data (this account cannot log in without the backend).'
         : 'Company Admin created successfully. They can log in immediately.');
       setForm(null);
-      reload();
     } catch (err) {
       if (!validation.setServerErrors(err)) setFormError(err.message || 'Failed to create Company Admin.');
     } finally {

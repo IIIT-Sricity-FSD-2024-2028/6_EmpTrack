@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getTasksForUser } from '../../services/taskService';
-import { createWorkLog, getWorkLogsForUser } from '../../services/worklogService';
+import { tasksEntity, worklogsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { workLogSchema } from '../../validation/formSchemas';
 import useWorkTimer from './useWorkTimer';
 import WorkTimer, { formatElapsed } from './WorkTimer';
@@ -61,18 +61,18 @@ export default function WorkLogs() {
   const [searchParams] = useSearchParams();
   const presetTaskId = searchParams.get('id') || '';
 
-  const { data: tasks = [], error: taskError, reload: reloadTasks } = useFetch(
-    async () => (await getTasksForUser(user.emp_id)).filter((t) => t.status !== 'COMPLETED'),
-    [user.emp_id],
-  );
-  const { data: logs = [], error: logsError, reload: reloadLogs } = useFetch(() => getWorkLogsForUser(user.emp_id), [user.emp_id]);
+  const dispatch = useDispatch();
+  const { data: allTasks = [], error: taskError, reload: reloadTasks } = useEntityQuery(tasksEntity, 'fetchForUser', user.emp_id);
+  const tasks = allTasks.filter((t) => t.status !== 'COMPLETED');
+  const { data: logs = [], error: logsError, reload: reloadLogs } = useEntityQuery(worklogsEntity, 'fetchForUser', user.emp_id);
+  const submitting = useSelector((s) => s.worklogs.mutations.create?.status === 'loading');
 
   const emptyForm = { taskId: presetTaskId, start: '', end: '', description: '' };
   const [form, setForm] = useState(emptyForm);
   const [toastVisible, setToastVisible] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const timer = useWorkTimer(async () => { await Promise.all([reloadTasks(), reloadLogs()]); });
+  // A confirmed timer marks tasks and work logs stale in Redux; both refetch.
+  const timer = useWorkTimer();
   const validation = useFormValidation(workLogSchema(tasks.map((t) => t.task_id)), form, {
     idPrefix: 'wl',
     serverFieldMap: { task_id: 'taskId', start_time: 'start', end_time: 'end', hours_spent: 'end' },
@@ -95,10 +95,9 @@ export default function WorkLogs() {
     e.preventDefault();
     setSubmitError('');
     if (!validation.validateAll()) return;
-    setSubmitting(true);
     const task = tasks.find((t) => t.task_id === form.taskId);
     try {
-      await createWorkLog({
+      await dispatch(worklogsEntity.thunks.create({
         emp_id: user.emp_id,
         task_id: form.taskId,
         task_title: task?.task_title,
@@ -106,17 +105,15 @@ export default function WorkLogs() {
         start_time: form.start,
         end_time: form.end,
         description: form.description.trim(),
-      });
+      })).unwrap();
     } catch (err) {
       if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to save the work log.');
       return;
-    } finally {
-      setSubmitting(false);
     }
+    // Backend confirmed: the work log list refetches (create marks it stale).
     setToastVisible(true);
     setForm(emptyForm);
     validation.reset(); // keeps the task pre-selected from the URL, like the original
-    reloadLogs();
   };
 
   const totalHours = logs.reduce((sum, l) => sum + Number(l.hours_spent || 0), 0);

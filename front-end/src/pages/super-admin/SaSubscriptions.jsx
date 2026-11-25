@@ -1,13 +1,15 @@
 // Converted from front-end/super_admin/subscriptions.html + js/views/super_admin/subscriptions.js
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import SaModal from '../../components/sa-common/SaModal';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import { Field, FormError, StateRow, useFormState } from '../../components/sa-common/saForm';
 import useFormValidation from '../../hooks/useFormValidation';
 import { planSchema } from '../../validation/formSchemas';
 import useSaToast from '../../components/sa-common/useSaToast';
-import * as sa from '../../services/superAdminService';
-import { companyStatusBadgeClass, formatCurrency } from '../../utils/saCommon';
+import { companiesEntity, subscriptionsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { companyStatusBadgeClass, formatCurrency, loadStateOf } from '../../utils/saCommon';
 import { SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
 import './styles/platform-admins.css';
@@ -55,31 +57,18 @@ function PlanFields({ form, prefix, validation }) {
 
 export default function SaSubscriptions() {
   const [toast, showToast] = useSaToast();
-  const [plans, setPlans] = useState([]);
-  const [loadState, setLoadState] = useState('loading');
+  const dispatch = useDispatch();
+  const plansQuery = useEntityQuery(subscriptionsEntity, 'fetchAll');
+  const plans = plansQuery.data ?? [];
+  const loadState = loadStateOf(plansQuery);
   const [modal, setModal] = useState(null); // 'create' | 'edit' | 'companies' | 'status'
   const [selected, setSelected] = useState(null);
   const [pendingStatus, setPendingStatus] = useState(null);
-  const [planCompanies, setPlanCompanies] = useState(null); // null loading | 'error' | []
   const [error, setError] = useState('');
   const createForm = useFormState(EMPTY_PLAN);
   const editForm = useFormState(EMPTY_PLAN);
   const createValidation = useFormValidation(planSchema, createForm.values, { idPrefix: 'cp' });
   const editValidation = useFormValidation(planSchema, editForm.values, { idPrefix: 'ep' });
-
-  const loadPlans = useCallback(async () => {
-    setLoadState('loading');
-    try {
-      setPlans(await sa.getSubscriptionPlans());
-      setLoadState('ready');
-    } catch {
-      setLoadState('error');
-    }
-  }, []);
-
-  useEffect(() => {
-    loadPlans();
-  }, [loadPlans]);
 
   const close = () => setModal(null);
   const open = (name, plan = null) => {
@@ -88,15 +77,11 @@ export default function SaSubscriptions() {
     setModal(name);
   };
 
-  const openCompanies = async (p) => {
-    setPlanCompanies(null);
-    open('companies', p);
-    try {
-      setPlanCompanies(await sa.getCompaniesForPlan(p.plan_id));
-    } catch {
-      setPlanCompanies('error');
-    }
-  };
+  // Companies on the selected plan, loaded while that modal is open: null loading | 'error' | []
+  const companiesOpen = modal === 'companies' && Boolean(selected);
+  const planQuery = useEntityQuery(companiesEntity, 'fetchForPlan', selected?.plan_id, { skip: !companiesOpen });
+  const planCompanies = planQuery.error ? 'error' : planQuery.data ?? null;
+  const openCompanies = (p) => open('companies', p);
 
   const save = async (action, success, failure) => {
     const validation = action === 'create' ? createValidation : editValidation;
@@ -104,11 +89,11 @@ export default function SaSubscriptions() {
     if (!validation.validateAll()) return;
     const data = toPlanData(action === 'create' ? createForm.values : editForm.values);
     try {
-      if (action === 'create') await sa.createSubscriptionPlan(data);
-      else await sa.updateSubscriptionPlan(selected.plan_id, data);
+      // Create refetches the plans; update stores the plan the backend returns.
+      if (action === 'create') await dispatch(subscriptionsEntity.thunks.create(data)).unwrap();
+      else await dispatch(subscriptionsEntity.thunks.update({ id: selected.plan_id, data })).unwrap();
       showToast(success);
       close();
-      await loadPlans();
     } catch (e) {
       if (!validation.setServerErrors(e)) setError(e.message || failure);
     }
@@ -116,10 +101,9 @@ export default function SaSubscriptions() {
 
   const submitStatus = async () => {
     try {
-      await sa.updateSubscriptionPlanStatus(pendingStatus.id, pendingStatus.newStatus);
+      await dispatch(subscriptionsEntity.thunks.updateStatus({ id: pendingStatus.id, status: pendingStatus.newStatus })).unwrap();
       showToast('Plan status updated successfully.');
       close();
-      await loadPlans();
     } catch (e) {
       showToast(e.message || 'Failed to update status.', 'error');
     }

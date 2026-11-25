@@ -6,15 +6,15 @@
 // (seeded from teamLeadDemo.js) so the portal works without a backend.
 //
 // The backend has no endpoints for reports, the team lead's escalation
-// history, profile edits or deleting tasks. Reports, escalation history and
-// profile edits are always stored locally (LOCAL_KEY); deleting a task is
-// only possible in demo mode.
+// history, profile edits or deleting tasks. Reports, escalation history, drafts
+// and profile edits are always stored locally, per Team Lead (localKey()); deleting
+// a task is only possible in demo mode.
 import config from '../config/config';
 import { STORAGE_KEYS } from '../utils/constants';
 import { readStorage, writeStorage } from '../utils/helpers';
 import api from './api';
 import { getAttendanceForUser } from './attendanceService';
-import { getUserById, updateUserPassword } from './employeeService';
+import { updateUserPassword } from './employeeService';
 import { getNotificationsForUser } from './notificationService';
 import { createDemoData } from './teamLeadDemo';
 import { getWorkLogsForUser } from './worklogService';
@@ -22,7 +22,6 @@ import { getWorkLogsForUser } from './worklogService';
 export const IS_DEMO = !config.apiUrl;
 
 const DEMO_KEY = 'empTrack_tl_demo_v2'; // bump when the seed shape changes
-const LOCAL_KEY = 'empTrack_tl_local';
 const DEMO_PASSWORD = 'Password@123'; // authService mock password
 
 const today = () => new Date().toISOString().split('T')[0];
@@ -55,11 +54,25 @@ function demoPatch(collection, idKey, id, changes) {
 }
 
 // ---- local-only store (features without a backend endpoint) ----
-const local = () => ({ escalations: [], drafts: [], reports: [], profile: {}, ...readStorage(LOCAL_KEY, {}) });
+// One key per signed-in Team Lead, taken from the stored session (the same one api.js
+// sends), so another Team Lead on this browser never sees these records. There is no
+// fallback: without a signed-in employee nothing is read or written. Data under the old
+// shared key ('empTrack_tl_local') can't be attributed to anyone and is left unread.
+const localKey = () => {
+  const empId = readStorage(STORAGE_KEYS.AUTH)?.user?.emp_id;
+  return empId ? `empTrack_tl_local_${empId}` : null;
+};
+const EMPTY_LOCAL = () => ({ escalations: [], drafts: [], reports: [], profile: {} });
+const local = () => {
+  const key = localKey();
+  return { ...EMPTY_LOCAL(), ...(key ? readStorage(key, {}) : {}) };
+};
 function localWrite(mutate) {
+  const key = localKey();
+  if (!key) throw new Error('You must be signed in to save this.');
   const data = local();
   const result = mutate(data);
-  writeStorage(LOCAL_KEY, data);
+  writeStorage(key, data);
   return result;
 }
 
@@ -250,9 +263,14 @@ export async function saveReport(report) {
 
 // ---- profile ----
 /** Account from the backend (or demo) merged with local profile edits. */
-export async function getProfile(sessionUser) {
-  const base = IS_DEMO ? { ...sessionUser, ...demoDb().profile } : await getUserById(sessionUser.emp_id);
-  return { ...base, ...local().profile };
+/**
+ * The browser-only part of the Team Lead's profile: their saved edits (per user, see
+ * localKey()). In demo mode there is no backend, so the demo profile is included.
+ * With a backend, the account itself is read through Redux (employees/fetchById) and
+ * these edits are laid over it on screen only - they never replace the backend record.
+ */
+export function getProfileEdits(sessionUser) {
+  return IS_DEMO ? { ...sessionUser, ...demoDb().profile, ...local().profile } : local().profile;
 }
 
 /** No self-service profile endpoint exists, so edits are kept in this browser. */

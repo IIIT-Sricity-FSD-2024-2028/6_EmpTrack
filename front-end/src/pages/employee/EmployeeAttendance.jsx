@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import Badge from '../../components/common/Badge';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getAttendanceForUser, markAttendance, markCheckOut } from '../../services/attendanceService';
+import { attendanceEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { cx, todayUtcKey } from '../../utils/helpers';
 import { WORKING_DAYS_PER_MONTH } from './employeeUtils';
 import './styles/attendance.css';
@@ -39,7 +40,8 @@ function SummaryCard({ icon, iconClass, value, label, valueClass, valueStyle }) 
 export default function EmployeeAttendance() {
   usePageTitle('Attendance');
   const { user } = useAuth();
-  const { data: records = [], reload } = useFetch(() => getAttendanceForUser(user.emp_id), [user.emp_id]);
+  const dispatch = useDispatch();
+  const { data: records = [], reload } = useEntityQuery(attendanceEntity, 'fetchForUser', user.emp_id);
   // Location chosen before checking in (the saved record's mode wins afterwards).
   const [chosenLocation, setChosenLocation] = useState('Office');
 
@@ -59,20 +61,21 @@ export default function EmployeeAttendance() {
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     try {
-      await markAttendance(user.emp_id, time, activeLocation === 'Home' ? 'REMOTE' : 'OFFICE');
+      // Success marks the attendance list stale, so it refetches from the backend.
+      await dispatch(attendanceEntity.thunks.checkIn({ empId: user.emp_id, checkInTime: time, mode: activeLocation === 'Home' ? 'REMOTE' : 'OFFICE' })).unwrap();
     } catch (err) {
       window.alert(`Error: ${err.message || 'Check-in failed.'}`);
+      reload(); // e.g. "already marked" - show what the backend has
     }
-    reload();
   };
 
   const handleCheckOut = async () => {
     try {
-      await markCheckOut(user.emp_id);
+      await dispatch(attendanceEntity.thunks.checkOut(user.emp_id)).unwrap();
     } catch (err) {
       window.alert(`Error: ${err.message || 'Check-out failed.'}`);
+      reload();
     }
-    reload();
   };
 
   // Check-in is the live action before checking in, check-out after; both are off once checked out.

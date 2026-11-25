@@ -3,11 +3,9 @@ import Badge from '../../components/common/Badge';
 import useWorkTimer from './useWorkTimer';
 import WorkTimer from './WorkTimer';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getAttendanceForUser } from '../../services/attendanceService';
-import { getLeavesForUser } from '../../services/leaveService';
-import { getTasksForUser } from '../../services/taskService';
+import { attendanceEntity, leavesEntity, tasksEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { todayUtcKey } from '../../utils/helpers';
 import ProgressBar from './components/ProgressBar';
 import { empPath, leaveStatusBadge, WORKING_DAYS_PER_MONTH } from './employeeUtils';
@@ -72,21 +70,19 @@ export default function EmployeeDashboard() {
   const { user } = useAuth();
   const timer = useWorkTimer();
 
-  const { data, error, loading, reload } = useFetch(async () => {
-    const [tasks, attendance, leaves] = await Promise.all([
-      getTasksForUser(user.emp_id),
-      getAttendanceForUser(user.emp_id),
-      getLeavesForUser(user.emp_id),
-    ]);
-    return { tasks, attendance, leaves };
-  }, [user.emp_id]);
+  const queries = [
+    useEntityQuery(tasksEntity, 'fetchForUser', user.emp_id),
+    useEntityQuery(attendanceEntity, 'fetchForUser', user.emp_id),
+    useEntityQuery(leavesEntity, 'fetchForUser', user.emp_id),
+  ];
+  const [{ data: tasks = [] }, { data: attendance = [] }, { data: leaves = [] }] = queries;
+  const error = queries.find((q) => q.error)?.error;
+  const reload = () => queries.forEach((q) => q.error && q.reload());
 
-  if (loading) return <div className="card" role="status">Loading your dashboard...</div>;
+  if (queries.some((q) => q.loading)) return <div className="card" role="status">Loading your dashboard...</div>;
   if (error) return <div className="card" role="alert">Failed to load your dashboard: {error.message} <button type="button" onClick={reload}>Retry</button></div>;
 
-  const tasks = data?.tasks ?? [];
-  const attendance = data?.attendance ?? [];
-  const recentLeaves = (data?.leaves ?? []).slice(0, 3);
+  const recentLeaves = leaves.slice(0, 3);
 
   const today = todayUtcKey();
   const monthRecords = attendance.filter((a) => a.attendance_date.startsWith(today.substring(0, 7)));
@@ -124,7 +120,7 @@ export default function EmployeeDashboard() {
         ))}
       </div>
 
-      <WorkTimer timer={timer} tasks={data?.tasks ?? []} />
+      <WorkTimer timer={timer} tasks={tasks} />
 
       {/* Assigned Tasks Summary */}
       <div className="card dashboard-tasks-section">

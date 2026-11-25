@@ -2,9 +2,10 @@
 import { useState } from 'react';
 import { paginate } from '../../components/platform/format';
 import { Pagination, PortalShell, SectionHeader } from '../../components/platform/ShellUI';
-import useFetch from '../../hooks/useFetch';
 import { cx } from '../../utils/helpers';
-import { getTickets, IS_DEMO } from '../../services/supportMemberService';
+import { IS_DEMO } from '../../services/supportMemberService';
+import { ticketsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import SupportTicketTable from './components/SupportTicketTable';
 import useSupportBoard from './components/useSupportBoard';
 
@@ -18,11 +19,8 @@ const SCOPES = [
 export default function Escalated() {
   const [scope, setScope] = useState('all');
   const [page, setPage] = useState(1);
-  const { data: tickets, loading, error, reload } = useFetch(
-    () => getTickets({ escalatedOnly: true, assignedTo: scope === 'mine' ? 'me' : undefined }),
-    [scope],
-  );
-  const board = useSupportBoard(reload);
+  const { data: tickets, loading, error } = useEntityQuery(ticketsEntity, 'fetchSupportQueue', { escalatedOnly: true, assignedTo: scope === 'mine' ? 'me' : undefined });
+  const board = useSupportBoard();
   const pager = paginate(tickets ?? [], page, PAGE_SIZE);
 
   return (

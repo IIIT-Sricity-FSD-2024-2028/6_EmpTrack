@@ -4,8 +4,9 @@ import Calendar from '../calendar/Calendar';
 import useAuth from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
 import { calendarFetcherFor, createEvent } from '../../services/calendarService';
-import { getNotificationsForUser } from '../../services/notificationService';
-import { useStore } from '../../store/store';
+import { useSelector } from 'react-redux';
+import { useEntityQuery } from '../../store/entitySlice';
+import { notificationsEntity } from '../../store/entities';
 import { CALENDAR_ROLES, ROLE_PORTAL_LABELS } from '../../utils/constants';
 import { cx } from '../../utils/helpers';
 import { getRoleBasePath } from '../../utils/permissions';
@@ -60,19 +61,13 @@ function CalendarPopover({ user }) {
 export default function Header({ onMenuClick }) {
   const { user, role } = useAuth();
   const { isDark, toggleTheme } = useTheme();
-  const pageTitle = useStore((s) => s.pageTitle);
+  const pageTitle = useSelector((s) => s.ui.pageTitle);
   const { pathname } = useLocation();
-  const [hasNotifications, setHasNotifications] = useState(false);
+  // Unread indicator only lights up when the user actually has notifications.
+  const { data: notifications } = useEntityQuery(notificationsEntity, 'fetchForUser', user?.emp_id, { skip: !user?.emp_id });
+  const hasNotifications = Boolean(notifications?.length);
   const basePath = getRoleBasePath(role);
   const onNotifications = pathname.includes('notifications');
-
-  // Unread indicator only lights up when the user actually has notifications.
-  useEffect(() => {
-    if (!user?.emp_id) return;
-    getNotificationsForUser(user.emp_id)
-      .then((list) => setHasNotifications(Boolean(list?.length)))
-      .catch(() => {});
-  }, [user?.emp_id]);
 
   return (
     <header className="top-header">
@@ -98,7 +93,10 @@ export default function Header({ onMenuClick }) {
           <i className={cx('ph', isDark ? 'ph-sun' : 'ph-moon')}></i>
         </button>
 
-        {CALENDAR_ROLES.includes(role) && <CalendarPopover user={user} />}
+        {/* Keyed by user: events are kept in the calendar's local state (it is the only
+            consumer of /calendar/*), so a different signed-in user gets a fresh instance -
+            no previous user's events, and a late response for them lands nowhere. */}
+        {CALENDAR_ROLES.includes(role) && <CalendarPopover key={user?.emp_id} user={user} />}
 
         <Link to={`${basePath}/notifications`} className="header-bell-link" aria-label="Notifications">
           <div className={cx('notification-bell', onNotifications && 'active-bell')}>

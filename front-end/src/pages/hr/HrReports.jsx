@@ -1,14 +1,15 @@
 // Converted from front-end/hr/reports.html + js/views/hr/reports.js.
 // The original charts plotted hard-coded numbers; these are computed from the
 // company's real attendance, tasks, issues and employees.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import ChartCanvas from '../../components/sa-common/ChartCanvas';
 import useSaToast from '../../components/sa-common/useSaToast';
 import usePageTitle from '../../hooks/usePageTitle';
-import * as hr from '../../services/hrService';
+import { issuesEntity, leavesEntity, tasksEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { chartTheme, loadChartJs } from '../../utils/saCommon';
-import { WORK_DAY_HOURS, isOnLeave, isStaff, todayKey } from './hrUtils';
+import { WORK_DAY_HOURS, isOnLeave, isStaff, todayKey, useStaffAttendance } from './hrUtils';
 import './styles/reports.css';
 
 const pct = (part, whole) => (whole ? Math.round((part / whole) * 100) : 0);
@@ -129,37 +130,37 @@ function ChartItem({ title, id, config, ready, height }) {
 export default function HrReports() {
   usePageTitle('Reports & Analytics');
   const [toast, showToast] = useSaToast();
-  const [report, setReport] = useState(null);
-  const [charts, setCharts] = useState(null);
-  const [chartsDone, setChartsDone] = useState(false);
-  const [error, setError] = useState(false);
+  // Every input is a shared Redux query; the report is computed from them.
+  const { employees, staffIds, attendance } = useStaffAttendance();
+  const issues = useEntityQuery(issuesEntity, 'fetchAll');
+  const leaves = useEntityQuery(leavesEntity, 'fetchAll');
+  const tasks = useEntityQuery(tasksEntity, 'fetchForUsers', staffIds, { skip: !employees.data });
+  const sources = [employees, attendance, tasks, issues, leaves];
+  const error = sources.some((q) => q.error);
+  const ready = sources.every((q) => q.data);
+  const report = useMemo(
+    () => (ready ? computeReport({ employees: employees.data, attendance: attendance.data, tasks: tasks.data, issues: issues.data, leaves: leaves.data }) : null),
+    [ready, employees.data, attendance.data, tasks.data, issues.data, leaves.data],
+  );
 
+  // Whether the Chart.js script has loaded (library state, not backend data).
+  const [chartLib, setChartLib] = useState(null); // null loading | true | false failed
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [employees, issues, leaves] = await Promise.all([hr.getEmployees(), hr.getIssues(), hr.getLeaves()]);
-        const staff = employees.filter(isStaff);
-        const [attendance, tasks] = await Promise.all([hr.getAttendanceFor(staff), hr.getTasksFor(staff)]);
-        const r = computeReport({ employees, attendance, tasks, issues, leaves });
-        if (cancelled) return;
-        setReport(r);
-        try {
-          await loadChartJs();
-          if (!cancelled) setCharts(buildCharts(r));
-        } catch {
-          if (!cancelled) showToast('Charts could not be loaded.', 'error');
-        } finally {
-          if (!cancelled) setChartsDone(true);
-        }
-      } catch {
-        if (!cancelled) setError(true);
-      }
-    })();
+    if (!report || chartLib !== null) return undefined;
+    let active = true;
+    loadChartJs()
+      .then(() => active && setChartLib(true))
+      .catch(() => {
+        if (!active) return;
+        setChartLib(false);
+        showToast('Charts could not be loaded.', 'error');
+      });
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [showToast]);
+  }, [report, chartLib, showToast]);
+  const charts = useMemo(() => (chartLib && report ? buildCharts(report) : null), [chartLib, report]);
+  const chartsDone = chartLib !== null;
 
   if (error) return <div className="hr-reports-root"><div className="card" style={{ color: '#EF4444' }}><i className="ph ph-warning-circle"></i> Failed to load reports.</div></div>;
 

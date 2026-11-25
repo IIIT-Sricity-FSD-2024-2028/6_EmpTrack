@@ -2,12 +2,13 @@
 // The original listed hard-coded demo employees and "added" new ones only in memory;
 // this is the real company directory. Creating accounts is a Company Admin action
 // in the backend (POST /employees), so HR gets a read-only view here.
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import SaModal from '../../components/sa-common/SaModal';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import * as hr from '../../services/hrService';
+import { employeesEntity, leavesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { ROLE_NAMES, departmentsOf, isOnLeave, joinedThisMonth, nameOf, shortDate, todayKey } from './hrUtils';
 import './styles/employee-management.css';
 
@@ -20,20 +21,12 @@ const STATUS = {
 export default function HrEmployeeManagement() {
   usePageTitle('Employee Management');
   const { user } = useAuth();
-  const [employees, setEmployees] = useState(null);
-  const [leaves, setLeaves] = useState([]);
-  const [error, setError] = useState(false);
+  const { data: allEmployees, error: employeesError } = useEntityQuery(employeesEntity, 'fetchAll');
+  const { data: leaves = [], error: leavesError } = useEntityQuery(leavesEntity, 'fetchAll');
+  const employees = allEmployees?.filter((e) => e.emp_id !== user.emp_id) ?? null;
+  const error = Boolean(employeesError || leavesError);
   const [filters, setFilters] = useState({ search: '', dept: 'all', status: 'all' });
   const [selected, setSelected] = useState(null);
-
-  useEffect(() => {
-    Promise.all([hr.getEmployees(), hr.getLeaves()])
-      .then(([list, leaveList]) => {
-        setEmployees(list.filter((e) => e.emp_id !== user.emp_id));
-        setLeaves(leaveList);
-      })
-      .catch(() => setError(true));
-  }, [user.emp_id]);
 
   const today = todayKey();
   const statusOf = (e) => {

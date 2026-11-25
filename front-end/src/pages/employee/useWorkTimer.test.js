@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { confirmWorkSession, getActiveWorkSession, startWorkSession, stopWorkSession } from '../../services/worklogService';
+import StoreProvider from '../../store/StoreProvider';
 import useWorkTimer from './useWorkTimer';
 
 vi.mock('../../services/worklogService', () => ({
@@ -22,7 +23,7 @@ describe('useWorkTimer recovery and actions', () => {
     stopWorkSession.mockResolvedValue(stopped);
     confirmWorkSession.mockResolvedValue({ worklog_id: 'WL-1' });
     const onSaved = vi.fn();
-    const { result } = renderHook(() => useWorkTimer(onSaved));
+    const { result } = renderHook(() => useWorkTimer(onSaved), { wrapper: StoreProvider });
     await waitFor(() => expect(result.current.session).toEqual(active));
     await act(async () => { await result.current.stop(); });
     expect(result.current.session).toEqual(stopped);
@@ -34,7 +35,7 @@ describe('useWorkTimer recovery and actions', () => {
 
   it('surfaces active-session lookup failures rather than treating them as no timer', async () => {
     getActiveWorkSession.mockRejectedValueOnce(new Error('Network unavailable'));
-    const { result } = renderHook(() => useWorkTimer());
+    const { result } = renderHook(() => useWorkTimer(), { wrapper: StoreProvider });
     await waitFor(() => expect(result.current.error).toBe('Network unavailable'));
     expect(result.current.session).toBeNull();
   });

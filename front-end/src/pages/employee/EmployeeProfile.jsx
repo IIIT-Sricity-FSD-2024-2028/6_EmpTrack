@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import ProfileSection from '../../components/profile/ProfileSection';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getAttendanceForUser } from '../../services/attendanceService';
-import { getUserById, updateUserPassword } from '../../services/employeeService';
-import { getTasksForUser } from '../../services/taskService';
-import { getWorkLogsForUser } from '../../services/worklogService';
+import { attendanceEntity, employeesEntity, tasksEntity, worklogsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { ROLE_LABELS } from '../../utils/constants';
 import { formatDate } from '../../utils/helpers';
 import { changePasswordSchema } from '../../validation/formSchemas';
@@ -32,7 +30,8 @@ function ChangePasswordForm({ empId }) {
   const [values, setValues] = useState(EMPTY_PASSWORDS);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const dispatch = useDispatch();
+  const submitting = useSelector((s) => s.employees.mutations.updatePassword?.status === 'loading');
   const validation = useFormValidation(changePasswordSchema, values, {
     idPrefix: 'emp-pw',
     serverFieldMap: { currentPassword: 'current', newPassword: 'next', confirmPassword: 'confirm' },
@@ -53,16 +52,15 @@ function ChangePasswordForm({ empId }) {
     // The current password itself is verified by the backend.
     if (!validation.validateAll()) return;
 
-    setSubmitting(true);
     try {
-      await updateUserPassword(empId, values.current, values.next, values.confirm);
+      await dispatch(employeesEntity.thunks.updatePassword({
+        empId, currentPassword: values.current, newPassword: values.next, confirmPassword: values.confirm,
+      })).unwrap();
       setValues(EMPTY_PASSWORDS);
       validation.reset();
       setSuccess(true);
     } catch (err) {
       if (!validation.setServerErrors(err)) setError(err.message || 'Failed to update password. Please try again.');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -131,21 +129,18 @@ export default function EmployeeProfile() {
   usePageTitle('My Profile');
   const { user: session } = useAuth();
 
-  const { data, error } = useFetch(async () => {
-    const user = await getUserById(session.emp_id);
-    const manager = user.manager_id ? await getUserById(user.manager_id).catch(() => null) : null;
-    return { user, manager };
-  }, [session.emp_id]);
-  const { data: records } = useFetch(async () => {
-    const [tasks, attendance, worklogs] = await Promise.all([
-      getTasksForUser(session.emp_id),
-      getAttendanceForUser(session.emp_id),
-      getWorkLogsForUser(session.emp_id),
-    ]);
-    return { tasks, attendance, worklogs };
-  }, [session.emp_id]);
+  const { data: users, error } = useEntityQuery(employeesEntity, 'fetchById', session.emp_id);
+  const user = users?.[0];
+  // A missing/forbidden manager record just leaves the manager field empty.
+  const { data: managers } = useEntityQuery(employeesEntity, 'fetchById', user?.manager_id, { skip: !user?.manager_id });
+  const data = user && { user, manager: managers?.[0] ?? null };
+  const sources = [
+    useEntityQuery(tasksEntity, 'fetchForUser', session.emp_id).data,
+    useEntityQuery(attendanceEntity, 'fetchForUser', session.emp_id).data,
+    useEntityQuery(worklogsEntity, 'fetchForUser', session.emp_id).data,
+  ];
+  const records = sources.every(Boolean) ? { tasks: sources[0], attendance: sources[1], worklogs: sources[2] } : undefined;
 
-  const user = data?.user;
   const joined = user ? formatDate(user.date_of_joining, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
   const roleLabel = user ? ROLE_LABELS[user.role] || user.role : undefined;
   // Until the records load (or if they fail) show '-' rather than zeros that look real.

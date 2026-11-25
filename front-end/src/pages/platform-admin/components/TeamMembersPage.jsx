@@ -2,6 +2,7 @@
 // front-end/platform_admin/{support,technical}-team.html + their view scripts,
 // which were identical apart from labels and the store functions they called.
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import Input from '../../../components/common/Input';
 import Modal from '../../../components/common/Modal';
 import { accountStatusBadge, paginate } from '../../../components/platform/format';
@@ -9,10 +10,11 @@ import {
   ClearButton, FilterSelect, modalClass, Pagination, PortalShell, SearchInput, SectionHeader, ShellTable, useDebounced, useToast,
 } from '../../../components/platform/ShellUI';
 import { ConfirmDialog } from '../../../components/platform/TicketParts';
-import useFetch from '../../../hooks/useFetch';
 import useFormValidation from '../../../hooks/useFormValidation';
 import { teamMemberSchema } from '../../../validation/formSchemas';
-import { createTeamMember, getTeam, IS_DEMO, updateTeamMember, updateTeamMemberStatus } from '../../../services/platformAdminService';
+import { IS_DEMO } from '../../../services/platformAdminService';
+import { employeesEntity } from '../../../store/entities';
+import { useEntityQuery } from '../../../store/entitySlice';
 
 const PAGE_SIZE = 8;
 const STATUS_OPTIONS = [
@@ -32,7 +34,8 @@ export default function TeamMembersPage({ role, label, title }) {
   const [page, setPage] = useState(1);
   const query = useDebounced(search.trim());
   // Status and search are filtered server-side (GET /<team>?status=&search=), as in the original.
-  const { data: members, loading, error, reload } = useFetch(() => getTeam(role, { status, search: query }), [role, status, query]);
+  const dispatch = useDispatch();
+  const { data: members, loading, error } = useEntityQuery(employeesEntity, 'fetchPlatformTeam', { role, filters: { status, search: query } });
   const pager = paginate(members ?? [], page, PAGE_SIZE);
 
   const [form, setForm] = useState(null); // { mode: 'create' | 'edit', id?, ...fields }
@@ -71,14 +74,13 @@ export default function TeamMembersPage({ role, label, title }) {
     setSaving(true);
     try {
       if (isCreate) {
-        await createTeamMember(role, data);
+        await dispatch(employeesEntity.thunks.createPlatformMember({ role, data })).unwrap();
         showToast(`${label} Team member added successfully.`);
       } else {
-        await updateTeamMember(role, form.id, data);
+        await dispatch(employeesEntity.thunks.updatePlatformMember({ role, id: form.id, data })).unwrap();
         showToast('Team member updated successfully.');
       }
-      setForm(null);
-      reload();
+      setForm(null); // the list refetches or stores the returned record
     } catch (err) {
       if (!validation.setServerErrors(err)) setFormError(err.message || (isCreate ? 'Failed to add team member.' : 'Failed to update.'));
     } finally {
@@ -88,10 +90,9 @@ export default function TeamMembersPage({ role, label, title }) {
 
   const confirmStatus = async () => {
     try {
-      await updateTeamMemberStatus(role, statusChange.member.emp_id, statusChange.newStatus);
+      await dispatch(employeesEntity.thunks.updatePlatformMemberStatus({ role, id: statusChange.member.emp_id, status: statusChange.newStatus })).unwrap();
       showToast('Team member status updated successfully.');
       setStatusChange(null);
-      reload();
     } catch (err) {
       showToast(err.message || 'Failed to update status.', 'error');
     }

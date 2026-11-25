@@ -1,3 +1,6 @@
+import { useMemo } from 'react';
+import { attendanceEntity, employeesEntity, leavesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 // Shared helpers for the HR pages.
 import { ROLES } from '../../utils/constants';
 import { getRoleBasePath } from '../../utils/permissions';
@@ -44,3 +47,32 @@ export const departmentsOf = (employees) => [...new Set(employees.map((e) => e.d
 
 /** Name lookup for ids (falls back to the id). */
 export const nameOf = (employees, id) => employees.find((e) => e.emp_id === id)?.emp_name || id || '-';
+
+/**
+ * Company employees, the staff among them, and staff attendance - the same Redux
+ * queries useCompanyData uses, so pages share one request and one copy.
+ */
+export function useStaffAttendance() {
+  const employees = useEntityQuery(employeesEntity, 'fetchAll');
+  const staff = useMemo(() => (employees.data ?? []).filter(isStaff), [employees.data]);
+  const staffIds = useMemo(() => staff.map((e) => e.emp_id), [staff]);
+  const attendance = useEntityQuery(attendanceEntity, 'fetchForUsers', staffIds, { skip: !employees.data });
+  return { employees, staff, staffIds, attendance };
+}
+
+/**
+ * Company records HR pages share, read from the Redux slices (employees,
+ * leaves, attendance). `data` stays null until everything has loaded.
+ */
+export function useCompanyData({ withQueue = false } = {}) {
+  const { employees, staff, attendance } = useStaffAttendance();
+  const leaves = useEntityQuery(leavesEntity, 'fetchAll');
+  const queue = useEntityQuery(leavesEntity, 'fetchReviewQueue', undefined, { skip: !withQueue });
+  const error = employees.error || leaves.error || queue.error || attendance.error;
+  const ready = employees.data && leaves.data && attendance.data && (!withQueue || queue.data);
+  const data = useMemo(
+    () => (ready ? { employees: employees.data, staff, leaves: leaves.data, queue: queue.data ?? [], attendance: attendance.data } : null),
+    [ready, employees.data, staff, leaves.data, queue.data, attendance.data],
+  );
+  return { data, error };
+}

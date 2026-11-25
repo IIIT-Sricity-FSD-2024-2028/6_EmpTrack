@@ -1,12 +1,12 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { createIssue } from '../../services/issueService';
-import { getTasksForUser } from '../../services/taskService';
+import { issuesEntity, tasksEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { cx } from '../../utils/helpers';
 import { ISSUE_ATTACHMENT_EXTENSIONS, raiseIssueSchema } from '../../validation/formSchemas';
 import BackHeading from './components/BackHeading';
@@ -37,10 +37,9 @@ export default function RaiseIssue() {
   usePageTitle('Raise Issue');
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: activeTasks = [] } = useFetch(
-    async () => (await getTasksForUser(user.emp_id)).filter((t) => t.status !== 'COMPLETED'),
-    [user.emp_id],
-  );
+  const dispatch = useDispatch();
+  const { data: tasks = [] } = useEntityQuery(tasksEntity, 'fetchForUser', user.emp_id);
+  const activeTasks = tasks.filter((t) => t.status !== 'COMPLETED');
 
   const [form, setForm] = useState({
     type: ISSUE_TYPES[0].value,
@@ -51,7 +50,7 @@ export default function RaiseIssue() {
     attachments: [],
   });
   const [submitError, setSubmitError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const submitting = useSelector((s) => s.issues.mutations.create?.status === 'loading');
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
   const validation = useFormValidation(
     raiseIssueSchema(ISSUE_TYPES.map((t) => t.value), activeTasks.map((t) => t.task_id)),
@@ -63,19 +62,17 @@ export default function RaiseIssue() {
     e.preventDefault();
     setSubmitError('');
     if (!validation.validateAll()) return;
-    setSubmitting(true);
     try {
-      await createIssue({
+      await dispatch(issuesEntity.thunks.create({
         emp_id: user.emp_id,
         type: form.type,
         priority: form.priority,
         related_task: form.relatedTask,
         title: form.title.trim(),
         description: form.description.trim(),
-      });
+      })).unwrap();
     } catch (err) {
       if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to raise the issue.');
-      setSubmitting(false);
       return;
     }
     navigate(empPath('issues-list'));

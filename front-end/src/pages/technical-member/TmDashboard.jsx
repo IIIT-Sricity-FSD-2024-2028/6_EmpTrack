@@ -1,12 +1,13 @@
 // Converted from front-end/technical_member/dashboard.html + js/views/technical_member/dashboard.js
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import ChartCanvas from '../../components/sa-common/ChartCanvas';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import useSaToast from '../../components/sa-common/useSaToast';
-import * as tm from '../../services/technicalMemberService';
-import { chartTheme, formatDateTime, loadChartJs } from '../../utils/saCommon';
+import { platformOverviewEntity, ticketsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { chartTheme, formatDateTime, loadChartJs, loadStateOf } from '../../utils/saCommon';
 import IssueRows, { IssueTableHead } from './components/IssueRows';
 import useIssueDetail from './components/useIssueDetail';
 import { TM_BASE, TM_PORTAL } from './tmConstants';
@@ -65,64 +66,43 @@ function buildCharts(stats) {
   return { workProgress, status };
 }
 
+const ACTIVE = { scope: 'active' };
+
 export default function TmDashboard() {
   const navigate = useNavigate();
   const [toast, showToast] = useSaToast();
-  const [stats, setStats] = useState(null);
-  const [statsError, setStatsError] = useState(false);
-  const [recent, setRecent] = useState({ status: 'loading', list: [] });
-  const [updates, setUpdates] = useState({ status: 'loading', list: [] });
-  const [charts, setCharts] = useState(null);
+  const statsQuery = useEntityQuery(platformOverviewEntity, 'fetchTechnicalStats');
+  const stats = statsQuery.data ?? null;
+  const statsError = Boolean(statsQuery.error);
+  // Recent assigned issues needing attention: not yet closed, most recently updated first.
+  const activeQuery = useEntityQuery(ticketsEntity, 'fetchTechnicalAssigned', ACTIVE);
+  const recent = { status: loadStateOf(activeQuery), list: (activeQuery.data ?? []).slice(0, 6) };
+  // Recent updates: flattened activity feed across every assigned issue.
+  const updatesQuery = useEntityQuery(platformOverviewEntity, 'fetchTechnicalRecentUpdates', 10);
+  const updates = { status: loadStateOf(updatesQuery), list: updatesQuery.data ?? [] };
 
-  const loadAll = useCallback(async (isCancelled = () => false) => {
-    let loadedStats = null;
-    try {
-      loadedStats = await tm.getTechnicalMemberStats();
-      if (!isCancelled()) {
-        setStats(loadedStats);
-        setStatsError(false);
-      }
-    } catch {
-      if (!isCancelled()) setStatsError(true);
-    }
-
-    // Recent assigned issues needing attention: not yet closed, most recently updated first.
-    try {
-      const issues = await tm.getMyTechnicalIssues({ scope: 'active' });
-      if (!isCancelled()) setRecent({ status: 'ready', list: issues.slice(0, 6) });
-    } catch {
-      if (!isCancelled()) setRecent({ status: 'error', list: [] });
-    }
-
-    // Recent updates: flattened activity feed across every assigned issue.
-    try {
-      const list = await tm.getTechnicalMemberRecentUpdates(10);
-      if (!isCancelled()) setUpdates({ status: 'ready', list: list || [] });
-    } catch {
-      if (!isCancelled()) setUpdates({ status: 'error', list: [] });
-    }
-
-    if (loadedStats) {
-      try {
-        await loadChartJs();
-        if (!isCancelled()) setCharts(buildCharts(loadedStats));
-      } catch {
-        // Charts are a progressive enhancement; stats/table above still work without them.
-      }
-    }
-  }, []);
-
+  // Charts are a progressive enhancement; stats/table above still work without them.
+  // Whether the Chart.js script has loaded is library state, not backend data.
+  const [chartLib, setChartLib] = useState(false);
   useEffect(() => {
-    let cancelled = false;
-    loadAll(() => cancelled);
+    let active = true;
+    loadChartJs().then(() => active && setChartLib(true)).catch(() => {});
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [loadAll]);
+  }, []);
+  const charts = useMemo(() => {
+    if (!chartLib || !stats) return null;
+    try {
+      return buildCharts(stats);
+    } catch {
+      return null;
+    }
+  }, [chartLib, stats]);
 
-  // The original reloaded the whole page after a change made in the issue modal;
-  // re-fetching the dashboard data gives the same refreshed view.
-  const { openIssue, issueModal } = useIssueDetail({ onChanged: () => loadAll(), showToast });
+  // Issue actions refetch the stats, queue and activity feed through Redux
+  // (the original reloaded the whole dashboard).
+  const { openIssue, issueModal } = useIssueDetail({ showToast });
 
   let updatesContent;
   if (updates.status === 'loading') {

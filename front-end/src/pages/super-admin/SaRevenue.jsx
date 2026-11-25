@@ -1,5 +1,5 @@
 // Converted from front-end/super_admin/revenue.html + js/views/super_admin/revenue.js
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import SaChartCard from '../../components/sa-common/SaChartCard';
 import SaFilterBar from '../../components/sa-common/SaFilterBar';
@@ -10,8 +10,10 @@ import useSaToast from '../../components/sa-common/useSaToast';
 import FieldError from '../../components/common/FieldError';
 import { validateForm } from '../../utils/validation';
 import { dateRangeSchema } from '../../validation/formSchemas';
-import * as sa from '../../services/superAdminService';
-import { chartTheme, formatCurrency, formatDate, loadChartJs, paginate } from '../../utils/saCommon';
+import useSaCharts from '../../components/sa-common/useSaCharts';
+import { companiesEntity, employeesEntity, paymentsEntity, platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { formatCurrency, formatDate, paginate, loadStateOf } from '../../utils/saCommon';
 import { SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
 import './styles/revenue.css';
@@ -40,75 +42,52 @@ function statusBadgeClass(status) {
   return 'badge-pending';
 }
 
-async function buildCharts(onChart) {
-  await loadChartJs();
-  const { textColor, gridColor } = chartTheme();
+// Backend data -> Chart.js config (data comes from the platformOverview slice).
+const bar = (labels, data, color, horizontal, { textColor, gridColor }) => {
   const common = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor }, beginAtZero: true } },
   };
-  const bar = (labels, data, color, horizontal) => ({
+  return {
     type: 'bar',
     data: { labels, datasets: [{ label: 'Revenue', data, backgroundColor: color, borderRadius: 4 }] },
     options: horizontal ? { ...common, indexAxis: 'y' } : common,
-  });
-  const jobs = {
-    byPlan: async () => { const r = await sa.getRevenueByPlan(); return bar(r.map((p) => p.plan_name), r.map((p) => p.revenue), '#2563EB'); },
-    byCompany: async () => { const r = await sa.getRevenueByCompany(); return bar(r.map((c) => c.company_name), r.map((c) => c.revenue), '#22C55E', true); },
-    byPa: async () => { const r = await sa.getRevenueByPlatformAdmin(); return bar(r.map((p) => p.platform_admin_name), r.map((p) => p.revenue), '#7C3AED', true); },
   };
-  await Promise.all(Object.entries(jobs).map(async ([key, job]) => {
-    try {
-      onChart(key, await job());
-    } catch {
-      onChart(key, null);
-    }
-  }));
-}
+};
+const BUILDERS = {
+  byPlan: (r, t) => bar(r.map((p) => p.plan_name), r.map((p) => p.revenue), '#2563EB', false, t),
+  byCompany: (r, t) => bar(r.map((c) => c.company_name), r.map((c) => c.revenue), '#22C55E', true, t),
+  byPa: (r, t) => bar(r.map((p) => p.platform_admin_name), r.map((p) => p.revenue), '#7C3AED', true, t),
+};
 
 export default function SaRevenue() {
   const [toast, showToast] = useSaToast();
-  const [summary, setSummary] = useState(null);
-  const [summaryError, setSummaryError] = useState(false);
-  const [charts, setCharts] = useState({});
-  const [companies, setCompanies] = useState([]);
-  const [admins, setAdmins] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-  const [loadState, setLoadState] = useState('loading');
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [dates, setDates] = useState({ from: '', to: '' });
   const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    let cancelled = false;
-    sa.getRevenueSummary().then((s) => !cancelled && setSummary(s)).catch(() => !cancelled && setSummaryError(true));
-    sa.getCompanies().then((list) => !cancelled && setCompanies(list)).catch(() => {});
-    sa.getPlatformAdmins().then((list) => !cancelled && setAdmins(list)).catch(() => {});
-    buildCharts((key, config) => !cancelled && setCharts((c) => ({ ...c, [key]: config })))
-      .catch(() => !cancelled && showToast('Some charts failed to load.', 'error'));
-    return () => {
-      cancelled = true;
-    };
-  }, [showToast]);
+  const summaryQuery = useEntityQuery(platformOverviewEntity, 'fetchRevenueSummary');
+  const summary = summaryQuery.data ?? null;
+  const summaryError = Boolean(summaryQuery.error);
+  // Filter dropdowns; a failed lookup just leaves its dropdown empty, as before.
+  const { data: companies = [] } = useEntityQuery(companiesEntity, 'fetchAll');
+  const { data: admins = [] } = useEntityQuery(employeesEntity, 'fetchPlatformAdmins');
+  const charts = useSaCharts({
+    byPlan: useEntityQuery(platformOverviewEntity, 'fetchRevenueByPlan'),
+    byCompany: useEntityQuery(platformOverviewEntity, 'fetchRevenueByCompany'),
+    byPa: useEntityQuery(platformOverviewEntity, 'fetchRevenueByPlatformAdmin'),
+  }, BUILDERS, () => showToast('Some charts failed to load.', 'error'));
+  // Revenue transactions are the same records as the Platform Admin payments (payments slice).
+  const txQuery = useEntityQuery(paymentsEntity, 'fetchRevenueTransactions', filters);
+  const transactions = txQuery.data ?? [];
+  const loadState = loadStateOf(txQuery);
 
-  const loadTransactions = useCallback(async () => {
-    setLoadState('loading');
-    try {
-      setTransactions(await sa.getRevenueTransactions(filters));
-      setLoadState('ready');
-      setPage(1);
-    } catch {
-      setLoadState('error');
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
-
-  const setFilter = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
+  const setFilter = (key) => (e) => {
+    setFilters((f) => ({ ...f, [key]: e.target.value }));
+    setPage(1);
+  };
   const setDate = (key) => (e) => {
     setDates((d) => ({ ...d, [key]: e.target.value }));
     setPage(1);

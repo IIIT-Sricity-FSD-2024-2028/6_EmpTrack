@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import { updateLeaveStatus } from '../../services/teamLeadService';
+import { leavesEntity } from '../../store/entities';
 import { formatDate, toTitleCase } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, Progress, StatCard, tlPath, useTeamData, useToast } from './components/TeamLeadUI';
 import { awaitsTeamLead, buildPerformance, escalationReason, isEscalated, isOverdue, LEAVE_TYPE_LABELS, nameOf, todayKey } from './tlUtils';
@@ -13,6 +14,7 @@ import './teamlead.css';
 
 export default function TeamLeadDashboard() {
   usePageTitle('Dashboard');
+  const dispatch = useDispatch();
   const { user } = useAuth();
   const { data, error, reload } = useTeamData({ leaves: true });
   const [busyId, setBusyId] = useState(null);
@@ -37,9 +39,9 @@ export default function TeamLeadDashboard() {
   const decide = async (leave, status) => {
     setBusyId(leave.leave_id);
     try {
-      await updateLeaveStatus(leave.leave_id, status, user.emp_id);
+      // Leave lists refetch from the backend once it confirms the decision.
+      await dispatch(leavesEntity.thunks.updateTeamStatus({ leaveId: leave.leave_id, status, approverId: user.emp_id })).unwrap();
       showToast(`Leave ${status === 'APPROVED' ? 'approved' : 'rejected'} for ${nameOf(members, leave.emp_id)}`);
-      await reload();
     } catch (err) {
       showToast(err.message || 'Could not update the leave request.', 'error');
     } finally {

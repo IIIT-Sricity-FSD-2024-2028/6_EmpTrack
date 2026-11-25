@@ -3,25 +3,24 @@
 // status/priority/category, reply, add internal notes, resolve / reopen / close,
 // and escalate to the Technical Team or the Platform Admin.
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import FieldError from '../../../components/common/FieldError';
 import Modal from '../../../components/common/Modal';
 import { formatDate, formatStatus, isClosedStatus, priorityBadge, supportTicketBadge } from '../../../components/platform/format';
 import { DetailItem, modalClass } from '../../../components/platform/ShellUI';
 import { CommentList, ConfirmDialog } from '../../../components/platform/TicketParts';
-import useFetch from '../../../hooks/useFetch';
 import useFormValidation from '../../../hooks/useFormValidation';
 import { SUPPORT_ATTACHMENT_EXTENSIONS, supportTicketSchema } from '../../../validation/formSchemas';
 import { cx } from '../../../utils/helpers';
-import {
-  addInternalNote, addMessage, changeCategory, changePriority, changeStatus, claimTicket, closeTicket, escalateToPlatformAdmin,
-  escalateToTechnicalTeam, getCategories, getCompanySummary, getLinkedTechnicalTicket, getTicket, reopenTicket, resolveTicket,
-} from '../../../services/supportMemberService';
+import { companiesEntity, ticketsEntity } from '../../../store/entities';
+import { useEntityQuery } from '../../../store/entitySlice';
 
 const EDITABLE_STATUSES = ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 function CompanyPanel({ companyId }) {
-  const { data: c } = useFetch(() => getCompanySummary(companyId), [companyId]);
+  const { data } = useEntityQuery(companiesEntity, 'fetchSupportSummary', companyId);
+  const c = data?.[0];
   if (!c) return null; // the original hid the panel when the lookup failed
   return (
     <div className="company-panel">
@@ -39,7 +38,8 @@ function CompanyPanel({ companyId }) {
 }
 
 function LinkedTechnicalTicket({ id }) {
-  const { data: linked } = useFetch(() => getLinkedTechnicalTicket(id), [id]);
+  const { data } = useEntityQuery(ticketsEntity, 'fetchLinkedTechnical', id);
+  const linked = data?.[0];
   if (!linked) return null;
   return (
     <div className="form-hint" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
@@ -51,12 +51,16 @@ function LinkedTechnicalTicket({ id }) {
 }
 
 /**
- * ticket: the ticket to show (null = closed). onClose(). onChanged(updated) after
- * any successful action, so the page can reload its lists. showToast(message, type).
+ * ticketId: the ticket to show (null = closed); its record is read from the tickets
+ * slice. onClose(). showToast(message, type). Every action goes through a thunk; the
+ * ticket queues and support stats refetch on success, so pages need no reload callback.
  */
-export default function SupportTicketModal({ ticket: initial, onClose, onChanged, showToast }) {
-  const [ticket, setTicket] = useState(initial);
-  const { data: categories } = useFetch(() => getCategories().catch(() => []), []);
+export default function SupportTicketModal({ ticketId, onClose, showToast }) {
+  const dispatch = useDispatch();
+  const call = (thunk) => dispatch(thunk).unwrap();
+  const ticket = useSelector((s) => (ticketId ? s.tickets.entities[ticketId] ?? null : null));
+  // A failed category lookup falls back to the ticket's own category, as before.
+  const { data: categories } = useEntityQuery(ticketsEntity, 'fetchSupportCategories');
   const [controls, setControls] = useState({ status: 'OPEN', priority: 'LOW', category: '' });
   const [tab, setTab] = useState('conversation');
   const [message, setMessage] = useState('');
@@ -73,8 +77,7 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
     { idPrefix: 'sm', serverFieldMap: { reason: 'dialogText', resolution_notes: 'dialogText' } },
   );
 
-  const sync = (t) => {
-    setTicket(t);
+  const syncControls = (t) => {
     if (!t) return;
     setControls({
       status: EDITABLE_STATUSES.includes(t.status) ? t.status : 'OPEN',
@@ -85,7 +88,7 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
 
   // Reset everything when a different ticket is opened.
   useEffect(() => {
-    sync(initial);
+    syncControls(ticket);
     setTab('conversation');
     setMessage('');
     setNote('');
@@ -93,7 +96,8 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
     setDialog(null);
     validation.reset();
     // Runs only when a different ticket is opened.
-  }, [initial]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketId]);
 
   if (!ticket) return null;
 
@@ -107,9 +111,8 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
     try {
       await action();
       after?.();
-      const updated = await getTicket(ticket.ticket_id);
-      sync(updated);
-      onChanged?.(updated);
+      // Re-read the ticket from the backend (as before); the slice stores it.
+      syncControls(await call(ticketsEntity.thunks.fetchSupportById(ticket.ticket_id)));
       if (success) showToast(success);
       return true;
     } catch (err) {
@@ -126,14 +129,14 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
     // Only the fields that changed are sent, each to its own endpoint (as in the original).
     // An escalated ticket's status isn't editable here (the select falls back to Open),
     // so a priority/category edit must not quietly de-escalate it.
-    if (EDITABLE_STATUSES.includes(ticket.status) && controls.status !== ticket.status) await changeStatus(id, controls.status);
-    if (controls.priority !== (ticket.priority || '').toUpperCase()) await changePriority(id, controls.priority);
-    if (controls.category !== ticket.category) await changeCategory(id, controls.category);
+    if (EDITABLE_STATUSES.includes(ticket.status) && controls.status !== ticket.status) await call(ticketsEntity.thunks.changeStatus({ id, status: controls.status }));
+    if (controls.priority !== (ticket.priority || '').toUpperCase()) await call(ticketsEntity.thunks.changePriority({ id, priority: controls.priority }));
+    if (controls.category !== ticket.category) await call(ticketsEntity.thunks.changeCategory({ id, category: controls.category }));
   }, 'Ticket updated.');
 
   const handleSend = () => {
     if (!validation.validateFields(['message', 'attachment'])) return undefined;
-    return run(() => addMessage(id, message.trim()), null, () => {
+    return run(() => call(ticketsEntity.thunks.supportComment({ id, message: message.trim() })), null, () => {
       setMessage('');
       setAttachment(null);
       validation.untouch(['message', 'attachment']);
@@ -142,7 +145,7 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
 
   const handleAddNote = () => {
     if (!validation.validateFields(['note'])) return undefined;
-    return run(() => addInternalNote(id, note.trim()), null, () => {
+    return run(() => call(ticketsEntity.thunks.addInternalNote({ id, message: note.trim() })), null, () => {
       setNote('');
       validation.untouch(['note']);
     });
@@ -166,25 +169,25 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
       title: 'Resolve Ticket?', label: 'Resolve Ticket', variant: 'success', icon: 'ph-check-fat',
       message: <>Are you sure you want to mark <strong>{id}</strong> as resolved?</>,
       field: { label: 'Resolution note (optional)', placeholder: 'Briefly describe how the issue was resolved...' },
-      action: () => resolveTicket(id, dialogText.trim() || undefined), success: `Ticket ${id} has been resolved successfully.`,
+      action: () => call(ticketsEntity.thunks.supportResolve({ id, notes: dialogText.trim() || undefined })), success: `Ticket ${id} has been resolved successfully.`,
     },
     reopen: {
       title: 'Reopen Ticket', label: 'Reopen', variant: 'primary', icon: 'ph-arrow-counter-clockwise',
       message: 'Why are you reopening this ticket?',
       field: { label: 'Reason (optional)', placeholder: 'Reason for reopening...' },
-      action: () => reopenTicket(id, dialogText.trim() || undefined), success: 'Ticket reopened.',
+      action: () => call(ticketsEntity.thunks.reopen({ id, reason: dialogText.trim() || undefined })), success: 'Ticket reopened.',
     },
     close: {
       title: 'Close Ticket', label: 'Close Ticket', variant: 'danger', message: 'Close this ticket? It must already be resolved.',
-      action: () => closeTicket(id), success: 'Ticket closed.',
+      action: () => call(ticketsEntity.thunks.close(id)), success: 'Ticket closed.',
     },
     'esc-tech': {
       title: 'Escalate to Technical Team', label: 'Escalate', variant: 'danger', message: 'Escalate this ticket to the Technical Team?',
-      action: () => escalateToTechnicalTeam(id, escalationNote), success: 'Escalated to the Technical Team.', after: () => setNote(''),
+      action: () => call(ticketsEntity.thunks.escalateToTechnical({ id, note: escalationNote })), success: 'Escalated to the Technical Team.', after: () => setNote(''),
     },
     'esc-admin': {
       title: 'Escalate to Platform Admin', label: 'Escalate', variant: 'danger', message: 'Escalate this ticket to the Platform Admin?',
-      action: () => escalateToPlatformAdmin(id, escalationNote), success: 'Escalated to the Platform Admin.', after: () => setNote(''),
+      action: () => call(ticketsEntity.thunks.escalateToPlatformAdmin({ id, note: escalationNote })), success: 'Escalated to the Platform Admin.', after: () => setNote(''),
     },
   };
   const active = dialog && dialogs[dialog];
@@ -217,7 +220,7 @@ export default function SupportTicketModal({ ticket: initial, onClose, onChanged
         {isUnassigned ? (
           <>
             <div className="action-row">
-              <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => claimTicket(id), 'Ticket claimed.')}>
+              <button type="button" className="btn btn-outline" disabled={busy} onClick={() => run(() => call(ticketsEntity.thunks.claim(id)), 'Ticket claimed.')}>
                 <i className="ph ph-hand-pointing"></i> Claim Ticket
               </button>
             </div>

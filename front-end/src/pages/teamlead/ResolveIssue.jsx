@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
@@ -6,7 +7,7 @@ import Input from '../../components/common/Input';
 import useAuth from '../../hooks/useAuth';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { updateIssue } from '../../services/teamLeadService';
+import { issuesEntity } from '../../store/entities';
 import { cx, formatDate } from '../../utils/helpers';
 import { DemoNotice, LoadState, tlPath, useTeamData } from './components/TeamLeadUI';
 import { issueStatusBadge, nameOf, priorityBadge, resolutionStats, teamIssues, todayKey } from './tlUtils';
@@ -20,6 +21,7 @@ const EMPTY = { type: '', hours: '', rootCause: '', actions: '', preventive: '',
 
 export default function ResolveIssue() {
   usePageTitle('Resolve Issue');
+  const dispatch = useDispatch();
   const { user } = useAuth();
   const [params] = useSearchParams();
   const { data, error, reload } = useTeamData({ tasks: false, issues: true });
@@ -59,7 +61,7 @@ export default function ResolveIssue() {
     if (!validation.validateAll()) return;
     setSaving(true);
     try {
-      await updateIssue(issueId, {
+      await dispatch(issuesEntity.thunks.updateForTeam({ issueId, changes: {
         status: 'Resolved',
         resolved_date: todayKey(),
         resolution: {
@@ -73,12 +75,11 @@ export default function ResolveIssue() {
           evidence: files.map((f) => f.name),
           resolved_by: user.emp_id,
         },
-      });
+      } })).unwrap();
       setStatus({ type: 'success', message: `${issueId} marked as resolved.` });
       setForm(EMPTY);
       setFiles([]);
       validation.reset();
-      await reload();
     } catch (err) {
       if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Failed to resolve the issue.' });
     } finally {

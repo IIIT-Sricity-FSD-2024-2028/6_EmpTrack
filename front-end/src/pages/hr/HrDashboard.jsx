@@ -2,14 +2,15 @@
 // The original rendered hard-coded demo numbers; every figure here comes from the backend.
 // The Company Admin dashboard is the same page without leave approvals or the action
 // cards (as in the original company_admin/dashboard.html).
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import AnimatedCount from '../../components/sa-common/AnimatedCount';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useAuth from '../../hooks/useAuth';
 import usePageTitle from '../../hooks/usePageTitle';
-import * as hr from '../../services/hrService';
-import { HR_BASE, ROLE_NAMES, isOnLeave, isStaff, joinedThisMonth, shortDate, todayKey } from './hrUtils';
+import { leavesEntity } from '../../store/entities';
+import { HR_BASE, ROLE_NAMES, isOnLeave, joinedThisMonth, shortDate, todayKey, useCompanyData } from './hrUtils';
 import { LEAVE_TYPE_LABELS } from '../teamlead/tlUtils';
 import './styles/dashboard.css';
 
@@ -35,32 +36,12 @@ export default function HrDashboard({ basePath = HR_BASE, showLeaveApprovals = t
   usePageTitle('Dashboard');
   const { user } = useAuth();
   const [toast, showToast] = useSaToast();
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(false);
+  const dispatch = useDispatch();
+  // The approval list is the backend's HR review queue (emergency leaves and Team
+  // Lead leaves); ordinary employee leaves are decided by their Team Lead.
+  const { data, error } = useCompanyData({ withQueue: showLeaveApprovals });
   const [barsReady, setBarsReady] = useState(false);
   const [busy, setBusy] = useState(null);
-
-  const load = useCallback(async () => {
-    try {
-      // The approval list is the backend's HR review queue (emergency leaves and Team
-      // Lead leaves); ordinary employee leaves are decided by their Team Lead.
-      const [employees, leaves, queue] = await Promise.all([
-        hr.getEmployees(),
-        hr.getLeaves(),
-        showLeaveApprovals ? hr.getLeaveReviewQueue() : [],
-      ]);
-      const staff = employees.filter(isStaff);
-      const attendance = await hr.getAttendanceFor(staff);
-      setData({ employees, staff, leaves, queue, attendance });
-      setError(false);
-    } catch {
-      setError(true);
-    }
-  }, [showLeaveApprovals]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   useEffect(() => {
     if (!data) return undefined;
@@ -71,9 +52,9 @@ export default function HrDashboard({ basePath = HR_BASE, showLeaveApprovals = t
   const decide = async (leave, status) => {
     setBusy(leave.leave_id);
     try {
-      await hr.updateLeaveStatus(leave.leave_id, status, user.emp_id);
+      // On success the leave lists (and review queue) refetch from the backend.
+      await dispatch(leavesEntity.thunks.updateStatus({ leaveId: leave.leave_id, status, approverId: user.emp_id })).unwrap();
       showToast(status === 'APPROVED' ? 'Leave approved.' : 'Leave rejected.');
-      await load();
     } catch (e) {
       showToast(e.message || 'Failed to update leave.', 'error');
     } finally {

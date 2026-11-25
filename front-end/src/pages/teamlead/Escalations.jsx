@@ -1,11 +1,13 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import Table from '../../components/common/Table';
 import usePageTitle from '../../hooks/usePageTitle';
-import { CAN_EDIT_ASSIGNMENT, reassignTask, sendNotification, updateTask } from '../../services/teamLeadService';
+import { CAN_EDIT_ASSIGNMENT } from '../../services/teamLeadService';
+import { notificationsEntity, tasksEntity } from '../../store/entities';
 import { formatDate } from '../../utils/helpers';
 import { DemoNotice, LoadState, Person, Progress, StatCard, tlPath, useTeamData, useToast } from './components/TeamLeadUI';
 import { escalationReason, isEscalated, isOverdue, nameOf, todayKey } from './tlUtils';
@@ -17,6 +19,7 @@ const TITLES = { warn: 'Send Warning', extend: 'Extend Deadline', reassign: 'Rea
 
 export default function Escalations() {
   usePageTitle('Escalation Management');
+  const dispatch = useDispatch();
   const { data, error, reload } = useTeamData();
   const [action, setAction] = useState(null); // { kind, task }
   const [value, setValue] = useState('');
@@ -52,13 +55,13 @@ export default function Escalations() {
     let run;
     let success;
     if (kind === 'warn') {
-      run = () => sendNotification(task.assigned_to, value.trim(), 'warning');
+      run = () => dispatch(notificationsEntity.thunks.create({ empId: task.assigned_to, message: value.trim(), type: 'warning' })).unwrap();
       success = `Warning sent to ${nameOf(members, task.assigned_to)}`;
     } else if (kind === 'extend') {
-      run = () => updateTask(task.task_id, { deadline: value });
+      run = () => dispatch(tasksEntity.thunks.update({ taskId: task.task_id, changes: { deadline: value } })).unwrap();
       success = `${task.task_id} deadline moved to ${formatDate(value)}`;
     } else {
-      run = () => reassignTask(task.task_id, value);
+      run = () => dispatch(tasksEntity.thunks.reassign({ taskId: task.task_id, empId: value })).unwrap();
       success = `${task.task_id} reassigned to ${nameOf(members, value)}`;
     }
     setSaving(true);

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import FieldError from '../../components/common/FieldError';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getTasksForUser, updateTaskStatus } from '../../services/taskService';
+import { tasksEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { updateTaskSchema } from '../../validation/formSchemas';
 import BackHeading from './components/BackHeading';
 import { empPath } from './employeeUtils';
@@ -20,25 +21,27 @@ export default function UpdateTask() {
   const [searchParams] = useSearchParams();
   const taskId = searchParams.get('id');
 
-  const { data: task, loading, error } = useFetch(
-    async () => (await getTasksForUser(user.emp_id)).find((t) => t.task_id === taskId) ?? null,
-    [user.emp_id, taskId],
-  );
+  const dispatch = useDispatch();
+  const { data: tasks, loading, error } = useEntityQuery(tasksEntity, 'fetchForUser', user.emp_id);
+  const task = tasks?.find((t) => t.task_id === taskId) ?? null;
+  const submitting = useSelector((s) => s.tasks.mutations.updateProgress?.status === 'loading');
 
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('NOT_STARTED');
   const [submitError, setSubmitError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const validation = useFormValidation(updateTaskSchema, { progress: String(progress), status }, {
     idPrefix: 'task',
     serverFieldMap: { progress_percentage: 'progress' },
   });
 
+  // Seed the form once per task (not on every refetch, which would wipe edits).
+  const loadedTaskId = task?.task_id;
   useEffect(() => {
     if (!task) return;
     setProgress(task.progress_percentage ?? 0);
     setStatus(task.status);
-  }, [task]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedTaskId]);
 
   const handleSlider = (e) => {
     const value = Number(e.target.value);
@@ -51,12 +54,11 @@ export default function UpdateTask() {
     e.preventDefault();
     setSubmitError('');
     if (!validation.validateAll()) return;
-    setSubmitting(true);
     try {
-      await updateTaskStatus(taskId, status, progress);
+      // The tasks slice stores the record the backend returns.
+      await dispatch(tasksEntity.thunks.updateProgress({ taskId, status, progress })).unwrap();
     } catch (err) {
       if (!validation.setServerErrors(err)) setSubmitError(err.message || 'Failed to update the task.');
-      setSubmitting(false);
       return;
     }
     navigate(empPath('tasks'));

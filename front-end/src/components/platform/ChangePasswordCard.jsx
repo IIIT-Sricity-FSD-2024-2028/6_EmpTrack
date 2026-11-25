@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Input from '../common/Input';
 import useFormValidation from '../../hooks/useFormValidation';
 import { PASSWORD_HINT } from '../../utils/validation';
@@ -20,6 +20,8 @@ export default function ChangePasswordCard({ onSubmit }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
+  // Blocks a second submit fired before `saving` disables the button (e.g. Enter twice).
+  const inFlight = useRef(false);
   const validation = useFormValidation(changePasswordSchema, values, { idPrefix: 'pf-pwd', serverFieldMap: SERVER_FIELDS });
   const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }));
 
@@ -27,7 +29,8 @@ export default function ChangePasswordCard({ onSubmit }) {
     e.preventDefault();
     setSuccess('');
     setError('');
-    if (!validation.validateAll()) return;
+    if (inFlight.current || !validation.validateAll()) return;
+    inFlight.current = true;
     setSaving(true);
     try {
       const { saved } = await onSubmit(values.current, values.next, values.confirm);
@@ -39,6 +42,7 @@ export default function ChangePasswordCard({ onSubmit }) {
     } catch (err) {
       if (!validation.setServerErrors(err)) setError(err.message || 'Failed to update password.');
     } finally {
+      inFlight.current = false;
       setSaving(false);
     }
   };

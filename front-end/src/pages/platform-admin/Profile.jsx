@@ -1,14 +1,17 @@
 // Converted from front-end/platform_admin/profile.html + js/views/platform_admin/profile.js
+import { useDispatch } from 'react-redux';
 import ChangePasswordCard from '../../components/platform/ChangePasswordCard';
 import { DetailItem, PortalShell } from '../../components/platform/ShellUI';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
-import { changePassword, getDashboardSummary, IS_DEMO } from '../../services/platformAdminService';
+import { IS_DEMO } from '../../services/platformAdminService';
+import { employeesEntity, platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 
 export default function Profile() {
   const { user } = useAuth();
+  const dispatch = useDispatch();
   // Team / company counts come from the dashboard summary, as in the original.
-  const { data: summary, error } = useFetch(getDashboardSummary, []);
+  const { data: summary, error } = useEntityQuery(platformOverviewEntity, 'fetchDashboardSummary');
   const count = (key) => (error || !summary ? '-' : summary[key]);
 
   return (
@@ -35,7 +38,11 @@ export default function Profile() {
           </div>
         </div>
 
-        <ChangePasswordCard onSubmit={(current, next, confirm) => changePassword(user.emp_id, current, next, confirm)} />
+        <ChangePasswordCard
+          onSubmit={(currentPassword, newPassword, confirmPassword) => dispatch(employeesEntity.thunks.changePasswordPlatform({
+            empId: user.emp_id, currentPassword, newPassword, confirmPassword,
+          })).unwrap()}
+        />
       </div>
     </PortalShell>
   );

@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import ProfileSection from '../../components/profile/ProfileSection';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { changePassword, getProfile, saveProfile } from '../../services/teamLeadService';
+import { getProfileEdits, IS_DEMO, saveProfile } from '../../services/teamLeadService';
+import { employeesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDate, getInitials } from '../../utils/helpers';
 import { LoadState, useTeamData, useToast } from './components/TeamLeadUI';
 import { isEscalated, teamIssues } from './tlUtils';
@@ -20,6 +22,7 @@ const EMPTY_PASSWORDS = { current: '', next: '', confirm: '' };
 const formatPhone = (p) => (p && p.length === 10 ? `+1 (${p.slice(0, 3)}) ${p.slice(3, 6)}-${p.slice(6)}` : p || '--');
 
 function ChangePassword({ empId }) {
+  const dispatch = useDispatch();
   const [values, setValues] = useState(EMPTY_PASSWORDS);
   const [status, setStatus] = useState(null);
   const validation = useFormValidation(changePasswordSchema, values, {
@@ -27,15 +30,21 @@ function ChangePassword({ empId }) {
     serverFieldMap: { currentPassword: 'current', newPassword: 'next', confirmPassword: 'confirm' },
   });
   const [saving, setSaving] = useState(false);
+  // Blocks a second submit fired before `saving` disables the button (e.g. Enter twice).
+  const inFlight = useRef(false);
   const set = (name) => (e) => setValues((v) => ({ ...v, [name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus(null);
-    if (!validation.validateAll()) return;
+    if (inFlight.current || !validation.validateAll()) return;
+    inFlight.current = true;
     setSaving(true);
     try {
-      const { saved } = await changePassword(empId, values.current, values.next, values.confirm);
+      // Demo-aware: PATCH /employees/:id/password with a backend ({ saved: true }).
+      const { saved } = await dispatch(employeesEntity.thunks.changePasswordTeamLead({
+        empId, currentPassword: values.current, newPassword: values.next, confirmPassword: values.confirm,
+      })).unwrap();
       setValues(EMPTY_PASSWORDS);
       validation.reset();
       setStatus(saved
@@ -44,6 +53,7 @@ function ChangePassword({ empId }) {
     } catch (err) {
       if (!validation.setServerErrors(err)) setStatus({ type: 'error', message: err.message || 'Failed to update password.' });
     } finally {
+      inFlight.current = false;
       setSaving(false);
     }
   };
@@ -69,7 +79,21 @@ function ChangePassword({ empId }) {
 export default function Profile() {
   usePageTitle('My Profile');
   const { user } = useAuth();
-  const { data: profile, error, reload } = useFetch(() => getProfile(user), [user.emp_id]);
+  // The account comes from the backend through Redux (same query as the Employee
+  // profile; session-guarded). There is no backend in demo mode.
+  const account = useEntityQuery(employeesEntity, 'fetchById', user.emp_id, { skip: IS_DEMO });
+  // Browser-only edits, re-read after each save (bumping editsVersion).
+  const [editsVersion, setEditsVersion] = useState(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const edits = useMemo(() => getProfileEdits(user), [user, editsVersion]);
+  const backendAccount = IS_DEMO ? {} : account.data?.[0];
+  // Shown merged; the Redux record itself is never overwritten by browser edits.
+  const profile = backendAccount ? { ...backendAccount, ...edits } : undefined;
+  const error = IS_DEMO ? null : account.error;
+  const reload = () => {
+    if (!IS_DEMO) account.reload();
+    setEditsVersion((v) => v + 1);
+  };
   const { data: team } = useTeamData({ leaves: true, issues: true });
   const [editing, setEditing] = useState(null);
   const profileValidation = useFormValidation(teamLeadProfileSchema, editing || {}, { idPrefix: 'tl-profile' });
@@ -104,7 +128,7 @@ export default function Profile() {
     });
     setEditing(null);
     showToast('Profile updated');
-    reload();
+    setEditsVersion((v) => v + 1); // browser-only: no backend request
   };
 
   return (

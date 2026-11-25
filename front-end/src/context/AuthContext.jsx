@@ -1,139 +1,66 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import config from '../config/config';
+// Session side effects. The session itself lives in the Redux auth slice
+// (store/authSlice.js); this component keeps it in step with the backend,
+// localStorage and the clock. Must be rendered inside the Redux <Provider>.
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import * as authService from '../services/authService';
 import { SESSION_EXPIRED_EVENT } from '../services/api';
-import { resetState } from '../store/store';
+import { sessionExpired, sessionSynced, verifySession } from '../store/authSlice';
 import { STORAGE_KEYS } from '../utils/constants';
-import { hasRole as roleAllowed } from '../utils/permissions';
-
-export const AuthContext = createContext(null);
 
 // setTimeout's maximum delay (~24.8 days); longer waits would fire immediately.
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
-function sameSession(a, b) {
-  return (
-    a?.token === b?.token &&
-    a?.expiresAt === b?.expiresAt &&
-    a?.user?.emp_id === b?.user?.emp_id &&
-    a?.user?.role === b?.user?.role
-  );
-}
-
 export function AuthProvider({ children }) {
-  // Restore a persisted session synchronously so protected routes
-  // don't flash a redirect to /login on refresh.
-  const [session, setSession] = useState(() => authService.getStoredSession());
-  // A token restored from storage is checked with the backend (GET /auth/me)
-  // before any protected page renders - it may have been revoked or lost.
-  const [isVerifying, setIsVerifying] = useState(() => Boolean(session?.token) && !config.useMockAuth);
-  const [reauthenticationRequired, setReauthenticationRequired] = useState(false);
+  const dispatch = useDispatch();
+  const isVerifying = useSelector((s) => s.auth.isVerifying);
+  const expiresAt = useSelector((s) => s.auth.session?.expiresAt);
 
-  // Re-reads the stored session (getStoredSession also drops expired ones).
-  // localStorage is shared by every tab, and every API call sends whatever token
-  // is stored there, so the UI must follow it.
-  const syncFromStorage = useCallback(() => {
-    const stored = authService.getStoredSession();
-    setSession((current) => (sameSession(current, stored) ? current : stored));
-  }, []);
-
-  const login = useCallback(async (email, password) => {
-    const newSession = await authService.login(email, password);
-    setSession(newSession);
-    return newSession.user;
-  }, []);
-
-  const requireReauthentication = useCallback(() => setReauthenticationRequired(true), []);
-  const cancelReauthentication = useCallback(() => setReauthenticationRequired(false), []);
-
-  const logout = useCallback(async () => {
-    await authService.logout();
-    resetState();
-    setSession(null);
-    setReauthenticationRequired(false);
-  }, []);
-
-  // The API client already cleared storage; drop the in-memory session too so
-  // ProtectedRoute sends the user back to /login.
+  // A token restored from storage is checked with GET /auth/me before any
+  // protected page renders (ProtectedRoute waits for isVerifying).
   useEffect(() => {
-    const onExpired = () => {
-      resetState();
-      setSession(null);
-      setReauthenticationRequired(false);
-    };
+    if (isVerifying) dispatch(verifySession());
+    // Only for the session restored at start-up; later logins come from the server.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // The API client already cleared storage on a 401; drop the session in Redux too.
+  useEffect(() => {
+    const onExpired = () => dispatch(sessionExpired());
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
-  }, []);
+  }, [dispatch]);
 
+  // localStorage is shared by every tab and every API call sends the token stored
+  // there, so follow logins/logouts in other tabs and re-check after bfcache
+  // restores or when the tab becomes active again.
   useEffect(() => {
-    if (!isVerifying) return undefined;
-    let active = true;
-    authService
-      .verifySession()
-      .then((verified) => {
-        if (active) setSession(verified);
-      })
-      .catch(() => {
-        // A 401 already cleared the session (SESSION_EXPIRED_EVENT). On a network
-        // error keep it: the backend still checks the token on every request.
-      })
-      .finally(() => {
-        if (active) setIsVerifying(false);
-      });
-    return () => {
-      active = false;
-    };
-    // Only for the session restored at start-up; later logins come from the server.
-  }, []);
-
-  // Follow logins/logouts in other tabs (`storage`), and re-check when a page is
-  // restored from the back/forward cache or the tab becomes active again - this
-  // copy of the app may have missed events while frozen or in the background.
-  useEffect(() => {
+    const sync = () => dispatch(sessionSynced(authService.getStoredSession()));
     const onStorage = (event) => {
-      if (event.key === STORAGE_KEYS.AUTH || event.key === null) syncFromStorage();
+      if (event.key === STORAGE_KEYS.AUTH || event.key === null) sync();
     };
     const onVisible = () => {
-      if (document.visibilityState === 'visible') syncFromStorage();
+      if (document.visibilityState === 'visible') sync();
     };
     window.addEventListener('storage', onStorage);
-    window.addEventListener('pageshow', syncFromStorage);
-    window.addEventListener('focus', syncFromStorage);
+    window.addEventListener('pageshow', sync);
+    window.addEventListener('focus', sync);
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       window.removeEventListener('storage', onStorage);
-      window.removeEventListener('pageshow', syncFromStorage);
-      window.removeEventListener('focus', syncFromStorage);
+      window.removeEventListener('pageshow', sync);
+      window.removeEventListener('focus', sync);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [syncFromStorage]);
+  }, [dispatch]);
 
   // End the session in the UI when it expires, not only on the next API call.
-  const expiresAt = session?.expiresAt;
   useEffect(() => {
     if (!expiresAt) return undefined;
     const delay = Math.min(Math.max(expiresAt - Date.now() + 1, 0), MAX_TIMEOUT_MS);
-    const timer = setTimeout(syncFromStorage, delay);
+    const timer = setTimeout(() => dispatch(sessionSynced(authService.getStoredSession())), delay);
     return () => clearTimeout(timer);
-  }, [expiresAt, syncFromStorage]);
+  }, [expiresAt, dispatch]);
 
-  const user = session?.user ?? null;
-
-  const value = useMemo(
-    () => ({
-      user,
-      role: user?.role ?? null,
-      isAuthenticated: Boolean(user),
-      isVerifying,
-      reauthenticationRequired,
-      login,
-      logout,
-      requireReauthentication,
-      cancelReauthentication,
-      hasRole: (allowedRoles) => roleAllowed(user?.role, allowedRoles),
-    }),
-    [user, isVerifying, reauthenticationRequired, login, logout, requireReauthentication, cancelReauthentication],
-  );
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return children;
 }

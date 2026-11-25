@@ -1,13 +1,16 @@
 // Converted from front-end/support_member/profile.html + js/views/support_member/profile.js
+import { useDispatch } from 'react-redux';
 import ChangePasswordCard from '../../components/platform/ChangePasswordCard';
 import { DetailItem, PortalShell } from '../../components/platform/ShellUI';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
-import { changePassword, getStats, IS_DEMO } from '../../services/supportMemberService';
+import { IS_DEMO } from '../../services/supportMemberService';
+import { employeesEntity, platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 
 export default function Profile() {
   const { user } = useAuth();
-  const { data: stats, error } = useFetch(getStats, []);
+  const dispatch = useDispatch();
+  const { data: stats, error } = useEntityQuery(platformOverviewEntity, 'fetchSupportStats');
   const count = (key) => (error || !stats ? '-' : stats[key]);
 
   return (
@@ -39,7 +42,11 @@ export default function Profile() {
           </div>
         </div>
 
-        <ChangePasswordCard onSubmit={(current, next, confirm) => changePassword(user.emp_id, current, next, confirm)} />
+        <ChangePasswordCard
+          onSubmit={(currentPassword, newPassword, confirmPassword) => dispatch(employeesEntity.thunks.changePasswordPlatform({
+            empId: user.emp_id, currentPassword, newPassword, confirmPassword,
+          })).unwrap()}
+        />
       </div>
     </PortalShell>
   );

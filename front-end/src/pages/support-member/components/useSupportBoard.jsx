@@ -1,17 +1,19 @@
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useToast } from '../../../components/platform/ShellUI';
-import { claimTicket } from '../../../services/supportMemberService';
+import { ticketsEntity } from '../../../store/entities';
 import SupportTicketModal from './SupportTicketModal';
 
 /**
  * Wires a page's ticket tables to the shared detail modal and quick-claim.
- * onChanged runs after any ticket action so the page can reload its lists.
- *   const board = useSupportBoard(reload);
+ * Ticket actions refetch the queues/stats through Redux, so pages pass nothing.
+ *   const board = useSupportBoard();
  *   <SupportTicketTable onView={board.open} onClaim={board.claim} claimingId={board.claimingId} ... />
  *   {board.element}
  */
-export default function useSupportBoard(onChanged) {
-  const [selected, setSelected] = useState(null);
+export default function useSupportBoard() {
+  const dispatch = useDispatch();
+  const [selectedId, setSelectedId] = useState(null); // UI state: which ticket the modal shows
   const [claimingId, setClaimingId] = useState(null);
   const [toast, showToast] = useToast();
 
@@ -19,9 +21,8 @@ export default function useSupportBoard(onChanged) {
   const claim = async (ticket) => {
     setClaimingId(ticket.ticket_id);
     try {
-      await claimTicket(ticket.ticket_id);
+      await dispatch(ticketsEntity.thunks.claim(ticket.ticket_id)).unwrap();
       showToast(`Ticket ${ticket.ticket_id} claimed.`);
-      onChanged();
     } catch (err) {
       showToast(err.message || 'Failed to claim ticket.', 'error');
     } finally {
@@ -31,10 +32,10 @@ export default function useSupportBoard(onChanged) {
 
   const element = (
     <>
-      {selected && <SupportTicketModal ticket={selected} onClose={() => setSelected(null)} onChanged={onChanged} showToast={showToast} />}
+      {selectedId && <SupportTicketModal ticketId={selectedId} onClose={() => setSelectedId(null)} showToast={showToast} />}
       {toast}
     </>
   );
 
-  return { open: setSelected, claim, claimingId, element };
+  return { open: (ticket) => setSelectedId(ticket.ticket_id), claim, claimingId, element };
 }

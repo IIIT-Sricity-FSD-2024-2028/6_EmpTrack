@@ -2,7 +2,8 @@
 // The original filled in a hard-coded demo person ("Roshan", fixed stats and skills);
 // this shows the signed-in user's account and live company figures. The Company
 // Admin profile is the same page without the stats row (company_admin/profile.html).
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useAuth from '../../hooks/useAuth';
@@ -10,7 +11,8 @@ import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { PASSWORD_HINT } from '../../utils/validation';
 import { changePasswordSchema } from '../../validation/formSchemas';
-import * as hr from '../../services/hrService';
+import { employeesEntity, escalationsEntity, leavesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { shortDate } from './hrUtils';
 import './styles/profile.css';
 
@@ -40,22 +42,23 @@ export default function HrProfile({ title = 'My Profile', roleLabel = 'HR Manage
   usePageTitle(title);
   const { user } = useAuth();
   const [toast, showToast] = useSaToast();
-  const [stats, setStats] = useState(null);
+  const dispatch = useDispatch();
   const [pwd, setPwd] = useState(EMPTY);
   const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
+  const saving = useSelector((s) => s.employees.mutations.updatePassword?.status === 'loading');
 
-  useEffect(() => {
-    if (!showStats) return;
-    Promise.all([hr.getEmployees(), hr.getEscalations(), hr.getLeaves()])
-      .then(([employees, escalations, leaves]) => setStats({
-        openCases: escalations.filter((e) => e.status === 'OPEN').length,
-        teamLeads: employees.filter((e) => e.role === 'TEAMLEAD').length,
-        employees: employees.filter((e) => e.role === 'EMPLOYEE').length,
-        pendingLeaves: leaves.filter((l) => l.status === 'PENDING').length,
-      }))
-      .catch(() => setStats(null));
-  }, [showStats]);
+  // HR stats row, derived from the shared slices. Not requested at all without the row
+  // (Company Admin profile): GET /escalations is HR-only. Any failure shows no stats, as before.
+  const skip = { skip: !showStats };
+  const employees = useEntityQuery(employeesEntity, 'fetchAll', undefined, skip).data;
+  const escalations = useEntityQuery(escalationsEntity, 'fetchAll', undefined, skip).data;
+  const leaves = useEntityQuery(leavesEntity, 'fetchAll', undefined, skip).data;
+  const stats = showStats && employees && escalations && leaves ? {
+    openCases: escalations.filter((e) => e.status === 'OPEN').length,
+    teamLeads: employees.filter((e) => e.role === 'TEAMLEAD').length,
+    employees: employees.filter((e) => e.role === 'EMPLOYEE').length,
+    pendingLeaves: leaves.filter((l) => l.status === 'PENDING').length,
+  } : null;
 
   const set = (key) => (e) => setPwd((p) => ({ ...p, [key]: e.target.value }));
   const validation = useFormValidation(changePasswordSchema, pwd, {
@@ -67,16 +70,15 @@ export default function HrProfile({ title = 'My Profile', roleLabel = 'HR Manage
     e.preventDefault();
     setError('');
     if (!validation.validateAll()) return;
-    setSaving(true);
     try {
-      await hr.updateUserPassword(user.emp_id, pwd.current, pwd.next, pwd.confirm);
+      await dispatch(employeesEntity.thunks.updatePassword({
+        empId: user.emp_id, currentPassword: pwd.current, newPassword: pwd.next, confirmPassword: pwd.confirm,
+      })).unwrap();
       setPwd(EMPTY);
       validation.reset();
       showToast('Password updated successfully!');
     } catch (err) {
       if (!validation.setServerErrors(err)) setError(err.message || 'Failed to update password.');
-    } finally {
-      setSaving(false);
     }
   };
 

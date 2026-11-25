@@ -1,9 +1,11 @@
 // Converted from front-end/company_admin/billing.html + js/views/company_admin/billing.js
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import SaModal from '../../components/sa-common/SaModal';
 import useSaToast from '../../components/sa-common/useSaToast';
 import usePageTitle from '../../hooks/usePageTitle';
-import * as ca from '../../services/companyAdminService';
+import { paymentsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDate, formatDateTime } from '../../utils/saCommon';
 import './styles/_shared.css';
 import './styles/billing.css';
@@ -20,37 +22,27 @@ function historyBadgeClass(status) {
 export default function CaBilling() {
   usePageTitle('Subscription & Billing');
   const [toast, showToast] = useSaToast();
-  const [subscription, setSubscription] = useState(undefined); // undefined loading | null failed
-  const [history, setHistory] = useState(null); // null loading | 'error' | []
-  const [pay, setPay] = useState(null); // { stage: 'confirm' | 'processing' | 'success' | 'error', result?, message? }
+  const dispatch = useDispatch();
+  // Same shapes the render code below expects.
+  const subscriptionQuery = useEntityQuery(paymentsEntity, 'fetchMySubscription');
+  const subscription = subscriptionQuery.error ? null : subscriptionQuery.data; // undefined loading | null failed
+  const historyQuery = useEntityQuery(paymentsEntity, 'fetchMyHistory');
+  const history = historyQuery.error ? 'error' : historyQuery.data ?? null; // null loading | 'error' | []
+  const [pay, setPay] = useState(null); // { stage: 'confirm' | 'processing' | 'success' | 'error', transactionId?, message? }
+  // The receipt is the transaction the backend returned, read from the payments slice.
+  const receipt = useSelector((s) => (pay?.transactionId ? s.payments.entities[pay.transactionId] : null));
   const historyRef = useRef(null);
-
-  const load = useCallback(async () => {
-    try {
-      setSubscription(await ca.getMySubscription());
-    } catch {
-      setSubscription(null);
-    }
-    try {
-      setHistory(await ca.getMyPaymentHistory());
-    } catch {
-      setHistory('error');
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const completePayment = async () => {
     setPay({ stage: 'processing' });
     try {
       // Short artificial delay so "Payment Processing..." is visible; this is a simulated payment.
       const [result] = await Promise.all([
-        ca.completeMockPayment({ companyId: subscription.company_id, subscriptionId: subscription.plan_id }),
+        // On success the subscription and history refetch from the backend.
+        dispatch(paymentsEntity.thunks.completeMockPayment({ companyId: subscription.company_id, subscriptionId: subscription.plan_id })).unwrap(),
         new Promise((resolve) => setTimeout(resolve, 900)),
       ]);
-      setPay({ stage: 'success', result });
+      setPay({ stage: 'success', transactionId: result.transaction_id });
     } catch (e) {
       setPay({ stage: 'error', message: e.message || 'Payment failed. Please try again.' });
     }
@@ -59,7 +51,6 @@ export default function CaBilling() {
   const finish = async () => {
     setPay(null);
     showToast('Payment recorded successfully.');
-    await load();
   };
 
   let card;
@@ -172,14 +163,14 @@ export default function CaBilling() {
         {stage === 'processing' && (
           <div className="pay-state active" id="pay-step-processing"><div className="spinner"></div><h4>Payment Processing...</h4></div>
         )}
-        {stage === 'success' && (
+        {stage === 'success' && receipt && (
           <div className="pay-state active" id="pay-step-success">
             <i className="ph-fill ph-check-circle pay-icon"></i>
             <h4>Payment Successful</h4>
             <div className="detail-grid success-detail-grid">
-              <div className="detail-item"><span className="detail-label">Transaction ID</span><span className="detail-value" id="ps-txn">{pay.result.transaction_id}</span></div>
-              <div className="detail-item"><span className="detail-label">Amount</span><span className="detail-value" id="ps-amount">{formatMoney(pay.result.amount, pay.result.currency)}</span></div>
-              <div className="detail-item" style={{ gridColumn: '1/-1' }}><span className="detail-label">Date</span><span className="detail-value" id="ps-date">{formatDateTime(pay.result.paid_at)}</span></div>
+              <div className="detail-item"><span className="detail-label">Transaction ID</span><span className="detail-value" id="ps-txn">{receipt.transaction_id}</span></div>
+              <div className="detail-item"><span className="detail-label">Amount</span><span className="detail-value" id="ps-amount">{formatMoney(receipt.amount, receipt.currency)}</span></div>
+              <div className="detail-item" style={{ gridColumn: '1/-1' }}><span className="detail-label">Date</span><span className="detail-value" id="ps-date">{formatDateTime(receipt.paid_at)}</span></div>
             </div>
           </div>
         )}

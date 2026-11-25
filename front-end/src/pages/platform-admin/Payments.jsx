@@ -4,8 +4,9 @@ import { formatCurrency, formatDate, paginate, paymentStatusBadge } from '../../
 import {
   ClearButton, ErrorState, FilterSelect, Pagination, PortalShell, SearchInput, SectionHeader, ShellTable, StatCard, useDebounced,
 } from '../../components/platform/ShellUI';
-import useFetch from '../../hooks/useFetch';
-import { getPayments, getPaymentSummary, IS_DEMO } from '../../services/platformAdminService';
+import { IS_DEMO } from '../../services/platformAdminService';
+import { paymentsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 
 const PAGE_SIZE = 10;
 const SUMMARY_DEFS = [
@@ -41,11 +42,11 @@ export default function Payments() {
   const [page, setPage] = useState(1);
   const query = useDebounced(search.trim());
 
-  const { data: summary, error: summaryError } = useFetch(getPaymentSummary, []);
+  const { data: summary, error: summaryError } = useEntityQuery(paymentsEntity, 'fetchSummary');
   // Company, status and search are filtered by the backend (as in the original)...
-  const { data: payments, loading, error } = useFetch(() => getPayments({ companyId, status, search: query }), [companyId, status, query]);
+  const { data: payments, loading, error } = useEntityQuery(paymentsEntity, 'fetchForPlatformAdmin', { companyId, status, search: query });
   // ...and the company dropdown lists every company with payments, so it is loaded unfiltered.
-  const { data: allPayments } = useFetch(() => getPayments(), []);
+  const { data: allPayments } = useEntityQuery(paymentsEntity, 'fetchForPlatformAdmin');
 
   const companies = useMemo(() => {
     const seen = new Map();

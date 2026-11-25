@@ -7,7 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrowserRouter, createMemoryRouter, Link, Navigate, Outlet, Route, RouterProvider, Routes, useNavigate } from 'react-router-dom';
 import ExitGuard from '../components/layout/ExitGuard';
 import config from '../config/config';
-import { AuthProvider } from '../context/AuthContext';
+import { AuthProvider as SessionEffects } from '../context/AuthContext';
+import StoreProvider from '../store/StoreProvider';
+
+const AuthProvider = ({ children }) => <StoreProvider><SessionEffects>{children}</SessionEffects></StoreProvider>;
 import useAuth from '../hooks/useAuth';
 import Login from '../pages/public/Login';
 import { PATHS, ROLES, STORAGE_KEYS } from '../utils/constants';
@@ -80,7 +83,8 @@ function PortalLayout() {
   // Same handler as components/layout/Sidebar.jsx.
   const handleLogout = async () => {
     await logout();
-    navigate(PATHS.HOME);
+    // Same as ExitGuard: land on /login without leaving a protected entry behind.
+    navigate(PATHS.LOGIN, { replace: true });
   };
   return (
     <div>
@@ -508,13 +512,16 @@ describe('exit confirmation on browser Back', () => {
   }
 
   const dialog = () => screen.queryByRole('dialog');
-  const traverse = async (step) => {
-    const before = window.history.state;
-    await act(async () => {
+  // Resolves once the traversal really happened (popstate fired; this listener is
+  // added last, so the router's and ExitGuard's handlers have already run) and act
+  // has flushed the resulting render. A history.state change is not enough: the
+  // guard's own replaceState changes it without any navigation. Callers then wait
+  // for the page result itself.
+  const traverse = (step) =>
+    act(() => new Promise((resolve) => {
+      window.addEventListener('popstate', resolve, { once: true });
       step();
-      await waitFor(() => expect(window.history.state).not.toBe(before));
-    });
-  };
+    }));
   const back = () => traverse(() => window.history.back());
   const forward = () => traverse(() => window.history.forward());
 
@@ -524,6 +531,11 @@ describe('exit confirmation on browser Back', () => {
     render(<BrowserApp />);
     await act(async () => {});
     await logIn();
+    // ExitGuard arms itself in an effect after the dashboard renders: it marks the
+    // first entry (idx 0) as the guard and pushes a copy on top (idx 1). Back
+    // before that has nothing to land on, so wait until the guard is in place.
+    await waitFor(() => expect(window.history.state?.idx).toBe(1));
+    expect(window.location.pathname).toBe('/employee/dashboard');
   });
 
   it('asks before leaving, and Cancel keeps the user on the same page, logged in', async () => {
@@ -545,10 +557,10 @@ describe('exit confirmation on browser Back', () => {
     fireEvent.click(screen.getByText('Tasks link'));
     expect(await screen.findByText('Employee tasks')).toBeTruthy();
     await back();
-    expect(screen.getByText('Employee dashboard')).toBeTruthy();
+    expect(await screen.findByText('Employee dashboard')).toBeTruthy();
     expect(dialog()).toBeNull();
     await back();
-    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(await screen.findAllByRole('dialog')).toHaveLength(1);
   });
 
   it('Yes, Exit logs out on the server and Forward does not restore the session', async () => {
@@ -562,9 +574,10 @@ describe('exit confirmation on browser Back', () => {
     expect(localStorage.getItem(STORAGE_KEYS.AUTH)).toBeNull();
     expect(dialog()).toBeNull();
 
+    // Forward lands on the protected copy, which ProtectedRoute sends back to /login.
     await forward();
+    await waitFor(() => expect(window.location.pathname).toBe(PATHS.LOGIN));
     await onLoginPage();
-    expect(window.location.pathname).toBe(PATHS.LOGIN);
     expect(protectedContent()).toBeNull();
     expect(dialog()).toBeNull();
   });
@@ -574,10 +587,10 @@ describe('exit confirmation on browser Back', () => {
     expect(await screen.findByText('Employee tasks')).toBeTruthy();
 
     await back();
-    expect(screen.getByText('Employee dashboard')).toBeTruthy();
+    expect(await screen.findByText('Employee dashboard')).toBeTruthy();
     expect(dialog()).toBeNull();
     await forward();
-    expect(screen.getByText('Employee tasks')).toBeTruthy();
+    expect(await screen.findByText('Employee tasks')).toBeTruthy();
     expect(dialog()).toBeNull();
   });
 
@@ -585,7 +598,7 @@ describe('exit confirmation on browser Back', () => {
     await back();
     await screen.findByRole('dialog');
     await forward();
-    expect(dialog()).toBeNull();
+    await waitFor(() => expect(dialog()).toBeNull());
     expect(screen.getByText('Employee dashboard')).toBeTruthy();
     expect(localStorage.getItem(STORAGE_KEYS.AUTH)).not.toBeNull();
   });

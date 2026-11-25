@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import Table from '../../components/common/Table';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
 import usePageTitle from '../../hooks/usePageTitle';
-import { getIssuesForUser } from '../../services/issueService';
+import { issuesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { empPath, issuePriorityBadge, issueStatusBadge } from './employeeUtils';
 
 const pillStyle = { padding: '4px 12px', borderRadius: 'var(--radius-full)', fontSize: 11 };
@@ -56,7 +56,7 @@ const columns = [
 export default function IssuesList() {
   usePageTitle('Issue Reporting');
   const { user } = useAuth();
-  const { data: issueData, loading, error } = useFetch(() => getIssuesForUser(user.emp_id), [user.emp_id]);
+  const { data: issueData, loading, error } = useEntityQuery(issuesEntity, 'fetchForUser', user.emp_id);
   const issues = issueData || [];
 
   const metrics = [

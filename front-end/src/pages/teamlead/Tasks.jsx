@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import Badge from '../../components/common/Badge';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -7,7 +8,7 @@ import SearchBar from '../../components/common/SearchBar';
 import Table from '../../components/common/Table';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
-import { createTask, deleteTask, updateTask } from '../../services/teamLeadService';
+import { tasksEntity } from '../../store/entities';
 import { formatDate } from '../../utils/helpers';
 import { teamLeadTaskSchema } from '../../validation/formSchemas';
 import { DemoNotice, LoadState, StatCard, useTeamData, useToast } from './components/TeamLeadUI';
@@ -57,6 +58,7 @@ function TaskFields({ values, validation, members, onChange, withStatus, idPrefi
 
 export default function Tasks() {
   usePageTitle('Assign Tasks');
+  const dispatch = useDispatch();
   const { data, error, reload } = useTeamData();
   const [toast, showToast] = useToast();
 
@@ -105,7 +107,7 @@ export default function Tasks() {
     e.preventDefault();
     if (!createValidation.validateAll()) return;
     setSaving(true);
-    if (await run(() => createTask({ ...toPayload(form), client_request_id: createRequestKey.current }), `Task assigned to ${nameOf(members, form.assigned_to)}`, createValidation)) {
+    if (await run(() => dispatch(tasksEntity.thunks.create({ ...toPayload(form), client_request_id: createRequestKey.current })).unwrap(), `Task assigned to ${nameOf(members, form.assigned_to)}`, createValidation)) {
       setForm(EMPTY_TASK);
       createRequestKey.current = newRequestKey();
       createValidation.reset();
@@ -130,7 +132,7 @@ export default function Tasks() {
       if ('task_title' in payload) payload.task_title = payload.task_title.trim();
       if ('task_description' in payload) payload.task_description = payload.task_description.trim();
       if ('est_hours' in payload) payload.est_hours = Number(payload.est_hours);
-      if (await run(() => updateTask(task_id, payload), 'Task updated', editValidation)) {
+      if (await run(() => dispatch(tasksEntity.thunks.update({ taskId: task_id, changes: payload })).unwrap(), 'Task updated', editValidation)) {
         setEditing(null);
         setEditingOriginal(null);
       }
@@ -255,7 +257,7 @@ export default function Tasks() {
         footer={
           <>
             <Button variant="outline" onClick={() => setDeleting(null)}>Cancel</Button>
-            <Button variant="danger" onClick={async () => { await run(() => deleteTask(deleting.task_id), `${deleting.task_id} deleted`); setDeleting(null); }}>Delete</Button>
+            <Button variant="danger" onClick={async () => { await run(() => dispatch(tasksEntity.thunks.remove(deleting.task_id)).unwrap(), `${deleting.task_id} deleted`); setDeleting(null); }}>Delete</Button>
           </>
         }
       >

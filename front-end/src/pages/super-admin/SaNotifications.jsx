@@ -1,15 +1,15 @@
 // Converted from front-end/super_admin/notifications.html + js/views/super_admin/notifications.js
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
-import { getNotificationsForUser } from '../../services/notificationService';
+import { notificationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDateTime } from '../../utils/saCommon';
 import './styles/_shared.css';
 import './styles/notifications.css';
 
 export default function SaNotifications() {
   const { user } = useAuth();
-  const { data: notifications, loading, error } = useFetch(() => getNotificationsForUser(user.emp_id), [user.emp_id]);
+  const { data: notifications, loading, error } = useEntityQuery(notificationsEntity, 'fetchForUser', user.emp_id);
 
   let content;
   if (loading) {

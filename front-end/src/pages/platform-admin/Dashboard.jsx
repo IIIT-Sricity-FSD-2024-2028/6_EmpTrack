@@ -1,8 +1,9 @@
 // Converted from front-end/platform_admin/dashboard.html + js/views/platform_admin/dashboard.js
 import { formatDateTime } from '../../components/platform/format';
 import { EmptyNote, ErrorState, PortalShell, SectionHeader, StatCard } from '../../components/platform/ShellUI';
-import useFetch from '../../hooks/useFetch';
-import { getDashboardSummary, IS_DEMO } from '../../services/platformAdminService';
+import { IS_DEMO } from '../../services/platformAdminService';
+import { platformOverviewEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 
 const STAT_DEFS = [
   { key: 'assigned_companies', label: 'Assigned Companies', icon: 'ph-buildings', tone: 'primary' },
@@ -15,7 +16,7 @@ const STAT_DEFS = [
 ];
 
 export default function Dashboard() {
-  const { data: summary, loading, error } = useFetch(getDashboardSummary, []);
+  const { data: summary, loading, error } = useEntityQuery(platformOverviewEntity, 'fetchDashboardSummary');
 
   return (
     <PortalShell portal="pa" title="Dashboard" demo={IS_DEMO}>

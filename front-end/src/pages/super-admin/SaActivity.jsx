@@ -1,10 +1,11 @@
 // Converted from front-end/super_admin/activity.html + js/views/super_admin/activity.js
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import SaPagination from '../../components/sa-common/SaPagination';
 import { StateRow } from '../../components/sa-common/saForm';
-import * as sa from '../../services/superAdminService';
-import { formatDateTime, paginate } from '../../utils/saCommon';
+import { activityLogsEntity, employeesEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { formatDateTime, loadStateOf, paginate } from '../../utils/saCommon';
 import { SA_PORTAL } from './saConstants';
 import './styles/_shared.css';
 import './styles/activity.css';
@@ -18,34 +19,19 @@ function statusBadgeClass(status) {
   return 'badge-suspended';
 }
 
+const NO_FILTERS = { userId: '', action: '' };
+
 export default function SaActivity() {
-  const [admins, setAdmins] = useState([]);
-  const [actions, setActions] = useState([]);
-  const [filters, setFilters] = useState({ userId: '', action: '' });
-  const [logs, setLogs] = useState([]);
-  const [loadState, setLoadState] = useState('loading');
+  const [filters, setFilters] = useState(NO_FILTERS);
   const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    sa.getPlatformAdmins().then(setAdmins).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoadState('loading');
-    sa.getActivityLogs(filters)
-      .then((list) => {
-        if (cancelled) return;
-        setLogs(list);
-        setLoadState('ready');
-        // The action list is built once, from the first (unfiltered) load.
-        setActions((prev) => (prev.length ? prev : [...new Set(list.map((l) => l.action))].sort()));
-      })
-      .catch(() => !cancelled && setLoadState('error'));
-    return () => {
-      cancelled = true;
-    };
-  }, [filters]);
+  // A failed admin list just leaves the user filter empty, as before.
+  const { data: admins = [] } = useEntityQuery(employeesEntity, 'fetchPlatformAdmins');
+  const logsQuery = useEntityQuery(activityLogsEntity, 'fetchAll', filters);
+  const logs = logsQuery.data ?? [];
+  const loadState = loadStateOf(logsQuery);
+  // The action list is built from the unfiltered logs (that query stays cached in Redux).
+  const { data: unfiltered } = useEntityQuery(activityLogsEntity, 'fetchAll', NO_FILTERS);
+  const actions = useMemo(() => [...new Set((unfiltered ?? []).map((l) => l.action))].sort(), [unfiltered]);
 
   const setFilter = (key) => (e) => {
     setPage(1);

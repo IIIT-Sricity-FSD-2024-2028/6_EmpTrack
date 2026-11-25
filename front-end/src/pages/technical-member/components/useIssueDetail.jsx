@@ -1,11 +1,13 @@
 // Issue detail modal shared by the Technical Member dashboard, Assigned Issues
 // and Issue History pages (converted from js/views/technical_member/_board.js).
 import { Fragment, useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import FieldError from '../../../components/common/FieldError';
 import SaModal from '../../../components/sa-common/SaModal';
 import useAuth from '../../../hooks/useAuth';
 import useFormValidation from '../../../hooks/useFormValidation';
-import * as tm from '../../../services/technicalMemberService';
+import { ticketRepository } from '../../../services/repositories';
+import { ticketsEntity } from '../../../store/entities';
 import { cx } from '../../../utils/helpers';
 import { formatDate, formatDateTime } from '../../../utils/saCommon';
 import {
@@ -83,6 +85,10 @@ function VerificationBanner({ issue }) {
  */
 function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast }) {
   const { user } = useAuth();
+  const dispatch = useDispatch();
+  // Every write is a thunk: the tickets slice stores the backend's issue and the
+  // active/history queues, stats and activity feed refetch.
+  const call = (thunk) => dispatch(thunk).unwrap();
   const pct = issue.progress_percentage || 0;
   const isTerminal = ['RESOLVED', 'CLOSED', 'ESCALATED'].includes(issue.status);
   const isVerified = issue.verification_status === 'VERIFIED';
@@ -121,56 +127,70 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
     if (showResolve) resolutionRef.current?.focus();
   }, [showResolve]);
 
+  // One action at a time: a second click while one runs (including its re-read of the
+  // issue) would send it to the backend again. The ref blocks it synchronously, even
+  // within one event burst; `busy` disables the action buttons.
+  const inFlight = useRef(false);
+  const [busy, setBusy] = useState(false);
   const act = async (fn, success, failure) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setBusy(true);
     try {
       await fn();
       if (success) showToast(success);
       await refresh();
     } catch (e) {
       if (!validation.setServerErrors(e)) showToast(e.message || failure, 'error');
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
     }
   };
 
   const update = () =>
     validation.validateFields(['status', 'progress', 'progressNote']) &&
     act(async () => {
-      if (status !== issue.status) await tm.updateMyIssueStatus(issue.ticket_id, status);
-      if (Number(progress) !== pct) await tm.updateMyIssueProgress(issue.ticket_id, Number(progress), progressNote.trim() || undefined);
+      if (status !== issue.status) await call(ticketsEntity.thunks.tmUpdateStatus({ id: issue.ticket_id, status }));
+      if (Number(progress) !== pct) await call(ticketsEntity.thunks.tmUpdateProgress({ id: issue.ticket_id, progress: Number(progress), note: progressNote.trim() || undefined }));
     }, 'Issue updated.', 'Failed to update issue.');
 
   const confirmResolve = () => {
     if (!validation.validateFields(['resolution'])) return;
     const notes = resolution.trim();
-    act(() => tm.resolveMyIssue(issue.ticket_id, notes), 'Issue marked as resolved.', 'Failed to resolve issue.');
+    act(() => call(ticketsEntity.thunks.tmResolve({ id: issue.ticket_id, notes })), 'Issue marked as resolved.', 'Failed to resolve issue.');
   };
 
   const submitVerification = () =>
     validation.validateFields(['submitNote']) &&
-    act(() => tm.submitMyIssueForVerification(issue.ticket_id, submitNote.trim() || undefined), 'Sent to the Platform Admin for verification.', 'Failed to send for verification.');
+    act(() => call(ticketsEntity.thunks.tmSubmitVerification({ id: issue.ticket_id, note: submitNote.trim() || undefined })), 'Sent to the Platform Admin for verification.', 'Failed to send for verification.');
 
   const send = () => {
     if (!validation.validateFields(['comment'])) return;
     const message = comment.trim();
-    act(() => tm.addMyIssueComment(issue.ticket_id, message), null, 'Failed to send message.');
+    act(() => call(ticketsEntity.thunks.tmComment({ id: issue.ticket_id, message })), null, 'Failed to send message.');
   };
 
   const addNote = () => {
     if (!validation.validateFields(['note'])) return;
     const message = note.trim();
-    act(() => tm.addMyIssueWorkNote(issue.ticket_id, message), null, 'Failed to add note.');
+    act(() => call(ticketsEntity.thunks.tmAddNote({ id: issue.ticket_id, message })), null, 'Failed to add note.');
   };
 
   const upload = async () => {
     if (!validation.validateFields(['attachKind', 'pendingFile'])) return;
     await act(async () => {
       const data_url = await readFileAsDataUrl(pendingFile);
-      await tm.uploadMyIssueAttachment(issue.ticket_id, {
-        file_name: pendingFile.name,
-        file_type: pendingFile.type || 'application/octet-stream',
-        file_size: pendingFile.size,
-        kind: attachKind,
-        data_url,
-      });
+      await call(ticketsEntity.thunks.tmUploadAttachment({
+        id: issue.ticket_id,
+        attachment: {
+          file_name: pendingFile.name,
+          file_type: pendingFile.type || 'application/octet-stream',
+          file_size: pendingFile.size,
+          kind: attachKind,
+          data_url,
+        },
+      }));
     }, 'Attachment uploaded.', 'Failed to upload attachment.');
   };
 
@@ -180,7 +200,8 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
       return;
     }
     try {
-      const full = await tm.getMyIssueAttachment(issue.ticket_id, attachmentId);
+      // File contents are fetched for this preview only, never kept in Redux.
+      const full = await ticketRepository.getTechnicalAttachment({ id: issue.ticket_id, attachmentId });
       let preview;
       if (full.data_url && (full.file_type || '').startsWith('image/')) {
         preview = <img className="attachment-preview" src={full.data_url} alt={full.file_name} />;
@@ -197,7 +218,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
 
   const removeAttachment = (attachmentId) => {
     if (!window.confirm('Remove this attachment?')) return;
-    act(() => tm.deleteMyIssueAttachment(issue.ticket_id, attachmentId), 'Attachment removed.', 'Failed to remove attachment.');
+    act(() => call(ticketsEntity.thunks.tmDeleteAttachment({ id: issue.ticket_id, attachmentId })), 'Attachment removed.', 'Failed to remove attachment.');
   };
 
   const comments = issue.comments || [];
@@ -253,7 +274,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           <FieldError {...validation.errorProps('progressNote')} />
         </div>
         <div style={{ display: 'flex', gap: 10, margin: '4px 0 20px', flexWrap: 'wrap' }}>
-          <button type="button" className="btn btn-secondary" id="tm-btn-update" onClick={update}><i className="ph ph-check-circle"></i> Update Status / Progress</button>
+          <button type="button" className="btn btn-secondary" id="tm-btn-update" disabled={busy} onClick={update}><i className="ph ph-check-circle"></i> Update Status / Progress</button>
           <button type="button" className="btn btn-primary" id="tm-btn-resolve" onClick={() => setShowResolve(true)}><i className="ph ph-flag-checkered"></i> Mark as Resolved</button>
         </div>
       </div>
@@ -267,7 +288,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           <FieldError {...validation.errorProps('resolution')} />
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button type="button" className="btn btn-primary" id="tm-btn-confirm-resolve" onClick={confirmResolve}><i className="ph ph-check-circle"></i> Confirm Resolution</button>
+          <button type="button" className="btn btn-primary" id="tm-btn-confirm-resolve" disabled={busy} onClick={confirmResolve}><i className="ph ph-check-circle"></i> Confirm Resolution</button>
           <button type="button" className="btn btn-outline" id="tm-btn-cancel-resolve" onClick={() => setShowResolve(false)}>Cancel</button>
         </div>
       </div>
@@ -278,7 +299,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           <textarea className="form-control" rows="2" maxLength={1000} placeholder="Note for the Platform Admin (optional)..." aria-label="Note for the Platform Admin" value={submitNote} onChange={(e) => setSubmitNote(e.target.value)} {...validation.input('submitNote', 'tm-d-submit-note')}></textarea>
           <FieldError {...validation.errorProps('submitNote')} />
         </div>
-        <button type="button" className="btn btn-primary" id="tm-btn-submit-verification" onClick={submitVerification}><i className="ph ph-paper-plane-tilt"></i> Send for Verification</button>
+        <button type="button" className="btn btn-primary" id="tm-btn-submit-verification" disabled={busy} onClick={submitVerification}><i className="ph ph-paper-plane-tilt"></i> Send for Verification</button>
       </div>
 
       <div className="msg-tabs">
@@ -305,7 +326,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           <textarea className="form-control" rows="2" maxLength={2000} placeholder="Message the Platform Admin..." aria-label="Message the Platform Admin" value={comment} onChange={(e) => setComment(e.target.value)} {...validation.input('comment', 'tm-d-comment')}></textarea>
           <FieldError {...validation.errorProps('comment')} />
         </div>
-        <button type="button" className="btn btn-primary" id="tm-btn-send" onClick={send}><i className="ph ph-paper-plane-tilt"></i> Send</button>
+        <button type="button" className="btn btn-primary" id="tm-btn-send" disabled={busy} onClick={send}><i className="ph ph-paper-plane-tilt"></i> Send</button>
       </div>
 
       <div className={cx('msg-pane', activeTab === 'notes' && 'active')} id="tm-pane-notes">
@@ -327,7 +348,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
           <textarea className="form-control" rows="2" maxLength={2000} placeholder="Add a technical note..." aria-label="Add a technical note" value={note} onChange={(e) => setNote(e.target.value)} {...validation.input('note', 'tm-d-note')}></textarea>
           <FieldError {...validation.errorProps('note')} />
         </div>
-        <button type="button" className="btn btn-outline" id="tm-btn-add-note" onClick={addNote}><i className="ph ph-note-pencil"></i> Add Note</button>
+        <button type="button" className="btn btn-outline" id="tm-btn-add-note" disabled={busy} onClick={addNote}><i className="ph ph-note-pencil"></i> Add Note</button>
       </div>
 
       <div className={cx('msg-pane', activeTab === 'attachments' && 'active')} id="tm-pane-attachments">
@@ -346,7 +367,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
                   <div className="row-actions">
                     <button type="button" className="icon-btn" title="View" onClick={() => togglePreview(a.attachment_id)}><i className="ph ph-eye"></i></button>
                     {a.uploaded_by === user.emp_id && (
-                      <button type="button" className="icon-btn danger" title="Remove" onClick={() => removeAttachment(a.attachment_id)}><i className="ph ph-trash"></i></button>
+                      <button type="button" className="icon-btn danger" title="Remove" disabled={busy} onClick={() => removeAttachment(a.attachment_id)}><i className="ph ph-trash"></i></button>
                     )}
                   </div>
                 </div>
@@ -366,7 +387,7 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
             <i className="ph ph-file"></i> <span id="tm-attach-name">{pendingFile?.name}</span>
           </span>
           <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept={TECHNICAL_ATTACHMENT_EXTENSIONS.join(',')} onChange={(e) => { setPendingFile(e.target.files[0] || null); validation.touch('pendingFile'); }} {...validation.input('pendingFile', 'tm-attach-input')} />
-          <button type="button" className="btn btn-primary" id="tm-btn-upload" disabled={!pendingFile} onClick={upload}><i className="ph ph-cloud-arrow-up"></i> Upload</button>
+          <button type="button" className="btn btn-primary" id="tm-btn-upload" disabled={busy || !pendingFile} onClick={upload}><i className="ph ph-cloud-arrow-up"></i> Upload</button>
         </div>
         <FieldError {...validation.errorProps('pendingFile')} />
         <div className="form-hint"><i className="ph ph-info"></i> Screenshots and log files up to 5 MB ({TECHNICAL_ATTACHMENT_EXTENSIONS.join(', ')}).</div>
@@ -396,29 +417,30 @@ function IssueDetailBody({ issue, activeTab, setActiveTab, refresh, showToast })
 }
 
 /**
- * const { openIssue, issueModal } = useIssueDetail({ onChanged, showToast });
- * onChanged(updatedIssue) runs after every successful action, so the page can
- * reload its list (the modal stays open on the refreshed issue).
+ * const { openIssue, issueModal } = useIssueDetail({ showToast });
+ * The open issue is read from the tickets slice by id. After every successful
+ * action it is re-read from the backend (the modal stays open on it), and the
+ * pages' queues/stats refetch through Redux, so pages need no reload callback.
  */
-export default function useIssueDetail({ onChanged, showToast }) {
-  const [current, setCurrent] = useState(null);
+export default function useIssueDetail({ showToast }) {
+  const dispatch = useDispatch();
+  const [currentId, setCurrentId] = useState(null); // UI state: which issue the modal shows
+  const current = useSelector((s) => (currentId ? s.tickets.entities[currentId] ?? null : null));
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('conversation');
   const [version, setVersion] = useState(0);
 
   const openIssue = (issue) => {
     // A different issue starts on Conversation; reopening the same one keeps the tab.
-    if (!current || current.ticket_id !== issue.ticket_id) setActiveTab('conversation');
-    setCurrent(issue);
+    if (currentId !== issue.ticket_id) setActiveTab('conversation');
+    setCurrentId(issue.ticket_id);
     setVersion((v) => v + 1);
     setOpen(true);
   };
 
   const refresh = async () => {
-    const updated = await tm.getMyTechnicalIssueById(current.ticket_id);
-    setCurrent(updated);
-    setVersion((v) => v + 1);
-    onChanged?.(updated);
+    await dispatch(ticketsEntity.thunks.fetchTechnicalById(currentId)).unwrap();
+    setVersion((v) => v + 1); // remount the body so its drafts reset to the refreshed issue
   };
 
   const issueModal = (

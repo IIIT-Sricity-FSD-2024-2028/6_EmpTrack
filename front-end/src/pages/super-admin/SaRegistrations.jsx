@@ -1,12 +1,16 @@
 // Company registration review queue. The backend only lets SUPER_ADMIN sessions
 // reach /registration-reviews, so this is the one place a company becomes verified.
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import SaModal from '../../components/sa-common/SaModal';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import { Field, FormError, StateRow } from '../../components/sa-common/saForm';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useFormValidation from '../../hooks/useFormValidation';
-import * as sa from '../../services/superAdminService';
+import { registrationRepository } from '../../services/repositories';
+import { employeesEntity, registrationsEntity, subscriptionsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
+import { loadStateOf } from '../../utils/saCommon';
 import { BUSINESS_TYPES, approveRegistrationSchema, rejectRegistrationSchema } from '../../validation/formSchemas';
 import { formatBytes } from '../public/CompanyRegister';
 import { REGISTRATION_STATUS_INFO } from '../public/RegistrationStatus';
@@ -22,15 +26,25 @@ function StatusBadge({ status }) {
   return <span className={`badge ${info.badge}`}>{info.label}</span>;
 }
 
+const ACTIVE = { status: 'ACTIVE' };
+
 export default function SaRegistrations() {
   const [toast, showToast] = useSaToast();
   const [status, setStatus] = useState('');
-  const [rows, setRows] = useState([]);
-  const [loadState, setLoadState] = useState('loading');
-  const [selected, setSelected] = useState(null);
+  const dispatch = useDispatch();
+  const rowsQuery = useEntityQuery(registrationsEntity, 'fetchAll', { status });
+  const rows = rowsQuery.data ?? [];
+  const loadState = loadStateOf(rowsQuery);
+  // Only the reference is UI state; the registration is read from the slice, so it
+  // shows the record the backend returned after each review action.
+  const [selectedRef, setSelectedRef] = useState(null);
+  const selected = useSelector((st) => (selectedRef ? st.registrations.entities[selectedRef] ?? null : null));
   const [mode, setMode] = useState('view'); // view | approve | reject
-  const [plans, setPlans] = useState([]);
-  const [admins, setAdmins] = useState([]);
+  const plansQuery = useEntityQuery(subscriptionsEntity, 'fetchAll');
+  const adminsQuery = useEntityQuery(employeesEntity, 'fetchPlatformAdmins', ACTIVE);
+  const plans = plansQuery.data ?? [];
+  const admins = adminsQuery.data ?? [];
+  const lookupsFailed = Boolean(plansQuery.error || adminsQuery.error);
   const [approveForm, setApproveForm] = useState({ platform_admin_id: '', subscription_plan_id: '' });
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,25 +54,12 @@ export default function SaRegistrations() {
   const av = useFormValidation(approveRegistrationSchema(planIds, admins.map((a) => a.emp_id)), approveForm, { idPrefix: 'rr' });
   const rv = useFormValidation(rejectRegistrationSchema, { reason }, { idPrefix: 'rr' });
 
-  const load = useCallback(async () => {
-    setLoadState('loading');
-    try {
-      setRows(await sa.getRegistrations({ status }));
-      setLoadState('ready');
-    } catch {
-      setLoadState('error');
-    }
-  }, [status]);
-
-  useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    Promise.all([sa.getSubscriptionPlans(), sa.getPlatformAdmins({ status: 'ACTIVE' })])
-      .then(([p, a]) => { setPlans(p); setAdmins(a); })
-      .catch(() => showToast('Failed to load platform admins / plans.', 'error'));
-  }, [showToast]);
+    if (lookupsFailed) showToast('Failed to load platform admins / plans.', 'error');
+  }, [lookupsFailed, showToast]);
 
   const open = (reg) => {
-    setSelected(reg);
+    setSelectedRef(reg.reference);
     setMode('view');
     setError('');
   };
@@ -69,7 +70,7 @@ export default function SaRegistrations() {
     const win = window.open('', '_blank');
     if (win) win.opener = null;
     try {
-      const blob = await sa.getRegistrationDocument(selected.reference, docType);
+      const blob = await registrationRepository.getDocument({ reference: selected.reference, docType });
       const url = URL.createObjectURL(blob);
       if (win) win.location.href = url;
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -83,11 +84,10 @@ export default function SaRegistrations() {
     setError('');
     setBusy(true);
     try {
-      const updated = await action();
-      setSelected(updated);
+      // The slice stores the returned registration and refetches the (status-filtered) lists.
+      await dispatch(action()).unwrap();
       setMode('view');
       showToast(successMessage);
-      load();
     } catch (err) {
       setError(err.message || 'Action failed.');
     } finally {
@@ -132,7 +132,7 @@ export default function SaRegistrations() {
     footer = (
       <>
         <button type="button" className="btn btn-outline" onClick={() => setMode('view')} disabled={busy}>Back</button>
-        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => av.validateAll() && act(() => sa.approveRegistration(s.reference, approveForm), 'Registration approved; company and admin account created.')}>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => av.validateAll() && act(() => registrationsEntity.thunks.approve({ reference: s.reference, data: approveForm }), 'Registration approved; company and admin account created.')}>
           {busy ? 'Approving...' : 'Approve and create company'}
         </button>
       </>
@@ -141,7 +141,7 @@ export default function SaRegistrations() {
     footer = (
       <>
         <button type="button" className="btn btn-outline" onClick={() => setMode('view')} disabled={busy}>Back</button>
-        <button type="button" className="btn btn-danger" disabled={busy} onClick={() => rv.validateAll() && act(() => sa.rejectRegistration(s.reference, reason.trim()), 'Registration rejected.')}>
+        <button type="button" className="btn btn-danger" disabled={busy} onClick={() => rv.validateAll() && act(() => registrationsEntity.thunks.reject({ reference: s.reference, reason: reason.trim() }), 'Registration rejected.')}>
           {busy ? 'Rejecting...' : 'Reject registration'}
         </button>
       </>
@@ -149,8 +149,8 @@ export default function SaRegistrations() {
   } else {
     footer = (
       <>
-        <button type="button" className="btn btn-outline" onClick={() => setSelected(null)}>Close</button>
-        {s?.status === 'pending' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => act(() => sa.startRegistrationReview(s.reference), 'Marked as under review.')}>Start review</button>}
+        <button type="button" className="btn btn-outline" onClick={() => setSelectedRef(null)}>Close</button>
+        {s?.status === 'pending' && <button type="button" className="btn btn-outline" disabled={busy} onClick={() => act(() => registrationsEntity.thunks.startReview(s.reference), 'Marked as under review.')}>Start review</button>}
         {canDecide && <button type="button" className="btn btn-danger" onClick={startReject}>Reject</button>}
         {canDecide && <button type="button" className="btn btn-primary" onClick={startApprove}>Approve</button>}
       </>
@@ -180,7 +180,7 @@ export default function SaRegistrations() {
         </div>
       </div>
 
-      <SaModal id="registrationModal" open={Boolean(s)} onClose={() => setSelected(null)} title={s ? `${s.company.legal_name} (${s.reference})` : ''} titleId="registrationModalTitle" maxWidth="720px" footer={footer}>
+      <SaModal id="registrationModal" open={Boolean(s)} onClose={() => setSelectedRef(null)} title={s ? `${s.company.legal_name} (${s.reference})` : ''} titleId="registrationModalTitle" maxWidth="720px" footer={footer}>
         {s && mode === 'view' && (
           <>
             <div className="form-section-title">Company details <StatusBadge status={s.status} /></div>

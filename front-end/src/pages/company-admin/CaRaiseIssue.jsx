@@ -1,11 +1,12 @@
 // Converted from front-end/company_admin/raise-issue.html + js/views/company_admin/raise-issue.js
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import FieldError, { RequiredMark } from '../../components/common/FieldError';
 import useFormValidation from '../../hooks/useFormValidation';
 import usePageTitle from '../../hooks/usePageTitle';
 import { raiseCompanyTicketSchema } from '../../validation/formSchemas';
-import { raiseCompanyIssue } from '../../services/companyAdminService';
+import { ticketsEntity } from '../../store/entities';
 import { CA_BASE } from './caConstants';
 
 const PRIORITIES = [
@@ -22,7 +23,8 @@ export default function CaRaiseIssue() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ priority: 'MEDIUM', category: '', title: '', description: '' });
   const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const dispatch = useDispatch();
+  const submitting = useSelector((s) => s.tickets.mutations.raiseCompanyTicket?.status === 'loading');
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const validation = useFormValidation(raiseCompanyTicketSchema, form, { idPrefix: 'ca-issue' });
 
@@ -30,13 +32,11 @@ export default function CaRaiseIssue() {
     e.preventDefault();
     setError('');
     if (!validation.validateAll()) return;
-    setSubmitting(true);
     try {
-      await raiseCompanyIssue({ title: form.title.trim(), description: form.description.trim(), priority: form.priority, category: form.category.trim() || undefined });
+      await dispatch(ticketsEntity.thunks.raiseCompanyTicket({ title: form.title.trim(), description: form.description.trim(), priority: form.priority, category: form.category.trim() || undefined })).unwrap();
       navigate(`${CA_BASE}/dashboard`);
     } catch (err) {
       if (!validation.setServerErrors(err)) setError(err.message || 'Could not raise issue. Please try again.');
-      setSubmitting(false);
     }
   };
 

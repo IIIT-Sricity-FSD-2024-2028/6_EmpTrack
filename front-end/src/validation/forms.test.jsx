@@ -3,7 +3,10 @@
 // focused, invalid forms never call the API, values are kept, backend field
 // errors land on the right field, and double submits are blocked.
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter as Router } from 'react-router-dom';
+import StoreProvider from '../store/StoreProvider';
+
+const MemoryRouter = ({ children }) => <StoreProvider><Router>{children}</Router></StoreProvider>;
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ChangePasswordCard from '../components/platform/ChangePasswordCard';
 import { ApiError } from '../services/api';

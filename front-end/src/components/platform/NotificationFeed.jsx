@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import useFetch from '../../hooks/useFetch';
+import { notificationsEntity } from '../../store/entities';
+import { useEntityQuery } from '../../store/entitySlice';
 import { formatDateTime } from './format';
 import { EmptyNote, ErrorState } from './ShellUI';
 
@@ -20,11 +21,12 @@ function toRoute(link) {
  * Notification list from the original notifications pages (platform_admin and
  * support_member). The backend has no read/unread flag or delete endpoint, and
  * the original pages offered no such actions, so the list is read-only; links
- * open the related ticket (Platform Admin "View Issue").
+ * open the related ticket (Platform Admin "View Issue"). Records come from the
+ * shared notifications slice (platformAdminService's demo-aware loader).
  */
-export default function NotificationFeed({ loader, showLinks }) {
+export default function NotificationFeed({ showLinks }) {
   const { user } = useAuth();
-  const { data, loading, error } = useFetch(() => loader(user.emp_id), [user.emp_id]);
+  const { data, loading, error } = useEntityQuery(notificationsEntity, 'fetchForPlatform', user.emp_id);
 
   let content;
   if (loading) content = <div className="ops-empty"><div className="spinner"></div>Loading notifications...</div>;

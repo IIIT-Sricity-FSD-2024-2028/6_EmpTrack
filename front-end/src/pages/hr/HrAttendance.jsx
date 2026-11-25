@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import usePageTitle from '../../hooks/usePageTitle';
 import * as hr from '../../services/hrService';
-import { WORK_DAY_HOURS, departmentsOf, isOnLeave, isStaff, todayKey } from './hrUtils';
+import { WORK_DAY_HOURS, departmentsOf, isOnLeave, todayKey, useCompanyData } from './hrUtils';
 import './styles/attendance.css';
 
 const BADGES = {
@@ -46,23 +46,10 @@ function DataCard({ tone, icon, label, value }) {
 
 export default function HrAttendance() {
   usePageTitle('Attendance Management');
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(false);
+  const { data, error } = useCompanyData();
   const [filters, setFilters] = useState({ search: '', dept: 'all', status: 'all', date: todayKey() });
   const [barsReady, setBarsReady] = useState(false);
   const lateAfter = 9 * 60 + Number(hr.getHrSettings().attendance.lateThreshold || 0);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const [employees, leaves] = await Promise.all([hr.getEmployees(), hr.getLeaves()]);
-        const staff = employees.filter(isStaff);
-        setData({ staff, leaves, attendance: await hr.getAttendanceFor(staff) });
-      } catch {
-        setError(true);
-      }
-    })();
-  }, []);
 
   useEffect(() => {
     setBarsReady(false);

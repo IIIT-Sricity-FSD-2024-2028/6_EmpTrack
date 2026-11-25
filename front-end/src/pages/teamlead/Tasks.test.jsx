@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import StoreProvider from '../../store/StoreProvider';
 import Tasks from './Tasks';
 import { createTask, deleteTask, updateTask } from '../../services/teamLeadService';
 import { useTeamData } from './components/TeamLeadUI';
@@ -39,7 +40,7 @@ describe('Team Lead task estimate editing', () => {
     useTeamData.mockReturnValue({
       data: { members: [{ emp_id: 'EM001', emp_name: 'Anne Employee' }], tasks }, error: null, reload,
     });
-    render(<Tasks />);
+    render(<StoreProvider><Tasks /></StoreProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Edit TK001' }));
     const dialog = screen.getByRole('dialog');
     const estimate = within(dialog).getByRole('spinbutton', { name: /Estimated Hours/ });
@@ -54,7 +55,7 @@ describe('Team Lead task estimate editing', () => {
   });
 
   it.each(['', '0', '-1', 'abc', '1001'])('shows a field error and blocks saving an invalid estimate: %s', async (value) => {
-    render(<Tasks />);
+    render(<StoreProvider><Tasks /></StoreProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Edit TK001' }));
     fireEvent.change(within(screen.getByRole('dialog')).getByRole('spinbutton', { name: /Estimated Hours/ }), { target: { value } });
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
@@ -63,7 +64,7 @@ describe('Team Lead task estimate editing', () => {
   });
 
   it('discards an unsaved estimate when cancelled and opens with the saved value again', () => {
-    render(<Tasks />);
+    render(<StoreProvider><Tasks /></StoreProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Edit TK001' }));
     fireEvent.change(within(screen.getByRole('dialog')).getByRole('spinbutton', { name: /Estimated Hours/ }), { target: { value: '12' } });
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
@@ -77,7 +78,7 @@ describe('Team Lead task estimate editing', () => {
       data: { members: [{ emp_id: 'EM001', emp_name: 'Anne Employee' }], tasks: [{ ...savedTask, est_hours: undefined }] },
       error: null, reload: vi.fn(),
     });
-    render(<Tasks />);
+    render(<StoreProvider><Tasks /></StoreProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Edit TK001' }));
     expect(within(screen.getByRole('dialog')).getByRole('spinbutton', { name: /Estimated Hours/ }).value).toBe('');
   });

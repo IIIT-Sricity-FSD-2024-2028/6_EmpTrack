@@ -72,3 +72,6 @@ export function companyStatusBadgeClass(status) {
   if (status === 'SUSPENDED') return 'badge-suspended';
   return 'badge-inactive';
 }
+
+/** Maps a Redux query ({ data, error }) to the SA tables' 'loading' | 'error' | 'ready'. */
+export const loadStateOf = (q) => (q.error ? 'error' : q.data ? 'ready' : 'loading');

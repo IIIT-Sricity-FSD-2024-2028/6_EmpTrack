@@ -1,13 +1,15 @@
 // Converted from front-end/super_admin/profile.html + js/views/super_admin/profile.js
+import { useDispatch } from 'react-redux';
 import PasswordCard from '../../components/sa-common/PasswordCard';
 import SaPageTitle from '../../components/sa-common/SaPageTitle';
 import useSaToast from '../../components/sa-common/useSaToast';
 import useAuth from '../../hooks/useAuth';
-import * as sa from '../../services/superAdminService';
+import { employeesEntity } from '../../store/entities';
 import './styles/_shared.css';
 import './styles/profile.css';
 
 export default function SaProfile() {
+  const dispatch = useDispatch();
   const { user } = useAuth();
   const [toast, showToast] = useSaToast();
 
@@ -36,7 +38,9 @@ export default function SaProfile() {
           </div>
 
           <PasswordCard
-            onSubmit={(current, next, confirm) => sa.updateUserPassword(user.emp_id, current, next, confirm)}
+            onSubmit={(currentPassword, newPassword, confirmPassword) => dispatch(employeesEntity.thunks.updatePassword({
+              empId: user.emp_id, currentPassword, newPassword, confirmPassword,
+            })).unwrap()}
             onSuccess={() => showToast('Password updated successfully.')}
           />
         </div>
