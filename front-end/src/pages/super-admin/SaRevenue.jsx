@@ -22,6 +22,7 @@ const PAGE_SIZE = 10;
 const COLS = 9;
 const EMPTY_FILTERS = { search: '', companyId: '', platformAdminId: '', status: 'all' };
 
+
 const STAT_DEFS = [
   { key: 'total_revenue', label: 'Total Revenue', icon: 'ph-currency-circle-dollar', tone: 'success', currency: true },
   { key: 'monthly_revenue', label: 'Monthly Revenue', icon: 'ph-calendar-check', tone: 'primary', currency: true },
