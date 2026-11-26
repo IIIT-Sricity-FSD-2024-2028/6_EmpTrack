@@ -11,7 +11,7 @@ import { escalationsEntity } from '../../store/entities';
 import { useEntityQuery } from '../../store/entitySlice';
 import { ROLE_NAMES, shortDate, useStaffAttendance } from './hrUtils';
 import './styles/escalations.css';
-   
+
 const STATUS_STYLE = {
   Pending: { background: 'var(--color-med-bg)', color: 'var(--color-med)' },
   Rejected: { background: 'var(--color-high-bg)', color: 'var(--color-high)' },
