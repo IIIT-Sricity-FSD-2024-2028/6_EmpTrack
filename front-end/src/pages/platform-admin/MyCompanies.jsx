@@ -1,15 +1,10 @@
 // Converted from front-end/platform_admin/my-companies.html + js/views/platform_admin/my-companies.js
 import { useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import Input from '../../components/common/Input';
 import Modal from '../../components/common/Modal';
 import { accountStatusBadge, formatDate, paginate } from '../../components/platform/format';
 import {
-  ClearButton, DetailItem, FilterSelect, modalClass, Pagination, PortalShell, SearchInput, SectionHeader, ShellTable, useDebounced, useToast,
+  ClearButton, DetailItem, FilterSelect, modalClass, Pagination, PortalShell, SearchInput, SectionHeader, ShellTable, useDebounced,
 } from '../../components/platform/ShellUI';
-import useFormValidation from '../../hooks/useFormValidation';
-import { PASSWORD_HINT } from '../../utils/validation';
-import { createCompanyAdminSchema } from '../../validation/formSchemas';
 import { IS_DEMO } from '../../services/platformAdminService';
 import { companiesEntity } from '../../store/entities';
 import { useEntityQuery } from '../../store/entitySlice';
@@ -21,7 +16,6 @@ const STATUS_OPTIONS = [
   { value: 'INACTIVE', label: 'Inactive' },
   { value: 'SUSPENDED', label: 'Suspended' },
 ];
-const EMPTY_FORM = { name: '', email: '', password: '', confirmPassword: '', phone: '', companyId: '', status: 'ACTIVE' };
 
 function CompanyDetails({ company }) {
   return (
@@ -46,18 +40,12 @@ function CompanyDetails({ company }) {
 }
 
 export default function MyCompanies() {
-  const dispatch = useDispatch();
   const { data: companies, loading, error } = useEntityQuery(companiesEntity, 'fetchMine');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
   const [viewing, setViewing] = useState(null);
-  const [form, setForm] = useState(null);
-  const [formError, setFormError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [toast, showToast] = useToast();
   const query = useDebounced(search.trim());
-  const validation = useFormValidation(createCompanyAdminSchema((companies ?? []).map((c) => c.company_id)), form || {}, { idPrefix: 'ca-new' });
 
   const filtered = useMemo(() => {
     let list = companies ?? [];
@@ -73,34 +61,6 @@ export default function MyCompanies() {
   const changeFilter = (setter) => (value) => {
     setter(value);
     setPage(1);
-  };
-
-  const openCreate = (companyId = '') => {
-    setForm({ ...EMPTY_FORM, companyId });
-    setFormError('');
-    validation.reset();
-  };
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    setFormError('');
-    if (!validation.validateAll()) return;
-    const data = { ...form, name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim() };
-    setSaving(true);
-    try {
-      const { companyId, ...payload } = data;
-      // Companies refetch (admin counts) once the backend confirms.
-      await dispatch(companiesEntity.thunks.createAdmin({ companyId, data: payload })).unwrap();
-      showToast(IS_DEMO
-        ? 'Company Admin created in demo data (this account cannot log in without the backend).'
-        : 'Company Admin created successfully. They can log in immediately.');
-      setForm(null);
-    } catch (err) {
-      if (!validation.setServerErrors(err)) setFormError(err.message || 'Failed to create Company Admin.');
-    } finally {
-      setSaving(false);
-    }
   };
 
   const columns = [
@@ -122,7 +82,6 @@ export default function MyCompanies() {
       key: 'actions', header: 'Actions', align: 'right', render: (c) => (
         <div className="row-actions">
           <button type="button" className="icon-btn" title="View" aria-label={`View ${c.company_name}`} onClick={() => setViewing(c)}><i className="ph ph-eye"></i></button>
-          <button type="button" className="icon-btn" title="Add Company Admin" aria-label={`Add Company Admin for ${c.company_name}`} onClick={() => openCreate(c.company_id)}><i className="ph ph-user-plus"></i></button>
         </div>
       ),
     },
@@ -166,45 +125,6 @@ export default function MyCompanies() {
       >
         {viewing && <CompanyDetails company={viewing} />}
       </Modal>
-
-      <Modal
-        isOpen={Boolean(form)}
-        onClose={() => setForm(null)}
-        title="Create Company Admin"
-        className={modalClass('pa')}
-        footer={
-          <>
-            <button type="button" className="btn btn-outline" onClick={() => setForm(null)}>Cancel</button>
-            <button type="submit" form="create-ca-form" className="btn btn-primary" disabled={saving}>{saving ? 'Creating...' : 'Create Company Admin'}</button>
-          </>
-        }
-      >
-        {form && (
-          <form id="create-ca-form" onSubmit={handleCreate} noValidate>
-            <Input label="Full Name" maxLength={100} value={form.name} onChange={set('name')} required {...validation.field('name')} />
-            <Input label="Email" type="email" maxLength={254} value={form.email} onChange={set('email')} required {...validation.field('email')} />
-            <Input label="Password" type="password" maxLength={64} hint={PASSWORD_HINT} autoComplete="new-password" value={form.password} onChange={set('password')} required {...validation.field('password')} />
-            <Input label="Confirm Password" type="password" maxLength={64} autoComplete="new-password" value={form.confirmPassword} onChange={set('confirmPassword')} required {...validation.field('confirmPassword')} />
-            <Input label="Phone Number" type="tel" maxLength={20} placeholder="e.g. +91 98765 43210" value={form.phone} onChange={set('phone')} required {...validation.field('phone')} />
-            <Input as="select" label="Company" value={form.companyId} onChange={set('companyId')} required {...validation.field('companyId')}>
-              <option value="">Select a company...</option>
-              {(companies ?? []).map((c) => <option key={c.company_id} value={c.company_id}>{c.company_name}</option>)}
-            </Input>
-            <Input as="select" label="Status" value={form.status} onChange={set('status')} {...validation.field('status')}>
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
-            </Input>
-            <div className="form-hint">
-              <i className="ph ph-info"></i>
-              {IS_DEMO
-                ? 'Only companies assigned to you are listed. Demo mode: the account is added to demo data but cannot log in.'
-                : 'Only companies assigned to you are listed. The account can log in immediately with this email and password.'}
-            </div>
-            {formError && <div className="form-error" role="alert">{formError}</div>}
-          </form>
-        )}
-      </Modal>
-      {toast}
     </PortalShell>
   );
 }
